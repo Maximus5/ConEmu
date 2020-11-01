@@ -91,12 +91,12 @@ LRESULT CSetPgColors::OnInitDialog(HWND hDlg, bool abInitial)
 	{
 		// активация уже загруженной вкладки, текущую палитру уже запомнили
 	}
-	else if ((pPal = gpSet->PaletteGet(-1)) != NULL)
+	else if ((pPal = gpSet->PaletteGet(-1)) != nullptr)
 	{
 		memmove(&gLastColors, pPal, sizeof(gLastColors));
-		if (gLastColors.pszName == NULL)
+		if (gLastColors.pszName == nullptr)
 		{
-			_ASSERTE(gLastColors.pszName!=NULL);
+			_ASSERTE(gLastColors.pszName!=nullptr);
 			static wchar_t szCurrentScheme[64] = L"";
 			lstrcpyn(szCurrentScheme, CLngRc::getRsrc(lng_CurClrScheme/*"<Current color scheme>"*/), countof(szCurrentScheme));
 			gLastColors.pszName = szCurrentScheme;
@@ -112,7 +112,7 @@ LRESULT CSetPgColors::OnInitDialog(HWND hDlg, bool abInitial)
 	SendMessage(GetDlgItem(hDlg, lbDefaultColors), CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage(hDlg, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
 
-	for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
+	for (int i = 0; (pPal = gpSet->PaletteGet(i)) != nullptr; i++)
 	{
 		SendDlgItemMessage(hDlg, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
 	}
@@ -179,26 +179,26 @@ INT_PTR CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			// Save & Delete buttons
 			{
 				bool bEnabled = false;
-				wchar_t* pszText = NULL;
+				wchar_t* pszText = nullptr;
 
 				if (code == CBN_EDITCHANGE)
 				{
 					INT_PTR nLen = GetWindowTextLength(hList);
-					pszText = (nLen > 0) ? (wchar_t*)malloc((nLen+1)*sizeof(wchar_t)) : NULL;
+					pszText = (nLen > 0) ? (wchar_t*)malloc((nLen+1)*sizeof(wchar_t)) : nullptr;
 					if (pszText)
 						GetWindowText(hList, pszText, nLen+1);
 				}
 				else if ((code == CBN_SELCHANGE) && nIdx > 0) // 0 -- current color scheme. ее удалять/сохранять "нельзя"
 				{
 					INT_PTR nLen = SendMessage(hList, CB_GETLBTEXTLEN, nIdx, 0);
-					pszText = (nLen > 0) ? (wchar_t*)malloc((nLen+1)*sizeof(wchar_t)) : NULL;
+					pszText = (nLen > 0) ? (wchar_t*)malloc((nLen+1)*sizeof(wchar_t)) : nullptr;
 					if (pszText)
 						SendMessage(hList, CB_GETLBTEXT, nIdx, (LPARAM)pszText);
 				}
 
 				if (pszText)
 				{
-					bEnabled = (wcspbrk(pszText, L"<>") == NULL);
+					bEnabled = (wcspbrk(pszText, L"<>") == nullptr);
 					SafeFree(pszText);
 				}
 
@@ -209,11 +209,11 @@ INT_PTR CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			// Юзер выбрал в списке другую палитру
 			if ((code == CBN_SELCHANGE) && gbLastColorsOk)  // только если инициализация палитр завершилась
 			{
-				const ColorPalette* pPal = NULL;
+				const ColorPalette* pPal = nullptr;
 
 				if (nIdx == 0)
 					pPal = &gLastColors;
-				else if ((pPal = gpSet->PaletteGet(nIdx-1)) == NULL)
+				else if ((pPal = gpSet->PaletteGet(nIdx-1)) == nullptr)
 					return 0; // неизвестный набор
 
 				gpSetCls->ChangeCurrentPalette(pPal, false);
@@ -281,7 +281,7 @@ void CSetPgColors::ColorSchemeSaveDelete(WORD CB, BYTE uCheck)
 
 	if (!mh_Dlg)
 	{
-		_ASSERTE(mh_Dlg!=NULL);
+		_ASSERTE(mh_Dlg!=nullptr);
 		return;
 	}
 

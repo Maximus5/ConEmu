@@ -143,8 +143,8 @@ class CSetPgBase
 	: public CSetDlgButtons
 {
 protected:
-	HWND mh_Dlg = NULL;
-	HWND mh_Parent = NULL;
+	HWND mh_Dlg = nullptr;
+	HWND mh_Parent = nullptr;
 	bool mb_SkipSelChange = false;
 	bool mb_DpiChanged = false;
 	UINT mn_ActivateTabMsg = WM_APP;
@@ -190,7 +190,7 @@ public:
 	/// Examples:
 	///    gbPasteM1 has title "Paste mode #1 (Shift+Ins)", pszFrom=L"(", pszTo=L")"
 	///      `Shift+Ins` is replaced replaced with current user defined hotkey value
-	///    cbMouseDragWindow has title "Ctrl+Alt - drag ConEmu window", pszFrom=NULL, pszTo=L" - "
+	///    cbMouseDragWindow has title "Ctrl+Alt - drag ConEmu window", pszFrom=nullptr, pszTo=L" - "
 	///      `Ctrl+Alt` is replaced
 	/// If pszGroup is specified, the key is replaced with pszGroup before processing the control label
 	/// e.g. pszGroup="Numbers" than replace szFull="Ctrl+1" with "Ctrl+Numbers"

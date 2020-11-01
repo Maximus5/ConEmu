@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CEStr.h"
 #include "../common/MMap.h"
 
-ATOM CFindPanel::mh_Class = NULL;
+ATOM CFindPanel::mh_Class = 0;
 #define FindPanelClass L"ConEmuFindPanel"
 #define SearchHint CLngRc::getRsrc(lng_Search/*"Search"*/)
 #define SearchCtrlId 1
@@ -53,10 +53,10 @@ static MMap<HWND,CFindPanel*> g_FindMap;
 
 CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 	: mp_ConEmu(apConEmu)
-	, mh_Pane(NULL)
-	, mh_Edit(NULL)
-	, mh_Font(NULL)
-	, mfn_EditProc(NULL)
+	, mh_Pane(nullptr)
+	, mh_Edit(nullptr)
+	, mh_Font(nullptr)
+	, mfn_EditProc(nullptr)
 	, mn_KeyDown(0)
 	, mn_RebarHeight(0)
 {
@@ -99,10 +99,10 @@ HWND CFindPanel::CreatePane(HWND hParent, int nBarHeight)
 		return mh_Pane;
 
 	if (!RegisterPaneClass())
-		return NULL;
+		return nullptr;
 
-	_ASSERTE(mh_Edit==NULL);
-	mh_Edit = NULL;
+	_ASSERTE(mh_Edit==nullptr);
+	mh_Edit = nullptr;
 
 	mn_RebarHeight = nBarHeight;
 
@@ -113,7 +113,7 @@ HWND CFindPanel::CreatePane(HWND hParent, int nBarHeight)
 	mh_Pane = CreateWindowEx(WS_EX_CONTROLPARENT,
 		FindPanelClass, L"",
 		WS_CHILD|WS_VISIBLE,
-		0, nShiftY, nWidth, nHeight, hParent, NULL, NULL, this);
+		0, nShiftY, nWidth, nHeight, hParent, nullptr, nullptr, this);
 
 	return mh_Pane;
 }
@@ -129,7 +129,7 @@ bool CFindPanel::OnCreateFinished()
 			L"EDIT", L"",
 			WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,
 			rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
-			mh_Pane, (HMENU)SearchCtrlId, NULL, NULL);
+			mh_Pane, (HMENU)SearchCtrlId, nullptr, nullptr);
 		if (!mh_Edit)
 		{
 			return false;
@@ -178,27 +178,27 @@ bool CFindPanel::RegisterPaneClass()
 	WNDCLASSEX wcFindPane = {
 		sizeof(wcFindPane), 0,
 		FindPaneProc, 0, 0,
-		g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW),
-		(HBRUSH)(COLOR_BTNFACE+1), NULL,
-		FindPanelClass
+		g_hInstance, nullptr, LoadCursor(nullptr, IDC_ARROW),
+		reinterpret_cast<HBRUSH>((COLOR_BTNFACE + 1)), nullptr,
+		FindPanelClass, nullptr
 	};
 
 	mh_Class = RegisterClassEx(&wcFindPane);
 
-	return (mh_Class != NULL);
+	return (mh_Class != 0);
 }
 
 LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR lRc = 0;
-	CFindPanel* pPanel = NULL;
+	CFindPanel* pPanel = nullptr;
 	RECT rcClient = {};
 
 	if (uMsg == WM_CREATE)
 	{
-		if (lParam && ((CREATESTRUCT*)lParam)->lpCreateParams)
+		if (lParam && reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams)
 		{
-			pPanel = (CFindPanel*)((CREATESTRUCT*)lParam)->lpCreateParams;
+			pPanel = static_cast<CFindPanel*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
 			pPanel->mh_Pane = hWnd;
 		}
 	}
@@ -238,7 +238,7 @@ LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	case WM_SIZE:
 	case WM_MOVE:
 		if (pPanel)
-			pPanel->OnSize(NULL);
+			pPanel->OnSize(nullptr);
 		break;
 
 	case WM_DESTROY:
@@ -260,7 +260,7 @@ wrap:
 LRESULT CFindPanel::EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc = 0;
-	CFindPanel* pPanel = NULL;
+	CFindPanel* pPanel = nullptr;
 	g_FindMap.Get(hCtrl, &pPanel);
 
 	if (pPanel) switch (uMsg)
@@ -300,7 +300,7 @@ void CFindPanel::OnDestroy()
 	g_FindMap.Del(mh_Pane);
 	g_FindMap.Del(mh_Edit);
 	SafeDeleteObject(mh_Font);
-	mh_Pane = mh_Edit = NULL;
+	mh_Pane = mh_Edit = nullptr;
 }
 
 void CFindPanel::OnWindowPosChanging(WINDOWPOS* p)
@@ -533,9 +533,9 @@ void CFindPanel::Invalidate()
 {
 	// #SIZE_TODO When caption is hidden, the search field is not painted properly on startup when `-detached`
 	if (mh_Pane)
-		::InvalidateRect(mh_Pane, NULL, FALSE);
+		::InvalidateRect(mh_Pane, nullptr, FALSE);
 	if (mh_Edit)
-		::InvalidateRect(mh_Edit, NULL, FALSE);
+		::InvalidateRect(mh_Edit, nullptr, FALSE);
 }
 
 HWND CFindPanel::Activate(bool bActivate)
@@ -543,7 +543,7 @@ HWND CFindPanel::Activate(bool bActivate)
 	if (bActivate)
 	{
 		if (!IsAvailable(false))
-			return NULL;
+			return nullptr;
 		if (!IsWindowVisible(mh_Pane))
 			::ShowWindow(mh_Pane, SW_SHOWNORMAL);
 		SetFocus(mh_Edit);

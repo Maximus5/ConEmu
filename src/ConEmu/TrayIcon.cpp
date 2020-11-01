@@ -82,7 +82,7 @@ void TrayIcon::SettingsChanged()
 
 void TrayIcon::AddTrayIcon()
 {
-	_ASSERTE(IconData.hIcon!=NULL);
+	_ASSERTE(IconData.hIcon!=nullptr);
 
 	if (!mb_WindowInTray)
 	{
@@ -127,7 +127,7 @@ void TrayIcon::UpdateTitle()
 	}
 }
 
-void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= NULL*/, TrayIconMsgSource aMsgSource /*= tsa_Source_None*/)
+void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= nullptr*/, TrayIconMsgSource aMsgSource /*= tsa_Source_None*/)
 {
 	m_MsgSource = aMsgSource;
 	if (asInfoTip && *asInfoTip)
@@ -146,7 +146,7 @@ void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= NULL*/, TrayIconMsgSource aMsg
 	AddTrayIcon(); // добавит или обновит tooltip
 }
 
-void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
+void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = nullptr */)
 {
 	if (gpConEmu->mp_Inside)
 	{

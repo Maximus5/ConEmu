@@ -63,7 +63,7 @@ public:
 	{
 		if (!this)
 		{
-			_ASSERTE(this!=NULL);
+			_ASSERTE(this!=nullptr);
 			return;
 		}
 
@@ -158,13 +158,13 @@ protected:
 public:
 	CRefGuard()
 	{
-		mp_Ref = NULL;
+		mp_Ref = nullptr;
 		mn_Tick = GetTickCount();
 	};
 
 	CRefGuard(T* apRef)
 	{
-		mp_Ref = NULL;
+		mp_Ref = nullptr;
 		mn_Tick = GetTickCount();
 
 		Attach(apRef);
@@ -180,7 +180,7 @@ public:
 		if (mp_Ref)
 		{
 			mp_Ref->Release();
-			mp_Ref = NULL;
+			mp_Ref = nullptr;
 		}
 	};
 
@@ -197,7 +197,7 @@ public:
 				apRef->Release();
 		}
 
-		return (mp_Ref != NULL);
+		return (mp_Ref != nullptr);
 	};
 
 
@@ -205,7 +205,7 @@ public:
 	// Dereference
 	T* operator->() const
 	{
-		_ASSERTE(mp_Ref!=NULL);
+		_ASSERTE(mp_Ref!=nullptr);
 		return mp_Ref;
 	};
 
@@ -225,6 +225,6 @@ public:
 	// Validation, No Assers
 	operator bool() const
 	{
-		return (mp_Ref != NULL);
+		return (mp_Ref != nullptr);
 	};
 };

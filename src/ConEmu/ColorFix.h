@@ -61,5 +61,5 @@ struct ColorFix
 
 	real_type DeltaE(ColorFix color);
 
-	bool PerceivableColor(COLORREF back/*, COLORREF alt*/, ColorFix& pColor, real_type* oldDE = NULL, real_type* newDE = NULL);
+	bool PerceivableColor(COLORREF back/*, COLORREF alt*/, ColorFix& pColor, real_type* oldDE = nullptr, real_type* newDE = nullptr);
 };

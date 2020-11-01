@@ -111,5 +111,5 @@ INT_PTR CSetPgMouse::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 void CSetPgMouse::OnPostLocalize(HWND hDlg)
 {
 	// "Ctrl+Alt - drag ConEmu window"
-	setCtrlTitleByHotkey(hDlg, cbMouseDragWindow, vkWndDragKey, NULL, L" - ", nullptr);
+	setCtrlTitleByHotkey(hDlg, cbMouseDragWindow, vkWndDragKey, nullptr, L" - ", nullptr);
 }

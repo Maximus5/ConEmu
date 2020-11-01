@@ -102,7 +102,7 @@ void ConEmuHotKeyList::ReleaseHotkeys()
 
 const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyPtr(const int idx)
 {
-	const ConEmuHotKey* pHK = NULL;
+	const ConEmuHotKey* pHK = nullptr;
 
 	if (idx >= 0 && this)
 	{
@@ -125,8 +125,8 @@ const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyPtr(const int idx)
 	return pHK;
 }
 
-// pRCon may be NULL
-// Returns either NULL or valid pointer to ConEmuHotKey
+// pRCon may be nullptr
+// Returns either nullptr or valid pointer to ConEmuHotKey
 const ConEmuHotKey* ConEmuHotKeyList::FindHotKey(const ConEmuChord& VkState, CRealConsole* pRCon)
 {
 	// На сами модификаторы - действий не вешается
@@ -136,13 +136,13 @@ const ConEmuHotKey* ConEmuHotKeyList::FindHotKey(const ConEmuChord& VkState, CRe
 	case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
 	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
 	case VK_MENU: case VK_LMENU: case VK_RMENU:
-		return NULL;
+		return nullptr;
 	case 0:
 		_ASSERTE(VkState.Vk!=0);
-		return NULL;
+		return nullptr;
 	}
 
-	const ConEmuHotKey* p = NULL;
+	const ConEmuHotKey* p = nullptr;
 
 	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
 	for (int i = 0;; i++)
@@ -182,15 +182,15 @@ const ConEmuHotKey* ConEmuHotKeyList::FindHotKey(const ConEmuChord& VkState, CRe
 		else
 		{
 			// Хоткей должен знать, что он "делает"
-			_ASSERTE(pi->fkey!=NULL);
+			_ASSERTE(pi->fkey!=nullptr);
 		}
 	}
 
 	return p;
 }
 
-// pRCon may be NULL
-// Returns: NULL, ConEmuSkipHotKey, or valid pointer to ConEmuHotKey
+// pRCon may be nullptr
+// Returns: nullptr, ConEmuSkipHotKey, or valid pointer to ConEmuHotKey
 const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
 {
 	const ConEmuHotKey* p = FindHotKey(VkState, pRCon);

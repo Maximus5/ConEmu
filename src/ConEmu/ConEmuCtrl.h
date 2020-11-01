@@ -52,7 +52,7 @@ public:
 
 	void FixSingleModifier(DWORD Vk, CRealConsole* pRCon);
 
-	static void StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm = 0, LPCWSTR StrParm = NULL, CRealConsole* pRCon = NULL); // csc_ShowHide, csc_SetStatusText
+	static void StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm = 0, LPCWSTR StrParm = nullptr, CRealConsole* pRCon = nullptr); // csc_ShowHide, csc_SetStatusText
 
 	static void TabCommand(ConEmuTabCommand nTabCmd); // ctc_ShowHide, ctc_SwitchNext, и т.п.
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
@@ -60,8 +60,8 @@ public:
 
 	static void ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/);
 
-	static void DoFindText(int nDirection, CRealConsole* pRCon = NULL);
-	static void DoEndFindText(CRealConsole* pRCon = NULL);
+	static void DoFindText(int nDirection, CRealConsole* pRCon = nullptr);
+	static void DoEndFindText(CRealConsole* pRCon = nullptr);
 
 	void SkipOneAppsRelease(bool abSkip);
 
@@ -72,7 +72,7 @@ protected:
 	BOOL mb_InCtrlTabSwitch = FALSE;
 
 	UINT mn_DoubleKeyConsoleNum = 0; // Previous VK
-	void ResetDoubleKeyConsoleNum(CRealConsole* pRCon = NULL);
+	void ResetDoubleKeyConsoleNum(CRealConsole* pRCon = nullptr);
 
 private:
 	DWORD dwControlKeyState = 0;

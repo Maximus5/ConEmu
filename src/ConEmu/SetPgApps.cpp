@@ -76,9 +76,9 @@ static struct StrDistinctControls
 CSetPgApps::CSetPgApps()
 	: mb_SkipEditChange(false)
 	, mb_SkipEditSet(false)
-	, mp_DlgDistinct2(NULL)
-	, mp_DpiDistinct2(NULL)
-	, mh_Child(NULL)
+	, mp_DlgDistinct2(nullptr)
+	, mp_DpiDistinct2(nullptr)
+	, mh_Child(nullptr)
 	, mb_Redraw(false)
 	, mb_Refill(false)
 {
@@ -106,7 +106,7 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 
 		if (!mh_Child)
 		{
-			_ASSERTE(mh_Child != NULL); // Must be created already!
+			_ASSERTE(mh_Child != nullptr); // Must be created already!
 			return 0;
 		}
 	}
@@ -128,7 +128,7 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 		SendDlgItemMessage(mh_Child, lbColorsOverride, CB_RESETCONTENT, 0, 0);
 		int iCurPalette = 0;
 		const ColorPalette* pPal;
-		for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
+		for (int i = 0; (pPal = gpSet->PaletteGet(i)) != nullptr; i++)
 		{
 			SendDlgItemMessage(mh_Child, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
 			if ((!iCurPalette) && (lstrcmp(pPal->pszName, gsDefaultColorScheme) == 0))
@@ -145,7 +145,7 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 	SendDlgItemMessage(hDlg, lbAppDistinct, LB_RESETCONTENT, 0,0);
 
 	int nApp = 0;
-	const AppSettings* pApp = NULL;
+	const AppSettings* pApp = nullptr;
 	while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
 	{
 		nApp++;
@@ -218,7 +218,7 @@ void CSetPgApps::ProcessDpiChange(const CDpiForDialog* apDpi)
 	{
 		HWND hHolder = GetDlgItem(mh_Dlg, tAppDistinctHolder);
 		RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
-		MapWindowPoints(NULL, mh_Dlg, (LPPOINT)&rcPos, 2);
+		MapWindowPoints(nullptr, mh_Dlg, (LPPOINT)&rcPos, 2);
 
 		mp_DpiDistinct2->SetDialogDPI(apDpi->GetCurDpi(), &rcPos);
 	}
@@ -314,7 +314,7 @@ INT_PTR CSetPgApps::pageOpProc_AppsChild(HWND hDlg, UINT messg, WPARAM wParam, L
 
 			if (dy)
 			{
-				ScrollWindowEx(hDlg, dx, dy, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN|SW_INVALIDATE|SW_ERASE);
+				ScrollWindowEx(hDlg, dx, dy, nullptr, nullptr, nullptr, nullptr, SW_SCROLLCHILDREN|SW_INVALIDATE|SW_ERASE);
 			}
 		}
 		return FALSE;
@@ -419,7 +419,7 @@ void CSetPgApps::DoReloadApps()
 		return;
 
 	// Reload App distinct
-	gpSet->LoadAppsSettings(NULL, true);
+	gpSet->LoadAppsSettings(nullptr, true);
 
 	// Refresh on screen
 	OnInitDialog(mh_Dlg, true);
@@ -525,12 +525,12 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 
 	BOOL bChecked;
 	int iCur = mb_SkipSelChange ? -1 : (int)SendDlgItemMessage(hDlg, lbAppDistinct, LB_GETCURSEL, 0,0);
-	AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+	AppSettings* pApp = (iCur < 0) ? nullptr : gpSet->GetAppSettingsPtr(iCur);
 	_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
 
 	if (!pApp)
 	{
-		_ASSERTE(pApp!=NULL);
+		_ASSERTE(pApp!=nullptr);
 		return 0;
 	}
 
@@ -665,21 +665,21 @@ bool CSetPgApps::CreateChildDlg()
 	if (mh_Child && !IsWindow(mh_Child))
 	{
 		_ASSERTE(FALSE && "Invalid mh_Child");
-		mh_Child = NULL;
+		mh_Child = nullptr;
 	}
 
 	if (!mh_Child)
 	{
 		#if defined(_DEBUG)
 		HWND hChild = GetDlgItem(mh_Dlg, IDD_SPG_APPDISTINCT2);
-		_ASSERTE(hChild == NULL);
+		_ASSERTE(hChild == nullptr);
 		#endif
 
 		LogString(L"Creating child dialog IDD_SPG_APPDISTINCT2");
 		SafeDelete(mp_DlgDistinct2); // JIC
 
 		mp_DlgDistinct2 = CDynDialog::ShowDialog(IDD_SPG_APPDISTINCT2, mh_Dlg, pageOpProc_AppsChild, 0/*dwInitParam*/);
-		mh_Child = mp_DlgDistinct2 ? mp_DlgDistinct2->mh_Dlg : NULL;
+		mh_Child = mp_DlgDistinct2 ? mp_DlgDistinct2->mh_Dlg : nullptr;
 
 		if (!mh_Child)
 		{
@@ -697,7 +697,7 @@ bool CSetPgApps::CreateChildDlg()
 
 		HWND hHolder = GetDlgItem(mh_Dlg, tAppDistinctHolder);
 		RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
-		MapWindowPoints(NULL, mh_Dlg, (LPPOINT)&rcPos, 2);
+		MapWindowPoints(nullptr, mh_Dlg, (LPPOINT)&rcPos, 2);
 		POINT ptScroll = {};
 		HWND hEnd = GetDlgItem(mh_Child,stAppDistinctBottom);
 		MapWindowPoints(hEnd, mh_Child, &ptScroll, 1);
@@ -717,7 +717,7 @@ bool CSetPgApps::CreateChildDlg()
 		//_ASSERTE(mh_Child && IsWindow(mh_Child));
 	}
 
-	return (mh_Child != NULL);
+	return (mh_Child != nullptr);
 }
 
 void CSetPgApps::DoFillControls(const AppSettings* pApp)
@@ -787,7 +787,7 @@ void CSetPgApps::DoEnableControls(WORD nGroupCtrlId)
 {
 	bool bAllowed = false;
 
-	const AppSettings* pApp = NULL;
+	const AppSettings* pApp = nullptr;
 	int iCur = (int)SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_GETCURSEL, 0,0);
 	if (iCur >= 0)
 		pApp = gpSet->GetAppSettings(iCur);
@@ -825,7 +825,7 @@ void CSetPgApps::DoEnableControls(WORD nGroupCtrlId)
 LRESULT CSetPgApps::OnEditChanged(HWND hDlg, WORD nCtrlId)
 {
 	int iCur = mb_SkipSelChange ? -1 : (int)SendDlgItemMessage(hDlg, lbAppDistinct, LB_GETCURSEL, 0,0);
-	AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+	AppSettings* pApp = (iCur < 0) ? nullptr : gpSet->GetAppSettingsPtr(iCur);
 	_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
 
 	if (pApp)
@@ -836,7 +836,7 @@ LRESULT CSetPgApps::OnEditChanged(HWND hDlg, WORD nCtrlId)
 			if (!mb_SkipEditChange)
 			{
 				_ASSERTE(pApp && pApp->AppNames);
-				wchar_t* pszApps = NULL;
+				wchar_t* pszApps = nullptr;
 				if (GetString(hDlg, nCtrlId, &pszApps))
 				{
 					pApp->SetNames(pszApps);
@@ -876,7 +876,7 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	else
 	{
 		int iCur = mb_SkipSelChange ? -1 : (int)SendDlgItemMessage(hDlg, lbAppDistinct, LB_GETCURSEL, 0,0);
-		AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+		AppSettings* pApp = (iCur < 0) ? nullptr : gpSet->GetAppSettingsPtr(iCur);
 		_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
 
 		if (!pApp)
@@ -910,7 +910,7 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				if (nIdx >= 0)
 				{
 					INT_PTR nLen = SendMessage(hList, CB_GETLBTEXTLEN, nIdx, 0);
-					wchar_t* pszText = (nLen > 0) ? (wchar_t*)calloc((nLen+1),sizeof(wchar_t)) : NULL;
+					wchar_t* pszText = (nLen > 0) ? (wchar_t*)calloc((nLen+1),sizeof(wchar_t)) : nullptr;
 					if (pszText)
 					{
 						SendMessage(hList, CB_GETLBTEXT, nIdx, (LPARAM)pszText);
@@ -940,7 +940,7 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 							}
 							else
 							{
-								_ASSERTE(pPal!=NULL);
+								_ASSERTE(pPal!=nullptr);
 							}
 						}
 					}
@@ -964,7 +964,7 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 void CSetPgApps::OnAppSelectionChanged()
 {
-	const AppSettings* pApp = NULL;
+	const AppSettings* pApp = nullptr;
 	//while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
 	int iCur = (int)SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_GETCURSEL, 0,0);
 	if (iCur >= 0)

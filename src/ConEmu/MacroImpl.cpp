@@ -45,7 +45,7 @@ wchar_t* GuiMacro::AsString()
 
 	size_t cchTotal = _tcslen(szFunc) + 5;
 
-	wchar_t** pszArgs = NULL;
+	wchar_t** pszArgs = nullptr;
 
 	if (argc > 0)
 	{
@@ -183,12 +183,12 @@ bool GuiMacro::GetStrArg(size_t idx, LPWSTR& val)
 	if ((idx >= argc)
 		|| (argv[idx].Type != gmt_Str && argv[idx].Type != gmt_VStr && argv[idx].Type != gmt_Int))
 	{
-		val = NULL;
+		val = nullptr;
 		return false;
 	}
 
 	val = argv[idx].Str;
-	return (val != NULL);
+	return (val != nullptr);
 }
 
 bool GuiMacro::GetRestStrArgs(size_t idx, LPWSTR& val)
@@ -250,7 +250,7 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 	{
 		if (rsErrMsg)
 			*rsErrMsg = lstrdup(L"Empty Macro");
-		return NULL;
+		return nullptr;
 	}
 
 	if (*asString == L'"')
@@ -260,9 +260,9 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 			*rsErrMsg = lstrmerge(
 				L"Invalid Macro, remove surrounding quotes:\r\n",
 				asString,
-				NULL);
+				nullptr);
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	// Extract function name
@@ -334,9 +334,9 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 				*rsErrMsg = lstrmerge(
 					L"Invalid Macro, can't get function name:\r\n",
 					asString,
-					NULL);
+					nullptr);
 			}
-			return NULL;
+			return nullptr;
 		}
 
 		if (rsErrMsg)
@@ -344,9 +344,9 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 			*rsErrMsg = lstrmerge(
 				L"Invalid Macro, too long function name:\r\n",
 				asString,
-				NULL);
+				nullptr);
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	// Подготовить аргументы (отрезать закрывающую скобку)
@@ -390,7 +390,7 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 			a.Type = (asString[0] == L'0' && (asString[1] == L'x' || asString[1] == L'X')) ? gmt_Hex : gmt_Int;
 
 			// If it fails - just use as string
-			bIntArg = (GetNextInt(asString, a) != NULL);
+			bIntArg = (GetNextInt(asString, a) != nullptr);
 		}
 
 		if (!bIntArg)
@@ -418,7 +418,7 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 				swprintf_c(szArgErr, L"Argument #%u failed (string)", Args.size()+1);
 				if (rsErrMsg)
 					*rsErrMsg = lstrdup(szArgErr);
-				return NULL;
+				return nullptr;
 			}
 
 			if (lbCvtVbt)
@@ -448,8 +448,8 @@ GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg)
 	GuiMacro* pMacro = (GuiMacro*)malloc(cbAllSize);
 	if (!pMacro)
 	{
-		_ASSERTE(pMacro != NULL);
-		return NULL;
+		_ASSERTE(pMacro != nullptr);
+		return nullptr;
 	}
 
 	pMacro->cbSize = cbAllSize;
@@ -530,7 +530,7 @@ void SkipWhiteSpaces(LPWSTR& rsString)
 {
 	if (!rsString)
 	{
-		_ASSERTE(rsString!=NULL);
+		_ASSERTE(rsString!=nullptr);
 		return;
 	}
 
@@ -545,14 +545,14 @@ void SkipWhiteSpaces(LPWSTR& rsString)
 // Delimiter - comma or space
 LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 {
-	LPWSTR pszArg = NULL, pszEnd = NULL;
+	LPWSTR pszArg = nullptr, pszEnd = nullptr;
 	rnValue.Str = rsArguments;
 	rnValue.Int = 0; // Reset
 
 	SkipWhiteSpaces(rsArguments);
 
 	if (!rsArguments || !*rsArguments)
-		return NULL;
+		return nullptr;
 
 	// Результат
 	pszArg = rsArguments;
@@ -588,10 +588,10 @@ LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 	if (pszEnd && *pszEnd)
 	{
 		// Check, if next symbol is correct delimiter
-		if (wcschr(L" \t\r\n),;", *pszEnd) == NULL)
+		if (wcschr(L" \t\r\n),;", *pszEnd) == nullptr)
 		{
 			// We'll use it as string
-			return NULL;
+			return nullptr;
 		}
 		rsArguments = pszEnd;
 		SkipWhiteSpaces(rsArguments);
@@ -608,10 +608,10 @@ LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 // Получить следующий строковый параметр
 LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bool& bEndBracket)
 {
-	rsString = NULL; // Сброс
+	rsString = nullptr; // Сброс
 
 	if (!rsArguments || !*rsArguments)
-		return NULL;
+		return nullptr;
 
 	#ifdef _DEBUG
 	LPWSTR pszArgStart = rsArguments;
@@ -621,7 +621,7 @@ LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bo
 	// Пропустить white-space
 	SkipWhiteSpaces(rsArguments);
 
-	LPCWSTR pszSrc = NULL;
+	LPCWSTR pszSrc = nullptr;
 
 	// C-style strings
 	if (rsArguments[0] == L'"')
@@ -771,7 +771,7 @@ LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bo
 wrap:
 	// Here nullptr is not expected, but empty string ("") is allowed
 	#ifdef _DEBUG // due to unittests
-	_ASSERTE(rsString!=NULL);
+	_ASSERTE(rsString!=nullptr);
 	#endif
 	return rsString;
 }

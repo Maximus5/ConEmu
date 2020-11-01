@@ -67,7 +67,7 @@ CFontPtr::~CFontPtr()
 
 int CFontPtr::Release()
 {
-	CFont* p = NULL;
+	CFont* p = nullptr;
 	std::swap(p, mp_Ref);
 	int iRef = p ? p->Release() : 0;
 	return iRef;
@@ -83,13 +83,13 @@ bool CFontPtr::Attach(CFont* apRef)
 		SafeRelease(apRef);
 	}
 
-	return (mp_Ref != NULL);
+	return (mp_Ref != nullptr);
 }
 
 // Dereference
 CFont* CFontPtr::operator->() const
 {
-	_ASSERTE(mp_Ref!=NULL);
+	_ASSERTE(mp_Ref!=nullptr);
 	return mp_Ref;
 }
 

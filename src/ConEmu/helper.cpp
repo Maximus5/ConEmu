@@ -41,17 +41,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BOOL gbInDisplayLastError = FALSE;
 
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitle /*= NULL*/, HWND hParent /*= NULL*/)
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitle /*= nullptr*/, HWND hParent /*= nullptr*/)
 {
 	int nBtn = 0;
 	DWORD dw = dwError ? dwError : GetLastError();
-	wchar_t* lpMsgBuf = NULL;
-	wchar_t *out = NULL;
+	wchar_t* lpMsgBuf = nullptr;
+	wchar_t *out = nullptr;
 	MCHKHEAP
 
 	if (dw && (dw != (DWORD)-1))
 	{
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, nullptr);
 		INT_PTR nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen(lpMsgBuf) : 0);
 		out = new wchar_t[nLen];
 		swprintf_c(out, nLen/*#SECURELEN*/, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
@@ -89,16 +89,16 @@ void initMainThread()
 /// Converts Windows path "C:\path 1" to Posix "'/c/path 1'" or "/c/path\ 1"
 /// @param asWinPath   Source Windows path, double-quotes ("\"C:\path\"") are not expected here
 /// @param bAutoQuote  if true - use strong quoting for strings with special characters
-/// @param asMntPrefix Mount prefix from RCon: "/mnt", "/cygdrive", "" or NULL
+/// @param asMntPrefix Mount prefix from RCon: "/mnt", "/cygdrive", "" or nullptr
 /// @param path        Buffer for result
-/// @return NULL on errors or the pointer to converted #path
+/// @return nullptr on errors or the pointer to converted #path
 const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path)
 {
 	if (!asWinPath || !*asWinPath)
 	{
 		_ASSERTE(asWinPath && *asWinPath);
 		path.Clear();
-		return NULL;
+		return nullptr;
 	}
 
 	const wchar_t* unquotedSpecials = L" ()$!'\"";
@@ -118,7 +118,7 @@ const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPr
 		+ (useQuote ? 3 : 1) // two or zero quotes + null-termination
 		+ (asMntPrefix ? _tcslen(asMntPrefix) : 0) // '/cygwin' or '/mnt' prefix
 		+ 1/*Possible space-termination on paste*/;
-	if (wcspbrk(asWinPath, posixSpec) != NULL)
+	if (wcspbrk(asWinPath, posixSpec) != nullptr)
 	{
 		const wchar_t *pch = wcspbrk(asWinPath, posixSpec);
 		while (pch)
@@ -129,7 +129,7 @@ const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPr
 	}
 	wchar_t* pszResult = path.GetBuffer(cchLen+1);
 	if (!pszResult)
-		return NULL;
+		return nullptr;
 	wchar_t* psz = pszResult;
 
 	if (useQuote)
@@ -156,7 +156,7 @@ const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPr
 	else
 	{
 		// А bash понимает сетевые пути?
-		_ASSERTE((psz[0] == L'\\' && psz[1] == L'\\') || (wcschr(psz, L'\\')==NULL));
+		_ASSERTE((psz[0] == L'\\' && psz[1] == L'\\') || (wcschr(psz, L'\\')==nullptr));
 	}
 
 	while (*asWinPath)
@@ -214,7 +214,7 @@ LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
 	{
 		_ASSERTE(lstrlen(pszSrc) > 0);
 		szWinPath.Clear();
-		return NULL;
+		return nullptr;
 	}
 
 	// #CYGDRIVE In some cases we may try to select real location of "~" folder (cygwin and msys)
@@ -242,7 +242,7 @@ LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
 	{
 		_ASSERTE(pszRc && "malloc failed");
 		szWinPath.Clear();
-		return NULL;
+		return nullptr;
 	}
 	// Make path
 	wchar_t* pszDst = pszRc;
@@ -326,7 +326,7 @@ void StripWords(wchar_t* pszText, const wchar_t* pszWords)
 		{
 			lstrcpyn(dummy, pszWord, std::min((int)countof(dummy),(nLen+1)));
 			wchar_t* pszFound;
-			while ((pszFound = StrStrI(pszText, dummy)) != NULL)
+			while ((pszFound = StrStrI(pszText, dummy)) != nullptr)
 			{
 				size_t nLeft = _tcslen(pszFound);
 				size_t nCurLen = nLen;
@@ -400,10 +400,10 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
 	*pszDst = 0;
 }
 
-bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* rsEnd /*= NULL*/)
+bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* rsEnd /*= nullptr*/)
 {
 	bool bOk = false;
-	wchar_t* pszEnd = NULL;
+	wchar_t* pszEnd = nullptr;
 
 	if (!asValue || !*asValue)
 	{

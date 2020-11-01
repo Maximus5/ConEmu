@@ -55,7 +55,7 @@ public:
 	// 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
 	ConEmuHotKeyType HkType{};
 
-	// May be NULL
+	// May be nullptr
 	HotkeyEnabled_t Enabled{ nullptr };
 
 	wchar_t Name[64] = L"";

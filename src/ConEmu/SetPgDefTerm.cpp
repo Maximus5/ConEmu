@@ -50,7 +50,7 @@ LRESULT CSetPgDefTerm::OnInitDialog(HWND hDlg, bool abInitial)
 	// Default terminal apps
 	CheckDlgButton(hDlg, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
 	bool bLeaveInTSA = gpSet->isRegisterOnOsStartupTSA;
-	bool bRegister = gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(NULL, &bLeaveInTSA);
+	bool bRegister = gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(nullptr, &bLeaveInTSA);
 	CheckDlgButton(hDlg, cbDefaultTerminalStartup, bRegister);
 	CheckDlgButton(hDlg, cbDefaultTerminalTSA, bLeaveInTSA);
 	EnableWindow(GetDlgItem(hDlg, cbDefaultTerminalTSA), bRegister);
@@ -60,9 +60,9 @@ LRESULT CSetPgDefTerm::OnInitDialog(HWND hDlg, bool abInitial)
 	CheckDlgButton(hDlg, cbDefaultTerminalDebugLog, gpSet->isDefaultTerminalDebugLog);
 	CheckRadioButton(hDlg, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
 	wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
-	_ASSERTE(pszApps!=NULL);
+	_ASSERTE(pszApps!=nullptr);
 	SetDlgItemText(hDlg, tDefaultTerminal, pszApps);
-	if (wcschr(pszApps, L',') != NULL && wcschr(pszApps, L'|') == NULL)
+	if (wcschr(pszApps, L',') != nullptr && wcschr(pszApps, L'|') == nullptr)
 		Icon.ShowTrayIcon(L"List of hooked executables must be delimited with \"|\" but not commas", tsa_Default_Term);
 	SafeFree(pszApps);
 

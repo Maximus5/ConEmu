@@ -187,15 +187,15 @@ DEFINE_GUID(IID_ITaskService,    0x2faba4c7, 0x4da9, 0x4013, 0x96, 0x97, 0x20, 0
 // bool bTaskCreated;
 
 CTaskScheduler2::CTaskScheduler2()
-	: pRegisteredTask(NULL)
-	, pRunningTask(NULL)
-	, pAction(NULL)
-	, pExecAction(NULL)
-	, pActionCollection(NULL)
-	, pTask(NULL)
-	, pSettings(NULL)
-	, pRootFolder(NULL)
-	, pService(NULL)
+	: pRegisteredTask(nullptr)
+	, pRunningTask(nullptr)
+	, pAction(nullptr)
+	, pExecAction(nullptr)
+	, pActionCollection(nullptr)
+	, pTask(nullptr)
+	, pSettings(nullptr)
+	, pRootFolder(nullptr)
+	, pService(nullptr)
 	, taskState((TASK_STATE)-1)
 	, bTaskCreated(false)
 {
@@ -206,11 +206,11 @@ CTaskScheduler2::~CTaskScheduler2()
 	//Delete the task when done
 	if (bTaskCreated)
 	{
-		hr = pRootFolder->DeleteTask(bsTaskName, NULL);
+		hr = pRootFolder->DeleteTask(bsTaskName, 0);
 		if (FAILED(hr))
 		{
 			wchar_t szLog[80];
-			swprintf_c(szLog, L"Scheduler: Failed delete created task, hr=x%08X", (DWORD)hr);
+			swprintf_c(szLog, L"Scheduler: Failed delete created task, hr=x%08X", static_cast<DWORD>(hr));
 			LogString(szLog);
 		}
 	}
@@ -256,7 +256,7 @@ HRESULT CTaskScheduler2::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 
 	//  ------------------------------------------------------
 	//  Initialize COM.
-	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
 		DisplaySchedulerError(L"CoInitializeEx failed.");
@@ -265,7 +265,7 @@ HRESULT CTaskScheduler2::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 	bCoInitialized = true;
 
 	//  Set general COM security levels.
-	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+	hr = CoInitializeSecurity(nullptr, -1, nullptr, nullptr, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, 0, nullptr);
 	if (FAILED(hr))
 	{
 		DisplaySchedulerError(L"CoInitializeSecurity failed.");
@@ -274,7 +274,7 @@ HRESULT CTaskScheduler2::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 
 	//  ------------------------------------------------------
 	//  Create an instance of the Task Service.
-	hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (void**)&pService);
+	hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER, IID_ITaskService, reinterpret_cast<void**>(&pService));
 	if (FAILED(hr))
 	{
 		DisplaySchedulerError(L"Failed to CoCreate an instance of the TaskService class.");
@@ -417,9 +417,9 @@ HRESULT CTaskScheduler2::Run()
 	//  ------------------------------------------------------
 	//  Run the task
 	//LONG nSessionId = (LONG)apiGetConsoleSessionID();
-	_ASSERTE(pRunningTask==NULL);
+	_ASSERTE(pRunningTask==nullptr);
 	//RunEx fails to run "As System" properly...
-	//hr = pRegisteredTask->RunEx(vtEmpty, (nSessionId > 0) ? TASK_RUN_USE_SESSION_ID : 0, nSessionId, NULL, &pRunningTask);
+	//hr = pRegisteredTask->RunEx(vtEmpty, (nSessionId > 0) ? TASK_RUN_USE_SESSION_ID : 0, nSessionId, nullptr, &pRunningTask);
 	hr = pRegisteredTask->Run(vtEmpty, &pRunningTask);
 	if (FAILED(hr))
 	{
@@ -510,12 +510,12 @@ DEFINE_GUID(IID_ITask, 0x148BD524L, 0xA2AB, 0x11CE, 0xB1, 0x1F, 0x00, 0xAA, 0x00
 // NET_API_STATUS (WINAPI* netScheduleJobDel)(LPCWSTR Servername, DWORD MinJobId, DWORD MaxJobId);
 // DWORD jobId;
 CTaskScheduler1::CTaskScheduler1()
-	: pITS(NULL)
-	, pITask(NULL)
-	, pIPersistFile(NULL)
-	, netApi(NULL)
-	, netScheduleJobAdd(NULL)
-	, netScheduleJobDel(NULL)
+	: pITS(nullptr)
+	, pITask(nullptr)
+	, pIPersistFile(nullptr)
+	, netApi(nullptr)
+	, netScheduleJobAdd(nullptr)
+	, netScheduleJobDel(nullptr)
 	, jobId((DWORD)-1)
 {
 }
@@ -528,7 +528,7 @@ CTaskScheduler1::~CTaskScheduler1()
 
 	if (jobId != (DWORD)-1)
 	{
-		netScheduleJobDel(NULL, jobId, jobId);
+		netScheduleJobDel(nullptr, jobId, jobId);
 	}
 
 	SafeDelete(netApi);
@@ -573,7 +573,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 
 	//  ------------------------------------------------------
 	//  Initialize COM.
-	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
 		DisplaySchedulerError(L"CoInitializeEx failed.");
@@ -583,7 +583,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 
 	//  ------------------------------------------------------
 	//  Create an instance of the Task Service (will be used to run Task).
-	hr = CoCreateInstance(CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (void**)&pITS);
+	hr = CoCreateInstance(CLSID_CTaskScheduler, nullptr, CLSCTX_INPROC_SERVER, IID_ITaskScheduler, (void**)&pITS);
 	if (FAILED(hr))
 	{
 		DisplaySchedulerError(L"Failed to CoCreate an instance of the TaskService class.");
@@ -598,7 +598,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 		CEStr lsCmdLine(L"\"", lpApplication, L"\" ", lpArguments);
 		at.Command = lsCmdLine.ms_Val;
 		DWORD jobId = (DWORD)-1;
-		NET_API_STATUS rc = netScheduleJobAdd(NULL, (LPBYTE)&at, &jobId);
+		NET_API_STATUS rc = netScheduleJobAdd(nullptr, (LPBYTE)&at, &jobId);
 		wchar_t szLog[120], szName[20];
 		if (rc != NERR_Success)
 		{
@@ -622,7 +622,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 			// Prepare error message
 			swprintf_c(szLog, L"NetScheduleJobAdd succeeded, jobId=%u, but ITask is not found", jobId);
 			// Delete the job immediately
-			netScheduleJobDel(NULL, jobId, jobId);
+			netScheduleJobDel(nullptr, jobId, jobId);
 			jobId = (DWORD)-1;
 			// Warn user
 			DisplaySchedulerError(szLog);
@@ -649,7 +649,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 			// MSBUG? Failed to start LocalSystem+Interactive. Always started NonInteractively.
 			_ASSERTE(FALSE && "Force logged user account!");
 
-			hr = pITask->SetAccountInformation(MBSTR(L""), NULL);
+			hr = pITask->SetAccountInformation(MBSTR(L""), nullptr);
 			if (FAILED(hr))
 			{
 				DisplaySchedulerError(L"Cannot set account to ‘LocalSystem’.");
@@ -666,7 +666,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 		#endif
 
 		{
-			//hr = pITask->SetAccountInformation(MBSTR(L""), NULL);
+			//hr = pITask->SetAccountInformation(MBSTR(L""), nullptr);
 
 			hr = pITask->SetFlags(TASK_FLAG_RUN_ONLY_IF_LOGGED_ON);
 			if (FAILED(hr))
@@ -712,7 +712,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 		SafeRelease(pITask);
 
 		// This would create `*.job` file in the Scheduler folder
-		hr = pIPersistFile->Save(NULL, TRUE);
+		hr = pIPersistFile->Save(nullptr, TRUE);
 		if (FAILED(hr))
 		{
 			DisplaySchedulerError(L"Failed to save task definition.");
@@ -816,7 +816,7 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-						   LPDWORD pdwLastError /*= NULL*/)
+						   LPDWORD pdwLastError /*= nullptr*/)
 {
 	if (!lpCommandLine || !*lpCommandLine)
 	{
@@ -827,17 +827,17 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 	// This issue is not actual anymore, because we call put_ExecutionTimeLimit(‘Infinite’)
 	// -- Issue 1897: Created task stopped after 72 hour, so use "/bypass"
 	CEStr szExe;
-	if (!GetModuleFileName(NULL, szExe.GetBuffer(MAX_PATH), MAX_PATH) || szExe.IsEmpty())
+	if (!GetModuleFileName(nullptr, szExe.GetBuffer(MAX_PATH), MAX_PATH) || szExe.IsEmpty())
 	{
-		DisplayLastError(L"GetModuleFileName(NULL) failed");
+		DisplayLastError(L"GetModuleFileName(nullptr) failed");
 		return FALSE;
 	}
 	wchar_t szInteractive[32] = L" ";
 	if (bAsSystem)
 		msprintf(szInteractive, countof(szInteractive), L"-interactive:%u ", anSessionId); // with trailing space
 	CEStr szCommand(
-		gpSet->isLogging() ? L"-log " : NULL,
-		lpCurrentDirectory ? L"-dir \"" : NULL, lpCurrentDirectory, lpCurrentDirectory ? L"\" " : NULL,
+		gpSet->isLogging() ? L"-log " : nullptr,
+		lpCurrentDirectory ? L"-dir \"" : nullptr, lpCurrentDirectory, lpCurrentDirectory ? L"\" " : nullptr,
 		bAsSystem ? szInteractive : L"-apparent ",
 		lpCommandLine);
 	LPCWSTR pszCmdArgs = szCommand;
@@ -845,8 +845,8 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 	BOOL lbRc = FALSE;
 
 	// Task Scheduler do not bring created tasks OnTop
-	HWND hPrevEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
-	HWND hCreated = NULL;
+	HWND hPrevEmu = FindWindowEx(nullptr, nullptr, VirtualConsoleClassMain, nullptr);
+	HWND hCreated = nullptr;
 
 	DWORD nTickStart, nDuration;
 	const DWORD nMaxWindowWait = 30000;
@@ -862,7 +862,7 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 	HRESULT hr;
 	TaskSchedulerState state;
 
-	CTaskSchedulerBase* pSchd = NULL;
+	CTaskSchedulerBase* pSchd = nullptr;
 
 	if (IsWin6())
 	{
@@ -912,8 +912,8 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 	{
 		nTickStart = GetTickCount();
 		nDuration = 0;
-		_ASSERTE(hCreated==NULL);
-		hCreated = NULL;
+		_ASSERTE(hCreated==nullptr);
+		hCreated = nullptr;
 
 		while (nDuration <= nMaxSystemWait/*30000*/)
 		{
@@ -936,13 +936,13 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 		{
 			nTickStart = GetTickCount();
 			nDuration = 0;
-			_ASSERTE(hCreated==NULL);
-			hCreated = NULL;
+			_ASSERTE(hCreated==nullptr);
+			hCreated = nullptr;
 
 			while (nDuration <= nMaxWindowWait/*30000*/)
 			{
-				HWND hTop = NULL;
-				while ((hTop = FindWindowEx(NULL, hTop, VirtualConsoleClassMain, NULL)) != NULL)
+				HWND hTop = nullptr;
+				while ((hTop = FindWindowEx(nullptr, hTop, VirtualConsoleClassMain, nullptr)) != nullptr)
 				{
 					if ((hTop == hPrevEmu)
 						|| !IsWindowVisible(hTop)
@@ -956,7 +956,7 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 					break;
 				}
 
-				if (hCreated != NULL)
+				if (hCreated != nullptr)
 				{
 					// Window found, activated
 					break;

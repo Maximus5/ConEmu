@@ -55,13 +55,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 {
 	mp_Owner = ap_Owner;
-	mh_TabFont = NULL;
-	mh_TabTip = mh_Balloon = NULL;
+	mh_TabFont = nullptr;
+	mh_TabTip = mh_Balloon = nullptr;
 	ms_TabErrText[0] = 0;
 	memset(&tiBalloon,0,sizeof(tiBalloon));
 	mn_prevTab = -1;
 	mn_LBtnDrag = 0;
-	mh_DragCursor = NULL;
+	mh_DragCursor = nullptr;
 	ZeroStruct(mpt_DragStart);
 	mn_InSelChange = 0;
 	mn_LastChangeTick = 0;
@@ -72,7 +72,7 @@ CTabPanelBase::~CTabPanelBase()
 	if (mh_TabFont)
 	{
 		DeleteObject(mh_TabFont);
-		mh_TabFont = NULL;
+		mh_TabFont = nullptr;
 	}
 }
 
@@ -163,23 +163,23 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 {
 	if (!mh_TabTip || !IsWindow(mh_TabTip))
 	{
-		mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+		mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
 									WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 									CW_USEDEFAULT, CW_USEDEFAULT,
 									CW_USEDEFAULT, CW_USEDEFAULT,
-									hParent, NULL,
-									g_hInstance, NULL);
+									hParent, nullptr,
+									g_hInstance, nullptr);
 		SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 	}
 
 	if (!mh_Balloon || !IsWindow(mh_Balloon))
 	{
-		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
 		                            gpSetCls->BalloonStyle() | WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 		                            CW_USEDEFAULT, CW_USEDEFAULT,
 		                            CW_USEDEFAULT, CW_USEDEFAULT,
-		                            hParent, NULL,
-		                            g_hInstance, NULL);
+		                            hParent, nullptr,
+		                            g_hInstance, nullptr);
 		SetWindowPos(mh_Balloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 		// Set up tool information.
 		// In this case, the "tool" is the entire parent window.
@@ -198,12 +198,12 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 	}
 }
 
-bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/)
+bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= nullptr*/)
 {
 	CVConGuard VCon;
 	DWORD wndIndex = 0;
 	BOOL  bNeedActivate = FALSE, bChangeOk = FALSE;
-	ShowTabErrorInt(NULL, 0);
+	ShowTabErrorInt(nullptr, 0);
 
 	bool bVConOk = mp_Owner->GetVConFromTab(tabIndex, &VCon, &wndIndex);
 
@@ -270,7 +270,7 @@ bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/
 
 	if (!bChangeOk)
 	{
-		pVCon = NULL;
+		pVCon = nullptr;
 
 		if (mp_Owner->IsInSwitch())
 			mp_Owner->Update();  // показать реальное положение дел
@@ -281,7 +281,7 @@ bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/
 
 	if (rpVCon)
 		rpVCon->Attach(pVCon);
-	return (pVCon != NULL);
+	return (pVCon != nullptr);
 }
 
 LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
@@ -441,7 +441,7 @@ void CTabPanelBase::EndTabDrag()
 		return;
 
 	mn_LBtnDrag = 0;
-	SetCursor(LoadCursor(NULL, IDC_ARROW));
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 }
 
 LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
@@ -601,7 +601,7 @@ LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 				case TID_ACTIVE_NUMBER:
 				{
 					CVConGuard VCon;
-					CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+					CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
 					if (pVCon)
 					{
 						RECT rcBtnRect = {0};

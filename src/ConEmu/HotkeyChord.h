@@ -93,7 +93,7 @@ public:
 	// Return key name (Apps, Win, Pause, ...)
 	static void GetVkKeyName(BYTE vk, wchar_t(&szName)[32], bool bSingle = true);
 	// Return VK by key name (Apps, Win, Pause, ...)
-	static UINT GetVkByKeyName(LPCWSTR asName, int* pnScanCode = NULL, DWORD* pnControlState = NULL);
+	static UINT GetVkByKeyName(LPCWSTR asName, int* pnScanCode = nullptr, DWORD* pnControlState = nullptr);
 	// Has that (VkMod) hotkey - modifier Mod (VK)?
 	static bool HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
 	// Set or Xor modifier in VkMod

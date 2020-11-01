@@ -82,17 +82,17 @@ INT_PTR CSetPgComspec::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 void CSetPgComspec::ReloadAutorun()
 {
-	wchar_t *pszCmd = NULL;
+	wchar_t *pszCmd = nullptr;
 
 	BOOL bForceNewWnd = isChecked(mh_Dlg, cbCmdAutorunNewWnd);
 
-	HKEY hkDir = NULL;
+	HKEY hkDir = nullptr;
 	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkDir))
 	{
 		pszCmd = LoadAutorunValue(hkDir, false);
 		if (pszCmd && *pszCmd)
 		{
-			bForceNewWnd = (StrStrI(pszCmd, L"/GHWND=NEW") != NULL);
+			bForceNewWnd = (StrStrI(pszCmd, L"/GHWND=NEW") != nullptr);
 		}
 		RegCloseKey(hkDir);
 	}
@@ -111,16 +111,16 @@ wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 	wchar_t *pszCmd = (wchar_t*)malloc(cchCmdMax*sizeof(*pszCmd));
 	if (!pszCmd)
 	{
-		_ASSERTE(pszCmd!=NULL);
-		return NULL;
+		_ASSERTE(pszCmd!=nullptr);
+		return nullptr;
 	}
 
-	_ASSERTE(hkCmd!=NULL);
-	//HKEY hkCmd = NULL;
+	_ASSERTE(hkCmd!=nullptr);
+	//HKEY hkCmd = nullptr;
 	//if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkCmd))
 
 	DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
-	if (0 == RegQueryValueEx(hkCmd, L"AutoRun", NULL, NULL, (LPBYTE)pszCmd, &cbMax))
+	if (0 == RegQueryValueEx(hkCmd, L"AutoRun", nullptr, nullptr, (LPBYTE)pszCmd, &cbMax))
 	{
 		pszCmd[cbMax>>1] = 0;
 
@@ -203,7 +203,7 @@ wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 {
 	const bool bForceNewWnd = isChecked(mh_Dlg, cbCmdAutorunNewWnd);
-		//checkDlgButton(, (StrStrI(pszCmd, L"/GHWND=NEW") != NULL));
+		//checkDlgButton(, (StrStrI(pszCmd, L"/GHWND=NEW") != nullptr));
 
 	HKEY hkCmd = nullptr;
 	const auto rc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0,
@@ -254,7 +254,7 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 		}
 		else
 		{
-			pszCur = bForced ? NULL : LoadAutorunValue(hkCmd, true);
+			pszCur = bForced ? nullptr : LoadAutorunValue(hkCmd, true);
 			pszSet = pszCur ? pszCur : L"";
 		}
 

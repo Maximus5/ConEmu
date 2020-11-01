@@ -54,9 +54,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "../common/WUser.h"
 
-//WNDPROC CTabPanelWin::_defaultTabProc = NULL;
-//WNDPROC CTabPanelWin::_defaultToolProc = NULL;
-//WNDPROC CTabPanelWin::_defaultReBarProc = NULL;
+//WNDPROC CTabPanelWin::_defaultTabProc = nullptr;
+//WNDPROC CTabPanelWin::_defaultToolProc = nullptr;
+//WNDPROC CTabPanelWin::_defaultReBarProc = nullptr;
 
 enum ReBarIndex
 {
@@ -72,8 +72,8 @@ enum ReBarIndex
 CTabPanelWin::CTabPanelWin(CTabBarClass* ap_Owner)
 	: CTabPanelBase(ap_Owner)
 {
-	mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL;
-	mp_Find = NULL;
+	mh_Toolbar = nullptr; mh_Tabbar = nullptr; mh_Rebar = nullptr;
+	mp_Find = nullptr;
 	mb_ChangeAllowed = false;
 	mn_LastToolbarWidth = 0;
 	mn_TabHeight = 0;
@@ -96,7 +96,7 @@ CTabPanelWin::~CTabPanelWin()
 LRESULT CALLBACK CTabPanelWin::_ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc;
-	TabPanelWinMap map = {NULL};
+	TabPanelWinMap map = {nullptr};
 	if (GetObj(hwnd, &map, (uMsg == WM_DESTROY)))
 		lRc = ((CTabPanelWin*)map.object)->ReBarProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
@@ -113,7 +113,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		case WM_DESTROY:
 		{
 			_ASSERTE(!mh_Rebar || mh_Rebar == hwnd);
-			mh_Rebar = NULL;
+			mh_Rebar = nullptr;
 			break;
 		}
 		case WM_WINDOWPOSCHANGING:
@@ -186,7 +186,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 LRESULT CALLBACK CTabPanelWin::_TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc;
-	TabPanelWinMap map = {NULL};
+	TabPanelWinMap map = {nullptr};
 	if (GetObj(hwnd, &map, (uMsg == WM_DESTROY)))
 		lRc = ((CTabPanelWin*)map.object)->TabProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
@@ -201,7 +201,7 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		case WM_DESTROY:
 		{
 			_ASSERTE(!mh_Tabbar || mh_Tabbar == hwnd);
-			mh_Tabbar = NULL;
+			mh_Tabbar = nullptr;
 			break;
 		}
 		case WM_WINDOWPOSCHANGING:
@@ -264,7 +264,7 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 LRESULT CALLBACK CTabPanelWin::_ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc;
-	TabPanelWinMap map = {NULL};
+	TabPanelWinMap map = {nullptr};
 	if (GetObj(hwnd, &map, (uMsg == WM_DESTROY)))
 		lRc = ((CTabPanelWin*)map.object)->ToolProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
@@ -280,7 +280,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		case WM_DESTROY:
 		{
 			_ASSERTE(!mh_Toolbar || mh_Toolbar == hwnd);
-			mh_Toolbar = NULL;
+			mh_Toolbar = nullptr;
 			break;
 		}
 		case WM_WINDOWPOSCHANGING:
@@ -354,7 +354,7 @@ bool CTabPanelWin::IsSearchShownInt(bool bFilled)
 HWND CTabPanelWin::ActivateSearchPaneInt(bool bActivate)
 {
 	if (!IsSearchShownInt(false))
-		return NULL;
+		return nullptr;
 	return mp_Find->Activate(bActivate);
 }
 
@@ -377,7 +377,7 @@ RECT CTabPanelWin::GetRect()
 	}
 	else
 	{
-		_ASSERTE(ghWnd!=NULL); // вроде ReBar для теста не создается.
+		_ASSERTE(ghWnd!=nullptr); // вроде ReBar для теста не создается.
 	}
 	return rcWnd;
 }
@@ -388,19 +388,19 @@ void CTabPanelWin::CreateRebar()
 
 	gpSetCls->CheckTheming();
 
-	if ((mh_Rebar != NULL) && IsWindow(mh_Rebar))
+	if ((mh_Rebar != nullptr) && IsWindow(mh_Rebar))
 	{
-		_ASSERTE((mh_Rebar==NULL) && "Rebar was already created!");
+		_ASSERTE((mh_Rebar==nullptr) && "Rebar was already created!");
 		return;
 	}
 
-	mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
+	mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, nullptr,
 								(ghWnd ? (WS_VISIBLE | WS_CHILD) : 0)
 								|WS_CLIPSIBLINGS|WS_CLIPCHILDREN
 								|/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
 								|RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
-								rcWnd.left, rcWnd.top, RectWidth(rcWnd), RectHeight(rcWnd), ghWnd, NULL, g_hInstance, NULL);
-	if (mh_Rebar == NULL)
+								rcWnd.left, rcWnd.top, RectWidth(rcWnd), RectHeight(rcWnd), ghWnd, nullptr, g_hInstance, nullptr);
+	if (mh_Rebar == nullptr)
 	{
 		return;
 	}
@@ -419,7 +419,7 @@ void CTabPanelWin::CreateRebar()
 	{
 		DisplayLastError(_T("Can't initialize rebar!"));
 		DestroyWindow(mh_Rebar);
-		mh_Rebar = NULL;
+		mh_Rebar = nullptr;
 		return;
 	}
 
@@ -451,7 +451,7 @@ void CTabPanelWin::DestroyRebar()
 	for (INT_PTR i = 0; i < countof(pWnd); i++)
 	{
 		HWND h = *(pWnd[i]);
-		*(pWnd[i]) = NULL;
+		*(pWnd[i]) = nullptr;
 		if (h) DestroyWindow(h);
 	}
 }
@@ -461,7 +461,7 @@ HWND CTabPanelWin::CreateTabbar()
 	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar)
-		return NULL; // создаётся только как Band в ReBar
+		return nullptr; // создаётся только как Band в ReBar
 
 	if (mh_Tabbar)
 		return mh_Tabbar; // Уже создали
@@ -472,12 +472,12 @@ HWND CTabPanelWin::CreateTabbar()
 
 	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|WS_CHILD;
 
-	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER,
-							0, 0, RectWidth(rcClient), RectHeight(rcClient), mh_Rebar, NULL, g_hInstance, NULL);
+	mh_Tabbar = CreateWindow(WC_TABCONTROL, nullptr, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER,
+							0, 0, RectWidth(rcClient), RectHeight(rcClient), mh_Rebar, nullptr, g_hInstance, nullptr);
 
-	if (mh_Tabbar == NULL)
+	if (mh_Tabbar == nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 
@@ -485,7 +485,7 @@ HWND CTabPanelWin::CreateTabbar()
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)_TabProc);
 	SetObj(mh_Tabbar, this, defaultProc);
 
-	// It may be NULL
+	// It may be nullptr
 	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mp_Owner->GetTabIcons(nHeightExpected));
 
 	if (!mh_TabTip || !IsWindow(mh_TabTip))
@@ -523,17 +523,17 @@ HWND CTabPanelWin::CreateToolbar()
 	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar || !gpSet->isMultiShowButtons)
-		return NULL; // создаётся только как Band в ReBar
+		return nullptr; // создаётся только как Band в ReBar
 
 	if (mh_Toolbar)
 		return mh_Toolbar; // Уже создали
 
-	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
+	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, nullptr,
 	                            WS_CHILD|WS_VISIBLE|
 	                            TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|
 	                            TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT,
 	                            0, 0, 0, 0, mh_Rebar,
-	                            NULL, NULL, NULL);
+	                            nullptr, nullptr, nullptr);
 
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)_ToolProc);
 	SetObj(mh_Toolbar, this, defaultProc);
@@ -572,7 +572,7 @@ HWND CTabPanelWin::CreateToolbar()
 		_ASSERTE(iCreated == (BID_TOOLBAR_LAST_IDX+1));
 	}
 
-	TBADDBITMAP bmp = {NULL, (UINT_PTR)mp_ToolImg->GetBitmap()};
+	TBADDBITMAP bmp = {nullptr, (UINT_PTR)mp_ToolImg->GetBitmap()};
 	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, iCreated, (LPARAM)&bmp);
 	_ASSERTE(BID_TOOLBAR_LAST_IDX==38);
 	int nScrollBmp = BID_TOOLBAR_LAST_IDX;
@@ -638,7 +638,7 @@ bool CTabPanelWin::GetRebarClientRect(RECT* rc)
 
 	HWND hWnd = mh_Rebar ? mh_Rebar : mh_Tabbar;
 	GetWindowRect(hWnd, rc);
-	MapWindowPoints(NULL, ghWnd, (LPPOINT)rc, 2);
+	MapWindowPoints(nullptr, ghWnd, (LPPOINT)rc, 2);
 
 	return true;
 }
@@ -682,7 +682,7 @@ bool CTabPanelWin::GetTabRect(int nTabIdx, RECT* rcTab)
 		nTabIdx = TabCtrl_GetCurSel(mh_Tabbar);
 
 	TabCtrl_GetItemRect(mh_Tabbar, nTabIdx, rcTab);
-	MapWindowPoints(mh_Tabbar, NULL, (LPPOINT)rcTab, 2);
+	MapWindowPoints(mh_Tabbar, nullptr, (LPPOINT)rcTab, 2);
 	RECT rcBar = {}; GetWindowRect(mh_Rebar, &rcBar);
 	rcTab->bottom = std::min(rcTab->bottom, rcBar.bottom);
 	rcTab->left = std::max(rcTab->left-2, rcBar.left);
@@ -762,7 +762,7 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 	}
 
 	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, (LPARAM)rcBtnRect);
-	MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)rcBtnRect, 2);
+	MapWindowPoints(mh_Toolbar, nullptr, (LPPOINT)rcBtnRect, 2);
 
 	return true;
 }
@@ -882,7 +882,7 @@ void CTabPanelWin::ShowBar(bool bShow)
 	}
 	else
 	{
-		_ASSERTE((mh_Rebar!=NULL) && "ReBar was not created!");
+		_ASSERTE((mh_Rebar!=nullptr) && "ReBar was not created!");
 	}
 }
 
@@ -922,14 +922,14 @@ void CTabPanelWin::RepositionInt()
 				Panes[i].iPaneMinWidth = std::max(150,mn_TabHeight*5);
 				break;
 			case rbi_FindBar:
-				if (mp_Find && ((Panes[i].hChild = mp_Find->GetHWND()) != NULL))
+				if (mp_Find && ((Panes[i].hChild = mp_Find->GetHWND()) != nullptr))
 				{
 					if (gpSet->isMultiShowSearch)
 						Panes[i].iPaneMinWidth = mp_Find->GetMinWidth();
 				}
 				break;
 			case rbi_ToolBar:
-				if ((Panes[i].hChild = mh_Toolbar) != NULL)
+				if ((Panes[i].hChild = mh_Toolbar) != nullptr)
 				{
 					SIZE sz = {0,0};
 					SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
@@ -1030,7 +1030,7 @@ void CTabPanelWin::RepositionInt()
 	}
 	else
 	{
-		_ASSERTE((mh_Rebar!=NULL) && "ReBar was not created!");
+		_ASSERTE((mh_Rebar!=nullptr) && "ReBar was not created!");
 	}
 }
 
@@ -1066,7 +1066,7 @@ void CTabPanelWin::UpdateToolbarPos()
 		}
 		else
 		{
-			_ASSERTE((mh_Rebar!=NULL) && "ReBar was not created!");
+			_ASSERTE((mh_Rebar!=nullptr) && "ReBar was not created!");
 		}
 	}
 }
@@ -1288,7 +1288,7 @@ bool CTabPanelWin::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
 
 	if (bCtrlOnly)
 	{
-		HWND hPane = mp_Find ? mp_Find->GetHWND() : NULL;
+		HWND hPane = mp_Find ? mp_Find->GetHWND() : nullptr;
 		bWasShown = IsSearchShownInt(false);
 		if (hPane)
 			::ShowWindow(hPane, bShow ? SW_SHOWNORMAL : SW_HIDE);
@@ -1305,7 +1305,7 @@ bool CTabPanelWin::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
 		{
 			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
-			HWND hFindPane = NULL;
+			HWND hFindPane = nullptr;
 			if (!mp_Find)
 				mp_Find = new CFindPanel(gpConEmu);
 
@@ -1385,7 +1385,7 @@ void CTabPanelWin::ShowToolsPane(bool bShow)
 	if (bShow)
 	{
 		_ASSERTE(isMainThread());
-		if (!IsToolbarCreated() && (CreateToolbar() != NULL))
+		if (!IsToolbarCreated() && (CreateToolbar() != nullptr))
 		{
 			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
@@ -1424,7 +1424,7 @@ void CTabPanelWin::ShowToolsPane(bool bShow)
 		{
 			SendMessage(mh_Rebar, RB_DELETEBAND, nPaneIndex, 0);
 			DestroyWindow(mh_Toolbar);
-			mh_Toolbar = NULL;
+			mh_Toolbar = nullptr;
 		}
 	}
 }
@@ -1435,7 +1435,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	if (!this) return 0;
 
 	// Размеры таба через TabCtrl_AdjustRect считаются криво при прыжках по мониторам
-	//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
+	//_ASSERTE((hTabs!=nullptr) && "Creating of a dummy tab control failed");
 	int newHeight = gpConEmu->GetDefaultTabbarHeight();
 	if (mn_TabHeight != newHeight)
 	{
@@ -1453,7 +1453,7 @@ void CTabPanelWin::InvalidateBar()
 {
 	if (this && mh_Rebar)
 	{
-		InvalidateRect(mh_Rebar, NULL, TRUE);
+		InvalidateRect(mh_Rebar, nullptr, TRUE);
 		if (mp_Find)
 			mp_Find->Invalidate();
 	}
@@ -1467,7 +1467,7 @@ void CTabPanelWin::RePaintInt()
 	RECT client, self;
 	client = gpConEmu->RebarRect();
 	GetWindowRect(mh_Rebar, &self);
-	MapWindowPoints(NULL, ghWnd, (LPPOINT)&self, 2);
+	MapWindowPoints(nullptr, ghWnd, (LPPOINT)&self, 2);
 
 	if (client != self)
 	{
@@ -1487,7 +1487,7 @@ void CTabPanelWin::RePaintInt()
 	UpdateWindow(mh_Rebar);
 }
 
-LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*= NULL*/)
+LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*= nullptr*/)
 {
 	if (pnOverTabHit)
 		*pnOverTabHit = -1;

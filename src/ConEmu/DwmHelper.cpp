@@ -48,7 +48,7 @@ CDwmHelper::~CDwmHelper()
 	if (mh_DwmApi)
 	{
 		FreeLibrary(mh_DwmApi);
-		mh_DwmApi = NULL;
+		mh_DwmApi = nullptr;
 
 		mb_DwmAllowed = false;
 		dwm = {};
@@ -62,7 +62,7 @@ CDwmHelper::~CDwmHelper()
 		}
 
 		FreeLibrary(mh_UxTheme);
-		mh_UxTheme = NULL;
+		mh_UxTheme = nullptr;
 
 		ux = {};
 	}
@@ -122,10 +122,10 @@ void CDwmHelper::InitDwm()
 			dwm._DwmInvalidateIconicBitmaps = (DWM::DwmInvalidateIconicBitmaps_t)GetProcAddress(mh_DwmApi, "DwmInvalidateIconicBitmaps");
 			dwm._DwmEnableBlurBehindWindow = (DWM::DwmEnableBlurBehindWindow_t)GetProcAddress(mh_DwmApi, "DwmEnableBlurBehindWindow");
 
-			mb_DwmAllowed = (dwm._DwmIsCompositionEnabled != NULL)
-				&& (dwm._DwmGetWindowAttribute != NULL) && (dwm._DwmSetWindowAttribute != NULL)
-				&& (dwm._DwmExtendFrameIntoClientArea != NULL)
-				&& (dwm._DwmDefWindowProc != NULL);
+			mb_DwmAllowed = (dwm._DwmIsCompositionEnabled != nullptr)
+				&& (dwm._DwmGetWindowAttribute != nullptr) && (dwm._DwmSetWindowAttribute != nullptr)
+				&& (dwm._DwmExtendFrameIntoClientArea != nullptr)
+				&& (dwm._DwmDefWindowProc != nullptr);
 			if (mb_DwmAllowed)
 				mb_EnableGlass = true;
 		}
@@ -158,7 +158,7 @@ void CDwmHelper::InitDwm()
 			ux._DrawThemeTextEx = (UX::DrawThemeTextEx_t)GetProcAddress(mh_UxTheme, "DrawThemeTextEx");
 			ux._SetWindowTheme = (UX::SetWindowTheme_t)GetProcAddress(mh_UxTheme, "SetWindowTheme");
 
-			mb_ThemeAllowed = (ux._IsAppThemed != NULL) && (ux._IsThemeActive != NULL);
+			mb_ThemeAllowed = (ux._IsAppThemed != nullptr) && (ux._IsThemeActive != nullptr);
 			if (mb_ThemeAllowed)
 			{
 				mb_EnableTheming = true;
@@ -242,7 +242,7 @@ void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 		// Возможно, ghWndWork впоследствии будет отдельным окном (WS_POPUP?)
 		// чтобы реализовать прозрачность только клиентской части
 		HWND hWnd = ghWnd;
-		_ASSERTE(ghWndWork!=NULL);
+		_ASSERTE(ghWndWork!=nullptr);
 		if (ghWndWork && !(GetWindowLong(ghWndWork, GWL_STYLE) & WS_CHILD))
 			hWnd = ghWndWork;
 
@@ -250,7 +250,7 @@ void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 		if (abBlurBehindClient)
 		{
 			GetWindowRect(ghWndWork, &rcWnd);
-			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcWnd, 2);
+			MapWindowPoints(nullptr, ghWnd, (LPPOINT)&rcWnd, 2);
 		}
 
 		// Create and populate the blur-behind structure.
@@ -264,7 +264,7 @@ void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 
 		// Specify blur-behind and blur region.
 		bb.fEnable = abBlurBehindClient;
-		//bb.hRgnBlur = abBlurBehindClient ? CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom) : NULL;
+		//bb.hRgnBlur = abBlurBehindClient ? CreateRectRgn(rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom) : nullptr;
 		//bb.fTransitionOnMaximized = true;
 		bb.dwFlags = 1/*DWM_BB_ENABLE*/; // | (bb.hRgnBlur ? 2/*DWM_BB_BLURREGION*/ : 0); // | 4/*DWM_BB_TRANSITIONONMAXIMIZED*/;
 
@@ -304,7 +304,7 @@ void CDwmHelper::CheckGlassAttribute()
 		//	if (bRgnWasSet)
 		//	{
 		//		bRgnWasSet = false;
-		//		SetWindowRgn(ghWnd, NULL, TRUE);
+		//		SetWindowRgn(ghWnd, nullptr, TRUE);
 		//	}
 		//}
 		//else
@@ -318,9 +318,9 @@ void CDwmHelper::CheckGlassAttribute()
 		//}
 	}
 
-	SetWindowPos(ghWnd, NULL, 0, 0, 0, 0,
+	SetWindowPos(ghWnd, nullptr, 0, 0, 0, 0,
 			SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-	RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+	RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 bool CDwmHelper::ExtendWindowFrame()
@@ -386,7 +386,7 @@ wrap:
 HANDLE/*HTHEME*/ CDwmHelper::OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
 {
 	if (!ux._OpenThemeData)
-		return NULL;
+		return nullptr;
 	return ux._OpenThemeData(hwnd, pszClassList);
 }
 
@@ -400,7 +400,7 @@ HRESULT CDwmHelper::CloseThemeData(HANDLE/*HTHEME*/ hTheme)
 HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT& rcTarget, PaintDC& dc)
 //(HDC hdcTarget, const RECT *prcTarget, int/*BP_BUFFERFORMAT*/ dwFormat, void/*BP_PAINTPARAMS*/ *pPaintParams, HDC *phdc)
 {
-	HANDLE hResult = NULL;
+	HANDLE hResult = nullptr;
 
 	if (ux._BeginBufferedPaint && !dc.bInternal)
 	{
@@ -419,9 +419,9 @@ HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT&
 		bi.biHeight = rcTarget.bottom;
 		bi.biPlanes = 1;
 		bi.biBitCount = 32;
-		void* pPixels = NULL;
+		void* pPixels = nullptr;
 		HDC hdcPaint = CreateCompatibleDC(hdcTarget);
-		HBITMAP hbmp = CreateDIBSection(hdcPaint, (BITMAPINFO*)&bi, DIB_RGB_COLORS, &pPixels, NULL, 0);
+		HBITMAP hbmp = CreateDIBSection(hdcPaint, (BITMAPINFO*)&bi, DIB_RGB_COLORS, &pPixels, nullptr, 0);
 		if (hbmp)
 		{
 			HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcPaint, hbmp);

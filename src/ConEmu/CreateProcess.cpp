@@ -47,10 +47,10 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-							 LPDWORD pdwLastError /*= NULL*/)
+							 LPDWORD pdwLastError /*= nullptr*/)
 {
 	BOOL lbRc = FALSE;
-	HANDLE hToken = NULL, hTokenRest = NULL;
+	HANDLE hToken = nullptr, hTokenRest = nullptr;
 
 	if (OpenProcessToken(GetCurrentProcess(),
 	                    TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY | TOKEN_EXECUTE,
@@ -79,7 +79,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 
 		if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE,
 		                         countof(sidsToDisable), sidsToDisable,
-		                         0, NULL, 0, NULL, &hTokenRest))
+		                         0, nullptr, 0, nullptr, &hTokenRest))
 		{
 			if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
@@ -93,7 +93,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 				if (pdwLastError) *pdwLastError = GetLastError();
 			}
 
-			CloseHandle(hTokenRest); hTokenRest = NULL;
+			CloseHandle(hTokenRest); hTokenRest = nullptr;
 		}
 		else
 		{
@@ -101,7 +101,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		}
 
 		free(pAdmSid);
-		CloseHandle(hToken); hToken = NULL;
+		CloseHandle(hToken); hToken = nullptr;
 	}
 	else
 	{
@@ -119,10 +119,10 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-							 LPDWORD pdwLastError /*= NULL*/)
+							 LPDWORD pdwLastError /*= nullptr*/)
 {
 	BOOL lbRc = FALSE;
-	HANDLE hToken = NULL, hTokenRest = NULL;
+	HANDLE hToken = nullptr, hTokenRest = nullptr;
 	wchar_t szLog[128];
 	DWORD nErrCode = 0, nCurSession = (DWORD)-1, nNewSessionId = (DWORD)-1, nRetSize = 0;
 
@@ -139,7 +139,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 		{
 			if (!szArg.IsSwitch(L"/GID="))
 				continue;
-			nParentPID = wcstoul(szArg.ms_Val+5, NULL, 10);
+			nParentPID = wcstoul(szArg.ms_Val+5, nullptr, 10);
 			break;
 		}
 		if (nParentPID == 0)
@@ -196,7 +196,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 
 	if (nNewSessionId != nCurSession)
 	{
-		if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL, SecurityImpersonation, TokenPrimary, &hTokenRest))
+		if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, nullptr, SecurityImpersonation, TokenPrimary, &hTokenRest))
 		{
 			swprintf_c(szLog, L"Failed to duplicate current token, code=%u", GetLastError());
 			LogString(szLog);
@@ -242,7 +242,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	}
 	else
 	{
-		lbRc = CreateProcess(NULL, lpCommandLine,
+		lbRc = CreateProcess(nullptr, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -272,7 +272,7 @@ BOOL CreateProcessSystem(DWORD anSessionId, LPWSTR lpCommandLine,
 						 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-						 LPDWORD pdwLastError /*= NULL*/)
+						 LPDWORD pdwLastError /*= nullptr*/)
 {
 	BOOL lbRc;
 
@@ -293,7 +293,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 						  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						  BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						  LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-						  LPDWORD pdwLastError /*= NULL*/)
+						  LPDWORD pdwLastError /*= nullptr*/)
 {
 	BOOL lbRc = FALSE;
 
@@ -303,21 +303,21 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 						   lpProcessAttributes, lpThreadAttributes,
 						   bInheritHandles, dwCreationFlags, lpEnvironment,
 						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,
-						   NULL);
+						   nullptr);
 	}
 
 	// Obtain User account from Explorer.exe?
 	if (!lbRc)
 	{
 		PROCESSENTRY32W explorer = {};
-		HANDLE hToken = NULL, hTokenRun = NULL, hExplorer = NULL;
+		HANDLE hToken = nullptr, hTokenRun = nullptr, hExplorer = nullptr;
 		if (GetProcessInfo(L"explorer.exe", &explorer))
 		{
 			hExplorer = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, explorer.th32ProcessID);
 			if (hExplorer
 				&& OpenProcessToken(hExplorer, TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY | TOKEN_EXECUTE, &hToken))
 			{
-				lbRc = CreateProcessAsUserW(hToken, NULL, lpCommandLine,
+				lbRc = CreateProcessAsUserW(hToken, nullptr, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -332,7 +332,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	if (!lbRc)
 	{
 
-		lbRc = CreateProcess(NULL, lpCommandLine,
+		lbRc = CreateProcess(nullptr, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);

@@ -58,7 +58,7 @@ LRESULT CSetPgHilight::OnInitDialog(HWND hDlg, bool abInitial)
 		HI_GOTO_EDITOR_SUBLM,  // Sublime text
 		HI_GOTO_EDITOR_CMD,    // Just ‘start’ highlighted file via cmd.exe
 		HI_GOTO_EDITOR_CMD_NC, // Just ‘start’ highlighted file via cmd.exe, same as prev. but without close confirmation
-		NULL};
+		nullptr};
 	CSetDlgLists::FillCBList(GetDlgItem(hDlg, lbGotoEditorCmd), abInitial, ppszDefEditors, gpSet->sFarGotoEditor);
 
 	// Highlight full row/column under mouse cursor
@@ -79,7 +79,7 @@ INT_PTR CSetPgHilight::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	{
 		if ((code == CBN_EDITCHANGE) || (code == CBN_SELCHANGE))
 		{
-			GetString(hDlg, lbGotoEditorCmd, &gpSet->sFarGotoEditor, NULL, (code == CBN_SELCHANGE));
+			GetString(hDlg, lbGotoEditorCmd, &gpSet->sFarGotoEditor, nullptr, (code == CBN_SELCHANGE));
 		}
 		break;
 	} // lbGotoEditorCmd

@@ -82,14 +82,14 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 			SetDlgItemText(hDlg, tStartTasksFile, gpSet->psStartTasksFile ? (*gpSet->psStartTasksFile == CmdFilePrefix ? (gpSet->psStartTasksFile+1) : gpSet->psStartTasksFile) : L"");
 
 			int nGroup = 0;
-			const CommandTasks* pGrp = NULL;
+			const CommandTasks* pGrp = nullptr;
 			SendDlgItemMessage(hDlg, lbStartNamedTask, CB_RESETCONTENT, 0,0);
 			SendDlgItemMessage(hDlg, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)csNoTask);
 			// Fill tasks from settings
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 				SendDlgItemMessage(hDlg, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
 			// Select active task
-			pGrp = gpSet->psStartTasksName ? gpSet->CmdTaskGetByName(gpSet->psStartTasksName) : NULL;
+			pGrp = gpSet->psStartTasksName ? gpSet->CmdTaskGetByName(gpSet->psStartTasksName) : nullptr;
 			if (!pGrp || !pGrp->pszName
 				|| (CSetDlgLists::SelectStringExact(hDlg, lbStartNamedTask, pGrp->pszName) <= 0))
 			{
@@ -157,7 +157,7 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 								pszTitle = L"Choose command file";
 							}
 
-							wchar_t* pszRet = SelectFile(pszTitle, temp, NULL, ghOpWnd, pszFilter, (CB==cbCmdLine)?sff_AutoQuote:sff_Default);
+							wchar_t* pszRet = SelectFile(pszTitle, temp, nullptr, ghOpWnd, pszFilter, (CB==cbCmdLine)?sff_AutoQuote:sff_Default);
 
 							if (pszRet)
 							{
@@ -178,7 +178,7 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 						break;
 					case tStartTasksFile:
 						{
-							wchar_t* psz = NULL;
+							wchar_t* psz = nullptr;
 							INT_PTR nLen = GetString(hDlg, tStartTasksFile, &psz);
 							if ((nLen <= 0) || !psz || !*psz)
 							{
@@ -258,7 +258,7 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 					if (nIdx == -1)
 						nIdx = -2;
 				}
-				const CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : NULL;
+				const CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : nullptr;
 				SetDlgItemText(hDlg, tStartGroupCommands, pTask ? pTask->pszCommands : L"");
 			}
 			else

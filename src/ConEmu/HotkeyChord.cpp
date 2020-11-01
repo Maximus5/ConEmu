@@ -553,7 +553,7 @@ void ConEmuChord::GetVkKeyName(BYTE vk, wchar_t(&szName)[32], bool bSingle /*= t
 	}
 }
 
-UINT ConEmuChord::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=NULL*/, DWORD* pnControlState/*=NULL*/)
+UINT ConEmuChord::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=nullptr*/, DWORD* pnControlState/*=nullptr*/)
 {
 	if (!asName || !*asName)
 		return 0;
@@ -581,7 +581,7 @@ UINT ConEmuChord::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=NULL*/, DWORD
 		// ConEmu internal codes
 		{L"WheelUp", VK_WHEEL_UP}, {L"WheelDown", VK_WHEEL_DOWN}, {L"WheelLeft", VK_WHEEL_LEFT}, {L"WheelRight", VK_WHEEL_RIGHT},
 		// End of predefined codes
-		{NULL}
+		{nullptr}
 	};
 
 	// Fn?

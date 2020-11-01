@@ -64,9 +64,9 @@ protected:
 
 	int  AddBitmap(HBITMAP hbm, int iNumBtns);
 	bool CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground);
-	bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
+	static bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
 
-	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, bool bHasAlpha = false);
+	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, bool bHasAlpha);
 
 	#ifdef __GNUC__
 	AlphaBlend_t GdiAlphaBlend;
@@ -82,7 +82,7 @@ public:
 
 	HBITMAP GetBitmap();
 
-	bool PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
+	bool PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight) const;
 	bool GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH);
 
 	/*

@@ -133,7 +133,7 @@ class CSettings
 		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
 		bool IsSingleInstanceArg();
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
-		bool ResetCmdHistory(HWND hParent = NULL);
+		bool ResetCmdHistory(HWND hParent = nullptr);
 		void SetSaveCmdHistory(bool bSaveHistory);
 
 		//int DefaultBufferHeight;
@@ -191,7 +191,7 @@ class CSettings
 		bool GetPageObj(T*& pObject)
 		{
 			pObject = dynamic_cast<T*>(GetPageObj(T::PageType()));
-			return (pObject != NULL);
+			return (pObject != nullptr);
 		};
 		TabHwndIndex GetPageId(HWND hPage);
 		LPCWSTR GetActivePageWiki(CEStr& lsWiki);
@@ -209,7 +209,7 @@ class CSettings
 		//
 		bool SetOption(LPCWSTR asName, int anValue);
 		bool SetOption(LPCWSTR asName, LPCWSTR asValue);
-		void SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine = NULL);
+		void SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine = nullptr);
 		void SettingsPreSave();
 		static void Dialog(int IdShowPage = 0);
 		void UpdateWindowMode(ConEmuWindowMode WndMode);
@@ -226,7 +226,7 @@ class CSettings
 		bool EditConsoleFont(HWND hParent);
 		static INT_PTR CALLBACK EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static int CALLBACK EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
-		bool CheckConsoleFontFast(LPCWSTR asCheckName = NULL);
+		bool CheckConsoleFontFast(LPCWSTR asCheckName = nullptr);
 		enum
 		{
 			ConFontErr_NonSystem   = 0x01,
@@ -241,7 +241,7 @@ class CSettings
 		HWND hwndConFontBalloon;
 		static bool CheckConsoleFontRegistry(LPCWSTR asFaceName);
 		static bool CheckConsoleFont(HWND ahDlg);
-		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
+		LPCWSTR CreateConFontError(LPCWSTR asReqFont=nullptr, LPCWSTR asGotFont=nullptr);
 		TOOLINFO tiConFontBalloon;
 		// #DPI Move DPI members to CConEmuMain
 		DpiValue _dpi;
@@ -260,7 +260,7 @@ class CSettings
 		void ShowConFontErrorTip();
 	protected:
 		INT_PTR OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId);
-		void OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage = NULL);
+		void OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage = nullptr);
 		void ExportSettings();
 		void ImportSettings();
 		void SearchForControls(); // Find setting by typed name in the "Search" box
@@ -274,7 +274,7 @@ class CSettings
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 	public:
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
+		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = nullptr);
 		void CheckSelectionModifiers(HWND hWnd2);
 		void ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown);
 		void RegisterTipsFor(HWND hChildDlg);

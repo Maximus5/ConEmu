@@ -196,7 +196,7 @@ RECT CConEmuSize::CalcMargins_Win10Frame() const
 
 	if (isWin10InvisibleFrame())
 	{
-		const MonitorInfoCache mi = NearestMonitorInfo(NULL);
+		const MonitorInfoCache mi = NearestMonitorInfo(nullptr);
 		const auto& fi = isCaptionHidden() ? mi.noCaption : mi.withCaption;
 		rc = fi.Win10Stealthy;
 	}
@@ -1204,7 +1204,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 {
 	if (mp_ConEmu->mp_Inside)
 	{
-		_ASSERTE(mp_ConEmu->mp_Inside == NULL);
+		_ASSERTE(mp_ConEmu->mp_Inside == nullptr);
 		return false;
 	}
 
@@ -1246,7 +1246,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 			SetFocus(GetDlgItem(hDlg, tWndWidth));
 		RECT rcQuake = mp_ConEmu->GetDefaultRect();
 		// And size/move!
-		setWindowPos(NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
+		setWindowPos(nullptr, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
 	}
 	else
 	{
@@ -1258,12 +1258,12 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 
 		POINT wndPos = RealPosFromVisual(newX, newY);
 
-		setWindowPos(NULL, wndPos.x, wndPos.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(nullptr, wndPos.x, wndPos.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 		// Установить размер
 		mp_ConEmu->SizeWindow(newW, newH);
 
-		setWindowPos(NULL, wndPos.x, wndPos.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(nullptr, wndPos.x, wndPos.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
@@ -1306,7 +1306,7 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 	if (ghWnd)
 		GetWindowRect(ghWnd, &rcReal);
 	MONITORINFO mi = {sizeof(mi)};
-	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcDesired);
+	HMONITOR hMon = GetNearestMonitorInfo(&mi, nullptr, &rcDesired);
 
 	bool bChange = false;
 
@@ -1481,7 +1481,7 @@ void CConEmuSize::ReloadMonitorInfo()
 	bool is_log = LogString(L"ReloadMonitorInfo");
 
 	monitors.clear();
-	EnumDisplayMonitors(NULL, NULL, Invoke::MonitorEnumProc, reinterpret_cast<LPARAM>(this));
+	EnumDisplayMonitors(nullptr, nullptr, Invoke::MonitorEnumProc, reinterpret_cast<LPARAM>(this));
 	if (monitors.empty())
 	{
 		MonitorInfoCache mi = {};
@@ -1585,14 +1585,14 @@ void CConEmuSize::ReloadMonitorInfo()
 
 		const wchar_t szFrameClass[] = L"ConEmuWin10FrameCheck";
 		WNDCLASSEX wc = {sizeof(WNDCLASSEX), 0, Win10Invoke::FrameTestProc, 0, 0,
-						 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-						 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
-						 NULL, szFrameClass, hClassIconSm
+						 g_hInstance, hClassIcon, LoadCursor(nullptr, IDC_ARROW),
+						 nullptr /*(HBRUSH)COLOR_BACKGROUND*/,
+						 nullptr, szFrameClass, hClassIconSm
 						};// | CS_DROPSHADOW
 
 		if (RegisterClassEx(&wc))
 		{
-			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, nullptr, nullptr, (HINSTANCE)g_hInstance, nullptr);
 			if (hFrame)
 			{
 				wchar_t szInfo[140];
@@ -1767,7 +1767,7 @@ CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(const RECT& rcWnd)
 	return NearestMonitorInfo(hMon);
 }
 
-// Pass hNewMon=NULL to get default/recommended monitor for our window
+// Pass hNewMon=nullptr to get default/recommended monitor for our window
 // Pass hNewMon=HMONITOR(-1) to get primary monitor
 CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(HMONITOR hNewMon) const
 {
@@ -2093,7 +2093,7 @@ bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
 	// If we haven't to change anything
 	if (!hStartMon)
 	{
-		LogString(PSS_SKIP_PREFIX L"hStartMon is NULL");
+		LogString(PSS_SKIP_PREFIX L"hStartMon is nullptr");
 		return false;
 	}
 	if (!mp_ConEmu->opt.Monitor.Exists && !gpSet->isRestore2ActiveMon)
@@ -2159,7 +2159,7 @@ bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
 	RECT rcNewMon = (gpSet->_WindowMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
 	if (IsRectEmpty(&rcNewMon))
 	{
-		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed (NULL RECT)");
+		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed (nullptr RECT)");
 		return false;
 	}
 
@@ -2335,7 +2335,7 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 
 void CConEmuSize::CascadedPosFix()
 {
-	if (gpSet->wndCascade && (ghWnd == NULL) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
+	if (gpSet->wndCascade && (ghWnd == nullptr) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
 	{
 		constexpr float cascadeMultiplier = 1.5;
 		const auto captionHeight = GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION);
@@ -2344,13 +2344,13 @@ void CConEmuSize::CascadedPosFix()
 		// Preferred window size
 		int nDefWidth = 0, nDefHeight = 0;
 
-		HWND hPrev = gpSetCls->isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
+		HWND hPrev = gpSetCls->isDontCascade ? nullptr : FindWindow(VirtualConsoleClassMain, nullptr);
 
 		// Find first visible existing ConEmu window with normal state
 		while (hPrev)
 		{
 			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				hPrev = FindWindowEx(nullptr, hPrev, VirtualConsoleClassMain, nullptr);
 				continue;
 			}*/
 			const WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(hPrev); // Workspace coordinates!!!
@@ -2368,7 +2368,7 @@ void CConEmuSize::CascadedPosFix()
 				/* Max in HideCaption mode */
 				|| (wpl.rcNormalPosition.left < mi.mi.rcWork.left || wpl.rcNormalPosition.top < mi.mi.rcWork.top))
 			{
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				hPrev = FindWindowEx(nullptr, hPrev, VirtualConsoleClassMain, nullptr);
 				continue;
 			}
 
@@ -2410,11 +2410,11 @@ void CConEmuSize::StorePreMinimizeMonitor()
 	}
 }
 
-HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prcWnd /*= NULL*/)
+HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= nullptr*/, LPCRECT prcWnd /*= nullptr*/)
 {
 	NestedCallAssert(1);
 
-	HMONITOR hMon = NULL;
+	HMONITOR hMon = nullptr;
 	MONITORINFO mi = {sizeof(mi)};
 
 	HWND hWndFrom = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetParentRoot() : ghWnd;
@@ -2423,17 +2423,17 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 
 	if (prcWnd)
 	{
-		hMon = GetNearestMonitorInfo(&mi, NULL, prcWnd);
+		hMon = GetNearestMonitorInfo(&mi, nullptr, prcWnd);
 	}
 	else if (!hWndFrom || (gpSet->isQuakeStyle && isIconic()))
 	{
 		_ASSERTE(WndWidth.Value>0 && WndHeight.Value>0);
 		RECT rcEvalWnd = GetDefaultRect();
-		hMon = GetNearestMonitorInfo(&mi, NULL, &rcEvalWnd);
+		hMon = GetNearestMonitorInfo(&mi, nullptr, &rcEvalWnd);
 	}
 	else if (!mp_ConEmu->mp_Menu->GetRestoreFromMinimized() && !isIconic())
 	{
-		hMon = GetNearestMonitorInfo(&mi, NULL, NULL, hWndFrom);
+		hMon = GetNearestMonitorInfo(&mi, nullptr, nullptr, hWndFrom);
 	}
 	else
 	{
@@ -2455,7 +2455,7 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	return hMon;
 }
 
-HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
+HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= nullptr*/)
 {
 	MONITORINFO mi = {sizeof(mi)};
 	HMONITOR hMon = GetPrimaryMonitorInfo(&mi);
@@ -2467,7 +2467,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 	{
 		wchar_t szInfo[255];
 		swprintf_c(szInfo, L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
-			(hMon!=NULL), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
+			(hMon!=nullptr), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
 	}
 
@@ -2499,7 +2499,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	}
 
 
-	auto mi = NearestMonitorInfo(NULL);
+	auto mi = NearestMonitorInfo(nullptr);
 	auto prm = IsWin6() ? mi : NearestMonitorInfo(HMONITOR(-1));
 
 
@@ -2633,7 +2633,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		swprintf_c(szInfo,
 			nRgn
 				? L"WM_WINDOWPOSCHANGED.begin: GetWindowRgn(0x%08X) = <%u> {%i,%i}-{%i,%i}"
-				: L"WM_WINDOWPOSCHANGED.begin: GetWindowRgn(0x%08X) = NULL",
+				: L"WM_WINDOWPOSCHANGED.begin: GetWindowRgn(0x%08X) = nullptr",
 			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
 		if (!mp_ConEmu->LogWindowPos(szInfo)) { DEBUGSTRRGN(szInfo); }
 		DeleteObject(hRgn);
@@ -2755,7 +2755,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		else
 		{
-			mp_ConEmu->mp_Status->OnWindowReposition(NULL);
+			mp_ConEmu->mp_Status->OnWindowReposition(nullptr);
 		}
 	}
 	else if (mp_ConEmu->hPictureView)
@@ -3002,7 +3002,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	#if 0
 		else if (isWindowNormal())
 		{
-			HMONITOR hMon = NULL;
+			HMONITOR hMon = nullptr;
 			RECT rcNew = {}; GetWindowRect(ghWnd, &rcNew);
 			if (!(p->flags & SWP_NOSIZE) && !(p->flags & SWP_NOMOVE))
 			{
@@ -3151,7 +3151,7 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 
 	// Lets go
 
-	HMONITOR hMon = NULL;
+	HMONITOR hMon = nullptr;
 	DpiValue dpi;
 
 	#ifdef _DEBUG
@@ -3254,7 +3254,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 	{
 		//GetWindowRect(ghWnd, &mrc_Ideal);
 		//UpdateIdealRect();
-		StoreNormalRect(NULL);
+		StoreNormalRect(nullptr);
 	}
 
 	if (mp_ConEmu->mp_TabBar->IsTabsActive())
@@ -3456,10 +3456,10 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/)
+LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= nullptr*/, bool bWmMove /*= false*/)
 {
 	BOOL bModified = FALSE;
-	HMONITOR hMon = NULL;
+	HMONITOR hMon = nullptr;
 	MONITORINFO mi = {sizeof(mi)};
 	RECT rcCur = {};
 	RECT rcShift;
@@ -3622,10 +3622,10 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 modified:
 	bModified = TRUE;
 
-	if (prcWnd == NULL)
+	if (prcWnd == nullptr)
 	{
 		// May get here from OnBtn_SnapToDesktopEdges if gpSet->isSnapToDesktopEdges
-		setWindowPos(NULL, rcWnd.left, rcWnd.top, nWidth, nHeight, SWP_NOZORDER);
+		setWindowPos(nullptr, rcWnd.left, rcWnd.top, nWidth, nHeight, SWP_NOZORDER);
 	}
 	else
 	{
@@ -3669,7 +3669,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 	WndWidth.Set(true, sizeW.Style, sizeW.Value);
 	WndHeight.Set(false, sizeH.Style, sizeH.Value);
 
-	if (setWindowPos(NULL, 0,0, szPixelSize.cx, szPixelSize.cy, SWP_NOMOVE|SWP_NOZORDER))
+	if (setWindowPos(nullptr, 0,0, szPixelSize.cx, szPixelSize.cy, SWP_NOMOVE|SWP_NOZORDER))
 	{
 		bSizeOK = true;
 	}
@@ -3791,7 +3791,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	// Save current rect, JIC
 	if (ghWnd)
-		StoreNormalRect(NULL);
+		StoreNormalRect(nullptr);
 
 	if (ghWnd)
 		apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
@@ -3853,7 +3853,7 @@ RECT CConEmuSize::SetNormalWindowSize()
 
 	if (!ghWnd)
 	{
-		_ASSERTE(ghWnd!=NULL);
+		_ASSERTE(ghWnd!=nullptr);
 		return rcNewWnd;
 	}
 
@@ -3863,7 +3863,7 @@ RECT CConEmuSize::SetNormalWindowSize()
 		SetTileMode(cwc_Current);
 	}
 
-	HMONITOR hMon = NULL;
+	HMONITOR hMon = nullptr;
 
 	if (!isIconic())
 		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
@@ -3872,8 +3872,8 @@ RECT CConEmuSize::SetNormalWindowSize()
 
 	if (!hMon)
 	{
-		_ASSERTE(hMon!=NULL);
-		setWindowPos(NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+		_ASSERTE(hMon!=nullptr);
+		setWindowPos(nullptr, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 	}
 	else
 	{
@@ -3945,10 +3945,10 @@ bool CConEmuSize::ChangeTileMode(ConEmuWindowCommand Tile)
 
 		if ((wm == wmNormal) && (Tile == cwc_Current))
 		{
-			StoreNormalRect(NULL);
+			StoreNormalRect(nullptr);
 		}
 
-		HMONITOR hMon = NULL;
+		HMONITOR hMon = nullptr;
 
 		changeFromWindowMode = wmNormal;
 
@@ -3961,7 +3961,7 @@ bool CConEmuSize::ChangeTileMode(ConEmuWindowCommand Tile)
 			hMon = GetNextMonitorInfo(&nxt, &mi.rcWork, (CurTile == cwc_TileRight)/*Next*/);
 			//131022 - if there is only one monitor - just switch Left/Right tiling...
 			if (!hMon || !nxt.cbSize)
-				hMon = GetNearestMonitorInfo(&nxt, NULL, &mi.rcWork);
+				hMon = GetNearestMonitorInfo(&nxt, nullptr, &mi.rcWork);
 			if (hMon && nxt.cbSize /* && memcmp(&mi.rcWork, &nxt.rcWork, sizeof(nxt.rcWork))*/)
 			{
 				memmove(&mi, &nxt, sizeof(nxt));
@@ -4017,7 +4017,7 @@ bool CConEmuSize::ChangeTileMode(ConEmuWindowCommand Tile)
 			// Сразу меняем, чтобы DefaultRect не слетел...
 			SetTileMode(Tile);
 
-			LogTileModeChange(L"ChangeTileMode", Tile, bChange, rcNewWnd, NULL, hMon);
+			LogTileModeChange(L"ChangeTileMode", Tile, bChange, rcNewWnd, nullptr, hMon);
 
 			if (CDpiAware::IsPerMonitorDpi())
 			{
@@ -4028,7 +4028,7 @@ bool CConEmuSize::ChangeTileMode(ConEmuWindowCommand Tile)
 				}
 			}
 
-			setWindowPos(NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+			setWindowPos(nullptr, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 		}
 
 		changeFromWindowMode = wmNotChanging;
@@ -4103,7 +4103,7 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 	if (!gpSet->isLogging() && !IsDebuggerPresent())
 		return;
 
-	ConEmuWindowCommand NewTile = GetTileMode(false/*Estimate*/, NULL);
+	ConEmuWindowCommand NewTile = GetTileMode(false/*Estimate*/, nullptr);
 	wchar_t szInfo[200], szName[32], szNewTile[32], szAfter[64];
 
 	if (prcAfter)
@@ -4128,7 +4128,7 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 		DEBUGSTRSIZE(szInfo);
 }
 
-ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& arcWnd, MONITORINFO* pmi /*= NULL*/)
+ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& arcWnd, MONITORINFO* pmi /*= nullptr*/)
 {
 	ConEmuWindowCommand CurTile = cwc_Current;
 
@@ -4139,7 +4139,7 @@ ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& arcWnd, MONITORINFO* p
 
 	// Where we are
 	MONITORINFO mi = {};
-	GetNearestMonitorInfo(&mi, NULL, &rcWnd, ghWnd);
+	GetNearestMonitorInfo(&mi, nullptr, &rcWnd, ghWnd);
 	if (pmi)
 		*pmi = mi;
 
@@ -4212,7 +4212,7 @@ wrap:
 	return CurTile;
 }
 
-ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
+ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=nullptr*/)
 {
 	if (Estimate)
 	{
@@ -4221,7 +4221,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		if (isFullScreen() || isZoomed())
 		{
 			if (pmi)
-				GetNearestMonitorInfo(pmi, NULL, NULL, ghWnd);
+				GetNearestMonitorInfo(pmi, nullptr, nullptr, ghWnd);
 			CurTile = cwc_Current;
 		}
 		else if (IsSizeFree()  // gh-622: Quake wmNormal, but 100% width
@@ -4331,7 +4331,7 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 	HWND hJump = getForegroundWindow();
 	if (!hJump)
 	{
-		Assert(hJump!=NULL);
+		Assert(hJump!=nullptr);
 		LogString(L"JumpNextMonitor skipped, no foreground window");
 		return false;
 	}
@@ -4429,7 +4429,7 @@ void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, 
 	rcNew.bottom = rcNew.top + Height;
 }
 
-bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos /*= NULL*/)
+bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos /*= nullptr*/)
 {
 	wchar_t szInfo[255];
 	RECT rcMain = {};
@@ -4450,13 +4450,13 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	}
 
 	MONITORINFO mi = {};
-	HMONITOR hNext = hJumpMon ? (GetMonitorInfoSafe(hJumpMon, mi) ? hJumpMon : NULL) : GetNextMonitorInfo(&mi, &rcMain, Next);
+	HMONITOR hNext = hJumpMon ? (GetMonitorInfoSafe(hJumpMon, mi) ? hJumpMon : nullptr) : GetNextMonitorInfo(&mi, &rcMain, Next);
 	if (!hNext)
 	{
 		if (gpSet->isLogging())
 		{
 			swprintf_c(szInfo,
-				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns NULL",
+				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns nullptr",
 				static_cast<int>(Next), LOGRECTCOORDS(rcMain));
 			LogString(szInfo);
 		}
@@ -4532,9 +4532,9 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 
 	// Move it
 	if (hJumpWnd == ghWnd)
-		setWindowPos(NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER|SWP_NOCOPYBITS);
+		setWindowPos(nullptr, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER|SWP_NOCOPYBITS);
 	else
-		SetWindowPos(hJumpWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER|SWP_NOCOPYBITS);
+		SetWindowPos(hJumpWnd, nullptr, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER|SWP_NOCOPYBITS);
 
 	// Almost done
 	if (hJumpWnd == ghWnd)
@@ -4601,14 +4601,14 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 		#endif
 	}
 
-	SetCursor(LoadCursor(NULL,IDC_WAIT));
+	SetCursor(LoadCursor(nullptr,IDC_WAIT));
 	mp_ConEmu->mp_Menu->SetPassSysCommand(true);
 
 	//WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
 	// Logging purposes
-	auto mi = IsRectMinimized(rcWnd) ? NearestMonitorInfo(NULL) : NearestMonitorInfo(rcWnd);
+	auto mi = IsRectMinimized(rcWnd) ? NearestMonitorInfo(nullptr) : NearestMonitorInfo(rcWnd);
 	swprintf_c(szInfo, L"SetWindowMode info: Wnd={%i,%i}-{%i,%i} Mon=x%08X Work={%i,%i}-{%i,%i} Full={%i,%i}-{%i,%i}",
 		LOGRECTCOORDS(rcWnd), LODWORD(mi.hMon), LOGRECTCOORDS(mi.mi.rcWork), LOGRECTCOORDS(mi.mi.rcMonitor));
 	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
@@ -4653,7 +4653,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	CVConGuard VCon;
 	mp_ConEmu->GetActiveVCon(&VCon);
-	//CRealConsole* pRCon = gpSet->isLogging() ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
+	//CRealConsole* pRCon = gpSet->isLogging() ? (VCon.VCon() ? VCon.VCon()->RCon() : nullptr) : nullptr;
 
 	swprintf_c(szInfo, L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
 	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
@@ -4663,7 +4663,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
 
-	LPCWSTR pszInfo = NULL;
+	LPCWSTR pszInfo = nullptr;
 
 	//!!!
 	switch (NewMode)
@@ -4745,7 +4745,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			mp_ConEmu->RefreshWindowStyles();
 
-			setWindowPos(NULL, rcIdeal.left, rcIdeal.top, RectWidth(rcIdeal), RectHeight(rcIdeal), SWP_NOZORDER);
+			setWindowPos(nullptr, rcIdeal.left, rcIdeal.top, RectWidth(rcIdeal), RectHeight(rcIdeal), SWP_NOZORDER);
 
 			#ifdef _DEBUG
 			wpl = WinApi::GetWindowPlacement(ghWnd);
@@ -4866,7 +4866,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			if (resetSize)
 			{
-				setWindowPos(NULL, rcMax.left, rcMax.top, rcMax.right-rcMax.left, rcMax.bottom-rcMax.top, SWP_NOCOPYBITS|SWP_NOZORDER);
+				setWindowPos(nullptr, rcMax.left, rcMax.top, rcMax.right-rcMax.left, rcMax.bottom-rcMax.top, SWP_NOCOPYBITS|SWP_NOZORDER);
 			}
 
 			// Already restored, need to clear the flag to avoid incorrect sizing
@@ -4942,7 +4942,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
-			setWindowPos(NULL,
+			setWindowPos(nullptr,
 			                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
 			                ptFullScreenSize.x,ptFullScreenSize.y,
 			                SWP_NOZORDER);
@@ -5042,7 +5042,7 @@ wrap:
 	mp_ConEmu->OnTransparent();
 
 	TODO("Что-то курсор иногда остается APPSTARTING...");
-	SetCursor(LoadCursor(NULL,IDC_ARROW));
+	SetCursor(LoadCursor(nullptr,IDC_ARROW));
 	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 	return lbRc;
 }
@@ -5101,7 +5101,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 			CVConGroup::PreReSize(WindowMode, rcCompWnd, CER_MAIN, true);
 
 			int iCompWidth = (rcCompWnd.right - rcCompWnd.left), iCompHeight = (rcCompWnd.bottom - rcCompWnd.top);
-			setWindowPos(NULL, rcWnd.left, rcWnd.top, iCompWidth, iCompHeight, SWP_NOZORDER);
+			setWindowPos(nullptr, rcWnd.left, rcWnd.top, iCompWidth, iCompHeight, SWP_NOZORDER);
 		}
 		else
 		{
@@ -5184,7 +5184,7 @@ void CConEmuSize::OnSizePanels(COORD cr)
 	int nRepeat = 0;
 	wchar_t szKey[32];
 	bool bShifted = (mp_ConEmu->mouse.state & MOUSE_DRAGPANEL_BOTH) != MOUSE_DRAGPANEL_BOTH;
-	CRealConsole* pRCon = NULL;
+	CRealConsole* pRCon = nullptr;
 	CVConGuard VCon;
 	if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
 		pRCon = VCon->RCon();
@@ -5347,7 +5347,7 @@ struct OnDpiChangedArg
 	{
 		pObject = ap;
 		DpiX = dx; DpiY = dy;
-		bSuggested = (prc != NULL);
+		bSuggested = (prc != nullptr);
 		if (prc)
 			rcSuggested = *prc;
 		else
@@ -5360,7 +5360,7 @@ struct OnDpiChangedArg
 LRESULT CConEmuSize::OnDpiChangedCall(LPARAM lParam)
 {
 	OnDpiChangedArg* p = (OnDpiChangedArg*)lParam;
-	return p->pObject->OnDpiChanged(p->DpiX, p->DpiY, p->bSuggested ? &p->rcSuggested : NULL, p->bResizeWindow, p->src);
+	return p->pObject->OnDpiChanged(p->DpiX, p->DpiY, p->bSuggested ? &p->rcSuggested : nullptr, p->bResizeWindow, p->src);
 }
 
 // Returns TRUE if DPI was really changed (compared with previous value)
@@ -5439,8 +5439,8 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 				else
 					GetWindowRect(ghWnd, &rcNew);
 				MONITORINFO miOld = {}, miNew = {};
-				HMONITOR hOld = GetNearestMonitorInfo(&miOld, NULL, &rcOld);
-				HMONITOR hNew = GetNearestMonitorInfo(&miNew, NULL, &rcNew);
+				HMONITOR hOld = GetNearestMonitorInfo(&miOld, nullptr, &rcOld);
+				HMONITOR hNew = GetNearestMonitorInfo(&miNew, nullptr, &rcNew);
 				if (hOld && hNew && (hOld != hNew))
 				{
 					// Сменился монитор, нужно обновить NormalRect
@@ -5473,7 +5473,7 @@ LRESULT CConEmuSize::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHei
 	return 0;
 }
 
-void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested /*= NULL*/)
+void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested /*= nullptr*/)
 {
 	SizeInfo::RequestRecalc();
 
@@ -5612,9 +5612,9 @@ void CConEmuSize::UpdateWindowRgn()
 	if (mp_ConEmu->mp_Inside)
 		return;
 
-	HRGN hRgn = NULL;
+	HRGN hRgn = nullptr;
 	if (m_ForceShowFrame == fsf_Show && !mb_DisableThickFrame)
-		hRgn = NULL; // allow nice themed buttons in the window caption (XP)
+		hRgn = nullptr; // allow nice themed buttons in the window caption (XP)
 	else
 		hRgn = CreateWindowRgn();
 
@@ -5639,12 +5639,12 @@ void CConEmuSize::UpdateWindowRgn()
 		RECT rcBox = {};
 		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
 		swprintf_c(szInfo,
-			nRgn ? L"SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"SetWindowRgn(0x%08X, NULL)",
+			nRgn ? L"SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"SetWindowRgn(0x%08X, nullptr)",
 			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
 		if (!LogString(szInfo)) { DEBUGSTRRGN(szInfo); }
 	}
 
-	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
+	// Облом получается при двукратном SetWindowRgn(ghWnd, nullptr, TRUE);
 	// Причем после следующего ресайза - рамка приходит в норму
 	bool b = mp_ConEmu->SetDontPreserveClient(true);
 	BOOL bRc = SetWindowRgn(ghWnd, hRgn, TRUE);
@@ -5772,11 +5772,11 @@ bool CConEmuSize::ShowMainWindow(int anCmdShow, bool abFirstShow /*= false*/)
 
 BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 {
-	HWND hNextWindow = NULL;
+	HWND hNextWindow = nullptr;
 	if ((dwFlags & AW_HIDE) && mp_ConEmu->isMeForeground(true, true))
 	{
 		hNextWindow = ghWnd;
-		while ((hNextWindow = GetNextWindow(hNextWindow, GW_HWNDNEXT)) != NULL)
+		while ((hNextWindow = GetNextWindow(hNextWindow, GW_HWNDNEXT)) != nullptr)
 		{
 			if (!CVConGroup::isOurWindow(hNextWindow)
 				&& ::IsWindowVisible(hNextWindow))
@@ -5930,7 +5930,7 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 		}
 
 		// Сама разберется, что надо/не надо
-		StoreNormalRect(NULL);
+		StoreNormalRect(nullptr);
 		// Теоретически, в некоторых случаях размер окна может (?) измениться с задержкой,
 		// в следующем цикле таймера - проверить размер
 		mp_ConEmu->mouse.bCheckNormalRect = true;
@@ -6021,7 +6021,7 @@ void CConEmuSize::DisableThickFrame(bool flag)
 	}
 }
 
-bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
+bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= nullptr*/)
 {
 	if (mb_InShowMinimized)
 		return true;
@@ -6051,16 +6051,16 @@ HRGN CConEmuSize::CreateWindowRgn()
 	if (mp_ConEmu->isInside())
 	{
 		_ASSERTE(FALSE && "Don't set WndRgn in Inside modes");
-		return NULL;
+		return nullptr;
 	}
 
-	HRGN hRgn = NULL, hExclusion = NULL;
+	HRGN hRgn = nullptr, hExclusion = nullptr;
 
 	TODO("DoubleView: Если видимы несколько консолей - нужно совместить регионы, или вообще отрубить, для простоты");
 
 	hExclusion = CVConGroup::GetExclusionRgn();
 
-	WARNING("Установка любого НЕ NULL региона сбивает XP темы при отрисовке кнопок в заголовке");
+	WARNING("Установка любого НЕ nullptr региона сбивает XP темы при отрисовке кнопок в заголовке");
 
 	// Ensure that parts of window frames will not be visible *under* the TaskBar or adjacent monitors
 	if (!gpSet->isQuakeStyle
@@ -6068,7 +6068,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 			// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
 			|| ((WindowMode == wmMaximized) && (mp_ConEmu->isSelfFrame() || hExclusion))))
 	{
-		auto mi = NearestMonitorInfo(NULL);
+		auto mi = NearestMonitorInfo(nullptr);
 		RECT rcScreen = (WindowMode == wmFullScreen) ? mi.mi.rcMonitor : mi.mi.rcWork;
 		RECT rcFrame = SizeInfo::FrameMargins();
 
@@ -6178,8 +6178,8 @@ HRGN CConEmuSize::CreateWindowRgn()
 				}
 				else
 				{
-					_ASSERTE(hRgn == NULL);
-					hRgn = NULL;
+					_ASSERTE(hRgn == nullptr);
+					hRgn = nullptr;
 				}
 			}
 		}
@@ -6199,7 +6199,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 
 HRGN CConEmuSize::CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight)
 {
-	HRGN hRgn = NULL, hExclusion = NULL, hCombine = NULL;
+	HRGN hRgn = nullptr, hExclusion = nullptr, hCombine = nullptr;
 
 	TODO("DoubleView: Если видимы несколько консолей - нужно совместить регионы, или вообще отрубить, для простоты");
 
@@ -6238,11 +6238,11 @@ HRGN CConEmuSize::CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWnd
 	{
 		if (hRgn)
 		{
-			//_ASSERTE(hRgn != NULL);
+			//_ASSERTE(hRgn != nullptr);
 			//DeleteObject(hExclusion);
 			//} else {
 			//POINT ptShift = {0,0};
-			//MapWindowPoints(ghWnd DC, NULL, &ptShift, 1);
+			//MapWindowPoints(ghWnd DC, nullptr, &ptShift, 1);
 			//RECT rcWnd = GetWindow
 			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 
@@ -6251,13 +6251,13 @@ HRGN CConEmuSize::CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWnd
 			MapWindowPoints(VCon->GetView(), ghWnd, &ptClient, 1);
 
 			HRGN hOffset = CreateRectRgn(0,0,0,0);
-			int n1 = CombineRgn(hOffset, hExclusion, NULL, RGN_COPY); UNREFERENCED_PARAMETER(n1);
+			int n1 = CombineRgn(hOffset, hExclusion, nullptr, RGN_COPY); UNREFERENCED_PARAMETER(n1);
 			int n2 = OffsetRgn(hOffset, rcFrame.left+ptClient.x, rcFrame.top+ptClient.y); UNREFERENCED_PARAMETER(n2);
 			hCombine = CreateRectRgn(0,0,1,1);
 			CombineRgn(hCombine, hRgn, hOffset, RGN_DIFF);
 			DeleteObject(hRgn);
-			DeleteObject(hOffset); hOffset = NULL;
-			hRgn = hCombine; hCombine = NULL;
+			DeleteObject(hOffset); hOffset = nullptr;
+			hRgn = hCombine; hCombine = nullptr;
 		}
 	}
 
@@ -6315,7 +6315,7 @@ bool CConEmuSize::isSelfFrame(const ConEmuWindowMode wmNewMode /*= wmCurrent*/) 
 	// gh-1539: Bypass Windows problem with region and hidden taskbar
 	if (wm == wmMaximized)
 	{
-		const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
+		const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(nullptr);
 		if (mi.isTaskbarHidden)
 			return true;
 	}
@@ -6330,7 +6330,7 @@ UINT CConEmuSize::GetSelfFrameWidth() const
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
 	const auto wm = GetWindowMode();
-	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
+	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(nullptr);
 	// -1 means we should use standard Windows thick frame if possible
 	// otherwise if window is maximized or fullscreen no sense to create hidden frame for sizing on mouse-over
 	if ((iFrame < 0) || (mi.isTaskbarHidden && isCaptionHidden() && (wm == wmMaximized || wm == wmFullScreen)))
@@ -6436,7 +6436,7 @@ void CConEmuSize::DoMaximizeRestore()
 	}
 
 	// -- this will be done in SetWindowMode
-	//StoreNormalRect(NULL); // Сама разберется, надо/не надо
+	//StoreNormalRect(nullptr); // Сама разберется, надо/не надо
 
 	ConEmuWindowMode wm = GetWindowMode();
 
@@ -6547,7 +6547,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	if ((ShowHideType == sih_None) && gpSet->isRestore2ActiveMon && gpSet->isRestoreInactive)
 	{
 		POINT ptCur = {}; GetCursorPos(&ptCur);
-		RECT rcCur = CalcRect(CER_MAIN, NULL);
+		RECT rcCur = CalcRect(CER_MAIN, nullptr);
 		HMONITOR hMonCur = MonitorFromRect(&rcCur, MONITOR_DEFAULTTONEAREST);
 		HMONITOR hMonAct = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
 		if (hMonCur && hMonAct && (hMonCur != hMonAct))
@@ -6736,7 +6736,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				}
 			}
 
-			setWindowPos(NULL, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
+			setWindowPos(nullptr, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
 		}
 
 		isQuakeMinimized = false; // теперь можно сбросить
@@ -6767,7 +6767,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					}
 					// and place it "in place"
 					int nWidth = rcPlace.right-rcPlace.left, nHeight = rcPlace.bottom-rcPlace.top;
-					setWindowPos(NULL, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
+					setWindowPos(nullptr, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
 
 					mn_QuakePercent = 100;
 					UpdateWindowRgn();
@@ -6792,7 +6792,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 						{
 							mn_QuakePercent += nQuakeShift;
 							UpdateWindowRgn();
-							RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+							RedrawWindow(ghWnd, nullptr, nullptr, RDW_UPDATENOW);
 
 							DWORD nCurTick = GetTickCount();
 							int nQuakeDelay = nQuakeStepDelay - ((int)(nCurTick - nStartTick));
@@ -6839,7 +6839,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (bVis && !bIsIconic)
 		{
 			//UpdateIdealRect();
-			StoreNormalRect(NULL);
+			StoreNormalRect(nullptr);
 		}
 
 		if ((ghLastForegroundWindow != ghWnd) && (ghLastForegroundWindow != ghOpWnd))
@@ -6923,7 +6923,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					while (mn_QuakePercent > 0)
 					{
 						UpdateWindowRgn();
-						RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+						RedrawWindow(ghWnd, nullptr, nullptr, RDW_UPDATENOW);
 						//Sleep(nQuakeDelay);
 						mn_QuakePercent -= nQuakeShift;
 
@@ -7112,14 +7112,14 @@ void CConEmuSize::DoDesktopModeSwitch()
 #ifdef CHILD_DESK_MODE
 	HWND hDesktop = GetDesktopWindow();
 
-	//HWND hProgman = FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
-	//HWND hParent = NULL; // mp_ConEmu->opt.DesktopMode ?  : GetDesktopWindow();
+	//HWND hProgman = FindWindowEx(hDesktop, nullptr, L"Progman", L"Program Manager");
+	//HWND hParent = nullptr; // mp_ConEmu->opt.DesktopMode ?  : GetDesktopWindow();
 
 	OnTaskbarSettingsChanged();
 
 	if (mp_ConEmu->opt.DesktopMode)
 	{
-		// Shell windows is FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
+		// Shell windows is FindWindowEx(hDesktop, nullptr, L"Progman", L"Program Manager");
 		HWND hShellWnd = GetShellWindow();
 		DWORD dwShellPID = 0;
 
@@ -7131,12 +7131,12 @@ void CConEmuSize::DoDesktopModeSwitch()
 		{
 			// В каких-то случаях (на каких-то темах?) иконки создаются в "Progman", а в одном из "WorkerW" классов
 			// Все эти окна принадлежат одному процессу explorer.exe
-			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
+			HWND hShell = FindWindowEx(hDesktop, nullptr, L"WorkerW", nullptr);
 
 			while (hShell)
 			{
 				// У него должны быть дочерние окна
-				if (IsWindowVisible(hShell) && FindWindowEx(hShell, NULL, NULL, NULL))
+				if (IsWindowVisible(hShell) && FindWindowEx(hShell, nullptr, nullptr, nullptr))
 				{
 					// Теоретически, эти окна должны принадлежать одному процессу (Explorer.exe)
 					if (dwShellPID)
@@ -7146,7 +7146,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 
 						if (dwTestPID != dwShellPID)
 						{
-							hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", NULL);
+							hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", nullptr);
 							continue;
 						}
 					}
@@ -7154,7 +7154,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 					break;
 				}
 
-				hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", NULL);
+				hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", nullptr);
 			}
 
 			if (hShell)
@@ -7187,10 +7187,10 @@ void CConEmuSize::DoDesktopModeSwitch()
 			mh_ShellWindow = hShellWnd;
 			GetWindowThreadProcessId(mh_ShellWindow, &mn_ShellWindowPID);
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-			MapWindowPoints(NULL, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
+			MapWindowPoints(nullptr, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
 			SetParent(mh_ShellWindow);
 
-			setWindowPos(NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
+			setWindowPos(nullptr, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
 			setWindowPos(HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 
 			#ifdef _DEBUG
@@ -7205,9 +7205,9 @@ void CConEmuSize::DoDesktopModeSwitch()
 		//dwStyle |= WS_POPUP;
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 		RECT rcVirtual = GetVirtualScreenRect(TRUE);
-		setWindowPos(NULL, std::max(rcWnd.left,rcVirtual.left),std::max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(nullptr, std::max(rcWnd.left,rcVirtual.left),std::max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
 		SetParent(hDesktop);
-		setWindowPos(NULL, std::max(rcWnd.left,rcVirtual.left),std::max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(nullptr, std::max(rcWnd.left,rcVirtual.left),std::max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
 		OnAlwaysOnTop();
 
 		if (ghOpWnd && !gpSet->isAlwaysOnTop)
@@ -7220,7 +7220,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 
 HWND CConEmuSize::FindNextSiblingApp(bool bActivate)
 {
-	HWND hNext = NULL;
+	HWND hNext = nullptr;
 	wchar_t szClass[MAX_PATH] = L"";
 
 	#ifdef _DEBUG
@@ -7229,7 +7229,7 @@ HWND CConEmuSize::FindNextSiblingApp(bool bActivate)
 	wchar_t szTitle[MAX_PATH] = L"";
 	#endif
 
-	while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
+	while ((hNext = FindWindowEx(nullptr, hNext, nullptr, nullptr)) != nullptr)
 	{
 		if (!IsWindowVisible(hNext) || !IsWindowEnabled(hNext))
 			continue;

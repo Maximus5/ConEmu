@@ -43,7 +43,7 @@ using namespace rapidxml;
 // catch (rapidxml::parse_error& e)
 
 #ifdef _DEBUG
-#define HEAPVAL //HeapValidate(GetProcessHeap(), 0, NULL);
+#define HEAPVAL //HeapValidate(GetProcessHeap(), 0, nullptr);
 #else
 #define HEAPVAL
 #endif
@@ -128,7 +128,7 @@ bool SettingsBase::Load(const wchar_t *regName, RECT &value)
 
 void SettingsBase::Save(const wchar_t *regName, const wchar_t *value)
 {
-	if (!value) value = L"";  // protect against NULL values
+	if (!value) value = L"";  // protect against nullptr values
 	Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
 }
 
@@ -185,7 +185,7 @@ SettingsRegistry::SettingsRegistry()
 	: SettingsBase()
 {
 	m_Storage = {StorageType::REG};
-	regMy = NULL;
+	regMy = nullptr;
 }
 SettingsRegistry::~SettingsRegistry()
 {
@@ -201,7 +201,7 @@ bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, unsigned acc
 	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE) || !lstrcmpi(regPath, L"Software\\Microsoft\\Command Processor"));
 
 	if ((access & KEY_WRITE) == KEY_WRITE)
-		res = RegCreateKeyEx(inHKEY, regPath, 0, NULL, 0, access, 0, &regMy, 0) == ERROR_SUCCESS;
+		res = RegCreateKeyEx(inHKEY, regPath, 0, nullptr, 0, access, 0, &regMy, 0) == ERROR_SUCCESS;
 	else
 		res = RegOpenKeyEx(inHKEY, regPath, 0, access, &regMy) == ERROR_SUCCESS;
 
@@ -216,7 +216,7 @@ void SettingsRegistry::CloseKey()
 	if (regMy)
 	{
 		RegCloseKey(regMy);
-		regMy = NULL;
+		regMy = nullptr;
 	}
 }
 
@@ -227,7 +227,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	_ASSERTE(nSize>0);
 
 	DWORD nNewSize = nSize;
-	LONG lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nNewSize);
+	LONG lRc = RegQueryValueEx(regMy, regName, nullptr, nullptr, (LPBYTE)value, &nNewSize);
 	if (lRc == ERROR_SUCCESS)
 		return true;
 
@@ -238,7 +238,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	{
 		// если тип раньше был DWORD а стал - BYTE
 		DWORD nData = 0;
-		lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)&nData, &nNewSize);
+		lRc = RegQueryValueEx(regMy, regName, nullptr, nullptr, (LPBYTE)&nData, &nNewSize);
 		if (lRc == ERROR_SUCCESS)
 		{
 			*value = (BYTE)(nData & 0xFF);
@@ -252,13 +252,13 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 {
 	DWORD len = 0;
 
-	if (RegQueryValueExW(regMy, regName, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len)
+	if (RegQueryValueExW(regMy, regName, nullptr, nullptr, nullptr, &len) == ERROR_SUCCESS && len)
 	{
 		int nChLen = len/2;
-		if (*value) {free(*value); *value = NULL;}
+		if (*value) {free(*value); *value = nullptr;}
 		*value = (wchar_t*)malloc((nChLen+2)*sizeof(wchar_t));
 
-		bool lbRc = (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS);
+		bool lbRc = (RegQueryValueExW(regMy, regName, nullptr, nullptr, (LPBYTE)(*value), &len) == ERROR_SUCCESS);
 
 		if (!lbRc)
 			nChLen = 0;
@@ -280,11 +280,11 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 	_ASSERTE(maxLen>1);
 	DWORD len = 0, dwType = 0;
 
-	if (RegQueryValueExW(regMy, regName, NULL, &dwType, NULL, &len) == ERROR_SUCCESS && dwType == REG_SZ)
+	if (RegQueryValueExW(regMy, regName, nullptr, &dwType, nullptr, &len) == ERROR_SUCCESS && dwType == REG_SZ)
 	{
 		len = maxLen*2; // max size in BYTES
 
-		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)value, &len) == ERROR_SUCCESS)
+		if (RegQueryValueExW(regMy, regName, nullptr, nullptr, (LPBYTE)value, &len) == ERROR_SUCCESS)
 		{
 			if (value)
 				value[maxLen-1] = 0; // на всякий случай, чтобы ASCIIZ был однозначно
@@ -318,9 +318,9 @@ void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, const DWORD n
 }
 //void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
 //{
-//	if (!value) value = _T("");  // сюда мог придти и NULL
+//	if (!value) value = _T("");  // сюда мог придти и nullptr
 //
-//	RegSetValueEx(regMy, regName, NULL, REG_SZ, (LPBYTE)value, (lstrlenW(value)+1) * sizeof(wchar_t));
+//	RegSetValueEx(regMy, regName, nullptr, REG_SZ, (LPBYTE)value, (lstrlenW(value)+1) * sizeof(wchar_t));
 //}
 
 
@@ -346,8 +346,8 @@ void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, const DWORD n
 SettingsINI::SettingsINI(const SettingsStorage& Storage)
 	: SettingsBase(Storage)
 {
-	mpsz_Section = NULL;
-	mpsz_IniFile = NULL;
+	mpsz_Section = nullptr;
+	mpsz_IniFile = nullptr;
 	m_Storage.Type = StorageType::INI;
 }
 SettingsINI::~SettingsINI()
@@ -365,7 +365,7 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 
 	if (!regPath || !*regPath)
 	{
-		mpsz_IniFile = NULL;
+		mpsz_IniFile = nullptr;
 		return false;
 	}
 
@@ -381,21 +381,21 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 
 	if (!mpsz_IniFile || !*mpsz_IniFile)
 	{
-		mpsz_IniFile = NULL;
+		mpsz_IniFile = nullptr;
 		return false;
 	}
 
 	HANDLE hFile = CreateFile(mpsz_IniFile,
 		((access & KEY_WRITE) == KEY_WRITE) ? GENERIC_WRITE : GENERIC_READ,
 		FILE_SHARE_READ,
-		NULL,
+		nullptr,
 		((access & KEY_WRITE) == KEY_WRITE) ? OPEN_ALWAYS : OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL,
-		NULL);
+		nullptr);
 
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		mpsz_IniFile = NULL;
+		mpsz_IniFile = nullptr;
 		return false;
 	}
 
@@ -404,7 +404,7 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 	wchar_t* pszDup = lstrdup(regPath);
 	if (!pszDup)
 	{
-		mpsz_IniFile = NULL;
+		mpsz_IniFile = nullptr;
 		return FALSE;
 	}
 	// Замена символов
@@ -420,7 +420,7 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 	char* pszSectionA = (char*)malloc(cchMax);
 	if (!pszSectionA)
 	{
-		mpsz_IniFile = NULL;
+		mpsz_IniFile = nullptr;
 		SafeFree(pszDup);
 		return false;
 	}
@@ -478,7 +478,7 @@ void SettingsINI::Delete(const wchar_t *regName)
 		//char szName[MAX_PATH*3] = {};
 		//WideCharToMultiByte(CP_UTF8, 0, regName, -1, szName, countof(szName), 0,0);
 		//if (*szName)
-		WritePrivateProfileString(mpsz_Section, regName, NULL, mpsz_IniFile);
+		WritePrivateProfileString(mpsz_Section, regName, nullptr, mpsz_IniFile);
 	}
 }
 
@@ -527,7 +527,7 @@ namespace
 
 		FileWriter(LPCWSTR pszXmlFile)
 		{
-			hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (!hFile || hFile == INVALID_HANDLE_VALUE)
 				throw FileException(GetLastError());
 			data.reserve(128*1024);
@@ -544,7 +544,7 @@ namespace
 			if (data.size() > 0)
 			{
 				DWORD nWritten = 0;
-				BOOL written = WriteFile(hFile, &data[0], data.size(), &nWritten, NULL);
+				BOOL written = WriteFile(hFile, &data[0], data.size(), &nWritten, nullptr);
 				if (!written || !nWritten)
 					throw FileException(GetLastError());
 				SetEndOfFile(hFile);
@@ -610,13 +610,13 @@ LPCWSTR SettingsXML::utf2wcs(const char* utf8, CEStr& wc)
 {
 	if (!utf8)
 	{
-		_ASSERTE(utf8 != NULL);
+		_ASSERTE(utf8 != nullptr);
 		wc.Clear();
-		return NULL;
+		return nullptr;
 	}
 
 	wc.Empty();
-	int wcLen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+	int wcLen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
 	if (wcLen > 0)
 	{
 		wcLen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wc.GetBuffer(wcLen), wcLen);
@@ -630,14 +630,14 @@ LPCWSTR SettingsXML::utf2wcs(const char* utf8, CEStr& wc)
 const char* SettingsXML::wcs2utf(const wchar_t* wc, CEStrA& str) const
 {
 	str.Clear();
-	int ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, NULL, 0, NULL, NULL);
+	int ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, nullptr, 0, nullptr, nullptr);
 	str = (char*)malloc(ucLen);
 	if (!str.ms_Val)
 	{
-		_ASSERTE(str.ms_Val!=NULL);
+		_ASSERTE(str.ms_Val!=nullptr);
 		return nullptr;
 	}
-	ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, str.ms_Val, ucLen, NULL, NULL);
+	ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, str.ms_Val, ucLen, nullptr, nullptr);
 	if (ucLen <= 0)
 	{
 		_ASSERTE(ucLen > 0);
@@ -652,13 +652,13 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc)
 {
 	if (!wc || !*wc)
 	{
-		_ASSERTE(wc!=NULL);
+		_ASSERTE(wc!=nullptr);
 		return "";
 	}
 
 	if (!mp_File)
 	{
-		_ASSERTE(mp_File!=NULL);
+		_ASSERTE(mp_File!=nullptr);
 		return nullptr;
 	}
 
@@ -669,18 +669,18 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc)
 	}
 
 	const char* allocated = mp_File->allocate_string(temp);
-	_ASSERTE(allocated != NULL);
+	_ASSERTE(allocated != nullptr);
 	return allocated;
 }
 
 bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 {
 	bool bRc = false;
-	bool bNeedReopen = (mp_File == NULL);
-	LPCWSTR pszXmlFile = NULL;
+	bool bNeedReopen = (mp_File == nullptr);
+	LPCWSTR pszXmlFile = nullptr;
 	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
 
-	_ASSERTE(pszErr == NULL);
+	_ASSERTE(pszErr == nullptr);
 
 	if (m_Storage.hasFile())
 	{
@@ -709,7 +709,7 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 			dwMode = OPEN_ALWAYS;
 		}
 
-		HANDLE hFile = CreateFile(pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, dwMode, 0, 0);
+		HANDLE hFile = CreateFile(pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, dwMode, 0, 0);
 
 		// XML-file is absent
 		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
@@ -728,7 +728,7 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 					if (bfi.nFileSizeHigh == 0 && bfi.nFileSizeLow == 3)
 					{
 						BYTE bom[3] = {}; DWORD nRead = 0;
-						if (ReadFile(hFile, bom, sizeof(bom), &nRead, NULL) && (nRead == sizeof(bom))
+						if (ReadFile(hFile, bom, sizeof(bom), &nRead, nullptr) && (nRead == sizeof(bom))
 							&& (bom[0]==0xEF && bom[1]==0xBB && bom[2]==0xBF))
 						{
 							mb_Empty = true;
@@ -736,11 +736,11 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 					}
 				}
 			}
-			CloseHandle(hFile); hFile = NULL;
+			CloseHandle(hFile); hFile = nullptr;
 			if (mb_Empty && bAllowCreate)
 			{
 				bNeedReopen = true;
-				hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, 0, 0);
+				hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, 0, 0);
 				if (!hFile || (hFile == INVALID_HANDLE_VALUE))
 				{
 					goto wrap;
@@ -753,10 +753,10 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 						"\t</key>\r\n"
 						"</key>\r\n";
 					DWORD nLen = lstrlenA(pszDefault);
-					WriteFile(hFile, pszDefault, nLen, &nLen, NULL);
+					WriteFile(hFile, pszDefault, nLen, &nLen, nullptr);
 					CloseHandle(hFile);
 				}
-				hFile = NULL;
+				hFile = nullptr;
 			}
 		}
 	}
@@ -773,8 +773,8 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 	CloseStorage();
 
 	{
-		_ASSERTE(mp_File == NULL);
-		_ASSERTE(mp_Utf8Data == NULL);
+		_ASSERTE(mp_File == nullptr);
+		_ASSERTE(mp_Utf8Data == nullptr);
 
 		DWORD cchChars = 0, nErrCode = 0;
 		if (ReadTextFile(pszXmlFile, (DWORD)-1, mp_Utf8Data, cchChars, nErrCode) < 0)
@@ -826,10 +826,10 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 
 	bool lbRc = false;
 	HRESULT hr = S_OK;
-	wchar_t* pszErr = NULL;
+	wchar_t* pszErr = nullptr;
 	wchar_t szName[MAX_PATH];
-	const wchar_t* psz = NULL;
-	SettingsXML::node* pKey = NULL;
+	const wchar_t* psz = nullptr;
+	SettingsXML::node* pKey = nullptr;
 	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
 
 	CloseKey(); // JIC
@@ -846,7 +846,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 
 	try
 	{
-		_ASSERTE(mp_File != NULL);
+		_ASSERTE(mp_File != nullptr);
 
 		pKey = mp_File;
 
@@ -897,7 +897,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 		}
 
 		// Нашли, запомнили
-		mp_Key = pKey; pKey = NULL;
+		mp_Key = pKey; pKey = nullptr;
 
 		lbRc = true;
 
@@ -916,7 +916,7 @@ wrap:
 	{
 		// Don't show error message box as a child of ghWnd
 		// otherwise it may be closed unexpectedly on exit
-		MsgBox(pszErr, MB_ICONSTOP, NULL, NULL);
+		MsgBox(pszErr, MB_ICONSTOP, nullptr, nullptr);
 	}
 	SafeFree(pszErr);
 
@@ -962,7 +962,7 @@ void SettingsXML::TouchKey(SettingsXML::node* apKey) noexcept
 void SettingsXML::CloseStorage() noexcept
 {
 	HRESULT hr = S_OK;
-	HANDLE hFile = NULL;
+	HANDLE hFile = nullptr;
 	bool bCanSave = false;
 
 	CloseKey();
@@ -976,7 +976,7 @@ void SettingsXML::CloseStorage() noexcept
 		if (pszXmlFile)
 		{
 			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-			                   NULL, OPEN_EXISTING, 0, 0);
+			                   nullptr, OPEN_EXISTING, 0, 0);
 
 			// XML-файл отсутсвует, или ошибка доступа
 			if (hFile == INVALID_HANDLE_VALUE)
@@ -989,7 +989,7 @@ void SettingsXML::CloseStorage() noexcept
 			}
 			else
 			{
-				CloseHandle(hFile); hFile = NULL;
+				CloseHandle(hFile); hFile = nullptr;
 				bCanSave = true;
 			}
 
@@ -1048,7 +1048,7 @@ void SettingsXML::CloseKey() noexcept
 	mp_Key = nullptr;
 }
 
-// Function DOES NOT return NULL
+// Function DOES NOT return nullptr
 const char* SettingsXML::GetAttr(SettingsXML::node* apNode, const char* asName)
 {
 	attribute* attr = apNode ? apNode->first_attribute(asName, 0, false) : nullptr;
@@ -1136,8 +1136,8 @@ SettingsXML::node* SettingsXML::FindItem(SettingsXML::node* apFrom, const wchar_
 bool SettingsXML::Load(const wchar_t *regName, wchar_t **value) noexcept
 {
 	bool lbRc = false;
-	SettingsXML::node *pChild = NULL;
-	SettingsXML::node *pNode = NULL;
+	SettingsXML::node *pChild = nullptr;
+	SettingsXML::node *pNode = nullptr;
 	const char *sType;
 	size_t cchMax = 0;
 	CEStrA data;
@@ -1232,7 +1232,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t *value, int maxLen) noexc
 {
 	_ASSERTE(maxLen>1);
 	bool lbRc = false;
-	wchar_t* pszValue = NULL;
+	wchar_t* pszValue = nullptr;
 
 	if (Load(regName, &pszValue))
 	{
@@ -1251,8 +1251,8 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t *value, int maxLen) noexc
 bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize) noexcept
 {
 	bool lbRc = false;
-	SettingsXML::node* pChild = NULL;
-	SettingsXML::node *pNode = NULL;
+	SettingsXML::node* pChild = nullptr;
+	SettingsXML::node *pNode = nullptr;
 	const char *sType = nullptr, *sData = nullptr;
 
 	if (!value || !nSize)
@@ -1302,7 +1302,7 @@ bool SettingsXML::ConvertData(const char* sType, const char* sData, LPBYTE value
 	} // if (0 == _strcmpi(sType, "string"))
 	else if ((0 == _strcmpi(sType, "ulong")) || (0 == _strcmpi(sType, "dword")))
 	{
-		char* pszEnd = NULL;
+		char* pszEnd = nullptr;
 		int radix = (0 == _strcmpi(sType, "dword")) ? 16 : 10;
 		DWORD lVal = strtoul(sData, &pszEnd, radix);
 
@@ -1316,7 +1316,7 @@ bool SettingsXML::ConvertData(const char* sType, const char* sData, LPBYTE value
 	} // if ((0 == _strcmpi(sType, "ulong")) || (0 == _strcmpi(sType, "dword")))
 	else if (0 == _strcmpi(sType, "long"))
 	{
-		char* pszEnd = NULL;
+		char* pszEnd = nullptr;
 		int lVal = strtol(sData, &pszEnd, 10);
 
 		if (nSize > sizeof(lVal)) nSize = sizeof(lVal);
@@ -1499,9 +1499,9 @@ void SettingsXML::ClearChildrenTail(SettingsXML::node* apNode, SettingsXML::node
 
 void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) noexcept
 {
-	SettingsXML::node* pChild = NULL;
-	const char* sValue = NULL;
-	const char* sType = NULL;
+	SettingsXML::node* pChild = nullptr;
+	const char* sValue = nullptr;
+	const char* sType = nullptr;
 	bool bNeedSetType = false;
 	// nType:
 	// REG_DWORD:    сохранение числа в 16-ричном или 10-чном формате, в зависимости от того, что сейчас указано в xml ("dword"/"ulong"/"long")
@@ -1644,14 +1644,14 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, const DWORD nType,
 
 		if (bNeedSetType)
 		{
-			_ASSERTE(sType!=NULL);
+			_ASSERTE(sType!=nullptr);
 			SetAttr(pChild, "type", sType);
 		}
 
 		// And the value
 		if (nType != REG_MULTI_SZ)
 		{
-			_ASSERTE(sValue != NULL);
+			_ASSERTE(sValue != nullptr);
 			SetAttr(pChild, "data", sValue);
 		}
 		else     // Create sequence of <line/> elements for REG_MULTI_SZ

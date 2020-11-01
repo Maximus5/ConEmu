@@ -157,7 +157,7 @@ TEST(CMatch, UnitTests)
 			etr_AnyClickable, false, {}},
 		{L"\t" L"m_abc.func(1,2,3)" L"\t",
 			etr_AnyClickable, false, {}},
-		{NULL}
+		{nullptr}
 	};
 
 	auto UnitTestMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText)
@@ -241,7 +241,7 @@ TEST(CMatch, UnitTests)
 			}
 
 			// More matches waiting?
-			if (Tests[i].matches[++iMatchNo] == NULL)
+			if (Tests[i].matches[++iMatchNo] == nullptr)
 			{
 				UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, iPrevStart, iSrcLen);
 				break;

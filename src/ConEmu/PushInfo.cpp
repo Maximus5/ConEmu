@@ -77,7 +77,7 @@ static CPushInfo::PushInfo gPushInfo[] = {
 #define INFO_MESSAGE_FOOTER L"<Yes> - open browser, <No> - stop buzzing."
 
 CPushInfo::CPushInfo()
-	: mp_Active(NULL)
+	: mp_Active(nullptr)
 {
 	SYSTEMTIME st = {};
 	FILETIME ft = {}, ft1 = {}, ft2 = {};
@@ -116,7 +116,7 @@ CPushInfo::CPushInfo()
 				if (iCmp1 <= 0 && iCmp2 <= 0)
 				{
 					// Don't show this notification in TSA
-					gPushInfo[i].pszTsaNotify = NULL;
+					gPushInfo[i].pszTsaNotify = nullptr;
 				}
 			}
 		}
@@ -180,7 +180,7 @@ void CPushInfo::OpenNotificationUrl()
 {
 	if (!mp_Active || !mp_Active->pszUrl)
 		return;
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", mp_Active->pszUrl, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", mp_Active->pszUrl, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);

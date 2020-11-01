@@ -35,7 +35,7 @@ struct CESERVER_REQ_GUIMACRO;
 namespace ConEmuMacro
 {
 	// Общая функция, для обработки любого известного макроса
-	LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false, CESERVER_REQ_GUIMACRO* Opt = NULL);
+	LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false, CESERVER_REQ_GUIMACRO* Opt = nullptr);
 	// Конвертация из "старого" в "новый" формат
 	// Старые макросы хранились как "Verbatim" но без префикса
 	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);

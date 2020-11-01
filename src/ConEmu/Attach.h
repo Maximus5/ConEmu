@@ -53,14 +53,14 @@ struct AttachParm
 class CAttachDlg
 {
 protected:
-	HWND mh_Dlg = NULL;
-	HWND mh_List = NULL;
+	HWND mh_Dlg = nullptr;
+	HWND mh_List = nullptr;
 	CDpiForDialog* mp_DpiAware = nullptr;
 	CDynDialog* mp_Dlg = nullptr;
 	// Attach options
 	int   mn_AttachType = 0;    // 1 - console, 2 - GUI
 	DWORD mn_AttachPID = 0;     // PID of the process we attach to
-	HWND  mh_AttachHWND = NULL; // HWND for GUI attach
+	HWND  mh_AttachHWND = nullptr; // HWND for GUI attach
 	// The information about running processes in our system
 	CProcessData *mp_ProcessData = nullptr;
 	BOOL  mb_IsWin64 = WIN3264TEST(FALSE,TRUE); // updated in ctor

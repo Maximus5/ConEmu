@@ -239,7 +239,7 @@ void AppSettings::SetNames(LPCWSTR asAppNames)
 		AppNamesLwr = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
 		if (!AppNames || !AppNamesLwr)
 		{
-			_ASSERTE(AppNames!=NULL && AppNamesLwr!=NULL);
+			_ASSERTE(AppNames!=nullptr && AppNamesLwr!=nullptr);
 			return;
 		}
 	}

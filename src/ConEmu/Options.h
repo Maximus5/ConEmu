@@ -342,7 +342,7 @@ struct Settings
 		void SaveStdColors(SettingsBase* reg);
 		void SaveStartCommands(SettingsBase* reg);
 
-		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL/*, Settings::CEAppColors** NewAppColors = NULL*/);
+		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = nullptr/*, Settings::CEAppColors** NewAppColors = nullptr*/);
 
 		DWORD mn_FadeMul;
 		inline BYTE GetFadeColorItem(BYTE c);
@@ -808,7 +808,7 @@ struct Settings
 		//reg->Load(L"TabFontHeight", nTabFontHeight);
 		int nTabFontHeight;
 
-		//if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
+		//if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = nullptr; } }
 		wchar_t *sTabCloseMacro;
 		LPCWSTR TabCloseMacro(FarMacroVersion fmv);
 		LPCWSTR TabCloseMacroDefault(FarMacroVersion fmv);
@@ -983,7 +983,7 @@ struct Settings
 		// VkMod = LOBYTE - VK, старшие три байта - модификаторы (тоже VK)
 
 		// Вернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
-		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = NULL);
+		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = nullptr);
 		// Return hotkeyname by ID
 		LPCWSTR GetHotkeyNameById(int nDescrID, wchar_t (&szFull)[128], bool bShowNone = true);
 		// Проверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
@@ -1139,7 +1139,7 @@ struct Settings
 		//HotGuiMacro Macros[24];
 
 	public:
-		void LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
+		void LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* apStorage = nullptr);
 		void InitSettings();
 		void InitVanilla();
 		void InitVanillaFontSettings();
@@ -1148,14 +1148,14 @@ struct Settings
 		void LoadPalettes(SettingsBase* reg);
 		void CreatePredefinedPalettes(int iAddUserCount);
 		void LoadProgresses(SettingsBase* reg);
-		BOOL SaveSettings(BOOL abSilent = FALSE, const SettingsStorage* apStorage = NULL);
+		BOOL SaveSettings(BOOL abSilent = FALSE, const SettingsStorage* apStorage = nullptr);
 		void SaveAppsSettings(SettingsBase* reg);
 		bool SaveCmdTasks(SettingsBase* reg);
 		bool SaveProgresses(SettingsBase* reg);
 		void SaveConsoleFont();
-		void SaveFindOptions(SettingsBase* reg = NULL);
+		void SaveFindOptions(SettingsBase* reg = nullptr);
 		void OnAutoSaveTimer();
-		void AutoSaveSettings(SettingsBase* reg = NULL, bool saveAll = false);
+		void AutoSaveSettings(SettingsBase* reg = nullptr, bool saveAll = false);
 		bool IsAutoSaveSettings(bool saveAll);
 		void SaveSettingsOnExit();
 		void SaveStopBuzzingDate();

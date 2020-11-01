@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR sHint, bool bRedraw, UINT nSearchMsg, WORD nDefBtnID);
-void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg = NULL);
+void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg = nullptr);
 bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult);
 void EditIconHint_ResChanged(HWND hEditCtrl);
 void EditIconHint_SetTimer(HWND hEditCtrl);

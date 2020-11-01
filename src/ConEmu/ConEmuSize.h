@@ -210,9 +210,9 @@ protected:
 	mutable MSectionSimple mcs_monitors = MSectionSimple(true);
 	MArray<MonitorInfoCache> monitors;
 	// Save preferred monitor to restore
-	HMONITOR mh_MinFromMonitor = NULL;
+	HMONITOR mh_MinFromMonitor = nullptr;
 	// Updated during move operation (jump, etc.)
-	HMONITOR mh_RequestedMonitor = NULL;
+	HMONITOR mh_RequestedMonitor = nullptr;
 	// true during jump to monitor with different dpi
 	bool mb_MonitorDpiChanged = false;
 public:
@@ -229,27 +229,27 @@ public:
 	static void AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op = rcop_Shrink);
 
 private:
-	HMONITOR FindInitialMonitor(MONITORINFO* pmi = NULL);
+	HMONITOR FindInitialMonitor(MONITORINFO* pmi = nullptr);
 
 public:
 	void AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom);
 	RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
-	RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon = NULL);
-	RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon = NULL, enum ConEmuMargins tTabAction = CEM_TAB);
+	RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon = nullptr);
+	RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon = nullptr, enum ConEmuMargins tTabAction = CEM_TAB);
 	void CascadedPosFix();
-	SIZE GetDefaultSize(bool bCells, const CESize* pSizeW = NULL, const CESize* pSizeH = NULL, HMONITOR hMon = NULL);
+	SIZE GetDefaultSize(bool bCells, const CESize* pSizeW = nullptr, const CESize* pSizeH = nullptr, HMONITOR hMon = nullptr);
 	RECT GetDefaultRect();
 	DpiValue GetInitialDpi();
 	RECT GetIdealRect();
 	void UpdateInsideRect(RECT rcNewPos);
 
-	void RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested = NULL);
+	void RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested = nullptr);
 	bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
 
 	static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
 	bool ChangeTileMode(ConEmuWindowCommand Tile);
-	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
-	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);
+	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = nullptr);
+	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = nullptr);
 	RECT GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi) const;
 	ConEmuWindowMode GetWindowMode() const;
 	ConEmuWindowMode GetChangeFromWindowMode() const;
@@ -265,7 +265,7 @@ public:
 	bool IsInWindowModeChange() const;
 	void LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1 = 0, DWORD nParm2 = 0, DWORD nParm3 = 0);
 	bool JumpNextMonitor(bool Next);
-	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = NULL);
+	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = nullptr);
 	void DoBringHere();
 	void DoFullScreen();
 	void DoMaximizeRestore();
@@ -294,15 +294,15 @@ public:
 	HWND FindNextSiblingApp(bool bActivate);
 
 public:
-	HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPCRECT prcWnd = NULL);
-	HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
+	HMONITOR GetNearestMonitor(MONITORINFO* pmi = nullptr, LPCRECT prcWnd = nullptr);
+	HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = nullptr);
 	void StorePreMinimizeMonitor();
 
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 
 	LRESULT OnSize(bool bResizeRCon = true, WPARAM wParam = 0);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
+	LRESULT OnMoving(LPRECT prcWnd = nullptr, bool bWmMove = false);
 	LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow, DpiChangeSource src);
@@ -316,7 +316,7 @@ public:
 	void ResetSizingFlags(DWORD nDropFlags = MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	void EndSizing(UINT nMouseMsg = 0);
 
-	bool InMinimizing(WINDOWPOS *p = NULL);
+	bool InMinimizing(WINDOWPOS *p = nullptr);
 
 	HRGN CreateWindowRgn();
 	HRGN CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
@@ -347,7 +347,7 @@ protected:
 	static RECT CalcMargins_StatusBar();
 	static RECT CalcMargins_Padding();
 	static RECT CalcMargins_Scrolling();
-	RECT CalcMargins_VisibleFrame(LPRECT prcFrame = NULL) const;
+	RECT CalcMargins_VisibleFrame(LPRECT prcFrame = nullptr) const;
 	RECT CalcMargins_InvisibleFrame() const;
 	static LRESULT OnDpiChangedCall(LPARAM lParam);
 	bool FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopupDlg = false);

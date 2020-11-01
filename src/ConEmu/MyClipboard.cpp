@@ -51,7 +51,7 @@ bool MyOpenClipboard(LPCWSTR asAction)
 	int iMaxTries = 100;
 
 	// Open Windows' clipboard
-	while (!(lbRc = OpenClipboard((ghWnd && IsWindow(ghWnd)) ? ghWnd : NULL)) && (iMaxTries-- > 0))
+	while (!(lbRc = OpenClipboard((ghWnd && IsWindow(ghWnd)) ? ghWnd : nullptr)) && (iMaxTries-- > 0))
 	{
 		DWORD dwErr = GetLastError();
 
@@ -90,8 +90,8 @@ HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem)
 {
 	HANDLE h = SetClipboardData(uFormat, hMem);
 
-	wchar_t szLog[100]; DWORD dwErr = (h == NULL) ? GetLastError() : 0;
-	if (h != NULL)
+	wchar_t szLog[100]; DWORD dwErr = (h == nullptr) ? GetLastError() : 0;
+	if (h != nullptr)
 		swprintf_c(szLog, L"SetClipboardData(x%04X, x%08X) succeeded", uFormat, (DWORD)(DWORD_PTR)hMem);
 	else
 		swprintf_c(szLog, L"SetClipboardData(x%04X, x%08X) failed, code=%u", uFormat, (DWORD)(DWORD_PTR)hMem, dwErr);
@@ -130,7 +130,7 @@ bool CopyToClipboard(LPCWSTR asText)
 					return;
 				}
 
-				int iLen = WideCharToMultiByte(cp, 0, asText, cch+1, lpstrCopy, cch+1, NULL, NULL);
+				int iLen = WideCharToMultiByte(cp, 0, asText, cch+1, lpstrCopy, cch+1, nullptr, nullptr);
 				GlobalUnlock(hglbCopy);
 				if (iLen < 1)
 				{
@@ -184,7 +184,7 @@ bool CopyToClipboard(LPCWSTR asText)
 
 		for (size_t f = 0; f < data.idx; f++)
 		{
-			if (MySetClipboardData(data.Formats[f], data.Hglbs[f]) != NULL)
+			if (MySetClipboardData(data.Formats[f], data.Hglbs[f]) != nullptr)
 				bCopied = true;
 			else
 				GlobalFree(data.Hglbs[f]);
@@ -201,14 +201,14 @@ wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax
 	if (!rsErrText || cchErrMax < 255)
 	{
 		_ASSERTE(FALSE && "Invalid arguments");
-		return NULL;
+		return nullptr;
 	}
 
 	HGLOBAL hglb;
 	LPCWSTR lptstr;
-	wchar_t* pszBuf = NULL;
+	wchar_t* pszBuf = nullptr;
 
-	if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
+	if ((hglb = GetClipboardData(CF_UNICODETEXT)) == nullptr)
 	{
 		rnErrCode = GetLastError();
 		swprintf_c(rsErrText, cchErrMax/*#SECURELEN*/, L"Clipboard does not contain CF_UNICODETEXT, nothing to paste (code=%u)", rnErrCode);
@@ -226,7 +226,7 @@ wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax
 		TODO("Сделать статусное сообщение с таймаутом");
 		//this->SetConStatus(L"Clipboard does not contains text. Nothing to paste.");
 	}
-	else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == NULL)
+	else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == nullptr)
 	{
 		rnErrCode = GetLastError();
 		swprintf_c(rsErrText, cchErrMax/*#SECURELEN*/, L"Can't lock CF_UNICODETEXT, paste failed (code=%u)", rnErrCode);
@@ -243,7 +243,7 @@ wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax
 	else
 	{
 		pszBuf = lstrdup(lptstr, 1); // Reserve memory for space-termination
-		Assert(pszBuf!=NULL);
+		Assert(pszBuf!=nullptr);
 		GlobalUnlock(hglb);
 	}
 

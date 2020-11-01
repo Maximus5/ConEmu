@@ -44,7 +44,7 @@ wchar_t gsFlattrPage[] = CEFLATTRPAGE;
 
 CImgButtons::CImgButtons(HWND ahDlg, int aAlignLeftId, int aAlignVCenterId)
 	: hDlg(ahDlg)
-	, hwndTip(NULL)
+	, hwndTip(nullptr)
 	, AlignLeftId(aAlignLeftId)
 	, AlignVCenterId(aAlignVCenterId)
 {
@@ -61,7 +61,7 @@ CImgButtons::~CImgButtons()
 	if (hwndTip)
 	{
 		DestroyWindow(hwndTip);
-		hwndTip = NULL;
+		hwndTip = nullptr;
 	}
 }
 
@@ -118,11 +118,11 @@ void CImgButtons::ImplementButtons()
 
 	hCtrl = GetDlgItem(hDlg, AlignLeftId);
 	GetWindowRect(hCtrl, &rcLeft);
-	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcLeft, 2);
+	MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcLeft, 2);
 	hCtrl = GetDlgItem(hDlg, AlignVCenterId);
 	GetWindowRect(hCtrl, &rcTop);
 	int nPreferHeight = rcTop.bottom - rcTop.top;
-	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcTop, 2);
+	MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcTop, 2);
 
 	#ifdef _DEBUG
 	DpiValue dpi;
@@ -152,7 +152,7 @@ void CImgButtons::ImplementButtons()
 		hCtrl = CreateWindow(L"STATIC", m_Btns[i].ResId,
 			WS_CHILD|WS_VISIBLE|SS_NOTIFY|SS_OWNERDRAW,
 			X, nY, nDispW, nDispH,
-			hDlg, (HMENU)(DWORD_PTR)m_Btns[i].nCtrlId, g_hInstance, NULL);
+			hDlg, (HMENU)(DWORD_PTR)m_Btns[i].nCtrlId, g_hInstance, nullptr);
 
 		#ifdef _DEBUG
 		if (!hCtrl)
@@ -175,10 +175,10 @@ bool CImgButtons::Process(HWND ahDlg, UINT messg, WPARAM wParam, LPARAM lParam, 
 	case WM_SETCURSOR:
 		{
 			LONG_PTR lID = GetWindowLongPtr((HWND)wParam, GWLP_ID);
-			BtnInfo* pBtn = NULL;
+			BtnInfo* pBtn = nullptr;
 			if (GetBtnInfo(lID, &pBtn))
 			{
-				SetCursor(LoadCursor(NULL, IDC_HAND));
+				SetCursor(LoadCursor(nullptr, IDC_HAND));
 				lResult = TRUE;
 				return true;
 			}
@@ -189,7 +189,7 @@ bool CImgButtons::Process(HWND ahDlg, UINT messg, WPARAM wParam, LPARAM lParam, 
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
-			BtnInfo* pBtn = NULL;
+			BtnInfo* pBtn = nullptr;
 			if (GetBtnInfo(LOWORD(wParam), &pBtn))
 			{
 				pBtn->OnClick();
@@ -200,7 +200,7 @@ bool CImgButtons::Process(HWND ahDlg, UINT messg, WPARAM wParam, LPARAM lParam, 
 
 	case WM_DRAWITEM:
 		{
-			BtnInfo* pBtn = NULL;
+			BtnInfo* pBtn = nullptr;
 			if (GetBtnInfo(LOWORD(wParam), &pBtn))
 			{
 				if (pBtn->pImg)
@@ -226,12 +226,12 @@ void CImgButtons::RegisterTip()
 	// Create the ToolTip.
 	if (!hwndTip || !IsWindow(hwndTip))
 	{
-		hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+		hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
 		                         /* BalloonStyle() | */ WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
 		                         CW_USEDEFAULT, CW_USEDEFAULT,
 		                         CW_USEDEFAULT, CW_USEDEFAULT,
-		                         ghOpWnd, NULL,
-		                         g_hInstance, NULL);
+		                         ghOpWnd, nullptr,
+		                         g_hInstance, nullptr);
 		if (!hwndTip)
 			return;
 		SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);

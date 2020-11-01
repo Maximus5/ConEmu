@@ -52,7 +52,7 @@ public:
 
 protected:
 	virtual CDefTermBase* GetInterface() override;
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) override;
+	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) override;
 	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
 	virtual void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
 	virtual void PreCreateThread() override;

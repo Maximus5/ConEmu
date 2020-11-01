@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //const wchar_t CSetDlgFonts::TEST_FONT_WIDTH_STRING_EN[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 //const wchar_t CSetDlgFonts::TEST_FONT_WIDTH_STRING_RU[] = L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 
-HANDLE CSetDlgFonts::mh_EnumThread = NULL;
+HANDLE CSetDlgFonts::mh_EnumThread = nullptr;
 DWORD  CSetDlgFonts::mn_EnumThreadId = 0;
 bool   CSetDlgFonts::mb_EnumThreadFinished = false;
 
@@ -127,11 +127,11 @@ int CSetDlgFonts::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpn
 
 DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 {
-	HDC hdc = GetDC(NULL);
+	HDC hdc = GetDC(nullptr);
 	int aFontCount[] = { 0, 0, 0 };
 	wchar_t szName[MAX_PATH];
 	// Сначала загрузить имена шрифтов, установленных в систему (или зарегистрированных нами)
-	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
+	EnumFontFamilies(hdc, (LPCTSTR) nullptr, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 	// Теперь - загрузить размеры установленных терминальных шрифтов (aka Raster fonts)
 	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; wcscpy_c(term.lfFaceName, L"Terminal");
 	//CFontMgr::szRasterSizes[0].cx = CFontMgr::szRasterSizes[0].cy = 0;
@@ -179,7 +179,7 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 	}
 
 	SafeCloseHandle(mh_EnumThread);
-	_ASSERTE(mh_EnumThread == NULL);
+	_ASSERTE(mh_EnumThread == nullptr);
 
 	mb_EnumThreadFinished = true;
 
@@ -200,10 +200,10 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 
 bool CSetDlgFonts::StartEnumFontsThread()
 {
-	_ASSERTE(mh_EnumThread == NULL);
+	_ASSERTE(mh_EnumThread == nullptr);
 	mb_EnumThreadFinished = false;
-	mh_EnumThread = apiCreateThread(EnumFontsThread, NULL, &mn_EnumThreadId, "EnumFontsThread"); // хэндл закроет сама нить
-	return (mh_EnumThread != NULL);
+	mh_EnumThread = apiCreateThread(EnumFontsThread, nullptr, &mn_EnumThreadId, "EnumFontsThread"); // хэндл закроет сама нить
+	return (mh_EnumThread != nullptr);
 }
 
 bool CSetDlgFonts::EnumFontsFinished()

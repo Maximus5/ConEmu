@@ -47,17 +47,17 @@ CRConFiles::~CRConFiles()
 LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 {
 	CEStr szWinPath;
-	LPCWSTR pszWinPath = MakeWinPath(asSrc, mp_RCon ? mp_RCon->GetMntPrefix() : NULL, szWinPath);
+	LPCWSTR pszWinPath = MakeWinPath(asSrc, mp_RCon ? mp_RCon->GetMntPrefix() : nullptr, szWinPath);
 	if (!pszWinPath || !*pszWinPath)
 	{
 		_ASSERTE(pszWinPath && *pszWinPath);
-		return NULL;
+		return nullptr;
 	}
 
 	if (IsFilePath(pszWinPath, true))
 	{
 		if (!FileExists(pszWinPath)) // otherwise it will cover directories too
-			return NULL;
+			return nullptr;
 		szFull.Attach(szWinPath.Detach());
 	}
 	else
@@ -67,8 +67,8 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 		// We may get empty dir here if we are in "~" subdir
 		if (!pszDir || !*pszDir)
 		{
-			_ASSERTE(pszDir && *pszDir && wcschr(pszDir,L'/')==NULL);
-			return NULL;
+			_ASSERTE(pszDir && *pszDir && wcschr(pszDir,L'/')==nullptr);
+			return nullptr;
 		}
 
 		// Попытаться просканировать один-два уровеня подпапок
@@ -81,7 +81,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 			if (pszWinPath[0] && (pszWinPath[1] == L'\\') && wcschr(L"abicwo", pszWinPath[0]))
 			{
 				LPCWSTR pszSlash = pszWinPath;
-				while (!bFound && ((pszSlash = wcschr(pszSlash, L'\\')) != NULL))
+				while (!bFound && ((pszSlash = wcschr(pszSlash, L'\\')) != nullptr))
 				{
 					while (*pszSlash == L'\\')
 						pszSlash++;
@@ -108,7 +108,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 		if (!bFound)
 		{
 			// If there is "src" subfolder in the current folder
-			const wchar_t* predefined[] = {L"trunk", L"src", L"source", L"sources", NULL};
+			const wchar_t* predefined[] = {L"trunk", L"src", L"source", L"sources", nullptr};
 			for (size_t i = 0; !bFound && predefined[i]; ++i)
 			{
 				CEStr szSrc(JoinPath(pszDir, predefined[i]));
@@ -119,7 +119,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 
 		if (!bFound)
 		{
-			return NULL;
+			return nullptr;
 		}
 	}
 

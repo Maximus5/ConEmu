@@ -37,17 +37,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool CDlgItemHelper::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
 {
 #ifdef _DEBUG
-	HWND hCheckBox = NULL;
+	HWND hCheckBox = nullptr;
 	if (!hParent)
 	{
-		_ASSERTE(hParent != NULL);
+		_ASSERTE(hParent != nullptr);
 	}
 	else
 	{
 		hCheckBox = GetDlgItem(hParent, nCtrlId);
 		if (!hCheckBox)
 		{
-			//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
+			//_ASSERTE(hCheckBox!=nullptr && "Checkbox not found in hParent dlg");
 			wchar_t szErr[128]; swprintf_c(szErr, L"checkDlgButton failed\nControlID %u not found in hParent dlg", nCtrlId);
 			MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 		}
@@ -68,7 +68,7 @@ bool CDlgItemHelper::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDL
 #ifdef _DEBUG
 	if (!hParent)
 	{
-		_ASSERTE(hParent != NULL);
+		_ASSERTE(hParent != nullptr);
 	}
 	else if (!GetDlgItem(hParent, nIDFirstButton) || !GetDlgItem(hParent, nIDLastButton) || !GetDlgItem(hParent, nIDCheckButton))
 	{
@@ -96,7 +96,7 @@ void CDlgItemHelper::enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount
 	#if defined(_DEBUG)
 	if (!hParent)
 	{
-		_ASSERTE(hParent != NULL);
+		_ASSERTE(hParent != nullptr);
 	}
 	#endif
 
@@ -106,7 +106,7 @@ void CDlgItemHelper::enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount
 		if (!hItem)
 		{
 			#if defined(_DEBUG)
-			//_ASSERTE(GetDlgItem(hParent, pnCtrlID[i]) != NULL);
+			//_ASSERTE(GetDlgItem(hParent, pnCtrlID[i]) != nullptr);
 			#endif
 			wchar_t szErr[128]; swprintf_c(szErr, L"enableDlgItems failed\nControlID %u not found in hParent dlg", pnCtrlID[i]);
 			MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
@@ -124,11 +124,11 @@ BYTE CDlgItemHelper::isChecked(HWND hParent, WORD nCtrlId)
 #ifdef _DEBUG
 	if (!hParent)
 	{
-		_ASSERTE(hParent != NULL);
+		_ASSERTE(hParent != nullptr);
 	}
 	else if ((nCtrlId != IDCANCEL) && !GetDlgItem(hParent, nCtrlId))
 	{
-		//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
+		//_ASSERTE(hCheckBox!=nullptr && "Checkbox not found in hParent dlg");
 		wchar_t szErr[128]; swprintf_c(szErr, L"IsChecked failed\nControlID %u not found in hParent dlg", nCtrlId);
 		MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 	}
@@ -151,14 +151,14 @@ bool CDlgItemHelper::isChecked2(HWND hParent, WORD nCtrlId)
 
 void CDlgItemHelper::InvalidateCtrl(HWND hCtrl, BOOL bErase)
 {
-	::InvalidateRect(hCtrl, NULL, bErase);
+	::InvalidateRect(hCtrl, nullptr, bErase);
 }
 
 int CDlgItemHelper::GetNumber(HWND hParent, WORD nCtrlId, int nMin /*= 0*/, int nMax /*= 0*/)
 {
 #ifdef _DEBUG
 	HWND hChild = GetDlgItem(hParent, nCtrlId);
-	_ASSERTE(hChild!=NULL);
+	_ASSERTE(hChild!=nullptr);
 #endif
 	int nValue = 0;
 	wchar_t szNumber[32] = {0};
@@ -177,7 +177,7 @@ int CDlgItemHelper::GetNumber(HWND hParent, WORD nCtrlId, int nMin /*= 0*/, int 
 	return nValue;
 }
 
-INT_PTR CDlgItemHelper::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault /*= NULL*/, bool abListBox /*= false*/)
+INT_PTR CDlgItemHelper::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault /*= nullptr*/, bool abListBox /*= false*/)
 {
 	INT_PTR nSel = abListBox ? SendDlgItemMessage(hParent, nCtrlId, CB_GETCURSEL, 0, 0) : -1;
 
@@ -197,7 +197,7 @@ INT_PTR CDlgItemHelper::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr,
 	wchar_t* pszNew = (TCHAR*)calloc(nLen+1, sizeof(TCHAR));
 	if (!pszNew)
 	{
-		_ASSERTE(pszNew!=NULL);
+		_ASSERTE(pszNew!=nullptr);
 	}
 	else
 	{
@@ -234,7 +234,7 @@ INT_PTR CDlgItemHelper::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr,
 		if (nLen > (*ppszStr ? (INT_PTR)_tcslen(*ppszStr) : 0))
 		{
 			if (*ppszStr) free(*ppszStr);
-			*ppszStr = pszNew; pszNew = NULL;
+			*ppszStr = pszNew; pszNew = nullptr;
 		}
 		else if (*ppszStr)
 		{
@@ -289,7 +289,7 @@ bool CDlgItemHelper::ProcessHyperlinkCtrl(HWND hDlg, WORD nCtrlId)
 
 bool CDlgItemHelper::OpenHyperlink(CEStr& url, HWND hParent)
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(hParent, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(hParent, L"open", url, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);

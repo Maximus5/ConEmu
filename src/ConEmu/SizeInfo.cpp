@@ -203,7 +203,7 @@ RECT SizeInfo::VisibleRect()
 HRGN SizeInfo::CreateSelfFrameRgn()
 {
 	if (!mp_ConEmu->isCaptionHidden())
-		return NULL;
+		return nullptr;
 
 	DoCalculate();
 
@@ -212,7 +212,7 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 	if (m_size.rr.real_client.left == 0 && m_size.rr.real_client.top == 0
 		&& RectWidth(m_size.rr.client) == RectWidth(m_size.rr.real_client)
 		&& RectHeight(m_size.rr.client) == RectHeight(m_size.rr.real_client))
-		return NULL;
+		return nullptr;
 
 	HRGN hWhole, hClient;
 	hWhole = CreateRectRgnIndirect(&m_size.rr.real_client);
@@ -223,7 +223,7 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 		_ASSERTEX(iRc == COMPLEXREGION);
 		DeleteObject(hWhole);
 		DeleteObject(hClient);
-		return NULL;
+		return nullptr;
 	}
 	DeleteObject(hClient);
 	return hWhole;

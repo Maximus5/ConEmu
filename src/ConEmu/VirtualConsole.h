@@ -256,7 +256,7 @@ class CVirtualConsole :
 		void DumpConsole();
 		bool LoadDumpConsole();
 		bool Dump(LPCWSTR asFile);
-		bool Update(bool abForce = false, HDC *ahDc=NULL);
+		bool Update(bool abForce = false, HDC *ahDc=nullptr);
 		void UpdateCursor(bool& lRes);
 		static bool UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam);
 		CECursorType GetCursor(bool bActive);
@@ -309,7 +309,7 @@ class CVirtualConsole :
 	protected:
 		struct VConHeap
 		{
-			HANDLE mh_Heap{NULL};
+			HANDLE mh_Heap{nullptr};
 			std::atomic_int64_t mn_HeapSize{0};
 			int64_t mn_HeapMax{0};
 			void Init(size_t initSize);

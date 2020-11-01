@@ -93,7 +93,7 @@ void CTaskBar::Taskbar_Init()
 	{
 		// В PostCreate это выполняется дольше всего. По идее мешать не должно,
 		// т.к. серверная нить уже запущена.
-		hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList,(void**)&mp_TaskBar1);
+		hr = CoCreateInstance(CLSID_TaskbarList,nullptr,CLSCTX_INPROC_SERVER,IID_ITaskbarList,(void**)&mp_TaskBar1);
 
 		if (hr == S_OK && mp_TaskBar1)
 		{
@@ -104,7 +104,7 @@ void CTaskBar::Taskbar_Init()
 		{
 			if (mp_TaskBar1) mp_TaskBar1->Release();
 
-			mp_TaskBar1 = NULL;
+			mp_TaskBar1 = nullptr;
 		}
 	}
 
@@ -134,25 +134,25 @@ void CTaskBar::Taskbar_Release()
 	if (mp_TaskBar4)
 	{
 		mp_TaskBar4->Release();
-		mp_TaskBar4 = NULL;
+		mp_TaskBar4 = nullptr;
 	}
 
 	if (mp_TaskBar3)
 	{
 		mp_TaskBar3->Release();
-		mp_TaskBar3 = NULL;
+		mp_TaskBar3 = nullptr;
 	}
 
 	if (mp_TaskBar2)
 	{
 		mp_TaskBar2->Release();
-		mp_TaskBar2 = NULL;
+		mp_TaskBar2 = nullptr;
 	}
 
 	if (mp_TaskBar1)
 	{
 		mp_TaskBar1->Release();
-		mp_TaskBar1 = NULL;
+		mp_TaskBar1 = nullptr;
 	}
 }
 
@@ -176,7 +176,7 @@ HRESULT CTaskBar::Taskbar_SetActiveTab(HWND hBtn)
 
 bool CTaskBar::Taskbar_GhostSnapshotRequired()
 {
-	_ASSERTE(mp_TaskBar1!=NULL);
+	_ASSERTE(mp_TaskBar1!=nullptr);
 	return mp_ConEmu->IsDwm();
 }
 
@@ -208,7 +208,7 @@ void CTaskBar::Taskbar_GhostRemove(LPVOID pVCon)
 void CTaskBar::Taskbar_GhostReorder()
 {
 	// No interface? Nothing to do.
-	if (mp_TaskBar3 == NULL)
+	if (mp_TaskBar3 == nullptr)
 	{
 		return;
 	}
@@ -247,8 +247,8 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, LPVOID pVCon, BOOL abSetActive 
 {
 	HRESULT hr, hr1;
 
-	// mp_TaskBar1 may be NULL if NO task bar is created (e.g. 'explorer.exe' is closed)
-	_ASSERTE(mp_TaskBar1!=NULL || FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL)==NULL);
+	// mp_TaskBar1 may be nullptr if NO task bar is created (e.g. 'explorer.exe' is closed)
+	_ASSERTE(mp_TaskBar1!=nullptr || FindWindowEx(nullptr, nullptr, L"Shell_TrayWnd", nullptr)==nullptr);
 
 	Taskbar_GhostAppend(pVCon);
 
@@ -256,7 +256,7 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, LPVOID pVCon, BOOL abSetActive 
 	if (mp_TaskBar3)
 	{
 		hr = mp_TaskBar3->RegisterTab(hBtn, ghWnd);
-		hr1 = mp_TaskBar3->SetTabOrder(hBtn, NULL);
+		hr1 = mp_TaskBar3->SetTabOrder(hBtn, nullptr);
 	}
 	else if (mp_TaskBar1)
 	{
@@ -383,23 +383,23 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 		mh_Shield = (HICON)LoadImage(g_hInstance, IDI_SHIELD, IMAGE_ICON, 16,16, 0);
 		if (!mh_Shield)
 		{
-			_ASSERTE(mh_Shield!=NULL);
+			_ASSERTE(mh_Shield!=nullptr);
 			return;
 		}
 	}
 
-	Taskbar_SetOverlay(abShield ? mh_Shield : NULL);
+	Taskbar_SetOverlay(abShield ? mh_Shield : nullptr);
 }
 
 bool CTaskBar::isTaskbarSmallIcons()
 {
 	bool bSmall = true;
-	HKEY hk = NULL;
+	HKEY hk = nullptr;
 	if (IsWindows7
 		&& (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", 0, KEY_READ, &hk)))
 	{
 		DWORD nSmall = 0, nSize = sizeof(nSmall);
-		if (0 == RegQueryValueEx(hk, L"TaskbarSmallIcons", NULL, NULL, (LPBYTE)&nSmall, &nSize))
+		if (0 == RegQueryValueEx(hk, L"TaskbarSmallIcons", nullptr, nullptr, (LPBYTE)&nSmall, &nSize))
 			bSmall = (nSmall != 0);
 		else
 			bSmall = false; // Default?
@@ -413,15 +413,15 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 	HRESULT hr = E_FAIL;
 
 	// If we use ‘Overlay icon’, don't change WM_GETICON
-	mp_ConEmu->SetTaskbarIcon(NULL);
+	mp_ConEmu->SetTaskbarIcon(nullptr);
 
 	// WinXP does not have mp_TaskBar3
 	if (mp_TaskBar3)
 	{
-		hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL) : E_FAIL;
+		hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, nullptr) : E_FAIL;
 
 		wchar_t szInfo[100];
-		swprintf_c(szInfo, L"mp_TaskBar3->SetOverlayIcon(%s) %s code=x%08X", ahIcon?L"ICON":L"NULL", SUCCEEDED(hr)?L"succeeded":L"failed", hr);
+		swprintf_c(szInfo, L"mp_TaskBar3->SetOverlayIcon(%s) %s code=x%08X", ahIcon?L"ICON":L"nullptr", SUCCEEDED(hr)?L"succeeded":L"failed", hr);
 		LogString(szInfo);
 
 		// The HRESULT_FROM_WIN32(ERROR_TIMEOUT) may be encountered here
@@ -441,7 +441,7 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	// Also, WinXP has small icons always...
 	if (!gpSet->isTaskbarOverlay)
 	{
-		Taskbar_SetOverlay(NULL);
+		Taskbar_SetOverlay(nullptr);
 		LogString(L"Taskbar_UpdateOverlay skipped: !isTaskbarOverlay");
 		return;
 	}
@@ -449,7 +449,7 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	bool bAdmin;
 	HICON hIcon;
 
-	if ((hIcon = mp_ConEmu->GetCurrentVConIcon()) != NULL)
+	if ((hIcon = mp_ConEmu->GetCurrentVConIcon()) != nullptr)
 	{
 		LogString(L"Taskbar_UpdateOverlay executed with tab icon");
 		if (!isTaskbarSmallIcons())

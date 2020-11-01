@@ -51,7 +51,7 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 	mb_IgnoreCmdGroupEdit = true;
 
 	wchar_t szKey[128] = L"";
-	const ConEmuHotKey* pDefCmdKey = NULL;
+	const ConEmuHotKey* pDefCmdKey = nullptr;
 	if (!gpSet->GetHotkeyById(vkMultiCmd, &pDefCmdKey) || !pDefCmdKey)
 		wcscpy_c(szKey, gsNoHotkey);
 	else
@@ -78,12 +78,12 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 	//if (abForceReload)
 	//{
 	//	// Обновить группы команд
-	//	gpSet->LoadCmdTasks(NULL, true);
+	//	gpSet->LoadCmdTasks(nullptr, true);
 	//}
 
 	int nGroup = 0;
 	wchar_t szItem[1024];
-	const CommandTasks* pGrp = NULL;
+	const CommandTasks* pGrp = nullptr;
 	while ((pGrp = gpSet->CmdTaskGet(nGroup)))
 	{
 		swprintf_c(szItem, L"%i\t", nGroup+1);
@@ -176,8 +176,8 @@ INT_PTR CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 				break;
 			MSetter lIgnoreEdit(&mb_IgnoreCmdGroupEdit);
 
-			const CommandTasks* pCmd = NULL;
-			int* Items = NULL;
+			const CommandTasks* pCmd = nullptr;
+			int* Items = nullptr;
 			int iSelCount = GetListboxSelection(hWnd2, lbCmdTasks, Items);
 			int iCur = (iSelCount == 1) ? Items[0] : -1;
 			if (iCur >= 0)

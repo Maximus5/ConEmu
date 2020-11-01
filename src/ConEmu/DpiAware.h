@@ -103,16 +103,16 @@ public:
 
 	static bool IsPerMonitorDpi();
 
-	static int QueryDpi(HWND hWnd = NULL, DpiValue* pDpi = NULL);
+	static int QueryDpi(HWND hWnd = nullptr, DpiValue* pDpi = nullptr);
 
-	// if hWnd is NULL - returns DC's dpi
-	static int QueryDpiForWindow(HWND hWnd = NULL, DpiValue* pDpi = NULL);
+	// if hWnd is nullptr - returns DC's dpi
+	static int QueryDpiForWindow(HWND hWnd = nullptr, DpiValue* pDpi = nullptr);
 
 	static DpiValue QueryDpiForRect(const RECT& rcWnd, MonitorDpiType dpiType = MDT_Default);
 	static DpiValue QueryDpiForMonitor(HMONITOR hMon, MonitorDpiType dpiType = MDT_Default);
 
 	// Dialog helper
-	static void GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault = NULL);
+	static void GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault = nullptr);
 	static void CenterDialog(HWND hDialog);
 
 protected:
@@ -158,7 +158,7 @@ public:
 
 	bool Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTemplate);
 
-	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = NULL);
+	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = nullptr);
 
 	void Detach();
 

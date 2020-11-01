@@ -70,7 +70,7 @@ public:
 	bool  isParentProcess(HWND hParent);
 	HWND  GetParentRoot();
 
-	bool  inMinimizing(WINDOWPOS *p /*= NULL*/);
+	bool  inMinimizing(WINDOWPOS *p /*= nullptr*/);
 	bool  isParentIconic();
 	bool  isSelfIconic();
 	HWND  InsideFindParent();
@@ -80,7 +80,7 @@ public:
 
 private:
 	HWND  mh_InitialRoot;
-	HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться
+	HWND  mh_InsideParentRel;  // Может быть nullptr (ii_Simple). HWND относительно которого нужно позиционироваться
 	HWND  mh_InsideParentPath; // Win7 Text = "Address: D:\MYDOC"
 	HWND  mh_InsideParentCD;   // Edit для смены текущей папки, например -> "C:\USERS"
 	RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада

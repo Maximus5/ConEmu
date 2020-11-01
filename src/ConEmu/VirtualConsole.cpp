@@ -130,7 +130,7 @@ WARNING("Часто после разблокирования компьютер
 #endif
 
 #ifdef _DEBUG
-#define DUMPDC(f) if (mb_DebugDumpDC) DumpImage((HDC)m_DC, NULL, m_DC.iWidth, m_DC.iHeight, f);
+#define DUMPDC(f) if (mb_DebugDumpDC) DumpImage((HDC)m_DC, nullptr, m_DC.iWidth, m_DC.iHeight, f);
 #else
 #define DUMPDC(f)
 #endif
@@ -149,7 +149,7 @@ WARNING("Часто после разблокирования компьютер
 #undef HEAPVALPTR
 #endif
 #define VAlloc(c,s) m_Heap.Alloc(c,s)
-#define VFree(f) if (f) { m_Heap.Free(f); f = NULL; }
+#define VFree(f) if (f) { m_Heap.Free(f); f = nullptr; }
 #define HEAPVAL m_Heap.Validate()
 #define HEAPVALPTR(x) //
 
@@ -157,7 +157,7 @@ void CVirtualConsole::VConHeap::Init(size_t initSize)
 {
 	if (mh_Heap)
 	{
-		_ASSERTE(mh_Heap==NULL);
+		_ASSERTE(mh_Heap==nullptr);
 		return;
 	}
 	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, initSize, 0);
@@ -189,7 +189,7 @@ void CVirtualConsole::VConHeap::Free(LPVOID ptr)
 void CVirtualConsole::VConHeap::Validate()
 {
 	#ifdef _DEBUG
-	HeapValidate(mh_Heap, 0, NULL);
+	HeapValidate(mh_Heap, 0, nullptr);
 	#endif
 }
 
@@ -198,7 +198,7 @@ CVirtualConsole::VConHeap::~VConHeap()
 	if (mh_Heap)
 	{
 		HeapDestroy(mh_Heap);
-		mh_Heap = NULL;
+		mh_Heap = nullptr;
 	}
 }
 
@@ -218,7 +218,7 @@ namespace VConCreateLogger
 		EventType Event;
 		DWORD Tick;
 	};
-	VConNewDel g_pos[BUFFER_SIZE] = {{NULL}};
+	VConNewDel g_pos[BUFFER_SIZE] = {{nullptr}};
 	LONG g_posidx = -1;
 
 	void Log(CVirtualConsole* pVCon, EventType Event)
@@ -241,10 +241,10 @@ CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSH
 wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
-//HMENU CVirtualConsole::mh_PopupMenu = NULL;
-//HMENU CVirtualConsole::mh_TerminatePopup = NULL;
-//HMENU CVirtualConsole::mh_DebugPopup = NULL;
-//HMENU CVirtualConsole::mh_EditPopup = NULL;
+//HMENU CVirtualConsole::mh_PopupMenu = nullptr;
+//HMENU CVirtualConsole::mh_TerminatePopup = nullptr;
+//HMENU CVirtualConsole::mh_DebugPopup = nullptr;
+//HMENU CVirtualConsole::mh_EditPopup = nullptr;
 
 static LONG gnVConLastCreatedID = 0;
 
@@ -252,19 +252,19 @@ static LONG gnVConLastCreatedID = 0;
 CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	: CVConRelease(this)
 	, CConEmuChild(this)
-	, mp_RCon(NULL)
+	, mp_RCon(nullptr)
 	, mp_ConEmu(pOwner)
-	, mp_Ghost(NULL)
-	, mp_Group(NULL)
+	, mp_Ghost(nullptr)
+	, mp_Group(nullptr)
 	, mn_Flags(vf_None)
 	, mn_Index(index) // !!! Informational !!!
-	, m_DC(NULL)
+	, m_DC(nullptr)
 	, m_SelectedFont(fnt_NULL)
 	#ifdef __GNUC__
-	, GdiAlphaBlend(NULL)
+	, GdiAlphaBlend(nullptr)
 	#endif
 	, m_Sizes()
-	, mp_Set(NULL)
+	, mp_Set(nullptr)
 	, cinf()
 	, winSize()
 	, coord()
@@ -273,7 +273,7 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mb_LastFadeFlag(false)
 	, mn_LastBitsPixel()
 	#ifdef APPDISTINCTBACKGROUND
-	, mp_BgInfo(NULL)
+	, mp_BgInfo(nullptr)
 	#endif
 	, TransparentInfo()
 	, isFade(false)
@@ -291,7 +291,7 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mb_InPaintCall(false)
 	, mb_InConsoleResize(false)
 	, mb_ConDataChanged(false)
-	, mh_TransparentRgn(NULL)
+	, mh_TransparentRgn(nullptr)
 	, mb_ChildWindowWasFound(false)
 	, mn_BackColorIdx(RELEASEDEBUGTEST(0/*Black*/,2/*Green*/))
 	, Cursor()
@@ -307,28 +307,28 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, drawImage(true)
 	, textChanged(true)
 	, attrChanged(true)
-	, hBgDc(NULL)
+	, hBgDc(nullptr)
 	, bgBmpSize()
 	, mb_IsForceUpdate(false)
 	, mb_InUpdate(false)
-	, hSelectedBrush(NULL)
-	, hOldBrush(NULL)
+	, hSelectedBrush(nullptr)
+	, hOldBrush(nullptr)
 	, isEditor(false)
 	, isViewer(false)
 	, isFilePanel(false)
 	, csbi()
-	, mpsz_ConChar(NULL)
-	, mpsz_ConCharSave(NULL)
-	, mpn_ConAttrEx(NULL)
-	, mpn_ConAttrExSave(NULL)
-	, ConCharX(NULL)
-	, pbLineChanged(NULL)
-	, pbBackIsPic(NULL)
-	, pnBackRGB(NULL)
+	, mpsz_ConChar(nullptr)
+	, mpsz_ConCharSave(nullptr)
+	, mpn_ConAttrEx(nullptr)
+	, mpn_ConAttrExSave(nullptr)
+	, ConCharX(nullptr)
+	, pbLineChanged(nullptr)
+	, pbBackIsPic(nullptr)
+	, pnBackRGB(nullptr)
 	, m_etr()
 	, mb_DialogsChanged(false)
-	, mp_Bg(NULL)
-	, mpsz_LogScreen(NULL)
+	, mp_Bg(nullptr)
+	, mpsz_LogScreen(nullptr)
 	, mdw_LastError(0)
 	, nBgImageColors(0)
 	, m_HighlightInfo()
@@ -350,12 +350,12 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	ZeroStruct(mrc_Dialogs);
 	ZeroStruct(mn_DialogFlags);
 
-	_ASSERTE(mh_WndDC == NULL);
+	_ASSERTE(mh_WndDC == nullptr);
 }
 
 CConEmuMain* CVirtualConsole::Owner()
 {
-	return this ? mp_ConEmu : NULL;
+	return this ? mp_ConEmu : nullptr;
 }
 
 int CVirtualConsole::Index()
@@ -421,7 +421,7 @@ bool CVirtualConsole::Constructor(RConStartArgsEx *args)
 
 	mp_Bg = new CBackground();
 	#ifdef APPDISTINCTBACKGROUND
-	mp_BgInfo = args->pszWallpaper ? CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper, false) : NULL;
+	mp_BgInfo = args->pszWallpaper ? CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper, false) : nullptr;
 	#endif
 
 	m_Colors = gpSet->GetColors(-1);
@@ -431,7 +431,7 @@ bool CVirtualConsole::Constructor(RConStartArgsEx *args)
 
 	Cursor.nBlinkTime = GetCaretBlinkTime();
 
-	_ASSERTE((HDC)m_DC == NULL);
+	_ASSERTE((HDC)m_DC == nullptr);
 
 	ResetHighlightCoords();
 
@@ -451,7 +451,7 @@ bool CVirtualConsole::Constructor(RConStartArgsEx *args)
 		wchar_t szFile[MAX_PATH+64], *pszDot;
 		wcscpy_c(szFile, mp_ConEmu->ms_ConEmuExe);
 
-		if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
+		if ((pszDot = wcsrchr(szFile, L'\\')) == nullptr)
 		{
 			DisplayLastError(L"wcsrchr failed!");
 			return false; // ошибка
@@ -507,7 +507,7 @@ CVirtualConsole::~CVirtualConsole()
 	if (mh_TransparentRgn)
 	{
 		DeleteObject(mh_TransparentRgn);
-		mh_TransparentRgn = NULL;
+		mh_TransparentRgn = nullptr;
 	}
 
 	// No need, actually, just for clearness
@@ -518,7 +518,7 @@ CVirtualConsole::~CVirtualConsole()
 	CVConGroup::OnVConDestroyed(this);
 
 	//if (mh_PopupMenu) { -- static на все экземпляры
-	//	DestroyMenu(mh_PopupMenu); mh_PopupMenu = NULL;
+	//	DestroyMenu(mh_PopupMenu); mh_PopupMenu = nullptr;
 	//}
 
 	//MSectionLock SC;
@@ -529,14 +529,14 @@ CVirtualConsole::~CVirtualConsole()
 	//if (mp_BkImgData)
 	//{
 	//	free(mp_BkImgData);
-	//	mp_BkImgData = NULL;
+	//	mp_BkImgData = nullptr;
 	//	mn_BkImgDataMax = 0;
 	//}
 
 	//if (mp_BkEmfData)
 	//{
 	//	free(mp_BkEmfData);
-	//	mp_BkEmfData = NULL;
+	//	mp_BkEmfData = nullptr;
 	//	mn_BkImgDataMax = 0;
 	//}
 	//
@@ -544,7 +544,7 @@ CVirtualConsole::~CVirtualConsole()
 	//{
 	//	SC.Unlock();
 	//	delete mcs_BkImgData;
-	//	mcs_BkImgData = NULL;
+	//	mcs_BkImgData = nullptr;
 	//}
 
 	SafeDelete(mp_Bg);
@@ -563,7 +563,7 @@ void CVirtualConsole::InitGhost()
 	{
 		if (mp_Ghost)
 		{
-			_ASSERTE(mp_Ghost==NULL);
+			_ASSERTE(mp_Ghost==nullptr);
 		}
 		else if (isMainThread())
 		{
@@ -586,7 +586,7 @@ void CVirtualConsole::OnDestroy()
 	if (this && mp_Ghost)
 	{
 		CTaskBarGhost* p = mp_Ghost;
-		mp_Ghost = NULL;
+		mp_Ghost = nullptr;
 		delete p;
 	}
 }
@@ -595,16 +595,16 @@ CRealConsole* CVirtualConsole::RCon()
 {
 	if (this)
 		return mp_RCon;
-	_ASSERTE(this!=NULL);
-	return NULL;
+	_ASSERTE(this!=nullptr);
+	return nullptr;
 }
 
 HWND CVirtualConsole::GuiWnd()
 {
 	if (this && mp_RCon)
 		return mp_RCon->GuiWnd();
-	_ASSERTE(this!=NULL);
-	return NULL;
+	_ASSERTE(this!=nullptr);
+	return nullptr;
 }
 
 // Вызывается из WM_SETFOCUS в Child & Back
@@ -629,7 +629,7 @@ HWND CVirtualConsole::GhostWnd()
 {
 	if (this && mp_Ghost)
 		return mp_Ghost->GhostWnd();
-	return NULL;
+	return nullptr;
 }
 
 bool CVirtualConsole::isActive(bool abAllowGroup)
@@ -744,7 +744,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 {
 	if (!this || !mp_RCon)
 	{
-		_ASSERTE(mp_RCon != NULL);
+		_ASSERTE(mp_RCon != nullptr);
 		return false;
 	}
 	_ASSERTE(isMainThread());
@@ -912,7 +912,7 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	DumpImage(m_DC.hDC, m_DC.hBitmap, m_DC.iWidth, m_DC.iHeight, asFile);
 
 	HANDLE hFile = CreateFile(asFile, GENERIC_WRITE, FILE_SHARE_READ,
-	                          NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	                          nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
@@ -922,14 +922,14 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 
 	DWORD dw;
 	LPCTSTR pszTitle = mp_ConEmu->GetLastTitle();
-	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
+	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, nullptr);
 	wchar_t temp[100];
 	swprintf_c(temp, L"\r\nSize: %ix%i   Cursor: %ix%i\r\n", m_Sizes.TextWidth, m_Sizes.TextHeight, Cursor.x, Cursor.y);
-	WriteFile(hFile, temp, wcslen(temp)*sizeof(wchar_t), &dw, NULL);
-	WriteFile(hFile, mpsz_ConChar, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConChar), &dw, NULL);
-	WriteFile(hFile, mpn_ConAttrEx, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrEx), &dw, NULL);
-	WriteFile(hFile, mpsz_ConCharSave, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConCharSave), &dw, NULL);
-	WriteFile(hFile, mpn_ConAttrExSave, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrExSave), &dw, NULL);
+	WriteFile(hFile, temp, wcslen(temp)*sizeof(wchar_t), &dw, nullptr);
+	WriteFile(hFile, mpsz_ConChar, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConChar), &dw, nullptr);
+	WriteFile(hFile, mpn_ConAttrEx, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrEx), &dw, nullptr);
+	WriteFile(hFile, mpsz_ConCharSave, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConCharSave), &dw, nullptr);
+	WriteFile(hFile, mpn_ConAttrExSave, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrExSave), &dw, nullptr);
 
 	if (mp_RCon)
 	{
@@ -973,7 +973,7 @@ void CVirtualConsole::PaintBackgroundImage(HDC hdc, const RECT& rcText, const CO
 {
 	#ifdef _DEBUG
 	bool lbDump = false;
-	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
+	if (lbDump) DumpImage(hBgDc, nullptr, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
 	#endif
 
 	// If Back is larger than DC (gap or non-integral size)
@@ -1071,7 +1071,7 @@ void CVirtualConsole::SelectFont(const CFontPtr& hFontPtr)
 
 	if (!hFontPtr.IsSet())
 	{
-		m_DC.SelectFont(NULL);
+		m_DC.SelectFont(nullptr);
 	}
 	else
 	{
@@ -1093,7 +1093,7 @@ void CVirtualConsole::SelectBrush(HBRUSH hNew)
 			SelectObject((HDC)m_DC, hOldBrush);
 		}
 
-		hOldBrush = NULL;
+		hOldBrush = nullptr;
 	}
 	else if (hSelectedBrush != hNew)
 	{
@@ -1125,7 +1125,7 @@ class DcDebug
 	public:
 		DcDebug(HDC* ahDcVar, HDC* ahPaintDC)
 		{
-			mb_Attached=FALSE; mh_OrigDc=NULL; mh_DcVar=NULL; mh_Dc=NULL;
+			mb_Attached=FALSE; mh_OrigDc=nullptr; mh_DcVar=nullptr; mh_Dc=nullptr;
 
 			if (!ahDcVar || !ahPaintDC) return;
 
@@ -1313,7 +1313,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 				}
 				else
 				{
-					wchar_t* pSpaces = NULL;
+					wchar_t* pSpaces = nullptr;
 					bool lbLineChanged;
 					size_t nChars = conLocked.right - conLocked.left + 1;
 					if (nLocked == 1)
@@ -1471,7 +1471,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	///| Read console output and cursor info... |/////////////////////////////
 	//------------------------------------------------------------------------
-	if (!UpdatePrepare(ahDc, NULL/*&SDC*/, &SCON))
+	if (!UpdatePrepare(ahDc, nullptr/*&SDC*/, &SCON))
 	{
 		mp_ConEmu->DebugStep(_T("DC initialization failed!"));
 		return false;
@@ -1596,7 +1596,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	/* ***************************************** */
 	/*       Finalization, release objects       */
 	/* ***************************************** */
-	SelectBrush(NULL);
+	SelectBrush(nullptr);
 
 	/*
 	for (UINT br=0; br<m_PartBrushes.size(); br++) {
@@ -2002,7 +2002,7 @@ bool CVirtualConsole::CheckTransparent()
 	if (mp_RCon)
 	{
 		// Если работа идет в GUI режиме (notepad во вкладке ConEmu)
-		if (mp_RCon->GuiWnd() != NULL)
+		if (mp_RCon->GuiWnd() != nullptr)
 			lbHasChildWindows = true;
 		// Или включен просмотр картинок/видефайлов
 		if (mp_RCon->isPictureView())
@@ -2041,7 +2041,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 
 	// Если изменены данные, или была прозрачность и появились дочерние окна (или наоборот)
-	if (mb_ConDataChanged || !((mh_TransparentRgn != NULL) ^ abHasChildWindows))
+	if (mb_ConDataChanged || !((mh_TransparentRgn != nullptr) ^ abHasChildWindows))
 	{
 		mb_ConDataChanged = false;
 
@@ -2173,9 +2173,9 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 				if (lbRgnChanged)
 				{
-					if (mh_TransparentRgn) { DeleteObject(mh_TransparentRgn); mh_TransparentRgn = NULL; }
+					if (mh_TransparentRgn) { DeleteObject(mh_TransparentRgn); mh_TransparentRgn = nullptr; }
 
-					INT   *lpAllCounts = NULL;
+					INT   *lpAllCounts = nullptr;
 
 					if (nRectCount > 0)
 					{
@@ -2193,12 +2193,12 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 					VFree(TransparentInfo.pAllCounts);
 
 					HEAPVAL;
-					TransparentInfo.pAllCounts = lpAllCounts; lpAllCounts = NULL;
+					TransparentInfo.pAllCounts = lpAllCounts; lpAllCounts = nullptr;
 
 					VFree(TransparentInfo.pAllPoints);
 
 					HEAPVAL;
-					TransparentInfo.pAllPoints = lpAllPoints; lpAllPoints = NULL;
+					TransparentInfo.pAllPoints = lpAllPoints; lpAllPoints = nullptr;
 					HEAPVAL;
 					TransparentInfo.nRectCount = nRectCount;
 				}
@@ -2224,7 +2224,7 @@ bool CVirtualConsole::LoadConsoleData()
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return false;
 	}
 
@@ -2250,7 +2250,7 @@ bool CVirtualConsole::LoadConsoleData()
 		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, m_Sizes.TextWidth, m_Sizes.TextHeight, m_etr); //TextLen*2);
 
 		#ifdef SHOWDEBUGSTEPS
-		mp_ConEmu->DebugStep(NULL);
+		mp_ConEmu->DebugStep(nullptr);
 		#endif
 	}
 	SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
@@ -2276,8 +2276,8 @@ bool CVirtualConsole::LoadConsoleData()
 	{
 		if (pRgn && (mn_DialogAllFlags & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH))
 		{
-			if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP)
-					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
+			if (pRgn->GetDetectedDialogs(1, &rcFull, nullptr, FR_UCHARMAP, FR_UCHARMAP)
+					&& pRgn->GetDetectedDialogs(1, &rcGlyph, nullptr, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
 			{
 				wchar_t szFontName[32], *pszStart, *pszEnd;
 				pszStart = mpsz_ConChar + m_Sizes.TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
@@ -2346,7 +2346,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 			if (!pszExt || (pszExt > pszRootProcessName))
 			{
 				lsPrefix = lstrmerge(L"#Attached:", pszRootProcessName);
-				wchar_t* pszDot = lsPrefix.ms_Val ? wcsrchr(lsPrefix.ms_Val, L'.') : NULL;
+				wchar_t* pszDot = lsPrefix.ms_Val ? wcsrchr(lsPrefix.ms_Val, L'.') : nullptr;
 				if (pszDot)
 				{
 					*pszDot = 0;
@@ -2383,7 +2383,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 			m_SelfPalette.Colors, false);
 		// And try to match it
 		pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
-		_ASSERTE(pFound != NULL);
+		_ASSERTE(pFound != nullptr);
 	}
 
 	if (pFound)
@@ -2492,7 +2492,7 @@ bool CVirtualConsole::ChangePalette(const ColorPalette* pPal)
 		LogString(lsLog);
 	}
 
-	bool bTextChanged = (pOldPal==NULL), bPopupChanged = (pOldPal==NULL);
+	bool bTextChanged = (pOldPal==nullptr), bPopupChanged = (pOldPal==nullptr);
 	if (pOldPal)
 	{
 		bTextChanged = (pOldPal->nTextColorIdx != pPal->nTextColorIdx) || (pOldPal->nBackColorIdx != pPal->nBackColorIdx);
@@ -2574,7 +2574,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	}
 
 	// Первая инициализация, или смена размера
-	BOOL lbSizeChanged = ((HDC)m_DC == NULL) || (m_Sizes.TextWidth != (unsigned)winSize.X || m_Sizes.TextHeight != (unsigned)winSize.Y)
+	BOOL lbSizeChanged = ((HDC)m_DC == nullptr) || (m_Sizes.TextWidth != (unsigned)winSize.X || m_Sizes.TextHeight != (unsigned)winSize.Y)
 		|| (m_Sizes.LastPadSize != gpSet->nCenterConsolePad)
 		|| isFontSizeChanged; // или смена шрифта ('Auto' на 'Main')
 
@@ -2595,7 +2595,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		//if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
 		//	pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
-		if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/ , false/*abNoWndResize*/, pSDC, pSCON))
+		if (!InitDC(ahDc!=nullptr && !isForce/*abNoDc*/ , false/*abNoWndResize*/, pSDC, pSCON))
 		{
 			return false;
 		}
@@ -2698,7 +2698,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		}
 		else
 		{
-			drawImage = (hBgDc!=NULL);
+			drawImage = (hBgDc!=nullptr);
 		}
 	}
 
@@ -2723,7 +2723,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 void CVirtualConsole::UpdateText()
 {
-	_ASSERTE((HDC)m_DC!=NULL);
+	_ASSERTE((HDC)m_DC!=nullptr);
 
 	// Refresh fonts array
 	//memmove(mh_FontByIndex, gpFontMgr->mh_Font, sizeof(gpFontMgr->mh_Font));
@@ -2773,8 +2773,8 @@ void CVirtualConsole::UpdateText()
 
 	BYTE nFontCharSet = gpFontMgr->FontCharSet();
 
-	wchar_t* tmpOemWide = NULL;
-	char* tmpOem = NULL;
+	wchar_t* tmpOemWide = nullptr;
+	char* tmpOem = nullptr;
 	INT_PTR cchOemMax = 0;
 	if (nFontCharSet == OEM_CHARSET)
 	{
@@ -2818,7 +2818,7 @@ void CVirtualConsole::UpdateText()
 		BYTE charSet;
 		if ((nFontCharSet == OEM_CHARSET) && tmpOem && tmpOemWide)
 		{
-			int iCvt = WideCharToMultiByte(CP_OEMCP, 0, ConCharLine, m_Sizes.TextWidth, tmpOem, cchOemMax, NULL, NULL);
+			int iCvt = WideCharToMultiByte(CP_OEMCP, 0, ConCharLine, m_Sizes.TextWidth, tmpOem, cchOemMax, nullptr, nullptr);
 			if (iCvt > 0 && iCvt <= cchOemMax)
 			{
 				int iWide = MultiByteToWideChar(CP_OEMCP, 0, tmpOem, iCvt, tmpOemWide, cchOemMax);
@@ -2899,14 +2899,14 @@ void CVirtualConsole::UpdateText()
 				{
 					if (!lp.GetNextPart(partIndex, part, nextPart))
 					{
-						_ASSERTE(FALSE && "Must not be here because nextPart!=NULL");
+						_ASSERTE(FALSE && "Must not be here because nextPart!=nullptr");
 						break;
 					}
 				}
 
 				if (!part)
 				{
-					_ASSERTE(FALSE && "part must be !NULL if nextPart was detected previously");
+					_ASSERTE(FALSE && "part must be !nullptr if nextPart was detected previously");
 				}
 			}
 
@@ -3109,7 +3109,7 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 		#endif
 		pbr = &m_PartBrushes[MAX_COUNT_PART_BRUSHES-1];
 		DeleteObject(pbr->hBrush);
-		pbr->hBrush = NULL;
+		pbr->hBrush = nullptr;
 	}
 
 	MYRGB clrBack, clrFore, clrMy;
@@ -3582,7 +3582,7 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	else
 	{
 		WARNING("Похоже для ChildGui - mp_RCon->hGuiWnd - это происходит хронически...");
-		_ASSERTE((HDC)m_DC!=NULL);
+		_ASSERTE((HDC)m_DC!=nullptr);
 	}
 
 	return bPaintRC;
@@ -3628,13 +3628,13 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 		return false;
 	}
 
-	if (((HDC)m_DC) != NULL)
+	if (((HDC)m_DC) != nullptr)
 	{
 		RECT rcClient = GetDcClientRect();
 		int  nPrintX = 0, nPrintY = 0;
 
 		bool bNeedStretch = false;
-		if (PaintRect != NULL)
+		if (PaintRect != nullptr)
 		{
 			bNeedStretch = (((rcClient.right-rcClient.left) != (PaintRect->right-PaintRect->left))
 				|| ((rcClient.bottom-rcClient.top) != (PaintRect->bottom-PaintRect->top)));
@@ -3644,7 +3644,7 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 
 		if (bNeedStretch)
 		{
-			_ASSERTE(PaintRect!=NULL);
+			_ASSERTE(PaintRect!=nullptr);
 			lbBltRc = StretchPaint(hPrintDc, nPrintX, nPrintY, PaintRect->right-PaintRect->left, PaintRect->bottom-PaintRect->top);
 		}
 		else
@@ -3672,7 +3672,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 
 	if (!mh_WndDC)
 	{
-		_ASSERTE(mh_WndDC!=NULL);
+		_ASSERTE(mh_WndDC!=nullptr);
 		return;
 	}
 
@@ -3758,7 +3758,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 {
 	if (!this)
 	{
-		_ASSERTE(FALSE && "Called with NULL pVCon");
+		_ASSERTE(FALSE && "Called with nullptr pVCon");
 		COLORREF crBack = gpSet->GetColors(-1, isFade)[0];
 		HBRUSH hBr = CreateSolidBrush(crBack);
 		FillRect(hPaintDc, &rcClient, hBr);
@@ -3789,13 +3789,13 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 
 		// 120721 - если показана статусная строка - не будем писать в саму консоль?
 		if (gpSet->isStatusBarShow)
-			pszStarting = NULL;
+			pszStarting = nullptr;
 		else if (mp_ConEmu->isProcessCreated())
 			pszStarting = L"No consoles";
 		else if (this && mp_RCon)
 			pszStarting = mp_RCon->GetConStatus();
 
-		if (pszStarting != NULL)
+		if (pszStarting != nullptr)
 		{
 			UINT nFlags = ETO_CLIPPED;
 			cePaintDc.SetTextColor(colors[7]);
@@ -3804,7 +3804,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 				        pszStarting, _tcslen(pszStarting), 0);
 		}
 
-		cePaintDc.SelectFont(NULL);
+		cePaintDc.SelectFont(nullptr);
 	}
 
 	if (lbDelBrush)
@@ -3839,7 +3839,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	//BOOL lbExcept = FALSE;
 	RECT client = rcClient;
 	//PAINTSTRUCT ps;
-	//HDC hPaintDc = NULL;
+	//HDC hPaintDc = nullptr;
 
 	//Get ClientRect('ghWnd DC', &client);
 
@@ -3866,7 +3866,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	//else
 	//	hPaintDc = GetDC('ghWnd DC');
 	// Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
-	HBRUSH hBr = NULL;
+	HBRUSH hBr = nullptr;
 
 	if (((ULONG)(client.right-client.left)) > m_Sizes.Width)
 	{
@@ -3890,7 +3890,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		client.bottom = client.top + m_Sizes.Height;
 	}
 
-	if (hBr) { DeleteObject(hBr); hBr = NULL; }
+	if (hBr) { DeleteObject(hBr); hBr = nullptr; }
 
 	//BOOL lbPaintLocked = FALSE;
 
@@ -3925,7 +3925,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 		if (lbLeftExists)
 		{
-			InvalidateRect(m_LeftPanelView.hWnd, NULL, FALSE);
+			InvalidateRect(m_LeftPanelView.hWnd, nullptr, FALSE);
 		}
 	}
 	else if (mb_DialogsChanged)
@@ -3939,7 +3939,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 		if (lbRightExists)
 		{
-			InvalidateRect(m_RightPanelView.hWnd, NULL, FALSE);
+			InvalidateRect(m_RightPanelView.hWnd, nullptr, FALSE);
 		}
 	}
 	else if (mb_DialogsChanged)
@@ -3991,7 +3991,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		UNREFERENCED_PARAMETER(lbBltRc);
 
 		//#ifdef _DEBUG
-		//MoveToEx(hPaintDc, client.left, client.top, NULL);
+		//MoveToEx(hPaintDc, client.left, client.top, nullptr);
 		//LineTo(hPaintDc, client.right-client.left, client.bottom-client.top);
 		//FillRect(hPaintDc, &rcClient, (HBRUSH)GetStockObject(WHITE_BRUSH));
 		//#endif
@@ -4034,7 +4034,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 			UpdateCursorDraw(hPaintDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
 
 			Cursor.isVisiblePrev = Cursor.isVisible;
-			cePaintDc.SelectFont(NULL);
+			cePaintDc.SelectFont(nullptr);
 			SCON.Unlock();
 		}
 	}
@@ -4050,7 +4050,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 			// Прямоугольник, соответствующий положению окна RealConsole
 			HWND hConWnd = mp_RCon->hConWnd;
 			RECT rcCon; GetWindowRect(hConWnd, &rcCon);
-			MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCon, 2);
+			MapWindowPoints(nullptr, GetView(), (LPPOINT)&rcCon, 2);
 			SelectObject(hPaintDc, GetStockObject(WHITE_PEN));
 			SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
 			Rectangle(hPaintDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
@@ -4066,7 +4066,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 			// Прямоугольники найденных диалогов
 			//SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; DWORD nDlgFlags[MAX_DETECTED_DIALOGS];
 			//int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
-			const DetectedDialogs* pDlg = NULL;
+			const DetectedDialogs* pDlg = nullptr;
 			// Если включены PanelView - попробовать взять диалоги у него
 			//#ifdef _DEBUG
 			MFileMapping<DetectedDialogs> pvMap;
@@ -4162,7 +4162,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 		mp_ConEmu->DebugStep(L"ConEmu: Sleeping in CVirtualConsole::PaintVCon for 1s");
 		Sleep(1000);
 		gpSetCls->PostUpdateCounters(true); // Force update "Info" counters
-		mp_ConEmu->DebugStep(NULL);
+		mp_ConEmu->DebugStep(nullptr);
 	}
 	#endif
 }
@@ -4330,7 +4330,7 @@ void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
 {
 	#ifdef _DEBUG // due to unittests
 	// Should could happen only during creation of new console (e.g., new tab panel appears)
-	_ASSERTE(mp_RCon && ((mp_RCon->ConWnd()==NULL) || mp_RCon->mb_InCloseConsole));
+	_ASSERTE(mp_RCon && ((mp_RCon->ConWnd()==nullptr) || mp_RCon->mb_InCloseConsole));
 	#endif
 	// И по идее, DC еще создан быть не должен был
 	if ((m_Sizes.Width == 0) && (m_Sizes.Height == 0))
@@ -4466,10 +4466,10 @@ bool CVirtualConsole::FindChanges(int row, const wchar_t* ConCharLine, const Cha
 HRGN CVirtualConsole::GetExclusionRgn()
 {
 	if (!gpSet->isUserScreenTransparent)
-		return NULL;
+		return nullptr;
 
 	if (mp_RCon->GetFarPID(TRUE) == 0)
-		return NULL;
+		return nullptr;
 
 	return mh_TransparentRgn;
 }
@@ -4531,7 +4531,7 @@ void CVirtualConsole::OnPanelViewSettingsChanged()
 			lWindows.hLeftView = m_LeftPanelView.hWnd;
 			lWindows.hRightView = m_RightPanelView.hWnd;
 			pipe.Execute(CMD_GUICHANGED, &lWindows, sizeof(lWindows));
-			mp_ConEmu->DebugStep(NULL);
+			mp_ConEmu->DebugStep(nullptr);
 		}
 	}
 
@@ -4663,7 +4663,7 @@ bool CVirtualConsole::CheckDialogsChanged()
 	bool lbChanged = false;
 	//SMALL_RECT rcDlg[32];
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(mrc_Dialogs));
-	//int nDlgCount = mp_RCon->GetDetectedDialogs(countof(rcDlg), rcDlg, NULL);
+	//int nDlgCount = mp_RCon->GetDetectedDialogs(countof(rcDlg), rcDlg, nullptr);
 
 	if (mn_LastDialogsCount != mn_DialogsCount)
 	{
@@ -4688,17 +4688,17 @@ bool CVirtualConsole::CheckDialogsChanged()
 
 const PanelViewInit* CVirtualConsole::GetPanelView(bool abLeftPanel)
 {
-	if (!this) return NULL;
+	if (!this) return nullptr;
 
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
 
 	if (!pp->hWnd || !IsWindow(pp->hWnd))
 	{
 		if (pp->hWnd)
-			pp->hWnd = NULL;
+			pp->hWnd = nullptr;
 
 		pp->bVisible = FALSE;
-		return NULL;
+		return nullptr;
 	}
 
 	return pp;
@@ -4712,7 +4712,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 	if (!pp->hWnd || !IsWindow(pp->hWnd))
 	{
 		if (pp->hWnd)
-			pp->hWnd = NULL;
+			pp->hWnd = nullptr;
 
 		pp->bVisible = FALSE;
 		return FALSE;
@@ -4744,7 +4744,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 	}
 	else
 	{
-		//HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
+		//HRGN hRgn = nullptr, hSubRgn = nullptr, hCombine = nullptr;
 		m_RgnTest.Reset();
 		SMALL_RECT rcPanel; DWORD nGetRc;
 
@@ -4805,9 +4805,9 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 
 				if (pRgn->nRgnState == SIMPLEREGION)
 				{
-					//NULL регион пусть ставит всегда (окно может быть ReUsed)
+					//nullptr регион пусть ставит всегда (окно может быть ReUsed)
 					//if (!abOnRegister) {
-					mp_RCon->SetOtherWindowRgn(pp->hWnd, 0, NULL, TRUE);
+					mp_RCon->SetOtherWindowRgn(pp->hWnd, 0, nullptr, TRUE);
 					//}
 				}
 				else if (lbChanged)
@@ -4843,7 +4843,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 				pp->bVisible = false;
 				//if (IsWindowVisible(pp->hWnd)) {
 				//	// Сбросит регион и скроет(!) окно
-				//	mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
+				//	mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, nullptr, FALSE);
 				//}
 			}
 		}
@@ -4858,7 +4858,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 		else if (!pp->bVisible && IsWindowVisible(pp->hWnd))
 		{
 			// Сбросит регион и скроет(!) окно
-			mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
+			mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, nullptr, FALSE);
 			//mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
 		}
 	}
@@ -4915,7 +4915,7 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 	// Не дергаться, если менять ничего не нужно
 	DWORD dwErr = 0; BOOL lbRc = TRUE;
 	RECT rcCur; GetWindowRect(pp->hWnd, &rcCur);
-	//MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCur, 2);
+	//MapWindowPoints(nullptr, ghWnd, (LPPOINT)&rcCur, 2);
 
 	if (mp_RCon && (rcCur.left != pt[0].x || rcCur.top != pt[0].y
 	        || rcCur.right != pt[1].x || rcCur.bottom != pt[1].y))
@@ -4932,7 +4932,7 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 	}
 
 	// И отрисовать -- не нужно. окно еще не показано? когда будет показано - тогда и отрисуется
-	//InvalidateRect(pp->hWnd, NULL, FALSE); -- не нужно, так получается двойной WM_PAINT
+	//InvalidateRect(pp->hWnd, nullptr, FALSE); -- не нужно, так получается двойной WM_PAINT
 	// Регионы и видимость (видимость при регистрации не меняется)
 	UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
 	return TRUE;
@@ -5112,7 +5112,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 #ifdef APPDISTINCTBACKGROUND
 CBackgroundInfo* CVirtualConsole::GetBackgroundObject()
 {
-	if (!this) return NULL;
+	if (!this) return nullptr;
 	if (mp_BgInfo)
 	{
 		mp_BgInfo->AddRef();
@@ -5195,7 +5195,7 @@ void CVirtualConsole::OnTaskbarSettingsChanged()
 		if (mp_Ghost)
 		{
 			delete mp_Ghost;
-			mp_Ghost = NULL;
+			mp_Ghost = nullptr;
 		}
 	}
 }

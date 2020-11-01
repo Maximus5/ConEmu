@@ -72,7 +72,7 @@ LPCWSTR CLngPredefined::getHint(UINT id)
 	if (p)
 		return p->str;
 
-	return NULL;
+	return nullptr;
 }
 
 // Search in gsDataRsrcs for id
@@ -88,5 +88,5 @@ LPCWSTR CLngPredefined::getRsrc(UINT id)
 	if (p)
 		return p->str;
 
-	return NULL;
+	return nullptr;
 }

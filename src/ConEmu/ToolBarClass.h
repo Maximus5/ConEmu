@@ -123,7 +123,7 @@ public:
 	int GetHeight();
 
 	void Lock();
-	int CreatePane(int anPane, int anPriority, bool abShow, HBITMAP ahBmp, LPARAM lParam, ToolbarCommand_f OnToolbarCommand, ToolbarMenu_f OnToolbarMenu = NULL, ToolBarDraw_f OnToolBarDraw = NULL);
+	int CreatePane(int anPane, int anPriority, bool abShow, HBITMAP ahBmp, LPARAM lParam, ToolbarCommand_f OnToolbarCommand, ToolbarMenu_f OnToolbarMenu = nullptr, ToolBarDraw_f OnToolBarDraw = nullptr);
 	bool ShowPane(int anPane, bool abShow);
 	bool DeletePane(int anPane);
 	int AddTool(int anPane, int anCmd, const RECT& rcBmp, DWORD anFlags, LPCWSTR asTip); // Returns new CmdID

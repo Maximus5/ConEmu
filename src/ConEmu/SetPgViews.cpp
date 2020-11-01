@@ -59,7 +59,7 @@ LRESULT CSetPgViews::OnInitDialog(HWND hDlg, bool abInitial)
 
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
 	{
-		CSetPgFonts* pFonts = NULL;
+		CSetPgFonts* pFonts = nullptr;
 		if (gpSetCls->GetPageObj(pFonts))
 		{
 			pFonts->CopyFontsTo(hDlg, tThumbsFontName, tTilesFontName, 0); // можно скопировать список с вкладки [thi_Fonts]

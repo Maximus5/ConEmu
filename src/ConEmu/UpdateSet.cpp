@@ -76,7 +76,7 @@ bool ConEmuUpdateSettings::IsVerLocationDeprecated(LPCWSTR asNewIniLocation) con
 		// Invalid location
 		// If one needs to point on one's local drive,
 		// proper format is: "file:///C:\path\version.ini"
-		_ASSERTE(pszDomain != NULL);
+		_ASSERTE(pszDomain != nullptr);
 		return true;
 	}
 
@@ -120,17 +120,17 @@ ConEmuUpdateSettings::Builds ConEmuUpdateSettings::GetDefaultUpdateChannel()
 void ConEmuUpdateSettings::ResetToDefaults()
 {
 	// Указатели должны быть освобождены перед вызовом
-	_ASSERTE(szUpdateExeCmdLine==NULL);
+	_ASSERTE(szUpdateExeCmdLine==nullptr);
 
-	szUpdateVerLocation = NULL;
+	szUpdateVerLocation = nullptr;
 	isUpdateCheckOnStartup = true;
 	isUpdateCheckHourly = true;
 	isUpdateConfirmDownload = true; // true-Show MsgBox, false-notify via TSA only
 	isUpdateUseBuilds = GetDefaultUpdateChannel();
 	isUpdateInetTool = false;
-	szUpdateInetTool = NULL;
+	szUpdateInetTool = nullptr;
 	isUpdateUseProxy = false;
-	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = NULL; // "Server:port"
+	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = nullptr; // "Server:port"
 	// Проверяем, была ли программа установлена через ConEmuSetup.exe?
 	isUpdateDownloadSetup = 0; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 	isSetupDetected = 0; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
@@ -256,7 +256,7 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 {
 	FreePointers();
 
-	szUpdateVerLocation = (apFrom->szUpdateVerLocation && *apFrom->szUpdateVerLocation) ? lstrdup(apFrom->szUpdateVerLocation) : NULL; // ConEmu latest version location info
+	szUpdateVerLocation = (apFrom->szUpdateVerLocation && *apFrom->szUpdateVerLocation) ? lstrdup(apFrom->szUpdateVerLocation) : nullptr; // ConEmu latest version location info
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
 	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
@@ -331,7 +331,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 				if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\WinRAR\\Extraction\\Profile", 0, KEY_READ, &hk))
 				{
 					DWORD nSize = sizeof(nSubFolder);
-					if (0 != RegQueryValueEx(hk, L"UnpToSubfolders", NULL, NULL, (LPBYTE)&nSubFolder, &nSize))
+					if (0 != RegQueryValueEx(hk, L"UnpToSubfolders", nullptr, nullptr, (LPBYTE)&nSubFolder, &nSize))
 						nSubFolder = 0;
 					RegCloseKey(hk);
 				}
@@ -380,7 +380,7 @@ BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 			{
 				_ASSERTE(countof(szInstallDir)>(MAX_PATH+1));
 				DWORD dwSize = MAX_PATH*sizeof(*szInstallDir);
-				if (0 == RegQueryValueEx(hk, pszName, NULL, NULL, (LPBYTE)szInstallDir, &dwSize) && *szInstallDir)
+				if (0 == RegQueryValueEx(hk, pszName, nullptr, nullptr, (LPBYTE)szInstallDir, &dwSize) && *szInstallDir)
 				{
 					size_t nLen = _tcslen(szInstallDir);
 					if (szInstallDir[nLen-1] != L'\\')

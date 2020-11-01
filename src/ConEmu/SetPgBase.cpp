@@ -120,7 +120,7 @@ void CSetPgBase::ProcessDpiChange(const CDpiForDialog* apDpi)
 
 	HWND hPlace = GetDlgItem(mh_Parent, tSetupPagePlace);
 	RECT rcClient; GetWindowRect(hPlace, &rcClient);
-	MapWindowPoints(NULL, mh_Parent, (LPPOINT)&rcClient, 2);
+	MapWindowPoints(nullptr, mh_Parent, (LPPOINT)&rcClient, 2);
 
 	mb_DpiChanged = false;
 	mp_DpiAware->SetDialogDPI(apDpi->GetCurDpi(), &rcClient);
@@ -141,7 +141,7 @@ INT_PTR CSetPgBase::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlI
 	}
 	else if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
 	{
-		_ASSERTE(hCtrl!=NULL);
+		_ASSERTE(hCtrl!=nullptr);
 		// Check appropriate flags
 		DWORD nStyle = GetWindowLong(hCtrl, GWL_STYLE);
 		if (!(nStyle & SS_NOTIFY))
@@ -173,7 +173,7 @@ INT_PTR CSetPgBase::OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTe
 	#endif
 	if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
 	{
-		SetCursor(LoadCursor(NULL, IDC_HAND));
+		SetCursor(LoadCursor(nullptr, IDC_HAND));
 		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
 		return TRUE;
 	}
@@ -190,11 +190,11 @@ INT_PTR CSetPgBase::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	TabHwndIndex pgId = thi_Last;
-	CSetPgBase* pObj = NULL;
+	CSetPgBase* pObj = nullptr;
 
 	if (messg != WM_INITDIALOG)
 	{
-		ConEmuSetupPages* pPage = NULL;
+		ConEmuSetupPages* pPage = nullptr;
 		pgId = gpSetCls->GetPageId(hDlg, &pPage);
 
 		if ((pgId == thi_Last) || !pPage || !pPage->pPage)
@@ -235,21 +235,21 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			_ASSERTE(pObj && (pObj->GetPageType() >= thi_General && pObj->GetPageType() < thi_Last));
 			return 0;
 		}
-		_ASSERTE(pObj->Dlg() == NULL || pObj->Dlg() == hDlg);
+		_ASSERTE(pObj->Dlg() == nullptr || pObj->Dlg() == hDlg);
 
 		pgId = pObj->GetPageType();
 
 		if (bInitial)
 		{
-			_ASSERTE(pObj->mp_InfoPtr && pObj->mp_InfoPtr->PageIndex >= 0 && pObj->mp_InfoPtr->hPage == NULL);
+			_ASSERTE(pObj->mp_InfoPtr && pObj->mp_InfoPtr->PageIndex >= 0 && pObj->mp_InfoPtr->hPage == nullptr);
 			pObj->mp_InfoPtr->hPage = hDlg;
 			pObj->mh_Dlg = hDlg;
 
 			CDynDialog* pDynDialog = CDynDialog::GetDlgClass(hDlg);
-			_ASSERTE(pObj->mp_DynDialog==NULL || pObj->mp_DynDialog==pDynDialog);
+			_ASSERTE(pObj->mp_DynDialog==nullptr || pObj->mp_DynDialog==pDynDialog);
 
 			#ifdef _DEBUG
-			// pObj->mp_DynDialog is NULL on first WM_INIT
+			// pObj->mp_DynDialog is nullptr on first WM_INIT
 			if (pObj->mp_DynDialog)
 			{
 				_ASSERTE(pObj->mp_DynDialog->mh_Dlg == hDlg);
@@ -258,7 +258,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 
 			HWND hPlace = GetDlgItem(pObj->mh_Parent, tSetupPagePlace);
 			RECT rcClient; GetWindowRect(hPlace, &rcClient);
-			MapWindowPoints(NULL, pObj->mh_Parent, (LPPOINT)&rcClient, 2);
+			MapWindowPoints(nullptr, pObj->mh_Parent, (LPPOINT)&rcClient, 2);
 			if (pObj->mp_DpiAware)
 				pObj->mp_DpiAware->Attach(hDlg, pObj->mh_Parent, pDynDialog);
 			MoveWindowRect(hDlg, rcClient);
@@ -306,7 +306,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		}
 		else
 		{
-			_ASSERTE(pAppsPg!=NULL);
+			_ASSERTE(pAppsPg!=nullptr);
 			return 0;
 		}
 	}
@@ -472,7 +472,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			else if (messg == gpSetCls->mn_MsgLoadFontFromMain)
 			{
-				CSetPgFonts* pFonts = NULL;
+				CSetPgFonts* pFonts = nullptr;
 				if (gpSetCls->GetPageObj(pFonts))
 				{
 					if (pgId == thi_Views)

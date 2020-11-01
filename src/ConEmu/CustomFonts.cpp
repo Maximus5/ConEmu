@@ -58,9 +58,9 @@ void CustomFontFamily::AddFont(CustomFont* font)
 CustomFont* CustomFontFamily::GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline)
 {
 	if (!pImpl)
-		return NULL;
+		return nullptr;
 
-	CustomFont* pBestFont = NULL;
+	CustomFont* pBestFont = nullptr;
 	int iBestScore = 1000000000;
 
 	//for (std::vector<CustomFont*>::iterator iter = pImpl->fonts.begin(); iter != pImpl->fonts.end(); ++iter)
@@ -102,8 +102,8 @@ CustomFontFamily::~CustomFontFamily()
 class BDFFont : public CustomFont
 {
 private:
-	HDC hDC = NULL;
-	HBITMAP hBitmap = NULL;  // for GDI rendering
+	HDC hDC = nullptr;
+	HBITMAP hBitmap = nullptr;  // for GDI rendering
 
 	int m_Width = 0, m_Height = 0;
 	bool m_Bold = FALSE;
@@ -119,9 +119,9 @@ private:
 
 	void CreateBitmap()
 	{
-		HDC hDDC = GetDC(NULL);
+		HDC hDDC = GetDC(nullptr);
 		hDC = CreateCompatibleDC(hDDC);
-		ReleaseDC(NULL, hDDC);
+		ReleaseDC(nullptr, hDDC);
 
 		struct MyBitmap
 		{
@@ -143,8 +143,8 @@ private:
 		// biBitCount==1: The bitmap is monochrome, and the bmiColors member
 		//                of BITMAPINFO must contain two entries.
 		b.bmi.bmiColors[1] = white;
-		void* pvBits = NULL;
-		hBitmap = CreateDIBSection(hDC, &b.bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+		void* pvBits = nullptr;
+		hBitmap = CreateDIBSection(hDC, &b.bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0);
 		if (hBitmap)
 			SelectObject(hDC, hBitmap);
 		bpBPixels = (BYTE*)pvBits;
@@ -196,16 +196,16 @@ public:
 
 	static char* LoadBuffer(const wchar_t* lpszFilePath, char*& pszBuf, char*& pszFileEnd)
 	{
-		HANDLE h = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+		HANDLE h = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, nullptr);
 		if (h == INVALID_HANDLE_VALUE)
-			return NULL;
+			return nullptr;
 
 		LARGE_INTEGER liSize = {};
 		if (!GetFileSizeEx(h, &liSize) || liSize.HighPart)
 		{
 			_ASSERTE("GetFileSizeEx failed" && 0);
 			CloseHandle(h);
-			return NULL;
+			return nullptr;
 		}
 
 		pszBuf = (char*)malloc(liSize.LowPart+1);
@@ -213,18 +213,18 @@ public:
 		{
 			_ASSERTE("Buffer allocation failed" && 0);
 			CloseHandle(h);
-			return NULL;
+			return nullptr;
 		}
 
 		DWORD nRead = 0;
-		BOOL bRead = ReadFile(h, pszBuf, liSize.LowPart, &nRead, NULL);
+		BOOL bRead = ReadFile(h, pszBuf, liSize.LowPart, &nRead, nullptr);
 		CloseHandle(h);
 
 		if (!bRead || (nRead != liSize.LowPart))
 		{
 			_ASSERTE("BDF file read failed" && 0);
 			free(pszBuf);
-			return NULL;
+			return nullptr;
 		}
 		pszBuf[nRead] = 0;
 
@@ -237,7 +237,7 @@ public:
 		char* pszBuf, *pszFileEnd;
 		char* pszCur = LoadBuffer(lpszFilePath, pszBuf, pszFileEnd);
 		if (!pszCur)
-			return NULL;
+			return nullptr;
 
 		char* szLine;
 		char* szWord;
@@ -450,7 +450,7 @@ wrap:
 			//   Our hBitmap MUST be created with palette of two RGB colors {0x000000, 0xFFFFFF}
 			//   to achieve proper trinaty raster operations on our pixels and foreground color (selected brush)
 			BitBlt(hDC, X, Y, m_Width, m_Height, this->hDC, (ch%256)*m_Width, (ch/256)*m_Height, 0x00E20746/*DSPDxax*/);
-			//MaskBlt(hDC, X, Y, m_Width, m_Height, hDC/*NULL?*/, X, Y, this->hBitmap, (ch%256)*m_Width, (ch/256)*m_Height, MAKEROP4(PATCOPY/*text/foreground*/, 0x00AA0029/*D:background*/));
+			//MaskBlt(hDC, X, Y, m_Width, m_Height, hDC/*nullptr?*/, X, Y, this->hBitmap, (ch%256)*m_Width, (ch/256)*m_Height, MAKEROP4(PATCOPY/*text/foreground*/, 0x00AA0029/*D:background*/));
 			X += m_Width;
 		}
 	}
@@ -521,7 +521,7 @@ CustomFont* BDF_Load( LPCTSTR lpszFilePath )
 
 CachedSolidBrush::~CachedSolidBrush()
 {
-	if (m_Brush != NULL)
+	if (m_Brush != nullptr)
 		DeleteObject(m_Brush);
 }
 
@@ -539,11 +539,11 @@ HBRUSH CachedSolidBrush::Get(COLORREF c)
 
 CEDC::CEDC(HDC hDc)
 	: hDC(hDc)
-	, hBitmap(NULL)
-	, mh_OldBitmap(NULL)
-	, mh_OldFont(NULL)
+	, hBitmap(nullptr)
+	, mh_OldBitmap(nullptr)
+	, mh_OldFont(nullptr)
 {
-	mb_ExtDc = (hDc != NULL);
+	mb_ExtDc = (hDc != nullptr);
 	iWidth = 0;
 	iHeight = 0;
 	Reset();
@@ -551,12 +551,12 @@ CEDC::CEDC(HDC hDc)
 
 void CEDC::Reset()
 {
-	_ASSERTE(mb_ExtDc || (hDC == NULL && hBitmap == NULL));
+	_ASSERTE(mb_ExtDc || (hDC == nullptr && hBitmap == nullptr));
 
-	mh_OldBitmap = NULL;
-	pPixels = NULL;
+	mh_OldBitmap = nullptr;
+	pPixels = nullptr;
 	m_Font.Release();
-	mh_OldFont = NULL;
+	mh_OldFont = nullptr;
 	m_BkColor = CLR_INVALID;
 	m_TextColor = CLR_INVALID;
 	m_BkMode = -1;
@@ -571,12 +571,12 @@ void CEDC::Delete()
 		if (mh_OldFont)
 		{
 			::SelectObject(hDC, mh_OldFont);
-			mh_OldFont = NULL;
+			mh_OldFont = nullptr;
 		}
 
 		if (mb_ExtDc)
 		{
-			_ASSERTEX(mh_OldBitmap==NULL);
+			_ASSERTEX(mh_OldBitmap==nullptr);
 		}
 		else
 		{
@@ -585,12 +585,12 @@ void CEDC::Delete()
 			::DeleteDC(hDC);
 		}
 
-		hDC = NULL;
+		hDC = nullptr;
 	}
 
 	if (hBitmap)
 	{
-		DeleteObject(hBitmap); hBitmap = NULL;
+		DeleteObject(hBitmap); hBitmap = nullptr;
 	}
 
 	Reset();
@@ -600,7 +600,7 @@ bool CEDC::Create(UINT Width, UINT Height)
 {
 	Delete();
 
-	const HDC hScreenDC = GetDC(NULL);
+	const HDC hScreenDC = GetDC(nullptr);
 	_ASSERTE(hScreenDC);
 	wchar_t szInfo[128];
 
@@ -608,11 +608,11 @@ bool CEDC::Create(UINT Width, UINT Height)
 
 	hDC = CreateCompatibleDC(hScreenDC);
 
-	if (hDC == NULL)
+	if (hDC == nullptr)
 	{
-		Assert((hDC!=NULL) && "CreateCompatibleDC failed!");
+		Assert((hDC!=nullptr) && "CreateCompatibleDC failed!");
 
-		ReleaseDC(NULL, hScreenDC);
+		ReleaseDC(nullptr, hScreenDC);
 		return false;
 	}
 
@@ -635,7 +635,7 @@ bool CEDC::Create(UINT Width, UINT Height)
 		bmi.bmiHeader.biBitCount    = 32;
 		bmi.bmiHeader.biCompression = BI_RGB;
 		void* pvBits;
-		hBitmap = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+		hBitmap = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0);
 		pPixels = (COLORREF*)pvBits;
 
 		swprintf_c(szInfo, L"Surface created DIB(%i,%i,%i)=x%08X", (int)bmi.bmiHeader.biWidth, (int)bmi.bmiHeader.biHeight, (int)bmi.bmiHeader.biBitCount, (DWORD)(DWORD_PTR)hBitmap);
@@ -668,7 +668,7 @@ bool CEDC::Create(UINT Width, UINT Height)
 
 	ReleaseDC(0, hScreenDC);
 
-	return (hBitmap!=NULL);
+	return (hBitmap!=nullptr);
 }
 
 void CEDC::SelectFont(CFont* font)
@@ -679,18 +679,18 @@ void CEDC::SelectFont(CFont* font)
 
 	m_Font = font;
 
-	if (font == NULL)
+	if (font == nullptr)
 	{
 		if (mh_OldFont)
 		{
 			::SelectObject(hDC, mh_OldFont);
-			mh_OldFont = NULL;
+			mh_OldFont = nullptr;
 		}
 	}
 	else if (font->iType == CEFONT_GDI)
 	{
 		HFONT hOldFont = (HFONT)::SelectObject(hDC, font->hFont);
-		if (mh_OldFont == NULL)
+		if (mh_OldFont == nullptr)
 			mh_OldFont = hOldFont;
 
 		if (m_TextColor != CLR_INVALID)

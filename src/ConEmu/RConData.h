@@ -43,8 +43,8 @@ class CRConDataGuard;
 struct ConsoleLinePtr
 {
 	const wchar_t* pChar;
-	const WORD* pAttr; // [may be NULL] - attributes from WinAPI
-	const CharAttr* pAttrEx; // [may be NULL] - extended attributes
+	const WORD* pAttr; // [may be nullptr] - attributes from WinAPI
+	const CharAttr* pAttrEx; // [may be nullptr] - extended attributes
 	int nLen;
 
 	void clear();

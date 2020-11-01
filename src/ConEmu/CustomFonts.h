@@ -63,7 +63,7 @@ class CustomFontFamily
 	struct Impl;
 	Impl *pImpl;
 public:
-	CustomFontFamily() : pImpl(NULL) {}
+	CustomFontFamily() : pImpl(nullptr) {}
 	~CustomFontFamily();
 	void AddFont(CustomFont* font);
 	CustomFont* GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline);
@@ -73,7 +73,7 @@ public:
 
 struct CachedSolidBrush
 {
-	CachedSolidBrush() : m_Color(CLR_INVALID), m_Brush(NULL) {}
+	CachedSolidBrush() : m_Color(CLR_INVALID), m_Brush(nullptr) {}
 	~CachedSolidBrush();
 	HBRUSH Get(COLORREF);
 private:

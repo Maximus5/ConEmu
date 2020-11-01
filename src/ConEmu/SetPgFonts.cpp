@@ -118,7 +118,7 @@ LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 			L"Dashes and Borders: 2013-2015;2500-25C4;",
 			L"Pseudographics: 2013-25C4;",
 			L"CJK: 2E80-9FC3;AC00-D7A3;F900-FAFF;FE30-FE4F;FF01-FF60;FFE0-FFE6;",
-			NULL
+			nullptr
 		};
 		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_CharAltFontRanges));
 		LPCWSTR pszCurrentRange = szCharRanges.ms_Val;

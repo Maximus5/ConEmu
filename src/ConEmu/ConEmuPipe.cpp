@@ -39,11 +39,11 @@ WARNING("!!! Обязательно нужно сделать возможнос
 CConEmuPipe::CConEmuPipe(DWORD anFarPID, DWORD anTimeout/*=-1*/)
 {
 	mn_FarPID = anFarPID;
-	mh_Pipe = NULL;
+	mh_Pipe = nullptr;
 	swprintf_c(ms_PipeName, CEPLUGINPIPENAME, L".", mn_FarPID);
-	pIn = NULL;
-	pOut = NULL;
-	lpCursor = NULL;
+	pIn = nullptr;
+	pOut = nullptr;
+	lpCursor = nullptr;
 	dwMaxDataSize = 0;
 	mdw_Timeout = anTimeout;
 }
@@ -99,7 +99,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 	if (!pIn)
 	{
-		_ASSERTE(pIn!=NULL);
+		_ASSERTE(pIn!=nullptr);
 		TCHAR szError[128];
 		swprintf_c(szError, _T("Pipe: Can't allocate memory (%i) bytes, Cmd = %i!"), nAllSize, nCmd);
 		MBoxA(szError);
@@ -125,7 +125,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 					cbReadBuf,              // buffer to receive reply
 					sizeof(cbReadBuf),      // size of read buffer
 					&cbRead,                // bytes read
-					NULL);                  // not overlapped
+					nullptr);                  // not overlapped
 	dwErr = GetLastError();
 
 	CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_PipeName);
@@ -150,7 +150,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 	if (cbRead < sizeof(DWORD))
 	{
-		pOut = NULL;
+		pOut = nullptr;
 		Close();
 		SafeFree(pIn);
 		return FALSE;
@@ -162,7 +162,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	if (pOut->hdr.cbSize <= sizeof(pOut->hdr))
 	{
 		_ASSERTE(pOut->hdr.cbSize == 0);
-		pOut = NULL;
+		pOut = nullptr;
 		Close();
 		SafeFree(pIn);
 		return FALSE;
@@ -171,14 +171,14 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER)
 	{
 		gpConEmu->ReportOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1, pOut->hdr.nSrcPID, pOut->hdr.hModule, pOut->hdr.nBits);
-		pOut = NULL;
+		pOut = nullptr;
 		Close();
 		SafeFree(pIn);
 		return FALSE;
 	}
 
 	nAllSize = pOut->hdr.cbSize;
-	pOut = NULL;
+	pOut = nullptr;
 
 	if (nAllSize==0)
 	{
@@ -190,7 +190,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	}
 
 	pOut = (CESERVER_REQ*)calloc(nAllSize,1);
-	_ASSERTE(pOut!=NULL);
+	_ASSERTE(pOut!=nullptr);
 	memmove(pOut, cbReadBuf, cbRead);
 	_ASSERTE(pOut->hdr.nVersion==CESERVER_REQ_VER);
 	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
@@ -210,7 +210,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 						ptrData,    // buffer to receive reply
 						nAllSize,   // size of buffer
 						&cbRead,    // number of bytes read
-						NULL);      // not overlapped
+						nullptr);      // not overlapped
 
 		// Exit if an error other than ERROR_MORE_DATA occurs.
 		if (!fSuccess && (GetLastError() != ERROR_MORE_DATA))
@@ -229,7 +229,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	return TRUE;
 }
 
-LPBYTE CConEmuPipe::GetPtr(DWORD* pdwLeft/*=NULL*/)
+LPBYTE CConEmuPipe::GetPtr(DWORD* pdwLeft/*=nullptr*/)
 {
 	if (pdwLeft)
 	{
@@ -248,7 +248,7 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 
 	if (nRead) *nRead = 0;  // пока сбросим
 
-	if (lpCursor == NULL)
+	if (lpCursor == nullptr)
 	{
 		if (nRead) *nRead=0;
 

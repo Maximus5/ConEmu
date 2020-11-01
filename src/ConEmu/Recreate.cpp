@@ -45,16 +45,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 CRecreateDlg::CRecreateDlg()
-	: mh_Dlg(NULL)
+	: mh_Dlg(nullptr)
 	, mn_DlgRc(0)
-	, mp_Args(NULL)
-	, mh_Parent(NULL)
+	, mp_Args(nullptr)
+	, mh_Parent(nullptr)
 	, mb_DontAutoSelCmd(false)
-	, mpsz_DefCmd(NULL)
-	, mpsz_CurCmd(NULL)
-	, mpsz_SysCmd(NULL)
-	, mpsz_DefDir(NULL)
-	, mp_DpiAware(NULL)
+	, mpsz_DefCmd(nullptr)
+	, mpsz_CurCmd(nullptr)
+	, mpsz_SysCmd(nullptr)
+	, mpsz_DefDir(nullptr)
+	, mp_DpiAware(nullptr)
 {
 	ms_CurUser[0] = 0;
 }
@@ -120,7 +120,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgsEx* apArgs, bool abDontAutoSelCmd /*=
 	//if (gpConEmu->mh_RecreatePasswFont)
 	//{
 	//	DeleteObject(gpConEmu->mh_RecreatePasswFont);
-	//	gpConEmu->mh_RecreatePasswFont = NULL;
+	//	gpConEmu->mh_RecreatePasswFont = nullptr;
 	//}
 
 	gpConEmu->SkipOneAppsRelease(false);
@@ -137,7 +137,7 @@ void CRecreateDlg::Close()
 			mn_DlgRc = IDCANCEL;
 			EndDialog(mh_Dlg, IDCANCEL);
 		}
-		mh_Dlg = NULL;
+		mh_Dlg = nullptr;
 	}
 	SafeDelete(mp_DpiAware);
 }
@@ -193,7 +193,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		lsAppend = tempArgs.CreateCommandLine();
 		if (!lsAppend.IsEmpty())
 		{
-			lsTempCmd = lstrmerge(pszSetCmd, ((lsAppend[0] == L' ') ? NULL : L" "), lsAppend);
+			lsTempCmd = lstrmerge(pszSetCmd, ((lsAppend[0] == L' ') ? nullptr : L" "), lsAppend);
 			pszSetCmd = lsTempCmd.ms_Val;
 		}
 	}
@@ -268,7 +268,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	wchar_t szOtherUser[MAX_PATH*2+1]; szOtherUser[0] = 0;
 
 	CVConGuard VCon;
-	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
 	EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), FALSE);
 	if ((pArgs->pszUserName && *pArgs->pszUserName)
 		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted)))
@@ -326,7 +326,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		SetDlgItemTextA(hDlg, cbRunAsAdmin, "&Run as..."); //GCC hack. иначе не собирается
 		// И уменьшить длину
 		RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-		SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
+		SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), nullptr, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
 				        SWP_NOMOVE|SWP_NOZORDER);
 	}
 	else if (gpConEmu->mb_IsUacAdmin || (pArgs && (pArgs->RunAsAdministrator == crb_On)))
@@ -349,7 +349,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	if (pArgs->aRecreate == cra_RecreateTab)
 	{
 		SetWindowText(hDlg, CLngRc::getRsrc(lng_DlgRestartConsole/*"Restart console"*/));
-		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
+		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(nullptr,IDI_EXCLAMATION), 0);
 		lbRc = TRUE;
 	}
 	else
@@ -363,11 +363,11 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), !bForceNewWindow);
 
 		//
-		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
+		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(nullptr,IDI_QUESTION), 0);
 		POINT pt = {0,0};
 		MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
 		DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
-		SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		SetWindowPos(GetDlgItem(hDlg, IDC_START), nullptr, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 		SetDlgItemText(hDlg, IDC_START, (pArgs->aRecreate == cra_EditTab)
 			? CLngRc::getRsrc(lng_NewConsoleSaveBtn/*"&Save"*/) : CLngRc::getRsrc(lng_NewConsoleStartBtn/*"&Start"*/));
 		DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
@@ -376,28 +376,28 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	// Align "New window" and "Run as administrator" checkboxes
 	{
 		RECT rcBox = {}; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-		MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 2);
+		MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcBox, 2);
 		const int chk_height = (rcBox.bottom - rcBox.top);
 
 		POINT pt = {rcBox.left};
 		if (!bRunInNewWindow_Hidden)
 		{
 			RECT rcIcoBox = {}; GetWindowRect(GetDlgItem(hDlg, IDC_RESTART_ICON), &rcIcoBox);
-			MapWindowPoints(NULL, hDlg, (LPPOINT)&rcIcoBox, 2);
+			MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcIcoBox, 2);
 			const int ico_height = (rcIcoBox.bottom - rcIcoBox.top);
 			const int h2 = (chk_height * 5) / 2;
 			pt.y = rcIcoBox.top + (ico_height - h2)/2;
-			SetWindowPos(GetDlgItem(hDlg, cbRunInNewWindow), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+			SetWindowPos(GetDlgItem(hDlg, cbRunInNewWindow), nullptr, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 			pt.y += (h2 - chk_height);
 		}
 		else
 		{
 			RECT rcBtnBox = {}; GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
-			MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtnBox, 2);
+			MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcBtnBox, 2);
 			const int btn_height = (rcBtnBox.bottom - rcBtnBox.top);
 			pt.y = rcBtnBox.top + (btn_height - chk_height)/2;
 		}
-		SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), nullptr, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	// Dpi aware processing at the end of sequence
@@ -461,7 +461,7 @@ INT_PTR CRecreateDlg::OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 	{
 		int index = 0;
 		LPCWSTR pszHistory;
-		while ((pszHistory = gpSet->HistoryGet(index++)) != NULL)
+		while ((pszHistory = gpSet->HistoryGet(index++)) != nullptr)
 		{
 			AddCommandList(pszHistory);
 		}
@@ -469,7 +469,7 @@ INT_PTR CRecreateDlg::OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 
 	// Tasks
 	int nGroup = 0;
-	const CommandTasks* pGrp = NULL;
+	const CommandTasks* pGrp = nullptr;
 	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 	{
 		AddCommandList(pGrp->pszName);
@@ -495,13 +495,13 @@ INT_PTR CRecreateDlg::OnUserControls(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 		{
 			DWORD dwLevel = 3, dwEntriesRead = 0, dwTotalEntries = 0, dwResumeHandle = 0;
 			NET_API_STATUS nStatus;
-			USER_INFO_3 *info = NULL;
-			nStatus = ::NetUserEnum(NULL, dwLevel, FILTER_NORMAL_ACCOUNT, (PBYTE*) & info,
+			USER_INFO_3 *info = nullptr;
+			nStatus = ::NetUserEnum(nullptr, dwLevel, FILTER_NORMAL_ACCOUNT, (PBYTE*) & info,
 					                MAX_PREFERRED_LENGTH, &dwEntriesRead, &dwTotalEntries, &dwResumeHandle);
 
 			if (nStatus == NERR_Success)
 			{
-				wchar_t *pszAdmin = NULL, *pszLikeAdmin = NULL, *pszOtherUser = NULL;
+				wchar_t *pszAdmin = nullptr, *pszLikeAdmin = nullptr, *pszOtherUser = nullptr;
 
 				for (DWORD i = 0; i < dwEntriesRead; ++i)
 				{
@@ -575,7 +575,7 @@ INT_PTR CRecreateDlg::OnSysCommand(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		return TRUE;
 
 	case ID_STORECMDHISTORY:
-		if (MsgBox(gpSet->isSaveCmdHistory ? L"Do you want to disable history?" : L"Do you want to enable history?", MB_YESNO|MB_ICONQUESTION, NULL, hDlg) == IDYES)
+		if (MsgBox(gpSet->isSaveCmdHistory ? L"Do you want to disable history?" : L"Do you want to enable history?", MB_YESNO|MB_ICONQUESTION, nullptr, hDlg) == IDYES)
 		{
 			gpSetCls->SetSaveCmdHistory(!gpSet->isSaveCmdHistory);
 			HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);
@@ -594,7 +594,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	{
 	case IDC_CHOOSE:
 	{
-		wchar_t *pszFilePath = SelectFile(L"Choose program to run", NULL, NULL, hDlg, L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0", sff_AutoQuote);
+		wchar_t *pszFilePath = SelectFile(L"Choose program to run", nullptr, nullptr, hDlg, L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0", sff_AutoQuote);
 		if (pszFilePath)
 		{
 			SetDlgItemText(hDlg, IDC_RESTART_CMD, pszFilePath);
@@ -688,7 +688,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				DWORD nErr = bCheckPwd ? 0 : GetLastError();
 				if (!bCheckPwd)
 				{
-					DisplayLastError(L"Invalid user name or password was specified!", nErr, MB_ICONSTOP, NULL, hDlg);
+					DisplayLastError(L"Invalid user name or password was specified!", nErr, MB_ICONSTOP, nullptr, hDlg);
 					return 1;
 				}
 			}
@@ -704,14 +704,14 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 		// StartupDir (may be specified as argument)
 		wchar_t* pszDir = GetDlgItemTextPtr(hDlg, IDC_STARTUP_DIR);
-		wchar_t* pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : NULL;
+		wchar_t* pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : nullptr;
 		LPCWSTR pszDirResult = pszExpand ? pszExpand : pszDir;
 		// Another user? We may fail with access denied. Check only for "current user" account
 		if (!pArgs->pszUserName && pszDirResult && *pszDirResult && !DirectoryExists(pszDirResult))
 		{
 			wchar_t* pszErrInfo = lstrmerge(L"Specified directory does not exists!\n", pszDirResult, L"\n" L"Do you want to choose another directory?\n\n");
 			DWORD nErr = GetLastError();
-			int iDirBtn = DisplayLastError(pszErrInfo, nErr, MB_ICONEXCLAMATION|MB_YESNO, NULL, hDlg);
+			int iDirBtn = DisplayLastError(pszErrInfo, nErr, MB_ICONEXCLAMATION|MB_YESNO, nullptr, hDlg);
 			if (iDirBtn == IDYES)
 			{
 				SafeFree(pszDir);
@@ -811,7 +811,7 @@ INT_PTR CRecreateDlg::OnComboSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	CRecreateDlg* pDlg = NULL;
+	CRecreateDlg* pDlg = nullptr;
 	if (messg == WM_INITDIALOG)
 	{
 		pDlg = (CRecreateDlg*)lParam;
@@ -913,8 +913,8 @@ void CRecreateDlg::InitVars()
 	}
 
 	CVConGuard VCon;
-	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-	CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
+	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
+	CRealConsole* pRCon = pVCon ? pVCon->RCon() : nullptr;
 
 	if (pRCon)
 	{
@@ -925,7 +925,7 @@ void CRecreateDlg::InitVars()
 	// Если уже передана команда через параметры - из текущей консоли не извлекать
 	if (!mp_Args || mp_Args->pszSpecialCmd)
 	{
-		_ASSERTE(mp_Args!=NULL);
+		_ASSERTE(mp_Args!=nullptr);
 		return;
 	}
 
@@ -937,11 +937,11 @@ void CRecreateDlg::InitVars()
 	// * Ни одной консоли нет (предложить то что запускается при старте - Task, команда)
 	// * Консоли есть (пусть наверное будет то что запускается при старте - Task, команда)
 
-	wchar_t* pszBuf = NULL;
+	wchar_t* pszBuf = nullptr;
 
 	_ASSERTE(pRCon || (mp_Args->aRecreate == cra_CreateTab || mp_Args->aRecreate == cra_EditTab));
 
-	LPCWSTR pszCmd = pRCon ? pRCon->GetCmd() : NULL;
+	LPCWSTR pszCmd = pRCon ? pRCon->GetCmd() : nullptr;
 	if (pszCmd && *pszCmd)
 		mpsz_CurCmd = lstrdup(pszCmd);
 
@@ -973,7 +973,7 @@ void CRecreateDlg::InitVars()
 				if (pszLine)
 					*pszLine = 0;
 
-				pszCmd = gpConEmu->ParseScriptLineOptions(pszBuf, NULL, mp_Args);
+				pszCmd = gpConEmu->ParseScriptLineOptions(pszBuf, nullptr, mp_Args);
 			}
 			else
 			{

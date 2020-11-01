@@ -114,11 +114,11 @@ unsigned CSetDlgLists::GetListItems(eFillListBoxItems eWhat, const ListBoxItem*&
 	LST_ENUM(TabBtnDblClickActions);
 	LST_ENUM(TabBarDblClickActions);
 	default:
-		pItems = NULL;
+		pItems = nullptr;
 	}
 
 	#undef  LST_ENUM
-	_ASSERTE((pItems!=NULL) && (nCount>0) && "Unsupported code");
+	_ASSERTE((pItems!=nullptr) && (nCount>0) && "Unsupported code");
 	return nCount;
 }
 
@@ -140,11 +140,11 @@ unsigned CSetDlgLists::GetListItems(eWordItems eWhat, const DWORD*& pItems)
 	LST_ENUM(ImgCtrls);
 	LST_ENUM(ExtendFonts);
 	default:
-		pItems = NULL;
+		pItems = nullptr;
 	}
 
 	#undef  LST_ENUM
-	_ASSERTE((pItems!=NULL) && (nCount>0) && "Unsupported code");
+	_ASSERTE((pItems!=nullptr) && (nCount>0) && "Unsupported code");
 	return nCount;
 }
 
@@ -166,7 +166,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& n
 	const ListBoxItem* Items;
 	unsigned nItems = GetListItems(eWhat, Items);
 
-	_ASSERTE(hList!=NULL);
+	_ASSERTE(hList!=nullptr);
 	int num = -1;
 	wchar_t szNumber[32];
 
@@ -225,7 +225,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, 
 	const DWORD* pnValues;
 	unsigned nItems = GetListItems(eWhat, pnValues);
 
-	_ASSERTE(hList!=NULL);
+	_ASSERTE(hList!=nullptr);
 	unsigned num = 0;
 	wchar_t szNumber[32];
 
@@ -260,7 +260,7 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWh
 	unsigned nItems = GetListItems(eWhat, Items);
 
 	HWND hList = nCtrlId ? GetDlgItem(hWnd, nCtrlId) : hWnd;
-	_ASSERTE(hList!=NULL);
+	_ASSERTE(hList!=nullptr);
 
 	INT_PTR num = SendMessage(hList, CB_GETCURSEL, 0, 0);
 
@@ -297,7 +297,7 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, UIN
 	unsigned nItems = GetListItems(eWhat, pnValues);
 
 	HWND hList = nCtrlId ? GetDlgItem(hWnd, nCtrlId) : hWnd;
-	_ASSERTE(hList!=NULL);
+	_ASSERTE(hList!=nullptr);
 
 	INT_PTR num = SendMessage(hList, CB_GETCURSEL, 0, 0);
 
@@ -340,7 +340,7 @@ INT_PTR CSetDlgLists::GetSelectedString(HWND hParent, WORD nListCtrlId, CEStr& s
 		wchar_t* pszNew = szNew.GetBuffer(nLen);
 		if (!pszNew)
 		{
-			_ASSERTE(pszNew!=NULL);
+			_ASSERTE(pszNew!=nullptr);
 		}
 		else
 		{
@@ -375,7 +375,7 @@ int CSetDlgLists::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 
 #ifdef _DEBUG
 	HWND hChild = GetDlgItem(hParent, nCtrlId);
-	_ASSERTE(hChild!=NULL);
+	_ASSERTE(hChild!=nullptr);
 #endif
 	// Осуществляет поиск по _началу_ (!) строки
 	int nIdx = (int)SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
@@ -389,14 +389,14 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 		return -1;
 
 	HWND hList = nCtrlId ? GetDlgItem(hParent, nCtrlId) : hParent;
-	_ASSERTE(hList!=NULL);
+	_ASSERTE(hList!=nullptr);
 
 	int nIdx = SendMessage(hList, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
 
 	if (nIdx < 0)
 	{
 		int nCount = SendMessage(hList, CB_GETCOUNT, 0, 0);
-		wchar_t* pszNumEnd = NULL;
+		wchar_t* pszNumEnd = nullptr;
 		int nNewVal = wcstol(asText, &pszNumEnd, 10), nCurVal;
 		bool bUseNumCmp = (pszNumEnd && *pszNumEnd) && ((nNewVal != 0) || (lstrcmp(pszNumEnd, L"0") == 0));
 
@@ -565,9 +565,9 @@ int CSetDlgLists::GetListboxSelection(HWND hDlg, UINT nCtrlID, int*& rItems)
 {
 	if (rItems)
 	{
-		_ASSERTE(rItems == NULL);
+		_ASSERTE(rItems == nullptr);
 		//delete[] rItems;
-		rItems = NULL;
+		rItems = nullptr;
 	}
 
 	HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : hDlg;
@@ -595,7 +595,7 @@ int CSetDlgLists::GetListboxSelection(HWND hDlg, UINT nCtrlID, int*& rItems)
 	if (lCount <= 0)
 	{
 		delete[] rItems;
-		rItems = NULL;
+		rItems = nullptr;
 		return 0;
 	}
 	return lCount;
@@ -620,7 +620,7 @@ void CSetDlgLists::ListBoxMultiSel(HWND hDlg, UINT nCtrlID, int nItem)
 
 void CSetDlgLists::FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefined, LPCWSTR pszUser)
 {
-	bool bUser = (pszUser != NULL);
+	bool bUser = (pszUser != nullptr);
 
 	if (abInitial)
 	{

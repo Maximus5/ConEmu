@@ -74,7 +74,7 @@ void UnitMaskTests()
 		{L"FileName.txt", L"File*qqq", false},
 		{L"FileName.txt", L"File*txt", true},
 		{L"FileName.txt", L"Name*txt", false},
-		{NULL}
+		{nullptr}
 	};
 	bool bCheck;
 	for (size_t i = 0; Tests[i].asFileName; i++)
@@ -98,7 +98,7 @@ void UnitDriveTests()
 		{L"\\\\?\\UNC\\Server\\Share\\Dir1\\Dir2\\File.txt", L"\\\\?\\UNC\\Server\\Share"},
 		{L"\\\\?\\C:", L"\\\\?\\C:"},
 		{L"\\\\?\\C:\\Dir1\\Dir2\\File.txt", L"\\\\?\\C:"},
-		{NULL}
+		{nullptr}
 	};
 	bool bCheck;
 	wchar_t szDrive[MAX_PATH];
@@ -116,12 +116,12 @@ void UnitPathTests()
 	struct {
 		LPCWSTR asPath, asResult;
 	} Tests[] = {
-		{L"C:", NULL},
+		{L"C:", nullptr},
 		{L"C:\\Dir1\\", L"C:\\Dir1"},
 		{L"C:\\Dir1\\File.txt", L"C:\\Dir1"},
 		{L"C:/Dir1/", L"C:/Dir1"},
 		{L"C:/Dir1/File.txt", L"C:/Dir1"},
-		{NULL}
+		{nullptr}
 	};
 	bool bCheck;
 	for (size_t i = 0; Tests[i].asPath; i++)
@@ -151,7 +151,7 @@ void UnitPathTests()
 		{L"folder 1/file", false, true},
 		{L"\\\\server\\share", true, true},
 		{L"\\\\server\\share", false, true},
-		{NULL}
+		{nullptr}
 	};
 	for (size_t i = 0; Tests2[i].asPath; ++i)
 	{
@@ -176,7 +176,7 @@ void UnitPathTests()
 		{L"C:/Dir(Dir)", false, L"/mnt/c/Dir\\(Dir\\)"},
 		{L"C:/Dir'Dir", false, L"/mnt/c/Dir\\'Dir"},
 		// #DupCygwinPath Network shares tests
-		{NULL}
+		{nullptr}
 	};
 	for (size_t i = 0; Tests3[i].asPath; i++)
 	{
@@ -200,10 +200,10 @@ void UnitFileNamesTest()
 	} Tests[] = {
 		{L"C:", L"Dir", L"File.txt", L"C:\\Dir\\File.txt"},
 		{L"C:\\", L"\\Dir\\", L"\\File.txt", L"C:\\Dir\\File.txt"},
-		{L"C:\\", L"\\File.txt", NULL, L"C:\\File.txt"},
-		{L"C:", L"\\File.txt", NULL, L"C:\\File.txt"},
-		{L"C:\\", L"File.txt", NULL, L"C:\\File.txt"},
-		{NULL}
+		{L"C:\\", L"\\File.txt", nullptr, L"C:\\File.txt"},
+		{L"C:", L"\\File.txt", nullptr, L"C:\\File.txt"},
+		{L"C:\\", L"File.txt", nullptr, L"C:\\File.txt"},
+		{nullptr}
 	};
 	bool bCheck;
 	wchar_t* pszJoin;
@@ -219,7 +219,7 @@ void UnitFileNamesTest()
 
 void UnitExpandTest()
 {
-	_ASSERTE(gpConEmu!=NULL);
+	_ASSERTE(gpConEmu!=nullptr);
 	CEStr szExe;
 	wchar_t szChoc[MAX_PATH] = L"powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin";
 	wchar_t* pszExpanded = ExpandEnvStr(szChoc);
@@ -240,7 +240,7 @@ void UnitModuleTest()
 	bool bTest;
 
 
-	_ASSERTE(!IsModuleValid((HMODULE)NULL));
+	_ASSERTE(!IsModuleValid((HMODULE)nullptr));
 	_ASSERTE(!IsModuleValid((HMODULE)INVALID_HANDLE_VALUE));
 
 	hMod = GetModuleHandle(L"kernel32.dll");
@@ -266,7 +266,7 @@ void UnitModuleTest()
 		hGetMod = GetModuleHandle(pszConEmuCD);
 		if (!hGetMod)
 			bTest = IsModuleValid(hMod);
-		_ASSERTE(!bTest || (hGetMod!=NULL));
+		_ASSERTE(!bTest || (hGetMod!=nullptr));
 	}
 	else
 	{
@@ -453,9 +453,9 @@ void DebugStrUnitTest()
 		LPCWSTR pszTest;
 		CEStr szStr1(L"Test");
 		CEStr szStr2;
-		//pszTest = szStr1 ? szStr1 : L"<NULL>"; // -- expected to be cl error in VC14
-		pszTest = szStr1 ? (LPCWSTR)szStr1 : L"<NULL>";
-		pszTest = szStr2 ? (LPCWSTR)szStr2 : L"<NULL>";
+		//pszTest = szStr1 ? szStr1 : L"<nullptr>"; // -- expected to be cl error in VC14
+		pszTest = szStr1 ? (LPCWSTR)szStr1 : L"<nullptr>";
+		pszTest = szStr2 ? (LPCWSTR)szStr2 : L"<nullptr>";
 		//msprintf(szStr2.GetBuffer(128), 128, L"Str1=`%s`", szStr1); //-- would be nice to forbid or assert this. strict `(LPCWSTR)szStr1` is required here
 		UNREFERENCED_PARAMETER(pszTest);
 	}
@@ -474,7 +474,7 @@ void DebugCpUnitTest()
 		{L"ansi", CP_ACP},
 		{L"ansicp;none", CP_ACP, L';'},
 		{L"65001:1251", 65001, L':'},
-		{NULL},
+		{nullptr},
 	};
 
 	LPCWSTR pszEnd;
@@ -487,7 +487,7 @@ void DebugCpUnitTest()
 		const Test& p = Tests[i];
 		nCP = GetCpFromString(p.sString, &pszEnd);
 		_ASSERTE(nCP == p.nCP);
-		_ASSERTE((pszEnd == NULL && p.cEnd == 0) || (pszEnd && *pszEnd == p.cEnd));
+		_ASSERTE((pszEnd == nullptr && p.cEnd == 0) || (pszEnd && *pszEnd == p.cEnd));
 	}
 }
 
@@ -496,7 +496,7 @@ void DebugProcessNameTest()
 	CProcessData processes;
 	CEStr lsName(lstrdup(L"xxx.exe")), lsPath;
 	DWORD nPID = GetCurrentProcessId();
-	bool bRc = processes.GetProcessName(nPID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
+	bool bRc = processes.GetProcessName(nPID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, nullptr);
 	_ASSERTE(bRc);
 }
 
@@ -509,7 +509,7 @@ void DebugTestSetParser()
 		&& !wcscmp(cmd.m_Commands[1]->pszName, L"V2") && !wcscmp(cmd.m_Commands[1]->pszValue, L"Value2 & Value2")
 		&& !wcscmp(cmd.m_Commands[2]->pszName, L"V3") && !wcscmp(cmd.m_Commands[2]->pszValue, L"\"Value \"\" 3 ")
 		);
-	CEStr lsTemp = cmd.Allocate(NULL);
+	CEStr lsTemp = cmd.Allocate(nullptr);
 }
 
 void DebugMapsTests()

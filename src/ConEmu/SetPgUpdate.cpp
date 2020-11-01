@@ -64,7 +64,7 @@ LRESULT CSetPgUpdate::OnInitDialog(HWND hDlg, bool abInitial)
 	SetDlgItemText(hDlg, tUpdateProxyUser, p->szUpdateProxyUser);
 	SetDlgItemText(hDlg, tUpdateProxyPassword, p->szUpdateProxyPassword);
 
-	OnButtonClicked(hDlg, NULL, cbUpdateInetTool); // Enable/Disable command field, button '...' and ‘Proxy’ fields
+	OnButtonClicked(hDlg, nullptr, cbUpdateInetTool); // Enable/Disable command field, button '...' and ‘Proxy’ fields
 
 	int nPackage = p->UpdateDownloadSetup(); // 1-exe, 2-7zip
 	checkRadioButton(hDlg, rbUpdateUseExe, rbUpdateUseArc, (nPackage==1) ? rbUpdateUseExe : rbUpdateUseArc);
@@ -77,7 +77,7 @@ LRESULT CSetPgUpdate::OnInitDialog(HWND hDlg, bool abInitial)
 	CEStr szFormat, szTitle; INT_PTR iLen;
 	if ((iLen = GetString(hDlg, rbUpdateUseExe, &szFormat.ms_Val)) > 0)
 	{
-		if (wcsstr(szFormat.ms_Val, L"%s") != NULL)
+		if (wcsstr(szFormat.ms_Val, L"%s") != nullptr)
 		{
 			wchar_t* psz = szTitle.GetBuffer(iLen+4);
 			if (psz)

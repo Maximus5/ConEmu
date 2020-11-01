@@ -97,7 +97,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef MSGLOGGER
 BOOL bBlockDebugLog=false, bSendToDebugger=true, bSendToFile=false;
-WCHAR *LogFilePath=NULL;
+WCHAR *LogFilePath=nullptr;
 #endif
 #ifndef _DEBUG
 BOOL gbNoDblBuffer = false;
@@ -119,27 +119,27 @@ SYSTEMTIME gstLastTimer = {};
 
 
 //externs
-HINSTANCE g_hInstance=NULL;
-HWND ghWnd=NULL, ghWndWork=NULL, ghWndApp=NULL, ghWndDrag=NULL;
+HINSTANCE g_hInstance=nullptr;
+HWND ghWnd=nullptr, ghWndWork=nullptr, ghWndApp=nullptr, ghWndDrag=nullptr;
 #ifdef _DEBUG
-HWND gh__Wnd = NULL; // Informational, to be sure what handle had our window before been destroyd
+HWND gh__Wnd = nullptr; // Informational, to be sure what handle had our window before been destroyd
 #endif
 // Если для ярлыка назначен shortcut - может случиться, что в главное окно он не дойдет
 WPARAM gnWndSetHotkey = 0, gnWndSetHotkeyOk = 0;
 #ifdef _DEBUG
-HWND ghConWnd=NULL;
+HWND ghConWnd=nullptr;
 #endif
-CConEmuMain *gpConEmu = NULL;
-//CVirtualConsole *pVCon=NULL;
-Settings  *gpSet = NULL;
-CSettings *gpSetCls = NULL;
-CFontMgr* gpFontMgr = NULL;
-ConEmuHotKeyList* gpHotKeys = NULL;
+CConEmuMain *gpConEmu = nullptr;
+//CVirtualConsole *pVCon=nullptr;
+Settings  *gpSet = nullptr;
+CSettings *gpSetCls = nullptr;
+CFontMgr* gpFontMgr = nullptr;
+ConEmuHotKeyList* gpHotKeys = nullptr;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
-HICON hClassIcon = NULL, hClassIconSm = NULL;
+HICON hClassIcon = nullptr, hClassIconSm = nullptr;
 BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
-CEStartupEnv* gpStartEnv = NULL;
+CEStartupEnv* gpStartEnv = nullptr;
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки
@@ -219,7 +219,7 @@ LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l)
 #ifdef _DEBUG
 char gsz_MDEBUG_TRAP_MSG[3000];
 char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
-HWND gh_MDEBUG_TRAP_PARENT_WND = NULL;
+HWND gh_MDEBUG_TRAP_PARENT_WND = nullptr;
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 {
 	//__debugbreak();
@@ -300,7 +300,7 @@ bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin /*= 0*/, 
 
 wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID)
 {
-	wchar_t* pszText = NULL;
+	wchar_t* pszText = nullptr;
 	size_t cchMax = 0;
 	MyGetDlgItemText(hDlg, nID, cchMax, pszText);
 	return pszText;
@@ -370,7 +370,7 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 	bool result = false;
 	int r = 0, g = 0, b = 0;
 	const wchar_t *pch;
-	wchar_t *pchEnd = NULL;
+	wchar_t *pchEnd = nullptr;
 	COLORREF clr = 0;
 	bool bHex = false;
 
@@ -409,18 +409,18 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 	else
 	{
 		pch = (wchar_t*)wcspbrk(pszText, L"0123456789");
-		pchEnd = NULL;
+		pchEnd = nullptr;
 		r = pch ? wcstol(pch, &pchEnd, 10) : 0;
 		if (pchEnd && (pchEnd > pch))
 		{
 			pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
-			pchEnd = NULL;
+			pchEnd = nullptr;
 			g = pch ? wcstol(pch, &pchEnd, 10) : 0;
 
 			if (pchEnd && (pchEnd > pch))
 			{
 				pch = (wchar_t*)wcspbrk(pchEnd, L"0123456789");
-				pchEnd = NULL;
+				pchEnd = nullptr;
 				b = pch ? wcstol(pch, &pchEnd, 10) : 0;
 			}
 
@@ -445,9 +445,9 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 }
 
 
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/)
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= nullptr*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= nullptr*/)
 {
-	wchar_t* pszResult = NULL;
+	wchar_t* pszResult = nullptr;
 
 	BROWSEINFO bi = {hParent};
 	wchar_t szFolder[MAX_PATH+1] = {0};
@@ -468,10 +468,10 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 			if (nFlags & sff_Cygwin)
 			{
 				CEStr path;
-				if (DupCygwinPath(szFolder, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : NULL, path))
+				if (DupCygwinPath(szFolder, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : nullptr, path))
 					pszResult = path.Detach();
 			}
-			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != NULL))
+			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != nullptr))
 			{
 				size_t cchLen = _tcslen(szFolder);
 				pszResult = (wchar_t*)malloc((cchLen+3)*sizeof(*pszResult));
@@ -495,9 +495,9 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/)
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= nullptr*/, LPCWSTR asDefPath /*= nullptr*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= nullptr*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= nullptr*/)
 {
-	wchar_t* pszResult = NULL;
+	wchar_t* pszResult = nullptr;
 
 	wchar_t temp[MAX_PATH+10] = {};
 	if (asDefFile)
@@ -528,12 +528,12 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDef
 		if (nFlags & sff_Cygwin)
 		{
 			CEStr path;
-			if (DupCygwinPath(pszName, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : NULL, path))
+			if (DupCygwinPath(pszName, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : nullptr, path))
 				pszResult = path.Detach();
 		}
 		else
 		{
-			if ((nFlags & sff_AutoQuote) && (wcschr(pszName, L' ') != NULL))
+			if ((nFlags & sff_AutoQuote) && (wcschr(pszName, L' ') != nullptr))
 			{
 				temp[0] = L'"';
 				wcscat_c(temp, L"\"");
@@ -561,7 +561,7 @@ bool isCharAltFont(ucs32 inChar)
 
 
 #ifdef DEBUG_MSG_HOOKS
-HHOOK ghDbgHook = NULL;
+HHOOK ghDbgHook = nullptr;
 LRESULT CALLBACK DbgCallWndProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	if (nCode == HC_ACTION)
@@ -593,7 +593,7 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 	if (messg == WM_CREATE)
 	{
-		if (ghWndApp == NULL)
+		if (ghWndApp == nullptr)
 			ghWndApp = hWnd;
 	}
 	else if (messg == WM_ACTIVATEAPP)
@@ -624,10 +624,10 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 // z120713 - В потоке CRealConsole::MonitorThread возвращаются
 // отличные от основного потока HWND. В результате, а также из-за
 // отложенного выполнения, UpdateServerActive передавал Thaw==FALSE
-HWND ghLastForegroundWindow = NULL;
+HWND ghLastForegroundWindow = nullptr;
 HWND getForegroundWindow()
 {
-	HWND h = NULL;
+	HWND h = nullptr;
 	if (!ghWnd || isMainThread())
 	{
 		ghLastForegroundWindow = h = ::GetForegroundWindow();
@@ -636,7 +636,7 @@ HWND getForegroundWindow()
 	{
 		h = ghLastForegroundWindow;
 		if (h && !IsWindow(h))
-			h = NULL;
+			h = nullptr;
 	}
 	return h;
 }
@@ -649,19 +649,19 @@ BOOL CheckCreateAppWindow()
 		if (ghWndApp)
 		{
 			// Вызов DestroyWindow(ghWndApp); закроет и "дочернее" ghWnd
-			_ASSERTE(ghWnd==NULL);
+			_ASSERTE(ghWnd==nullptr);
 			if (ghWnd)
-				gpConEmu->SetParent(NULL);
+				gpConEmu->SetParent(nullptr);
 			DestroyWindow(ghWndApp);
-			ghWndApp = NULL;
+			ghWndApp = nullptr;
 		}
 		return TRUE;
 	}
 
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC, AppWndProc, 0, 0,
-	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
-	                 NULL, gsClassNameApp, hClassIconSm
+	                 g_hInstance, hClassIcon, LoadCursor(nullptr, IDC_ARROW),
+	                 nullptr /*(HBRUSH)COLOR_BACKGROUND*/,
+	                 nullptr, gsClassNameApp, hClassIconSm
 	                };// | CS_DROPSHADOW
 
 	if (!RegisterClassEx(&wc))
@@ -671,16 +671,16 @@ BOOL CheckCreateAppWindow()
 	gpConEmu->LogString(L"Creating app window", false);
 
 
-	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, nullptr, nullptr, (HINSTANCE)g_hInstance, nullptr);
 	DWORD style = WS_OVERLAPPEDWINDOW | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
 	int nWidth = 100, nHeight = 100, nX = WINDOWS_ICONIC_POS, nY = WINDOWS_ICONIC_POS;
 	DWORD exStyle = WS_EX_TOOLWINDOW|WS_EX_ACCEPTFILES;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWndApp = CreateWindowEx(exStyle, gsClassNameApp, gpConEmu->GetDefaultTitle(), style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	ghWndApp = CreateWindowEx(exStyle, gsClassNameApp, gpConEmu->GetDefaultTitle(), style, nX, nY, nWidth, nHeight, nullptr, nullptr, (HINSTANCE)g_hInstance, nullptr);
 
 	if (!ghWndApp)
 	{
-		WarnCreateWindowFail(L"application window", NULL, GetLastError());
+		WarnCreateWindowFail(L"application window", nullptr, GetLastError());
 		return FALSE;
 	}
 
@@ -746,9 +746,9 @@ void SkipOneShowWindow()
 
 	const wchar_t szSkipClass[] = L"ConEmuSkipShowWindow";
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), 0, SkipShowWindowProc, 0, 0,
-	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
-	                 NULL, szSkipClass, hClassIconSm
+	                 g_hInstance, hClassIcon, LoadCursor(nullptr, IDC_ARROW),
+	                 nullptr /*(HBRUSH)COLOR_BACKGROUND*/,
+	                 nullptr, szSkipClass, hClassIconSm
 	                };// | CS_DROPSHADOW
 
 	if (!RegisterClassEx(&wc))
@@ -761,11 +761,11 @@ void SkipOneShowWindow()
 
 	gpConEmu->Taskbar_Init();
 
-	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, nullptr, nullptr, (HINSTANCE)g_hInstance, nullptr);
 	DWORD style = WS_OVERLAPPED | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 	int nWidth=100, nHeight=100, nX = -32000, nY = -32000;
 	DWORD exStyle = WS_EX_TOOLWINDOW;
-	HWND hSkip = CreateWindowEx(exStyle, szSkipClass, L"", style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	HWND hSkip = CreateWindowEx(exStyle, szSkipClass, L"", style, nX, nY, nWidth, nHeight, nullptr, nullptr, (HINSTANCE)g_hInstance, nullptr);
 
 	if (hSkip)
 	{
@@ -812,12 +812,12 @@ static BOOL CALLBACK FindProcessWindowEnum(HWND hwnd, LPARAM lParam)
 
 HWND FindProcessWindow(DWORD nPID)
 {
-	FindProcessWindowArg args = {NULL, nPID};
+	FindProcessWindowArg args = {nullptr, nPID};
 	EnumWindows(FindProcessWindowEnum, (LPARAM)&args);
 	return args.hwnd;
 }
 
-HWND ghDlgPendingFrom = NULL;
+HWND ghDlgPendingFrom = nullptr;
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	if (!ghDlgPendingFrom)
@@ -835,7 +835,7 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			if (lstrcmp(szClass, L"#32770") == 0)
 			{
 				// Reset immediately, to avoid stack overflow
-				ghDlgPendingFrom = NULL;
+				ghDlgPendingFrom = nullptr;
 				// And patch the icon
 				SendMessage(hFore, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 				SendMessage(hFore, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
@@ -845,7 +845,7 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 }
 
 LONG gnInMsgBox = 0;
-int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= nullptr*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
 {
 	DontEnable de(abModal);
 
@@ -853,24 +853,24 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 
 	HWND hParent = gbMessagingStarted
 		? ((ahParent == (HWND)-1) ? ghWnd :ahParent)
-		: NULL;
+		: nullptr;
 
 	HooksUnlocker;
 	MSetter lInCall(&gnInMsgBox);
 
 	if (gpSet && gpSet->isLogging())
 	{
-		CEStr lsLog(lpCaption, lpCaption ? L":: " : NULL, lpText);
+		CEStr lsLog(lpCaption, lpCaption ? L":: " : nullptr, lpText);
 		LogString(lsLog);
 	}
 
 	// If there were problems with displaying error box, MessageBox will return default button
 	// This may cause infinite loops in some cases
 	SetLastError(0);
-	int nBtn = MessageBox(hParent, lpText ? lpText : L"<NULL>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	int nBtn = MessageBox(hParent, lpText ? lpText : L"<nullptr>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
 	DWORD nErr = GetLastError();
 
-	ghDlgPendingFrom = NULL;
+	ghDlgPendingFrom = nullptr;
 
 	UNREFERENCED_PARAMETER(nErr);
 	return nBtn;
@@ -915,7 +915,7 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 	const int nHeight = (rcDlg.bottom - rcDlg.top);
 
 	MONITORINFO mi = {sizeof(mi)};
-	GetNearestMonitorInfo(&mi, NULL, &rcParent);
+	GetNearestMonitorInfo(&mi, nullptr, &rcParent);
 
 	RECT rcCenter = {
 		std::max(mi.rcWork.left, rcParent.left + (rcParent.right - rcParent.left - nWidth) / 2),
@@ -945,7 +945,7 @@ BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
 	BOOL lbRc;
 
 	if (gpConEmu && (ghWnd == hWnd))
-		lbRc = gpConEmu->setWindowPos(NULL, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, SWP_NOZORDER|(bRepaint?0:SWP_NOREDRAW));
+		lbRc = gpConEmu->setWindowPos(nullptr, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, SWP_NOZORDER|(bRepaint?0:SWP_NOREDRAW));
 	else
 		lbRc = MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
 
@@ -954,14 +954,14 @@ BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
 
 HICON CreateNullIcon()
 {
-	static HICON hNullIcon = NULL;
+	static HICON hNullIcon = nullptr;
 
 	if (!hNullIcon)
 	{
 		BYTE NilBits[16*16/8] = {};
 		BYTE SetBits[16*16/8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 								0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-		hNullIcon = CreateIcon(NULL, 16, 16, 1, 1, SetBits, NilBits);
+		hNullIcon = CreateIcon(nullptr, 16, 16, 1, 1, SetBits, NilBits);
 	}
 
 	return hNullIcon;
@@ -969,14 +969,14 @@ HICON CreateNullIcon()
 
 void MessageLoop()
 {
-	MSG Msg = {NULL};
+	MSG Msg = {nullptr};
 	gbMessagingStarted = true;
 
 	#ifdef _DEBUG
 	wchar_t szDbg[128];
 	#endif
 
-	while (GetMessage(&Msg, NULL, 0, 0))
+	while (GetMessage(&Msg, nullptr, 0, 0))
 	{
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
@@ -1143,9 +1143,9 @@ wrap:
 HWND FindTopExplorerWindow()
 {
 	wchar_t szClass[MAX_PATH] = L"";
-	HWND hwndFind = NULL;
+	HWND hwndFind = nullptr;
 
-	while ((hwndFind = FindWindowEx(NULL, hwndFind, NULL, NULL)) != NULL)
+	while ((hwndFind = FindWindowEx(nullptr, hwndFind, nullptr, nullptr)) != nullptr)
 	{
 		if ((GetClassName(hwndFind, szClass, countof(szClass)) > 0)
 			&& CDefTermBase::IsExplorerWindowClass(szClass))
@@ -1164,19 +1164,19 @@ wchar_t* getFocusedExplorerWindowPath()
 	if (!SUCCEEDED(statement)) goto fail;
 
 #define FE_RELEASE(hnd) \
-	if (hnd) { hnd->Release(); hnd = NULL; }
+	if (hnd) { hnd->Release(); hnd = nullptr; }
 
-	wchar_t* ret = NULL;
+	wchar_t* ret = nullptr;
 	wchar_t szPath[MAX_PATH] = L"";
 
-	IShellBrowser *psb = NULL;
-	IShellView *psv = NULL;
-	IFolderView *pfv = NULL;
-	IPersistFolder2 *ppf2 = NULL;
-	IDispatch  *pdisp = NULL;
-	IWebBrowserApp *pwba = NULL;
-	IServiceProvider *psp = NULL;
-	IShellWindows *psw = NULL;
+	IShellBrowser *psb = nullptr;
+	IShellView *psv = nullptr;
+	IFolderView *pfv = nullptr;
+	IPersistFolder2 *ppf2 = nullptr;
+	IDispatch  *pdisp = nullptr;
+	IWebBrowserApp *pwba = nullptr;
+	IServiceProvider *psp = nullptr;
+	IShellWindows *psw = nullptr;
 
 	VARIANT v;
 	HWND hwndWBA;
@@ -1185,7 +1185,7 @@ wchar_t* getFocusedExplorerWindowPath()
 	BOOL fFound = FALSE;
 	HWND hwndFind = FindTopExplorerWindow();
 
-	FE_CHECK_OUTER_FAIL(CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL,
+	FE_CHECK_OUTER_FAIL(CoCreateInstance(CLSID_ShellWindows, nullptr, CLSCTX_ALL,
 		IID_IShellWindows, (void**)&psw))
 
 	V_VT(&v) = VT_I4;
@@ -1245,13 +1245,13 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 	LPCWSTR pszConfig = gpSetCls->GetConfigName();
 	if (pszConfig && !*pszConfig)
-		pszConfig = NULL;
+		pszConfig = nullptr;
 
 	CEStr lsTempBuf;
 	LPCWSTR pszConEmuStartArgs = gpConEmu->MakeConEmuStartArgs(lsTempBuf);
 	_ASSERTE(!pszConEmuStartArgs || pszConEmuStartArgs[_tcslen(pszConEmuStartArgs)-1]==L' ');
 
-	wchar_t* pszBuf = NULL;
+	wchar_t* pszBuf = nullptr;
 	if (!pszArguments || !*pszArguments)
 	{
 		size_t cchMax = _tcslen(pszTitle)
@@ -1302,12 +1302,12 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 	}
 
 	IShellLink *psl;
-	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
 	if (SUCCEEDED(hr))
 	{
 		// Determine our executable's file path so the task will execute this application
 		WCHAR szAppPath[MAX_PATH];
-		if (GetModuleFileName(NULL, szAppPath, ARRAYSIZE(szAppPath)))
+		if (GetModuleFileName(nullptr, szAppPath, ARRAYSIZE(szAppPath)))
 		{
 			hr = psl->SetPath(szAppPath);
 
@@ -1316,7 +1316,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			CEStr szIcon; int iIcon = 0;
 			CEStr szBatch;
 			LPCWSTR pszTemp = pszArguments;
-			LPCWSTR pszIcon = NULL;
+			LPCWSTR pszIcon = nullptr;
 			RConStartArgsEx args;
 
 			while ((pszTemp = NextArg(pszTemp, szTmp)))
@@ -1340,14 +1340,14 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 					if (!szBatch.IsEmpty())
 					{
-						pszTemp = gpConEmu->ParseScriptLineOptions(szBatch, NULL, &args);
+						pszTemp = gpConEmu->ParseScriptLineOptions(szBatch, nullptr, &args);
 
 						// Icon may be defined in -new_console:C:...
 						if (!pszIcon)
 						{
 							if (!args.pszIconFile)
 							{
-								_ASSERTE(args.pszSpecialCmd == NULL);
+								_ASSERTE(args.pszSpecialCmd == nullptr);
 								args.pszSpecialCmd = lstrdup(pszTemp);
 								args.ProcessNewConArg();
 							}
@@ -1378,8 +1378,8 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 				if ((!apiGetFullPathName(pszSearch, szIcon)
 						|| !FileExists(szIcon))
-					&& !apiSearchPath(NULL, pszSearch, NULL, szIcon)
-					&& !apiSearchPath(NULL, pszSearch, L".exe", szIcon))
+					&& !apiSearchPath(nullptr, pszSearch, nullptr, szIcon)
+					&& !apiSearchPath(nullptr, pszSearch, L".exe", szIcon))
 				{
 					szIcon.Empty();
 					iIcon = 0;
@@ -1440,7 +1440,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 {
 	IPropertyStore *pps;
-	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IPropertyStore, (void**)&pps);
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IPropertyStore, (void**)&pps);
 	if (SUCCEEDED(hr))
 	{
 		PROPVARIANT propvar = {VT_BOOL};
@@ -1485,12 +1485,12 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	// MsgBox logs the text itself
 	MBoxA(L"Sorry, UpdateWin7TaskList is not available in GCC!");
 #else
-	SetCursor(LoadCursor(NULL, IDC_WAIT));
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 
 	LPCWSTR pszTasks[32] = {};
 	LPCWSTR pszTasksPrefix[32] = {};
 	LPCWSTR pszHistory[32] = {};
-	LPCWSTR pszCurCmd = NULL;
+	LPCWSTR pszCurCmd = nullptr;
 	size_t nTasksCount = 0, nHistoryCount = 0;
 
 	// Add commands from history
@@ -1499,7 +1499,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		pszCurCmd = SkipNonPrintable(gpConEmu->opt.runCommand);
 		if (!pszCurCmd || !*pszCurCmd)
 		{
-			pszCurCmd = NULL;
+			pszCurCmd = nullptr;
 		}
 
 		// Commands form history
@@ -1522,7 +1522,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	if (gpSet->isStoreTaskbarkTasks)
 	{
 		int nGroup = 0;
-		const CommandTasks* pGrp = NULL;
+		const CommandTasks* pGrp = nullptr;
 		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) && (nTasksCount < countof(pszTasks)))
 		{
 			if (pGrp->pszName && *pGrp->pszName
@@ -1537,8 +1537,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 	// The visible categories are controlled via the ICustomDestinationList interface.  If not customized,
 	// applications will get the Recent category by default.
-	ICustomDestinationList *pcdl = NULL;
-	HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_ICustomDestinationList, (void**)&pcdl);
+	ICustomDestinationList *pcdl = nullptr;
+	HRESULT hr = CoCreateInstance(CLSID_DestinationList, nullptr, CLSCTX_INPROC_SERVER, IID_ICustomDestinationList, (void**)&pcdl);
 	if (FAILED(hr) || !pcdl)
 	{
 		DisplayLastError(L"ICustomDestinationList create failed", (DWORD)hr);
@@ -1546,7 +1546,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	else
 	{
 		UINT cMinSlots = 0;
-		IObjectArray *poaRemoved = NULL;
+		IObjectArray *poaRemoved = nullptr;
 		hr = pcdl->BeginList(&cMinSlots, IID_PPV_ARGS(&poaRemoved));
 		if (FAILED(hr))
 		{
@@ -1564,15 +1564,15 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 			msprintf(szInfo, countof(szInfo), L"Jump Lists update started, Tasks: %u, History: %u", nTasksCount, nHistoryCount);
 			LogString(szInfo);
 
-			IObjectCollection *poc = NULL;
-			hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&poc));
+			IObjectCollection *poc = nullptr;
+			hr = CoCreateInstance(CLSID_EnumerableObjectCollection, nullptr, CLSCTX_INPROC, IID_PPV_ARGS(&poc));
 			if (FAILED(hr) || !poc)
 			{
 				DisplayLastError(L"IObjectCollection create failed", (DWORD)hr);
 			}
 			else
 			{
-				IShellLink * psl = NULL;
+				IShellLink * psl = nullptr;
 				bool bNeedSeparator = false;
 				bool bEmpty = true;
 
@@ -1583,7 +1583,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 					LogString(L"Jump Lists: Tasks");
 					for (size_t i = 0; (i < countof(pszTasks)) && pszTasks[i]; i++)
 					{
-						hr = _CreateShellLink(NULL, pszTasksPrefix[i], pszTasks[i], &psl);
+						hr = _CreateShellLink(nullptr, pszTasksPrefix[i], pszTasks[i], &psl);
 
 						if (SUCCEEDED(hr))
 						{
@@ -1626,7 +1626,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 					if (SUCCEEDED(hr) && pszCurCmd)
 					{
-						hr = _CreateShellLink(pszCurCmd, NULL, pszCurCmd, &psl);
+						hr = _CreateShellLink(pszCurCmd, nullptr, pszCurCmd, &psl);
 
 						if (SUCCEEDED(hr))
 						{
@@ -1647,7 +1647,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 					for (size_t i = 0; SUCCEEDED(hr) && (i < countof(pszHistory)) && pszHistory[i]; i++)
 					{
-						hr = _CreateShellLink(NULL, NULL, pszHistory[i], &psl);
+						hr = _CreateShellLink(nullptr, nullptr, pszHistory[i], &psl);
 
 						if (SUCCEEDED(hr))
 						{
@@ -1672,7 +1672,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 				// Now we are ready to put items to Jump List
 				if (SUCCEEDED(hr))
 				{
-					IObjectArray * poa = NULL;
+					IObjectArray * poa = nullptr;
 					hr = poc->QueryInterface(IID_PPV_ARGS(&poa));
 					if (FAILED(hr) || !poa)
 					{
@@ -1732,9 +1732,9 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	//SHAddToRecentDocs(SHARD_PATHW, pszTemp);
 
 	//HRESULT hres;
-	//IShellLink* phsl = NULL;
+	//IShellLink* phsl = nullptr;
 	//// Get a pointer to the IShellLink interface.
-	//hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+	//hres = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
 	//					   IID_IShellLink, (LPVOID*)&phsl);
 	//if (SUCCEEDED(hres))
 	//{
@@ -1761,7 +1761,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	//}
 	#endif
 
-	SetCursor(LoadCursor(NULL, IDC_ARROW));
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 #endif // __GNUC__
 
 	return bSucceeded;
@@ -1865,7 +1865,7 @@ HRESULT UpdateAppUserModelID()
 	}
 	else
 	{
-		_ASSERTE(pszColon!=NULL && "::<CESERVER_REQ_VER> is expected at the tail!");
+		_ASSERTE(pszColon!=nullptr && "::<CESERVER_REQ_VER> is expected at the tail!");
 	}
 	CEStr AppID(APP_MODEL_ID_PREFIX/*L"Maximus5.ConEmu."*/, lsTempBuf.ms_Val);
 
@@ -1875,7 +1875,7 @@ HRESULT UpdateAppUserModelID()
 	HMODULE hShell = GetModuleHandle(L"Shell32.dll");
 	SetCurrentProcessExplicitAppUserModelID_t fnSetAppUserModelID = hShell
 		? (SetCurrentProcessExplicitAppUserModelID_t)GetProcAddress(hShell, "SetCurrentProcessExplicitAppUserModelID")
-		: NULL;
+		: nullptr;
 	if (fnSetAppUserModelID)
 	{
 		hr = fnSetAppUserModelID(AppID);
@@ -1981,7 +1981,7 @@ bool DumpCurrentProcess(ConEmuDumpInfo& dumpInfo)
 }
 
 // ReSharper disable twice CppParameterMayBeConst
-void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POINTERS exceptionInfo /*= NULL*/)
+void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POINTERS exceptionInfo /*= nullptr*/)
 {
 	#ifdef _DEBUG
 	//_ASSERTE(FALSE);
@@ -2008,11 +2008,11 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POI
 		wchar_t szDashes[] = L"-----------------------\r\n", szPID[80];
 		swprintf_c(szPID, L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
 		const CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild[0]) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
-							L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(NULL,L"D"), L"] ");
+							L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(nullptr,L"D"), L"] ");
 		const CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
 		const CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", ultow_s(nLine, szLine, 10), L"\r\n", szDashes);
 		const CEStr lsHeader(lsAssertion,
-			(gpConEmu && gpConEmu->ms_ConEmuExe[0]) ? gpConEmu->ms_ConEmuExe : L"<NULL>",
+			(gpConEmu && gpConEmu->ms_ConEmuExe[0]) ? gpConEmu->ms_ConEmuExe : L"<nullptr>",
 			lsWhere, szText, L"\r\n", szDashes, L"\r\n");
 
 		szFull = CEStr(
@@ -2080,15 +2080,15 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POI
 // Clear some rubbish in the environment
 void ResetEnvironmentVariables()
 {
-	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, NULL);
-	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, NULL);
+	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, nullptr);
+	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, nullptr);
 }
 
 int CheckZoneIdentifiers(bool abAutoUnblock)
 {
 	if (!gpConEmu)
 	{
-		_ASSERTE(gpConEmu!=NULL);
+		_ASSERTE(gpConEmu!=nullptr);
 		return 0;
 	}
 
@@ -2097,13 +2097,13 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 	LPCWSTR pszDirs[] = {
 		gpConEmu->ms_ConEmuExeDir,
 		gpConEmu->ms_ConEmuBaseDir,
-		NULL};
+		nullptr};
 	LPCWSTR pszFiles[] = {
 		L"ConEmu.exe", L"ConEmu64.exe",
 		ConEmuC_32_EXE, ConEmuC_64_EXE,
 		ConEmuCD_32_DLL, ConEmuCD_64_DLL,
 		ConEmuHk_32_DLL, ConEmuHk_64_DLL,
-		NULL};
+		nullptr};
 
 	for (int i = 0; i <= 1; i++)
 	{
@@ -2117,7 +2117,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 			if (HasZoneIdentifier(lsFile, nZone)
 				&& (nZone != 0 /*LocalComputer*/))
 			{
-				lstrmerge(&szZonedFiles.ms_Val, szZonedFiles.ms_Val ? L"\r\n" : NULL, lsFile.ms_Val);
+				lstrmerge(&szZonedFiles.ms_Val, szZonedFiles.ms_Val ? L"\r\n" : nullptr, lsFile.ms_Val);
 			}
 		}
 	}
@@ -2133,7 +2133,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 		L"This may cause blocking or access denied errors!");
 
 	int iBtn = abAutoUnblock ? IDYES
-		: ConfirmDialog(lsMsg, L"Warning!", NULL, NULL, MB_YESNOCANCEL, ghWnd,
+		: ConfirmDialog(lsMsg, L"Warning!", nullptr, nullptr, MB_YESNOCANCEL, ghWnd,
 			L"Unblock and Continue", L"Let ConEmu try to unblock these files" L"\r\n" L"You may see SmartScreen and UAC confirmations",
 			L"Visit home page and Exit", CEZONEID /* https://conemu.github.io/en/ZoneId.html */,
 			L"Ignore and Continue", L"You may face further warnings");
@@ -2181,7 +2181,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 					if (!sei.hProcess)
 					{
 						Sleep(500);
-						_ASSERTE(sei.hProcess!=NULL);
+						_ASSERTE(sei.hProcess!=nullptr);
 					}
 					if (sei.hProcess)
 					{
@@ -2226,7 +2226,7 @@ int ProcessCmdArg(LPCWSTR cmdNew, const bool isScript, const bool isBare, CEStr&
 	DEBUGSTRSTARTUP(L"Preparing command line");
 
 	MCHKHEAP
-	const wchar_t* pszDefCmd = NULL;
+	const wchar_t* pszDefCmd = nullptr;
 
 	if (isScript)
 	{
@@ -2369,7 +2369,7 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 	{
 		wchar_t szTitle[128]; swprintf_c(szTitle, L"Conemu started, PID=%i", GetCurrentProcessId());
 		CEStr lsText(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", asCmdLine);
-		MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+		MessageBox(nullptr, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 		nDbg = IsDebuggerPresent();
 	}
 	else if (debugw)
@@ -2427,7 +2427,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	#ifdef _DEBUG
 	HMODULE hConEmuHk = GetModuleHandle(ConEmuHk_DLL_3264);
-	_ASSERTE(hConEmuHk==NULL && "Hooks must not be loaded into ConEmu[64].exe!");
+	_ASSERTE(hConEmuHk==nullptr && "Hooks must not be loaded into ConEmu[64].exe!");
 	#endif
 
 	// On Vista and higher ensure our process will be
@@ -2492,14 +2492,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gbIsDBCS = IsWinDBCS();
 	if (gbIsDBCS)
 	{
-		HKEY hk = NULL;
+		HKEY hk = nullptr;
 		DWORD nOemCP = GetOEMCP();
 		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 		if (nOemCP && !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
 		{
 			wchar_t szName[64]; swprintf_c(szName, L"%u", nOemCP);
 			wchar_t szVal[64] = {}; DWORD cbSize = sizeof(szVal)-2;
-			if (!RegQueryValueEx(hk, szName, NULL, NULL, (LPBYTE)szVal, &cbSize) && *szVal)
+			if (!RegQueryValueEx(hk, szName, nullptr, nullptr, (LPBYTE)szVal, &cbSize) && *szVal)
 			{
 				if (wcschr(szVal, L'?'))
 				{
@@ -2542,7 +2542,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 #ifdef DEBUG_MSG_HOOKS
-	ghDbgHook = SetWindowsHookEx(WH_CALLWNDPROC, DbgCallWndProc, NULL, GetCurrentThreadId());
+	ghDbgHook = SetWindowsHookEx(WH_CALLWNDPROC, DbgCallWndProc, nullptr, GetCurrentThreadId());
 #endif
 
 	_ASSERTE(gpSetCls->SingleInstanceArg == sgl_Default);
@@ -2860,12 +2860,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	//if (FontFilePrm) {
-	//	if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+	//	if (!AddFontResourceEx(FontFile, FR_PRIVATE, nullptr)) //ADD fontname; by Mors
 	//	{
 	//		TCHAR* psz=(TCHAR*)calloc(_tcslen(FontFile)+100,sizeof(TCHAR));
 	//		lstrcpyW(psz, L"Can't register font:\n");
 	//		lstrcatW(psz, FontFile);
-	//		MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
+	//		MessageBox(nullptr, psz, gpConEmu->GetDefaultTitle(), MB_OK|MB_ICONSTOP);
 	//		free(psz);
 	//		return 100;
 	//	}
@@ -2921,10 +2921,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		DEBUGSTRSTARTUPLOG(L"Checking for existing instance");
 
-		HWND hConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
+		HWND hConEmuHwnd = FindWindowExW(nullptr, nullptr, VirtualConsoleClassMain, nullptr);
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
 		// чтобы успело "появиться" главное окно ConEmu
-		if ((hConEmuHwnd == NULL) && (gpSetCls->SingleInstanceShowHide == sih_None))
+		if ((hConEmuHwnd == nullptr) && (gpSetCls->SingleInstanceShowHide == sih_None))
 		{
 			// Если окна нет, и других процессов (ConEmu.exe, ConEmu64.exe) нет
 			// то ждать смысла нет
@@ -3081,7 +3081,7 @@ done:
 	//KillTimer(ghWnd, 0);
 	//delete pVCon;
 	//CloseHandle(hChildProcess); -- он более не требуется
-	//if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
+	//if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, nullptr); //ADD fontname; by Mors
 	gpFontMgr->UnregisterFonts();
 
 	//CoUninitialize();

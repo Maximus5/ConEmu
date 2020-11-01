@@ -367,8 +367,8 @@ void VConTextPart::Done()
 
 CVConLine::CVConLine(const bool isFar)
 	: mn_DialogsCount(0)
-	, mrc_Dialogs(NULL)
-	, mn_DialogFlags(NULL)
+	, mrc_Dialogs(nullptr)
+	, mn_DialogFlags(nullptr)
 	, mn_DialogAllFlags(0)
 	, mrc_UCharMap()
 	, isFilePanel(false)
@@ -376,13 +376,13 @@ CVConLine::CVConLine(const bool isFar)
 	, FontWidth(0)
 	, isForce(true)
 	, row(0)
-	, ConCharLine(NULL)
-	, ConAttrLine(NULL)
+	, ConCharLine(nullptr)
+	, ConAttrLine(nullptr)
 	, MaxBufferSize(0)
 	, PartsCount(0)
-	, TextParts(NULL)
-	, TempCharFlags(NULL)
-	, TempCharWidth(NULL)
+	, TextParts(nullptr)
+	, TempCharFlags(nullptr)
+	, TempCharWidth(nullptr)
 	, TotalLineWidth(0)
 	, isFixFrameCoord(isFar)
 	, NextDialog(true)
@@ -838,7 +838,7 @@ struct Shrinker
 
 	Shrinker()
 	{
-		data = NULL;
+		data = nullptr;
 
 		// Default values;
 		indent_elast = 100;
@@ -861,7 +861,7 @@ struct Shrinker
 
 	void init(VConTextPart* parts, unsigned l, unsigned r, unsigned a_font_width)
 	{
-		if (data == NULL)
+		if (data == nullptr)
 		{
 			data_count = (r-l+1);
 			data = new part_data[data_count];
@@ -884,7 +884,7 @@ struct Shrinker
 
 	void get_total(VConTextPart* parts, unsigned l, unsigned r, float& total_k, int& total_l)
 	{
-		_ASSERTE(data!=NULL);
+		_ASSERTE(data!=nullptr);
 
 		total_l = 0;
 		double k_den = 0.0;
@@ -937,7 +937,7 @@ struct Shrinker
 
 		if (l == r)
 		{
-			_ASSERTE(data!=NULL);
+			_ASSERTE(data!=nullptr);
 			data[0].old_width = parts[l].TotalWidth;
 			data[0].new_width = a_req_len;
 			return ((data[0].new_width * 2) < data[0].old_width);
@@ -1172,7 +1172,7 @@ bool CVConLine::GetNextPart(unsigned& partIndex, VConTextPart*& part, VConTextPa
 	// No more parts?
 	if (partIndex >= PartsCount)
 	{
-		nextPart = NULL;
+		nextPart = nullptr;
 		return false;
 	}
 
@@ -1182,7 +1182,7 @@ bool CVConLine::GetNextPart(unsigned& partIndex, VConTextPart*& part, VConTextPa
 	// Skip all next ‘combined’ parts
 	while ((partIndex < PartsCount) && (TextParts[partIndex].Flags == TRF_None))
 		partIndex++;
-	nextPart = (partIndex < PartsCount) ? (TextParts+partIndex) : NULL;
+	nextPart = (partIndex < PartsCount) ? (TextParts+partIndex) : nullptr;
 	return true;
 }
 

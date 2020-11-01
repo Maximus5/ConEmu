@@ -121,7 +121,7 @@ CFontMgr::~CFontMgr()
 
 	while (!m_FontPtrs.empty())
 	{
-		CFont* p = NULL;
+		CFont* p = nullptr;
 		m_FontPtrs.pop_back(p);
 		if (p)
 		{
@@ -155,7 +155,7 @@ void CFontMgr::FontPtrUnregister(CFont* p)
 {
 	if (!p)
 	{
-		_ASSERTE(p!=NULL);
+		_ASSERTE(p!=nullptr);
 		return;
 	}
 
@@ -206,7 +206,7 @@ bool CFontMgr::AutoRecreateFont(int nFontW, int nFontH)
 BYTE CFontMgr::BorderFontCharSet()
 {
 	CFontPtr font;
-	if (QueryFont(fnt_Alternative, NULL, font))
+	if (QueryFont(fnt_Alternative, nullptr, font))
 		return font->m_tm.tmCharSet;
 	return DEFAULT_CHARSET;
 }
@@ -261,7 +261,7 @@ bool CFontMgr::CreateOtherFont(const wchar_t* asFontName, CFontPtr& rpFont)
 	return (rpFont.IsSet());
 }
 
-// pVCon may be NULL
+// pVCon may be nullptr
 bool CFontMgr::QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPtr& rpFont)
 {
 	TODO("Take into account per-VCon font size zoom value");
@@ -339,7 +339,7 @@ LONG CFontMgr::EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharS
 		fi.lfCharSet = lf.lfCharSet = nFontCharSet;
 		lf.lfPitchAndFamily = DEFAULT_PITCH | FF_MODERN;
 
-		HDC hdc = CreateCompatibleDC(NULL);
+		HDC hdc = CreateCompatibleDC(nullptr);
 		if (hdc)
 		{
 			HFONT hOld, f = CreateFontIndirect(&lf);
@@ -617,7 +617,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 	};
 
 	BOOL lbRc = FALSE;
-	HANDLE f = NULL;
+	HANDLE f = nullptr;
 	wchar_t szRetValA[MAX_PATH];
 	wchar_t szRetValU[MAX_PATH];
 	DWORD dwRead;
@@ -631,11 +631,11 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 	wchar_t szDumpInfo[200];
 
 	//if (f.Open(lpszFilePath, CFile::modeRead|CFile::shareDenyWrite)){
-	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr)) == INVALID_HANDLE_VALUE)
 		goto wrap;
 
 	//f.Read(&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
-	if (!ReadFile(f, &ttOffsetTable, sizeof(ttOffsetTable), &(dwRead=0), NULL) || (dwRead != sizeof(ttOffsetTable)))
+	if (!ReadFile(f, &ttOffsetTable, sizeof(ttOffsetTable), &(dwRead=0), nullptr) || (dwRead != sizeof(ttOffsetTable)))
 		goto wrap;
 
 	ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
@@ -650,7 +650,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 	for (int i = 0; i < ttOffsetTable.uNumOfTables; i++)
 	{
 		//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
-		if (ReadFile(f, &tblDir, sizeof(tblDir), &(dwRead=0), NULL) && dwRead)
+		if (ReadFile(f, &tblDir, sizeof(tblDir), &(dwRead=0), nullptr) && dwRead)
 		{
 			if (lstrcmpni(tblDir.szTag, "name", 4) == 0) //-V112
 			{
@@ -664,12 +664,12 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 
 	if (bFound)
 	{
-		if (SetFilePointer(f, tblDir.uOffset, NULL, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
+		if (SetFilePointer(f, tblDir.uOffset, nullptr, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
 		{
 			TT_NAME_TABLE_HEADER ttNTHeader;
 
 			//f.Read(&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER));
-			if (ReadFile(f, &ttNTHeader, sizeof(ttNTHeader), &(dwRead=0), NULL) && dwRead)
+			if (ReadFile(f, &ttNTHeader, sizeof(ttNTHeader), &(dwRead=0), nullptr) && dwRead)
 			{
 				ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
 				ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
@@ -679,7 +679,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 				for (int i = 0; i < ttNTHeader.uNRCount; i++)
 				{
 					//f.Read(&ttRecord, sizeof(TT_NAME_RECORD));
-					if (ReadFile(f, &ttRecord, sizeof(ttRecord), &(dwRead=0), NULL) && dwRead)
+					if (ReadFile(f, &ttRecord, sizeof(ttRecord), &(dwRead=0), nullptr) && dwRead)
 					{
 						ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
 
@@ -699,11 +699,11 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 									//csTemp.ReleaseBuffer();
 									char szName[(LF_FACESIZE+3)*sizeof(wchar_t)] = "";
 
-									if (ReadFile(f, szName, ttRecord.uStringLength + sizeof(wchar_t), &(dwRead=0), NULL) && dwRead)
+									if (ReadFile(f, szName, ttRecord.uStringLength + sizeof(wchar_t), &(dwRead=0), nullptr) && dwRead)
 									{
 										// Ensure even wchar_t would be Z-terminated
 										szName[ttRecord.uStringLength] = 0; szName[ttRecord.uStringLength+1] = 0; szName[ttRecord.uStringLength+2] = 0;
-										LPCWSTR pszFound = NULL;
+										LPCWSTR pszFound = nullptr;
 
 										// Dump found table item
 										if (bDumpTable)
@@ -836,7 +836,7 @@ BOOL CFontMgr::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 
 
 	BOOL lbRc = FALSE;
-	HANDLE f = NULL;
+	HANDLE f = nullptr;
 	wchar_t szFullName[MAX_PATH] = {}, szName[128] = {}, szSubName[128] = {};
 	char szData[MAX_PATH] = {};
 	int iFullOffset = -1, iFamOffset = -1, iSubFamOffset = -1;
@@ -848,11 +848,11 @@ BOOL CFontMgr::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 	OTF_NAME_RECORD namRec;
 	BOOL bFound = FALSE;
 
-	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr)) == INVALID_HANDLE_VALUE)
 		goto wrap;
 
 	//f.Read(&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
-	if (!ReadFile(f, &root, sizeof(root), &(dwRead=0), NULL) || (dwRead != sizeof(root)))
+	if (!ReadFile(f, &root, sizeof(root), &(dwRead=0), nullptr) || (dwRead != sizeof(root)))
 		goto wrap;
 
 	root.NumTables = SWAPWORD(root.NumTables);
@@ -864,7 +864,7 @@ BOOL CFontMgr::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 	for (WORD i = 0; i < root.NumTables; i++)
 	{
 		//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
-		if (ReadFile(f, &tbl, sizeof(tbl), &(dwRead=0), NULL) && dwRead)
+		if (ReadFile(f, &tbl, sizeof(tbl), &(dwRead=0), nullptr) && dwRead)
 		{
 			if (lstrcmpni(tbl.szTag, "name", 4) == 0) //-V112
 			{
@@ -878,9 +878,9 @@ BOOL CFontMgr::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 
 	if (bFound)
 	{
-		if (SetFilePointer(f, tbl.Offset, NULL, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
+		if (SetFilePointer(f, tbl.Offset, nullptr, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
 		{
-			if (ReadFile(f, &nam, sizeof(nam), &(dwRead=0), NULL) && dwRead)
+			if (ReadFile(f, &nam, sizeof(nam), &(dwRead=0), nullptr) && dwRead)
 			{
 				nam.Format = SWAPWORD(nam.Format);
 				nam.Count = SWAPWORD(nam.Count);
@@ -892,7 +892,7 @@ BOOL CFontMgr::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 
 				for (int i = 0; i < nam.Count; i++)
 				{
-					if (ReadFile(f, &namRec, sizeof(namRec), &(dwRead=0), NULL) && dwRead)
+					if (ReadFile(f, &namRec, sizeof(namRec), &(dwRead=0), nullptr) && dwRead)
 					{
 						namRec.NameID = SWAPWORD(namRec.NameID);
 						namRec.Offset = SWAPWORD(namRec.Offset);
@@ -941,14 +941,14 @@ BOOL CFontMgr::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 						iOffset = iSubFamOffset; iLen = iSubFamLength;
 						//break;
 					}
-					if (SetFilePointer(f, tbl.Offset + nam.StringOffset + iOffset, NULL, FILE_BEGIN)==INVALID_SET_FILE_POINTER)
+					if (SetFilePointer(f, tbl.Offset + nam.StringOffset + iOffset, nullptr, FILE_BEGIN)==INVALID_SET_FILE_POINTER)
 						break;
 					if (iLen >= (int)sizeof(szData))
 					{
 						_ASSERTE(iLen < (int)sizeof(szData));
 						iLen = sizeof(szData)-1;
 					}
-					if (!ReadFile(f, szData, iLen, &(dwRead=0), NULL) || (dwRead != (DWORD)iLen))
+					if (!ReadFile(f, szData, iLen, &(dwRead=0), nullptr) || (dwRead != (DWORD)iLen))
 						break;
 
 					switch (n)
@@ -1029,7 +1029,7 @@ LONG CFontMgr::GetZoom(bool bRaw /*= false*/)
 	return bRaw ? mn_FontZoomValue : MulDiv(mn_FontZoomValue, 100, FontZoom100);
 }
 
-void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
+void CFontMgr::InitFont(LPCWSTR asFontName/*=nullptr*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
 	lstrcpyn(LogFont.lfFaceName, (asFontName && *asFontName) ? asFontName : (*gpSet->inFont) ? gpSet->inFont : gsDefGuiFont, countof(LogFont.lfFaceName));
 	if ((asFontName && *asFontName) || *gpSet->inFont)
@@ -1412,7 +1412,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 
 		if (hf)
 		{
-			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(NULL, hf);
+			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(nullptr, hf);
 
 			if (lpOutl)
 			{
@@ -1431,7 +1431,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		{
 			wcscpy_c(LF.lfFaceName, szFullFontName);
 			hf = CreateFontIndirect(&LF);
-			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(NULL, hf);
+			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(nullptr, hf);
 
 			if (lpOutl)
 			{
@@ -1495,7 +1495,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		return TRUE;
 	}
 
-	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, NULL))  //ADD fontname; by Mors
+	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, nullptr))  //ADD fontname; by Mors
 	{
 		size_t cchLen = _tcslen(asFontFile)+100;
 		wchar_t* psz=(wchar_t*)calloc(cchLen,sizeof(wchar_t));
@@ -1515,7 +1515,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	}
 
 	// Теперь его нужно добавить в вектор независимо от успешности определения рамок
-	// будет нужен RemoveFontResourceEx(asFontFile, FR_PRIVATE, NULL);
+	// будет нужен RemoveFontResourceEx(asFontFile, FR_PRIVATE, nullptr);
 	// Определить наличие рамок и "юникодности" шрифта
 	HDC hdc = CreateCompatibleDC(0);
 
@@ -1531,7 +1531,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		if (hf)
 		{
 
-			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(NULL, hf);
+			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(nullptr, hf);
 			if (lpOutl)
 			{
 				if (lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, rf.szFontName) != 0)
@@ -1554,7 +1554,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		                      OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
 		                      NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0,
 		                      szFullFontName);
-			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(NULL, hf);
+			LPOUTLINETEXTMETRICW lpOutl = LoadOutline(nullptr, hf);
 
 			if (lpOutl)
 			{
@@ -1573,7 +1573,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		if (hf && lbFail)
 		{
 			DeleteObject(hf);
-			hf = NULL;
+			hf = nullptr;
 		}
 		if (lbFail && *szDbg)
 		{
@@ -1584,8 +1584,8 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		if (hf)
 		{
 			HFONT hOldF = (HFONT)SelectObject(hdc, hf);
-			LPGLYPHSET pSets = NULL;
-			DWORD nSize = GetFontUnicodeRanges(hdc, NULL);
+			LPGLYPHSET pSets = nullptr;
+			DWORD nSize = GetFontUnicodeRanges(hdc, nullptr);
 
 			if (nSize)
 			{
@@ -1769,7 +1769,7 @@ void CFontMgr::UnregisterFonts()
 		if (iter->pCustom)
 			delete iter->pCustom;
 		else
-			RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, NULL);
+			RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, nullptr);
 
 		m_RegFonts.erase(j);
 	}
@@ -1779,7 +1779,7 @@ void CFontMgr::UnregisterFonts()
 
 // Вызывается из
 // -- первичная инициализация
-// void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
+// void CFontMgr::InitFont(LPCWSTR asFontName/*=nullptr*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 // -- смена шрифта из фара (через Gui Macro "FontSetName")
 // void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)
 // -- смена _размера_ шрифта из фара (через Gui Macro "FontSetSize")
@@ -1800,7 +1800,7 @@ bool CFontMgr::CreateFontGroup(CLogFont inFont)
 	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 
 	// For *.bdf fonts
-	CustomFontFamily* pCustom = NULL;
+	CustomFontFamily* pCustom = nullptr;
 
 	{
 	CFontPtr font;
@@ -1852,7 +1852,7 @@ bool CFontMgr::CreateFontGroup(CLogFont inFont)
 	{
 		inFont.lfCharSet = m_tm->tmCharSet;
 
-		const ListBoxItem* pCharSets = NULL;
+		const ListBoxItem* pCharSets = nullptr;
 		uint nCount = CSetDlgLists::GetListItems(CSetDlgLists::eCharSets, pCharSets);
 		for (uint i = 0; i < nCount; i++)
 		{
@@ -1907,7 +1907,7 @@ wrap:
 	return bSucceeded;
 }
 
-bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCustom /*= NULL*/)
+bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCustom /*= nullptr*/)
 {
 	bool bSucceeded = false;
 
@@ -1922,8 +1922,8 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 
 	// Search through *.bdf font (drawn by ConEmu internally)
 	bool isBdf = false;
-	CustomFont* pFont = NULL;
-	CustomFontFamily* pCustom = NULL;
+	CustomFont* pFont = nullptr;
+	CustomFontFamily* pCustom = nullptr;
 
 	// If bdf font family was already found by CreateFontGroup
 	if (ppCustom && *ppCustom)
@@ -1941,7 +1941,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 	{
 		if (!pFont)
 		{
-			MBoxAssert(pFont != NULL);
+			MBoxAssert(pFont != nullptr);
 			goto wrap;
 		}
 
@@ -1971,9 +1971,9 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 	else
 	{
 		if (ppCustom)
-			*ppCustom = NULL;
+			*ppCustom = nullptr;
 
-		HFONT hFont = NULL;
+		HFONT hFont = nullptr;
 		static int nRastNameLen = _tcslen(RASTER_FONTS_NAME);
 		int nRastHeight = 0, nRastWidth = 0;
 		bool bRasterFont = false; // Specially for [Raster Fonts WxH]
@@ -1981,7 +1981,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 
 		if (inFont.lfFaceName[0] == L'[' && wcsncmp(inFont.lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0)
 		{
-			wchar_t *pszEnd = NULL;
+			wchar_t *pszEnd = nullptr;
 			wchar_t *pszSize = inFont.lfFaceName + nRastNameLen + 2;
 			nRastWidth = wcstol(pszSize, &pszEnd, 10);
 
@@ -2021,7 +2021,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 		hFont = CreateFontIndirect(&tmpFont);
 
 		wchar_t szFontFace[32];
-		CEDC hDC(NULL);
+		CEDC hDC(nullptr);
 		hDC.Create(800, 600);
 		MBoxAssert(hDC);
 
@@ -2069,7 +2069,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 				rpFont->m_tm.tmAveCharWidth = rpFont->m_tm.tmMaxCharWidth = nRastWidth;
 			}
 
-			rpFont->mp_otm = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
+			rpFont->mp_otm = LoadOutline(hDC, nullptr/*hFont*/); // шрифт УЖЕ выбран в DC
 
 			if (!rpFont->mp_otm)
 			{
@@ -2133,8 +2133,8 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 
 			SelectObject(hDC, hOldF);
 
-			_ASSERTE(hFont != NULL);
-			bSucceeded = (hFont != NULL);
+			_ASSERTE(hFont != nullptr);
+			bSucceeded = (hFont != nullptr);
 		}
 
 		hDC.Delete();
@@ -2161,8 +2161,8 @@ LONG CFontMgr::EvalCellWidth()
 
 bool CFontMgr::FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline, CustomFontFamily** ppCustom, CustomFont** ppFont)
 {
-	*ppFont = NULL;
-	*ppCustom = NULL;
+	*ppFont = nullptr;
+	*ppCustom = nullptr;
 
 	// Поиск по шрифтам рисованным ConEmu (bdf)
 	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
@@ -2177,10 +2177,10 @@ bool CFontMgr::FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL bI
 
 			if (!*ppFont)
 			{
-				MBoxAssert(*ppFont != NULL);
+				MBoxAssert(*ppFont != nullptr);
 			}
 
-			return true; // [bdf] шрифт. ошибка определяется по (*ppFont==NULL)
+			return true; // [bdf] шрифт. ошибка определяется по (*ppFont==nullptr)
 		}
 	}
 
@@ -2416,7 +2416,7 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 
 	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 
-	if (abReset || (ghOpWnd == NULL))
+	if (abReset || (ghOpWnd == nullptr))
 	{
 		LF = LogFont;
 	}
@@ -2577,7 +2577,7 @@ void CFontMgr::SettingsLoaded(SettingsLoadedFlags slfFlags)
 	}
 	else
 	{
-		_ASSERTE(ghWnd==NULL);
+		_ASSERTE(ghWnd==nullptr);
 	}
 }
 
@@ -2612,8 +2612,8 @@ bool CFontMgr::IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLIN
 			0, asFaceName);
 		if (hFont)
 		{
-			lpotm = LoadOutline(NULL, hFont);
-			bSelfOtm = (lpotm != NULL);
+			lpotm = LoadOutline(nullptr, hFont);
+			bSelfOtm = (lpotm != nullptr);
 			DeleteObject(hFont);
 		}
 	}
@@ -2686,15 +2686,15 @@ LPOUTLINETEXTMETRIC CFontMgr::LoadOutline(HDC hDC, HFONT hFont)
 		ReleaseDC(0, hScreenDC);
 	}
 
-	HFONT hOldF = NULL;
+	HFONT hOldF = nullptr;
 
 	if (hFont)
 	{
 		hOldF = (HFONT)SelectObject(hDC, hFont);
 	}
 
-	LPOUTLINETEXTMETRIC pOut = NULL;
-	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
+	LPOUTLINETEXTMETRIC pOut = nullptr;
+	UINT nSize = GetOutlineTextMetrics(hDC, 0, nullptr);
 
 	if (nSize)
 	{
@@ -2706,7 +2706,7 @@ LPOUTLINETEXTMETRIC CFontMgr::LoadOutline(HDC hDC, HFONT hFont)
 
 			if (!GetOutlineTextMetricsW(hDC, nSize, pOut))
 			{
-				free(pOut); pOut = NULL;
+				free(pOut); pOut = nullptr;
 			}
 			else
 			{

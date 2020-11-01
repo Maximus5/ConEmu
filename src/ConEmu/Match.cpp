@@ -217,11 +217,11 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 		return false;
 
 	pszBadChar = wcspbrk(pszFile, pszInvalidChars);
-	if (pszBadChar != NULL)
+	if (pszBadChar != nullptr)
 		return false;
 
 	pszBadChar = wcspbrk(pszFile, pszSpacing);
-	if (pszBadChar != NULL)
+	if (pszBadChar != nullptr)
 		return false;
 
 	// where are you, regexps...
@@ -230,9 +230,9 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 	if (pszFile[0] == L'.' && (pszFile[1] == 0 || (pszFile[1] == L'.' && (pszFile[2] == 0 || (pszFile[2] == L'.' && (pszFile[3] == 0))))))
 		return false;
 	CharLowerBuff(ms_FileCheck.ms_Val, anLen);
-	if ((wcschr(pszFile, L'.') == NULL)
+	if ((wcschr(pszFile, L'.') == nullptr)
 		//&& (wcsncmp(pszFile, L"make", 4) != 0)
-		&& (wcspbrk(pszFile, L"abcdefghijklmnopqrstuvwxyz") == NULL))
+		&& (wcspbrk(pszFile, L"abcdefghijklmnopqrstuvwxyz") == nullptr))
 		return false;
 
 	CEStr szFullPath;
@@ -410,7 +410,7 @@ bool CMatch::MatchFileNoExt(CRConDataGuard& data, int nFromLine)
 		return false;
 
 	mn_MatchRight = mn_MatchLeft + nNakedFileLen - 1;
-	StoreMatchText(NULL, NULL);
+	StoreMatchText(nullptr, nullptr);
 	m_Type = etr_File;
 	return true;
 }
@@ -503,7 +503,7 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 	}
 
 	// Done
-	StoreMatchText(NULL, NULL);
+	StoreMatchText(nullptr, nullptr);
 
 	return true;
 }
@@ -611,7 +611,7 @@ bool CMatch::MatchAny(CRConDataGuard& data, int nFromLine)
 	}
 
 	// Starts with quotation?
-	if ((pszTest = wcschr(gszQuotStart, m_SrcLine.ms_Val[mn_MatchLeft])) != NULL)
+	if ((pszTest = wcschr(gszQuotStart, m_SrcLine.ms_Val[mn_MatchLeft])) != nullptr)
 	{
 		iQuotStart = (int)(pszTest - gszQuotStart);
 	}
@@ -749,7 +749,7 @@ bool CMatch::MatchAny(CRConDataGuard& data, int nFromLine)
 					iExtFound = ef_DotFound;
 					iBracket = 0;
 				}
-				else if (wcschr(pszSlashes, m_SrcLine.ms_Val[mn_MatchRight]) != NULL)
+				else if (wcschr(pszSlashes, m_SrcLine.ms_Val[mn_MatchRight]) != nullptr)
 				{
 					// Был слеш, значит расширения - еще нет
 					iExtFound = ef_NotFound;
@@ -791,7 +791,7 @@ bool CMatch::MatchAny(CRConDataGuard& data, int nFromLine)
 				}
 				else
 				{
-					bWasSeparator = (wcschr(pszSeparat, m_SrcLine.ms_Val[mn_MatchRight]) != NULL);
+					bWasSeparator = (wcschr(pszSeparat, m_SrcLine.ms_Val[mn_MatchRight]) != nullptr);
 				}
 			}
 
@@ -829,7 +829,7 @@ bool CMatch::MatchAny(CRConDataGuard& data, int nFromLine)
 				}
 			}
 
-			bWasPunctuator = (wcschr(pszPuctuators, m_SrcLine.ms_Val[mn_MatchRight]) != NULL);
+			bWasPunctuator = (wcschr(pszPuctuators, m_SrcLine.ms_Val[mn_MatchRight]) != nullptr);
 
 			// Рассчитано на закрывающие : или ) или ] или ,
 			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[4]==0);
@@ -1052,14 +1052,14 @@ bool CMatch::MatchAny(CRConDataGuard& data, int nFromLine)
 		bFound = true;
 
 		_ASSERTE(!bMaybeMail || !bUrlMode); // Одновременно - флаги не могут быть выставлены!
-		LPCWSTR pszPrefix = (bMaybeMail && !bUrlMode) ? L"mailto:" : NULL;
+		LPCWSTR pszPrefix = (bMaybeMail && !bUrlMode) ? L"mailto:" : nullptr;
 		if (bMaybeMail && !bUrlMode)
 			bUrlMode = true;
 
-		StoreMatchText(pszPrefix, bUrlMode ? pszUrlTrimRight : NULL);
+		StoreMatchText(pszPrefix, bUrlMode ? pszUrlTrimRight : nullptr);
 
 		#ifdef _DEBUG
-		if (!bUrlMode && wcsstr(ms_Match.ms_Val, L"//")!=NULL)
+		if (!bUrlMode && wcsstr(ms_Match.ms_Val, L"//")!=nullptr)
 		{
 			_ASSERTE(FALSE);
 		}

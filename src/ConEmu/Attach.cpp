@@ -112,8 +112,8 @@ void CAttachDlg::AttachDlg()
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	// (CreateDialog)
 	SafeFree(mp_Dlg);
-	mp_Dlg = CDynDialog::ShowDialog(IDD_ATTACHDLG, NULL, AttachDlgProc, (LPARAM)this);
-	mh_Dlg = mp_Dlg ? mp_Dlg->mh_Dlg : NULL;
+	mp_Dlg = CDynDialog::ShowDialog(IDD_ATTACHDLG, nullptr, AttachDlgProc, (LPARAM)this);
+	mh_Dlg = mp_Dlg ? mp_Dlg->mh_Dlg : nullptr;
 	gpConEmu->SetSkipOnFocus(bPrev);
 }
 
@@ -123,14 +123,14 @@ void CAttachDlg::Close()
 	{
 		if (IsWindow(mh_Dlg))
 			DestroyWindow(mh_Dlg);
-		mh_Dlg = NULL;
+		mh_Dlg = nullptr;
 	}
 
 	if (mp_ProcessData)
 	{
-		_ASSERTE(mp_ProcessData==NULL);
+		_ASSERTE(mp_ProcessData==nullptr);
 		delete mp_ProcessData;
-		mp_ProcessData = NULL;
+		mp_ProcessData = nullptr;
 	}
 
 	SafeDelete(mp_Dlg);
@@ -149,9 +149,9 @@ bool CAttachDlg::OnStartAttach()
 	wchar_t *psz;
 	int iSel, iCur;
 	DWORD nTID;
-	HANDLE hThread = NULL;
+	HANDLE hThread = nullptr;
 	MArray<AttachParm>* Parms = new MArray<AttachParm>();
-	//HWND hAttachWnd = NULL;
+	//HWND hAttachWnd = nullptr;
 
 	ShowWindow(mh_Dlg, SW_HIDE);
 
@@ -164,7 +164,7 @@ bool CAttachDlg::OnStartAttach()
 		iCur = iSel;
 		iSel = ListView_GetNextItem(mh_List, iCur, LVNI_SELECTED);
 
-		AttachParm L = {NULL, 0, WIN3264TEST(32,64), apt_Unknown, bAlternativeMode, bLeaveOpened};
+		AttachParm L = {nullptr, 0, WIN3264TEST(32,64), apt_Unknown, bAlternativeMode, bLeaveOpened};
 
 		ListView_GetItemText(mh_List, iCur, alc_PID, szItem, countof(szItem)-1);
 		L.nPID = wcstoul(szItem, &psz, 10);
@@ -187,7 +187,7 @@ bool CAttachDlg::OnStartAttach()
 			L.nType = apt_Gui;
 
 		ListView_GetItemText(mh_List, iCur, alc_HWND, szItem, countof(szItem));
-		L.hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)(DWORD_PTR)wcstoul(szItem+2, &psz, 16) : NULL;
+		L.hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)(DWORD_PTR)wcstoul(szItem+2, &psz, 16) : nullptr;
 
 		if (!L.nPID || !L.nBits || !L.nType || !L.hAttachWnd)
 		{
@@ -237,10 +237,10 @@ CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlter
 {
 	MArray<AttachParm>* Parms = new MArray<AttachParm>();
 
-	HWND hFind = NULL;
+	HWND hFind = nullptr;
 	CProcessData ProcessData;
 
-	while ((hFind = FindWindowEx(NULL, hFind, NULL, NULL)) != NULL)
+	while ((hFind = FindWindowEx(nullptr, hFind, nullptr, nullptr)) != nullptr)
 	{
 		if (!IsWindowVisible(hFind))
 			continue;
@@ -482,7 +482,7 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 
 INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	CAttachDlg* pDlg = NULL;
+	CAttachDlg* pDlg = nullptr;
 	if (messg == WM_INITDIALOG)
 	{
 		pDlg = (CAttachDlg*)lParam;
@@ -496,10 +496,10 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 	if (!pDlg)
 	{
-		//_ASSERTE(pDlg!=NULL);
+		//_ASSERTE(pDlg!=nullptr);
 		return 0;
 	}
-	_ASSERTE(pDlg->mh_Dlg!=NULL);
+	_ASSERTE(pDlg->mh_Dlg!=nullptr);
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
@@ -560,7 +560,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::Begin");
 
-			HWND hTaskBar = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
+			HWND hTaskBar = FindWindowEx(nullptr, nullptr, L"Shell_TrayWnd", nullptr);
 			if (hTaskBar)
 				GetWindowThreadProcessId(hTaskBar, &pDlg->mn_ExplorerPID);
 			else
@@ -571,7 +571,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::End");
 
 			delete pDlg->mp_ProcessData;
-			pDlg->mp_ProcessData = NULL;
+			pDlg->mp_ProcessData = nullptr;
 
 			AttachDlgProc(hDlg, WM_SIZE, 0, 0);
 
@@ -592,13 +592,13 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			RECT rcDlg, rcBtn, rcList, rcAttach, rcLeave;
 			::GetClientRect(hDlg, &rcDlg);
 			HWND h = GetDlgItem(hDlg, IDC_ATTACHLIST);
-			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
+			GetWindowRect(h, &rcList); MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcList, 2);
 			HWND hb = GetDlgItem(hDlg, ID_ATTACH);
-			GetWindowRect(hb, &rcBtn); MapWindowPoints(NULL, hb, (LPPOINT)&rcBtn, 2);
+			GetWindowRect(hb, &rcBtn); MapWindowPoints(nullptr, hb, (LPPOINT)&rcBtn, 2);
 			HWND hAttach = GetDlgItem(hDlg, IDC_ATTACH_ALT);
-			GetWindowRect(hAttach, &rcAttach); MapWindowPoints(NULL, hAttach, (LPPOINT)&rcAttach, 2);
+			GetWindowRect(hAttach, &rcAttach); MapWindowPoints(nullptr, hAttach, (LPPOINT)&rcAttach, 2);
 			HWND hLeave = GetDlgItem(hDlg, IDC_ATTACH_LEAVE_OPEN);
-			GetWindowRect(hLeave, &rcLeave); MapWindowPoints(NULL, hLeave, (LPPOINT)&rcLeave, 2);
+			GetWindowRect(hLeave, &rcLeave); MapWindowPoints(nullptr, hLeave, (LPPOINT)&rcLeave, 2);
 			BOOL lbRedraw = FALSE;
 			const int pad = rcList.left;
 			// ListView (layered)
@@ -625,7 +625,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			MoveWindow(hLeave,
 				x, cbx_y, rcLeave.right, rcLeave.bottom, lbRedraw);
 			// All done
-			RedrawWindow(hDlg, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
+			RedrawWindow(hDlg, nullptr, nullptr, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 			break;
 		}
 
@@ -634,10 +634,10 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			MINMAXINFO* p = (MINMAXINFO*)lParam;
 			HWND h;
 			RECT rcBtn = {}, rcList = {}, rcMode = {}, rcLeave = {};
-			GetWindowRect((h = GetDlgItem(hDlg, ID_ATTACH)), &rcBtn); MapWindowPoints(NULL, h, (LPPOINT)&rcBtn, 2);
-			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACH_ALT)), &rcMode); MapWindowPoints(NULL, h, (LPPOINT)&rcMode, 2);
-			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACH_LEAVE_OPEN)), &rcLeave); MapWindowPoints(NULL, h, (LPPOINT)&rcLeave, 2);
-			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACHLIST)), &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, ID_ATTACH)), &rcBtn); MapWindowPoints(nullptr, h, (LPPOINT)&rcBtn, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACH_ALT)), &rcMode); MapWindowPoints(nullptr, h, (LPPOINT)&rcMode, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACH_LEAVE_OPEN)), &rcLeave); MapWindowPoints(nullptr, h, (LPPOINT)&rcLeave, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACHLIST)), &rcList); MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcList, 2);
 			RECT rcWnd = {}, rcClient = {};
 			GetWindowRect(hDlg, &rcWnd);
 			::GetClientRect(hDlg, &rcClient);
@@ -702,7 +702,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 							pDlg->mp_ProcessData = new CProcessData;
 							EnumWindows(AttachDlgEnumWin, (LPARAM)pDlg);
 							delete pDlg->mp_ProcessData;
-							pDlg->mp_ProcessData = NULL;
+							pDlg->mp_ProcessData = nullptr;
 						}
 						return 1;
 				}
@@ -727,10 +727,10 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	PROCESS_INFORMATION pi = {};
 	STARTUPINFO si = {sizeof(si)};
 	SHELLEXECUTEINFO sei = {sizeof(sei)};
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	HANDLE hPipeTest = NULL;
-	HANDLE hPluginTest = NULL;
-	HANDLE hProcTest = NULL;
+	CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
+	HANDLE hPipeTest = nullptr;
+	HANDLE hPluginTest = nullptr;
+	HANDLE hProcTest = nullptr;
 	DWORD nErrCode = 0;
 	bool lbCreate;
 	CESERVER_CONSOLE_MAPPING_HDR srv;
@@ -772,7 +772,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	// Is it a Far Manager with our ConEmu.dll plugin loaded?
 	swprintf_c(szPipe, CEPLUGINPIPENAME, L".", anPID);
-	hPluginTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
+	hPluginTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, nullptr);
 	if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(hPluginTest);
@@ -781,7 +781,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	// May be there is already ConEmuHk[64].dll loaded? Either it is already in the another ConEmu VCon?
 	swprintf_c(szPipe, CEHOOKSPIPENAME, L".", anPID);
-	hPipeTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
+	hPipeTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, nullptr);
 	if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(hPipeTest);
@@ -815,10 +815,10 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	hProcTest = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, anPID);
 
 	// If the attaching process is running as admin (elevated) we have to run ConEmuC as admin too
-	if (hProcTest == NULL)
+	if (hProcTest == nullptr)
 	{
 		nErrCode = GetLastError();
-		MBoxAssert(hProcTest!=NULL || nErrCode==ERROR_ACCESS_DENIED);
+		MBoxAssert(hProcTest!=nullptr || nErrCode==ERROR_ACCESS_DENIED);
 
 		sei.hwnd = ghWnd;
 		sei.fMask = (abAltMode ? 0 : SEE_MASK_NO_CONSOLE)|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
@@ -831,7 +831,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		lbCreate = (ShellExecuteEx(&sei) != FALSE);
 		if (lbCreate)
 		{
-			MBoxAssert(sei.hProcess!=NULL);
+			MBoxAssert(sei.hProcess!=nullptr);
 			pi.hProcess = sei.hProcess;
 		}
 	}
@@ -842,7 +842,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 			| (abAltMode ? CREATE_NO_WINDOW : CREATE_NEW_CONSOLE)
 			| CREATE_DEFAULT_ERROR_MODE
 			| NORMAL_PRIORITY_CLASS;
-		lbCreate = (CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi) != FALSE);
+		lbCreate = (CreateProcess(szSrv, szArgs, nullptr, nullptr, FALSE, dwFlags, nullptr, nullptr, &si, &pi) != FALSE);
 	}
 
 	if (!lbCreate)
@@ -928,7 +928,7 @@ DWORD CAttachDlg::StartAttachThread(MArray<AttachParm>* lpParam)
 {
 	if (!lpParam)
 	{
-		_ASSERTE(lpParam!=NULL);
+		_ASSERTE(lpParam!=nullptr);
 		return 100;
 	}
 

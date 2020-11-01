@@ -223,7 +223,7 @@ bool CDpiAware::IsPerMonitorDpi()
 		if (IsWindows8_1 && (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_READ, &hk)))
 		{
 			DWORD nValue = 0, nSize = sizeof(nValue);
-			if (0 == RegQueryValueEx(hk, L"Win8DpiScaling", NULL, NULL, (LPBYTE)&nValue, &nSize) && nSize == sizeof(nValue))
+			if (0 == RegQueryValueEx(hk, L"Win8DpiScaling", nullptr, nullptr, (LPBYTE)&nValue, &nSize) && nSize == sizeof(nValue))
 			{
 				iPerMonitor = (nValue == 0) ? 1 : -1;
 			}
@@ -242,7 +242,7 @@ bool CDpiAware::IsPerMonitorDpi()
 	return (iPerMonitor == 1);
 }
 
-int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
+int CDpiAware::QueryDpi(HWND hWnd /*= nullptr*/, DpiValue* pDpi /*= nullptr*/)
 {
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
 	if (pDpi) pDpi->SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
@@ -264,8 +264,8 @@ int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 	return QueryDpiForWindow(hWnd, pDpi);
 }
 
-// if hWnd is NULL - returns DC's dpi
-int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
+// if hWnd is nullptr - returns DC's dpi
+int CDpiAware::QueryDpiForWindow(HWND hWnd /*= nullptr*/, DpiValue* pDpi /*= nullptr*/)
 {
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
 	if (pDpi) pDpi->SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
@@ -274,12 +274,12 @@ int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/
 
 	int dpi = 96;
 	HDC desktopDc = GetDC(hWnd);
-	if (desktopDc != NULL)
+	if (desktopDc != nullptr)
 	{
 		// Get native resolution
 		int x = GetDeviceCaps(desktopDc, LOGPIXELSX);
 		int y = GetDeviceCaps(desktopDc, LOGPIXELSY);
-		ReleaseDC(NULL, desktopDc);
+		ReleaseDC(nullptr, desktopDc);
 		if (x >= 96 && y >= 96)
 		{
 			if (pDpi)
@@ -349,7 +349,7 @@ DpiValue CDpiAware::QueryDpiForMonitor(HMONITOR hMon, const MonitorDpiType dpiTy
 	return dpi;
 }
 
-void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /*= NULL*/)
+void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /*= nullptr*/)
 {
 #ifdef _DEBUG
 	HMONITOR hMon;
@@ -386,17 +386,17 @@ void CDpiAware::CenterDialog(HWND hDialog)
 
 	// If possible, open our startup dialogs on the monitor,
 	// where user have clicked our icon (shortcut on the desktop or TaskBar)
-	HMONITOR hDefault = ghWnd ? NULL : gpStartEnv->hStartMon;
+	HMONITOR hDefault = ghWnd ? nullptr : gpStartEnv->hStartMon;
 
 	// Position dialog in the workarea center
-	CDpiAware::GetCenteredRect(NULL, rect, hDefault);
+	CDpiAware::GetCenteredRect(nullptr, rect, hDefault);
 	MoveWindowRect(hDialog, rect);
 
 	if (IsPerMonitorDpi() && GetWindowRect(hDialog, &rectAfter))
 	{
 		if ((RectWidth(rect) != RectWidth(rectAfter)) || (RectHeight(rect) != RectHeight(rectAfter)))
 		{
-			CDpiAware::GetCenteredRect(NULL, rectAfter, NULL);
+			CDpiAware::GetCenteredRect(nullptr, rectAfter, nullptr);
 			MoveWindowRect(hDialog, rectAfter);
 		}
 	}
@@ -446,13 +446,13 @@ bool CDpiForDialog::Create(CDpiForDialog*& pHelper)
 
 CDpiForDialog::CDpiForDialog()
 {
-	mh_Dlg = NULL;
+	mh_Dlg = nullptr;
 	//mn_InitFontHeight = 8;
 	ZeroStruct(mlf_InitFont);
 	mn_TemplateFontSize = 8;
 	mn_CurFontHeight = 0;
 	ZeroStruct(mlf_CurFont);
-	mh_OldFont = mh_CurFont = NULL;
+	mh_OldFont = mh_CurFont = nullptr;
 	ZeroStruct(m_Items);
 	mn_InSet = 0;
 }
@@ -472,7 +472,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 	mn_TemplateFontSize = apDlgTemplate ? apDlgTemplate->GetFontPointSize() : 8;
 
 	mh_OldFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
-	if ((mh_OldFont != NULL)
+	if ((mh_OldFont != nullptr)
 		&& (GetObject(mh_OldFont, sizeof(mlf_InitFont), &mlf_InitFont) > 0))
 	{
 		swprintf_c(szLog, L"CDpiForDialog(x%08X) Font='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
@@ -480,7 +480,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 	else
 	{
 		ZeroStruct(mlf_InitFont);
-		mlf_InitFont.lfHeight = GetFontSizeForDpi(NULL, 96);
+		mlf_InitFont.lfHeight = GetFontSizeForDpi(nullptr, 96);
 		lstrcpyn(mlf_InitFont.lfFaceName, L"MS Shell Dlg", countof(mlf_InitFont.lfFaceName));
 		mlf_InitFont.lfWeight = 400;
 		mlf_InitFont.lfCharSet = DEFAULT_CHARSET;
@@ -530,7 +530,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 	return true;
 }
 
-bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*= NULL*/)
+bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*= nullptr*/)
 {
 	wchar_t szLog[160];
 	RECT rcClient = {}, rcCurWnd = {};
@@ -576,9 +576,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		return false;
 
 	bool bRc = false;
-	MArray<DlgItem>* p = NULL;
+	MArray<DlgItem>* p = nullptr;
 	DpiValue curDpi(m_CurDpi);
-	HFONT hf = NULL;
+	HFONT hf = nullptr;
 
 	wchar_t szClass[100];
 
@@ -593,7 +593,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	m_CurDpi.SetDpi(setDpi);
 
 	// Eval
-	mn_CurFontHeight = GetFontSizeForDpi(NULL, m_CurDpi.Ydpi);
+	mn_CurFontHeight = GetFontSizeForDpi(nullptr, m_CurDpi.Ydpi);
 	//(m_CurDpi.Ydpi && m_InitDpi.Ydpi) ? (mn_InitFontHeight * m_CurDpi.Ydpi / m_InitDpi.Ydpi) : -11;
 	mlf_CurFont = mlf_InitFont;
 	mlf_CurFont.lfHeight = mn_CurFontHeight;
@@ -605,9 +605,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 
 	if (!m_Items.Get(m_CurDpi.Ydpi, &p))
 	{
-		MArray<DlgItem>* pOrig = NULL;
+		MArray<DlgItem>* pOrig = nullptr;
 		int iOrigDpi = 0;
-		if (!m_Items.GetNext(NULL, &iOrigDpi, &pOrig) || !pOrig || (iOrigDpi <= 0))
+		if (!m_Items.GetNext(nullptr, &iOrigDpi, &pOrig) || !pOrig || (iOrigDpi <= 0))
 			goto wrap;
 		int iNewDpi = m_CurDpi.Ydpi;
 
@@ -668,7 +668,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	}
 
 	hf = CreateFontIndirect(&mlf_CurFont);
-	if (hf == NULL)
+	if (hf == nullptr)
 	{
 		goto wrap;
 	}
@@ -689,7 +689,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		if (bResizeCombo && (nStyles & CBS_OWNERDRAWFIXED))
 		{
 			GetWindowRect(di.h, &rcCur);
-			hComboEdit = FindWindowEx(di.h, NULL, L"Edit", NULL);
+			hComboEdit = FindWindowEx(di.h, nullptr, L"Edit", nullptr);
 			GetClientRect(di.h, &rcItemClient);
 			GetClientRect(hComboEdit, &rcEdit);
 			iComboWasHeight = (rcCur.bottom - rcCur.top);
@@ -721,7 +721,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 			SendMessage(di.h, CB_SETEDITSEL, 0, MAKELPARAM(-1,0));
 		}
 		EditIconHint_ResChanged(di.h);
-		InvalidateRect(di.h, NULL, TRUE);
+		InvalidateRect(di.h, nullptr, TRUE);
 		#ifdef _DEBUG
 		itest1 = GetObject(hf, sizeof(lftest1), &lftest1);
 		hftest = (HFONT)SendMessage(di.h, WM_GETFONT, 0, 0);
@@ -734,13 +734,13 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		const DlgItem& di = (*p)[0];
 		SendMessage(mh_Dlg, WM_SETFONT, (WPARAM)hf, FALSE);
 		DWORD nWndFlags = SWP_NOZORDER | (lprcSuggested ? 0 : SWP_NOMOVE);
-		SetWindowPos(mh_Dlg, NULL,
+		SetWindowPos(mh_Dlg, nullptr,
 			lprcSuggested ? lprcSuggested->left : 0, lprcSuggested ? lprcSuggested->top : 0,
 			di.r.right, di.r.bottom,
 			nWndFlags);
 		RECT rc = {}; GetClientRect(mh_Dlg, &rc);
-		InvalidateRect(mh_Dlg, NULL, TRUE);
-		RedrawWindow(mh_Dlg, &rc, NULL, /*RDW_ERASE|*/RDW_ALLCHILDREN/*|RDW_INVALIDATE|RDW_UPDATENOW|RDW_INTERNALPAINT*/);
+		InvalidateRect(mh_Dlg, nullptr, TRUE);
+		RedrawWindow(mh_Dlg, &rc, nullptr, /*RDW_ERASE|*/RDW_ALLCHILDREN/*|RDW_INVALIDATE|RDW_UPDATENOW|RDW_INTERNALPAINT*/);
 	}
 
 	if (mh_CurFont != hf)
@@ -757,9 +757,9 @@ void CDpiForDialog::Detach()
 {
 	if (m_Items.Initialized())
 	{
-		MArray<DlgItem>* p = NULL;
+		MArray<DlgItem>* p = nullptr;
 		int iDpi = 0;
-		while (m_Items.GetNext(iDpi ? &iDpi : NULL, &iDpi, &p))
+		while (m_Items.GetNext(iDpi ? &iDpi : nullptr, &iDpi, &p))
 		{
 			if (p)
 				delete p;
@@ -796,15 +796,15 @@ MArray<CDpiForDialog::DlgItem>* CDpiForDialog::LoadDialogItems(HWND hDlg)
 	if (!GetWindowRect(hDlg, &i.r))
 	{
 		delete p;
-		return NULL;
+		return nullptr;
 	}
 	OffsetRect(&i.r, -i.r.left, -i.r.top);
 	p->push_back(i);
 
-	i.h = NULL;
-	while ((i.h = FindWindowEx(hDlg, i.h, NULL, NULL)) != NULL)
+	i.h = nullptr;
+	while ((i.h = FindWindowEx(hDlg, i.h, nullptr, nullptr)) != nullptr)
 	{
-		if (GetWindowRect(i.h, &i.r) && MapWindowPoints(NULL, hDlg, (LPPOINT)&i.r, 2))
+		if (GetWindowRect(i.h, &i.r) && MapWindowPoints(nullptr, hDlg, (LPPOINT)&i.r, 2))
 		{
 			#ifdef _DEBUG
 			DWORD_PTR ID = GetWindowLong(i.h, GWL_ID);
@@ -834,7 +834,7 @@ int CDpiForDialog::GetFontSizeForDpi(HDC hdc, int Ydpi)
 
 	if (Ydpi > 0)
 	{
-		//bool bSelfDC = (hdc == NULL);
+		//bool bSelfDC = (hdc == nullptr);
 		//if (bSelfDC) hdc = GetDC(mh_Dlg);
 		UINT nTemplSize = mn_TemplateFontSize ? mn_TemplateFontSize : 8;
 		int logY = 99; //GetDeviceCaps(hdc, LOGPIXELSY);

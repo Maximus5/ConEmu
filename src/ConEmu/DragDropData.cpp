@@ -93,33 +93,33 @@ TODO("Попробовать перевести DragImage на нормальн�
 
 CDragDropData::CDragDropData()
 {
-	m_pfpi = NULL; mp_LastRCon = NULL; mn_PfpiSizeMax = 0;
-	mp_DataObject = NULL;
+	m_pfpi = nullptr; mp_LastRCon = nullptr; mn_PfpiSizeMax = 0;
+	mp_DataObject = nullptr;
 	m_DesktopID.mkid.cb = 0;
-	//mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = mh_BitsBMP_Old = NULL;
+	//mh_Overlapped = nullptr; mh_BitsDC = nullptr; mh_BitsBMP = mh_BitsBMP_Old = nullptr;
 	#if !defined(USE_DRAG_HELPER)
-	mp_Bits = NULL;
+	mp_Bits = nullptr;
 	#endif
 	mb_DragWithinNow = FALSE;
 	mn_ExtractIconsTID = 0;
-	mh_ExtractIcons = NULL;
+	mh_ExtractIcons = nullptr;
 	mb_DragDropRegistered = FALSE;
 	/* Unlocked drag support */
 	mb_DragStarting = FALSE;
 	ms_SourceClass[0] = 0; mh_SourceClass = 0;
 	#ifdef USE_DROP_HELPER
-	mp_TargetHelper = NULL;
+	mp_TargetHelper = nullptr;
 	mb_TargetHelperFailed = false;
 	#endif
 	#ifdef USE_DRAG_HELPER
-	mp_SourceHelper = NULL;
+	mp_SourceHelper = nullptr;
 	mb_SourceHelperFailed = false;
 	#endif
 	mb_selfdrag = false;
 	mb_IsUpdatePackage = false;
-	mpsz_UpdatePackage = NULL;
-	mp_DroppedObject = NULL;
-	mp_DraggedVCon = NULL;
+	mpsz_UpdatePackage = nullptr;
+	mp_DroppedObject = nullptr;
+	mp_DraggedVCon = nullptr;
 }
 
 CDragDropData::~CDragDropData()
@@ -128,7 +128,7 @@ CDragDropData::~CDragDropData()
 	if (mp_TargetHelper)
 	{
 		mp_TargetHelper->Release();
-		mp_TargetHelper = NULL;
+		mp_TargetHelper = nullptr;
 	}
 	#endif
 
@@ -136,7 +136,7 @@ CDragDropData::~CDragDropData()
 	if (mp_SourceHelper)
 	{
 		mp_SourceHelper->Release();
-		mp_SourceHelper = NULL;
+		mp_SourceHelper = nullptr;
 	}
 	#endif
 
@@ -144,9 +144,9 @@ CDragDropData::~CDragDropData()
 	//DestroyDragImageWindow();
 
 	// Final release, no more need
-	if (m_pfpi) free(m_pfpi); m_pfpi = NULL;
-	mp_LastRCon = NULL;
-	if (mpsz_UpdatePackage) free(mpsz_UpdatePackage); mpsz_UpdatePackage = NULL;
+	if (m_pfpi) free(m_pfpi); m_pfpi = nullptr;
+	mp_LastRCon = nullptr;
+	if (mpsz_UpdatePackage) free(mpsz_UpdatePackage); mpsz_UpdatePackage = nullptr;
 }
 
 BOOL CDragDropData::Register()
@@ -182,14 +182,14 @@ BOOL CDragDropData::Register()
 	// Helper (drag image)
 	mb_TargetHelperFailed = false;
 	// Относительно длительная операция, будем выполнять при необходимости
-	//IUnknown* pHelper = NULL;
-	//hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+	//IUnknown* pHelper = nullptr;
+	//hr = CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
 	//if (pHelper)
 	//{
 	//	//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
 	//	hr = pHelper->QueryInterface(__uuidof(mp_TargetHelper), (void**)&mp_TargetHelper);
 	//	pHelper->Release();
-	//	pHelper = NULL;
+	//	pHelper = nullptr;
 	//}
 #endif
 
@@ -244,14 +244,14 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 	{
 		if (!mp_TargetHelper)
 		{
-			IUnknown* pHelper = NULL;
-			hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+			IUnknown* pHelper = nullptr;
+			hr = CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
 			if (SUCCEEDED(hr) && pHelper)
 			{
 				//	hr = pHelper->QueryInterface(__uuidof(mp_SourceHelper), (void**)&mp_SourceHelper);
 				hr = pHelper->QueryInterface(IID_IDropTargetHelper/*__uuidof(mp_TargetHelper)*/, (void**)&mp_TargetHelper);
 				pHelper->Release();
-				pHelper = NULL;
+				pHelper = nullptr;
 			}
 		}
 
@@ -289,13 +289,13 @@ bool CDragDropData::UseSourceHelper()
 
 	if (!mp_SourceHelper)
 	{
-		IUnknown* pHelper = NULL;
-		hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
+		IUnknown* pHelper = nullptr;
+		hr = CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_IUnknown, (void**)&pHelper);
 		if (SUCCEEDED(hr) && pHelper)
 		{
 			hr = pHelper->QueryInterface(IID_IDragSourceHelper, (void**)&mp_SourceHelper);
 			pHelper->Release();
-			pHelper = NULL;
+			pHelper = nullptr;
 		}
 	}
 
@@ -320,19 +320,19 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 	if (CVConGroup::GetActiveVCon(&VCon) < 0)
 	{
 		DEBUGSTRFAR(L"-- failed\n");
-		SetDragToInfo(NULL, 0, NULL);
+		SetDragToInfo(nullptr, 0, nullptr);
 		return -1;
 	}
 
 	int size = -1;
 	UINT nFilesCount = 0;
-	wchar_t *szDraggedPath = NULL;
+	wchar_t *szDraggedPath = nullptr;
 	bool bInfoSet = false;
 	//BOOL lbNeedLBtnUp = !abClickNeed;
 	CConEmuPipe pipe(gpConEmu->GetFarPID(), CONEMUREADYTIMEOUT);
 	MCHKHEAP
 
-	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+	//if (m_pfpi) {free(m_pfpi); m_pfpi=nullptr;}
 
 	if (pipe.Init(_T("CDragDropData::Drag")))
 	{
@@ -374,7 +374,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 			else
 			{
 				gpConEmu->DebugStep(_T("DnD: Recieving data..."));
-				//mpsz_DraggedPath <-- wchar_t *szDraggedPath=NULL; //ASCIIZZ
+				//mpsz_DraggedPath <-- wchar_t *szDraggedPath=nullptr; //ASCIIZZ
 				szDraggedPath = new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];
 				ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
 				wchar_t  *curr = szDraggedPath;
@@ -395,9 +395,9 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 
 				int cbStructSize = 0;
 				DWORD cbPfiReadSize = 0;
-				ForwardedPanelInfo* pBuf = NULL;
+				ForwardedPanelInfo* pBuf = nullptr;
 
-				//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+				//if (m_pfpi) {free(m_pfpi); m_pfpi=nullptr;}
 
 				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
@@ -429,7 +429,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 
 	if (!bInfoSet)
 	{
-		SetDragToInfo(NULL, 0, NULL);
+		SetDragToInfo(nullptr, 0, nullptr);
 	}
 
 	*ppszDraggedPath = szDraggedPath;
@@ -453,7 +453,7 @@ BOOL CDragDropData::AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, 
 		char* pszAnsi = new char[nAnsiSize];
 		if (pszAnsi)
 		{
-			if (WideCharToMultiByte(CP_ACP, 0, pszDraggedPath, cbSize, pszAnsi, nAnsiSize, NULL, NULL) > 0)
+			if (WideCharToMultiByte(CP_ACP, 0, pszDraggedPath, cbSize, pszAnsi, nAnsiSize, nullptr, nullptr) > 0)
 			{
 				hr = mp_DataObject->SetDataInt(CFSTR_FILENAMEA/*L"FileName"*/, pszAnsi, nAnsiSize);
 			}
@@ -468,11 +468,11 @@ BOOL CDragDropData::AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, 
 BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	BOOL lbAdded = FALSE;
-	CIDA* file_PIDLs = NULL;
+	CIDA* file_PIDLs = nullptr;
 	DWORD nParentSize = 0;
 	HRESULT hr = S_OK;
 	UINT nAdded = 0;
-	IShellFolder *pDesktop = NULL;
+	IShellFolder *pDesktop = nullptr;
 	//if (nFilesCount !=1 )
 	//	goto wrap;
 	// Прикидочно определим, сколько понадобится памяти для хранения всех PIDL
@@ -498,7 +498,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	{
 		// Сначала нужно получить Interface для Desktop
 		SFGAOF tmp;
-		LPITEMIDLIST pItem = NULL;
+		LPITEMIDLIST pItem = nullptr;
 		DWORD nItemSize = 0;
 
 
@@ -518,7 +518,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 
 			// теперь собственно файл/папка...
 			ULONG nEaten=0;
-			hr = pDesktop->ParseDisplayName(ghWnd, NULL, pszFile, &nEaten, &pItem, &(tmp=0));
+			hr = pDesktop->ParseDisplayName(ghWnd, nullptr, pszFile, &nEaten, &pItem, &(tmp=0));
 
 			if (hr == S_OK && pItem /*&& mp_DesktopID*/)
 			{
@@ -547,7 +547,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 
 			if (pItem)
 			{
-				CoTaskMemFree(pItem); pItem = NULL;
+				CoTaskMemFree(pItem); pItem = nullptr;
 			}
 		}
 
@@ -577,13 +577,13 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	// Добавляем
 	mp_DataObject->SetDataInt(CFSTR_SHELLIDLIST, file_PIDLs);
 	lbAdded = TRUE;
-	file_PIDLs = NULL;
+	file_PIDLs = nullptr;
 
 wrap:
 
-	if (pDesktop) { pDesktop->Release(); pDesktop = NULL; }
+	if (pDesktop) { pDesktop->Release(); pDesktop = nullptr; }
 
-	if (file_PIDLs) { GlobalFree(file_PIDLs); file_PIDLs = NULL; }
+	if (file_PIDLs) { GlobalFree(file_PIDLs); file_PIDLs = nullptr; }
 
 	return lbAdded;
 }
@@ -667,7 +667,7 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 			{L"DisableDragText", 0},
 
 			// End
-			{NULL}
+			{nullptr}
 		};
 
 		HRESULT hrTest = S_OK;
@@ -703,8 +703,8 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 #if defined(USE_DRAG_HELPER)
 	if (UseSourceHelper())
 	{
-		HDC hDrawDC = NULL;
-		HBITMAP hBitmap = NULL, hOldBitmap = NULL;
+		HDC hDrawDC = nullptr;
+		HBITMAP hBitmap = nullptr, hOldBitmap = nullptr;
 		POINT ptCursor = {0,0};
 		int nMaxX = 0, nMaxY = 0;
 		COLORREF clrKey = RGB(1,2,3); // Something dark, but not black
@@ -732,7 +732,7 @@ BOOL CDragDropData::AddFmt_DragImageBits(wchar_t* pszDraggedPath, UINT nFilesCou
 			SelectObject(hDrawDC, hOldBitmap);
 			DeleteDC(hDrawDC);
 
-			IDragSourceHelper2* pHelper2 = NULL;
+			IDragSourceHelper2* pHelper2 = nullptr;
 			if (SUCCEEDED(mp_SourceHelper->QueryInterface(IID_IDragSourceHelper2, (void**)&pHelper2)))
 			{
 				TODO("DSH_ALLOWDROPDESCRIPTIONTEXT")
@@ -774,11 +774,11 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 {
 	BOOL lbSucceeded = FALSE;
 	int  size = -1;
-	wchar_t *szDraggedPath = NULL; // ASCIIZZ
+	wchar_t *szDraggedPath = nullptr; // ASCIIZZ
 	UINT nFilesCount = 0;
 	CVConGuard VCon;
 
-	SetDragToInfo(NULL, 0, NULL);
+	SetDragToInfo(nullptr, 0, nullptr);
 
 	if (!gpSet->isDragEnabled /*|| isInDrag */|| gpConEmu->isDragging())
 	{
@@ -802,7 +802,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 
 	*pdwAllowedEffects = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 	// Создать IDataObject (пока пустой)
-	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
+	CreateDataObject(nullptr, nullptr, 0, &mp_DataObject) ;
 
 	// Т.к. у нас появились сплиты - нужно помнить, из какой консоли вытащили файлы
 	CVConGroup::GetActiveVCon(&VCon);
@@ -829,7 +829,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 
 	MCHKHEAP
 	//Освободить память, больше не нужно
-	delete szDraggedPath; szDraggedPath=NULL;
+	delete szDraggedPath; szDraggedPath=nullptr;
 
 	//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI
 
@@ -858,7 +858,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 #endif
 
 	//gpConEmu->DebugStep(_T("DnD: Finally, DoDragDrop"));
-	gpConEmu->DebugStep(NULL);
+	gpConEmu->DebugStep(nullptr);
 	lbSucceeded = TRUE;
 wrap:
 	return lbSucceeded;
@@ -873,10 +873,10 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 		return (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
 	}
 	else
-		return NULL;
+		return nullptr;
 };
 template <class T> void PidlDump(
-	T pidl, HANDLE hDumpFile = NULL
+	T pidl, HANDLE hDumpFile = nullptr
 )
 {
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
@@ -911,7 +911,7 @@ template <class T> void PidlDump(
 		{
 			wchar_t szDumpW[512]; DWORD nWritten;
 			MultiByteToWideChar(CP_ACP, 0, szDump, -1, szDumpW, 512);
-			WriteFile(hDumpFile, szDumpW, (DWORD)_tcslen(szDumpW)*2, &nWritten, NULL);
+			WriteFile(hDumpFile, szDumpW, (DWORD)_tcslen(szDumpW)*2, &nWritten, nullptr);
 		}
 		else
 		{
@@ -924,14 +924,14 @@ template <class T> void PidlDump(
 }
 
 // Если передан hDumpFile - запись полной информации в текстовый файл
-void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile /*= NULL*/)
+void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile /*= nullptr*/)
 {
 	//=== codeanalyze: Excessive stack usage
 
 	//BOOL lbDoEnum = FALSE;
 	//if (!lbDoEnum) return;
 	HRESULT hr = S_OK;
-	IEnumFORMATETC *pEnum = NULL;
+	IEnumFORMATETC *pEnum = nullptr;
 	FORMATETC fmt[20];
 	STGMEDIUM stg[20];
 	LPCWSTR psz[20];
@@ -950,7 +950,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 	if (!szNames.resize(nCnt))
 		return;
 
-	if (hDumpFile) WriteFile(hDumpFile, "\xFF\xFE", 2, &nWritten, NULL);
+	if (hDumpFile) WriteFile(hDumpFile, "\xFF\xFE", 2, &nWritten, nullptr);
 
 	hr = pDataObject->EnumFormatEtc(DATADIR_GET,&pEnum);
 
@@ -962,7 +962,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 		if (hDumpFile)
 		{
 			swprintf_c(szNames[0].str, L"Drag object contains %i formats\n\n", nCnt);
-			WriteFile(hDumpFile, szNames[0].str, (DWORD)_tcslen(szNames[0].str)*2, &nWritten, NULL);
+			WriteFile(hDumpFile, szNames[0].str, (DWORD)_tcslen(szNames[0].str)*2, &nWritten, nullptr);
 		}
 
 		pEnum->Release();
@@ -1079,7 +1079,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 						else
 						{
 							wcscat_c(szNames[i].str, L", hGlobal not available");
-							stg[i].hGlobal = NULL;
+							stg[i].hGlobal = nullptr;
 						}
 					}
 				}
@@ -1087,44 +1087,44 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 				{
 					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 				else if (stg[i].tymed == TYMED_ISTREAM)
 				{
 					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 				else if (stg[i].tymed == TYMED_ISTORAGE)
 				{
 					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 				else if (stg[i].tymed == TYMED_GDI)
 				{
 					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 				else if (stg[i].tymed == TYMED_MFPICT)
 				{
 					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 				else if (stg[i].tymed == TYMED_ENHMF)
 				{
 					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 				else
 				{
 					nCurLen = _tcslen(szNames[i].str);
 					swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
 					ReleaseStgMedium(stg+i);
-					stg[i].hGlobal = NULL;
+					stg[i].hGlobal = nullptr;
 				}
 			}
 			else
@@ -1132,7 +1132,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 				nCurLen = _tcslen(szNames[i].str);
 				swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Can't get TYMED_HGLOBAL, rc=0x%08X", (DWORD)hr);
 				ReleaseStgMedium(stg+i);
-				stg[i].hGlobal = NULL;
+				stg[i].hGlobal = nullptr;
 			}
 
 
@@ -1146,15 +1146,15 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 
 			if (hDumpFile)
 			{
-				WriteFile(hDumpFile, szNames[i].str, (DWORD)2*_tcslen(szNames[i].str), &nWritten, NULL);
+				WriteFile(hDumpFile, szNames[i].str, (DWORD)2*_tcslen(szNames[i].str), &nWritten, nullptr);
 
 				if (nDataSize && pszData[i])
 				{
-					WriteFile(hDumpFile, pszData[i], nDataSize, &nWritten, NULL);
-					WriteFile(hDumpFile, L"\n", 2, &nWritten, NULL);
+					WriteFile(hDumpFile, pszData[i], nDataSize, &nWritten, nullptr);
+					WriteFile(hDumpFile, L"\n", 2, &nWritten, nullptr);
 				}
 
-				WriteFile(hDumpFile, L"\n", 2, &nWritten, NULL);
+				WriteFile(hDumpFile, L"\n", 2, &nWritten, nullptr);
 			}
 			else
 			{
@@ -1208,7 +1208,7 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 	if (mpsz_UpdatePackage)
 	{
 		free(mpsz_UpdatePackage);
-		mpsz_UpdatePackage = NULL;
+		mpsz_UpdatePackage = nullptr;
 	}
 
 	if (gpUpd && (gpUpd->InUpdate() != CConEmuUpdate::UpdateStep::NotStarted))
@@ -1274,11 +1274,11 @@ bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 	#endif
 
 	CVConGuard VCon;
-	CRealConsole* pRCon = NULL;
+	CRealConsole* pRCon = nullptr;
 	if (CVConGroup::GetVConFromPoint(pt, &VCon))
 		pRCon = VCon->RCon();
 
-	bool bNeedRefresh = (pRCon != mp_LastRCon) || (m_pfpi == NULL);
+	bool bNeedRefresh = (pRCon != mp_LastRCon) || (m_pfpi == nullptr);
 
 	if (bNeedRefresh && pRCon)
 	{
@@ -1313,14 +1313,14 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 	if (m_pfpi && (cbInfoSize > mn_PfpiSizeMax))
 	{
 		// Need larger buffer
-		free(m_pfpi); m_pfpi=NULL;
+		free(m_pfpi); m_pfpi=nullptr;
 	}
 
 	mp_LastRCon = pRCon;
 
 	if (!pInfo || (cbInfoSize <= sizeof(ForwardedPanelInfo)) || pInfo->NoFarConsole)
 	{
-		DEBUGSTRFAR(pInfo ? L"CDragDropData::SetDragToInfo(NoFarConsole)\n" : L"CDragDropData::SetDragToInfo(NULL)\n");
+		DEBUGSTRFAR(pInfo ? L"CDragDropData::SetDragToInfo(NoFarConsole)\n" : L"CDragDropData::SetDragToInfo(nullptr)\n");
 
 		if (!m_pfpi)
 		{
@@ -1331,7 +1331,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 
 		if (!m_pfpi)
 		{
-			DEBUGSTRFAR(L"-- skipped, m_pfpi==NULL\n");
+			DEBUGSTRFAR(L"-- skipped, m_pfpi==nullptr\n");
 			return;
 		}
 
@@ -1399,19 +1399,19 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 void CDragDropData::RetrieveDragToInfo(POINTL pt)
 {
 	DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo()\n");
-	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+	//if (m_pfpi) {free(m_pfpi); m_pfpi=nullptr;}
 
 	CVConGuard VCon;
-	CVirtualConsole* pVCon = NULL;
-	CRealConsole* pRCon = NULL;
+	CVirtualConsole* pVCon = nullptr;
+	CRealConsole* pRCon = nullptr;
 	POINT ptScreen = {pt.x, pt.y};
 
 	if (!CVConGroup::GetVConFromPoint(ptScreen, &VCon)
-		|| ((pVCon = VCon.VCon()) == NULL)
-		|| ((pRCon = pVCon->RCon()) == NULL))
+		|| ((pVCon = VCon.VCon()) == nullptr)
+		|| ((pRCon = pVCon->RCon()) == nullptr))
 	{
-		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> NULL\n");
-		SetDragToInfo(NULL, 0, NULL);
+		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> nullptr\n");
+		SetDragToInfo(nullptr, 0, nullptr);
 		return;
 	}
 
@@ -1422,7 +1422,7 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 
 	if (nFarPID == 0)
 	{
-		//SetDragToInfo(NULL, 0, pRCon);
+		//SetDragToInfo(nullptr, 0, pRCon);
 		DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> (nFarPID == 0)\n");
 	}
 	else if (!pRCon->isAlive())
@@ -1445,7 +1445,7 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 				DWORD cbBytesRead=0;
 				int cbStructSize=0;
 
-				//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+				//if (m_pfpi) {free(m_pfpi); m_pfpi=nullptr;}
 
 				if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 				{
@@ -1488,12 +1488,12 @@ void CDragDropData::RetrieveDragToInfo(POINTL pt)
 			DEBUGSTRFAR(L"CDragDropData::RetrieveDragFromInfo() -> pipe.Init failed\n");
 		}
 
-		gpConEmu->DebugStep(NULL);
+		gpConEmu->DebugStep(nullptr);
 	}
 
 	if (!bInfoSet)
 	{
-		SetDragToInfo(NULL, 0, pRCon);
+		SetDragToInfo(nullptr, 0, pRCon);
 	}
 }
 
@@ -1527,19 +1527,19 @@ bool CDragDropData::AllocDragImageBits()
 {
 	if (mp_Bits)
 	{
-		_ASSERTE(mp_Bits==NULL);
+		_ASSERTE(mp_Bits==nullptr);
 		SafeFree(mp_Bits);
 	}
 
 	mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits),1);
 
-	return (mp_Bits!=NULL);
+	return (mp_Bits!=nullptr);
 }
 #endif
 
 BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP& hBitmap, HBITMAP& hOldBitmap, int nWidth, int nHeight, int* pnMaxX, int* pnMaxY, POINT* ptCursor, bool bUseColorKey, COLORREF clrKey)
 {
-	HDC hScreenDC = ::GetDC(NULL);
+	HDC hScreenDC = ::GetDC(nullptr);
 	bool bCreateDC = false; //, bCreateBmp = false;
 
 	if (!hDrawDC)
@@ -1570,10 +1570,10 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	if (hScreenDC)
 	{
 		::ReleaseDC(0, hScreenDC);
-		hScreenDC = NULL;
+		hScreenDC = nullptr;
 	}
 
-	HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
+	HFONT hOldF = nullptr, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
 
 	if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
 
@@ -1685,7 +1685,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	//GdiFlush();
 
 	#ifdef DEBUG_DUMP_IMAGE
-	DumpImage(hDrawDC, NULL, nWidth, nMaxY, L"T:\\DragDump.bmp");
+	DumpImage(hDrawDC, nullptr, nWidth, nMaxY, L"T:\\DragDump.bmp");
 	#endif
 
 	//if (nLineX>2 && nMaxY>2)
@@ -1701,10 +1701,10 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	//		bih.biPlanes = 1;
 	//		bih.biBitCount = 32;
 	//		bih.biCompression = BI_RGB;
-	//		MyRgbQuad* pSrc = NULL;
-	//		HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+	//		MyRgbQuad* pSrc = nullptr;
+	//		HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, nullptr, 0);
 
-	//		DragImageBits* pDst = NULL;
+	//		DragImageBits* pDst = nullptr;
 	//		bool UseDragHelper = false;
 
 	//		if (hBitsBitmap)
@@ -1816,17 +1816,17 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	//				if (AllocDragImageBits())
 	//				{
 	//					*mp_Bits = *pDst;
-	//					pBits = pDst; pDst = NULL; //OK
-	//					mh_BitsDC = hBitsDC; hBitsDC = NULL;
-	//					mh_BitsBMP = hBitsBitmap; hBitsBitmap = NULL;
+	//					pBits = pDst; pDst = nullptr; //OK
+	//					mh_BitsDC = hBitsDC; hBitsDC = nullptr;
+	//					mh_BitsBMP = hBitsBitmap; hBitsBitmap = nullptr;
 	//				}
 	//				else
 	//				{
-	//					if (pDst) GlobalFree(pDst); pDst = NULL;  // Ошибка
+	//					if (pDst) GlobalFree(pDst); pDst = nullptr;  // Ошибка
 	//				}
 	//			}
 
-	//			Assert((hBitsDC==NULL) && (hBitsBitmap==NULL) && "AllocDragImageBits was not succeeded");
+	//			Assert((hBitsDC==nullptr) && (hBitsBitmap==nullptr) && "AllocDragImageBits was not succeeded");
 
 	//			if (hBitsDC)
 	//			{
@@ -1835,7 +1835,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 
 	//			if (hBitsBitmap)
 	//			{
-	//				DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
+	//				DeleteObject(hBitsBitmap); hBitsBitmap = nullptr;
 	//			}
 	//		}
 
@@ -1844,7 +1844,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 
 	//	if (hBitsDC)
 	//	{
-	//		DeleteDC(hBitsDC); hBitsDC = NULL;
+	//		DeleteDC(hBitsDC); hBitsDC = nullptr;
 	//	}
 	//}
 
@@ -1872,9 +1872,9 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 {
 	if (!pszFiles)
 	{
-		DEBUGSTROVL(L"CreateDragImageBits failed, pszFiles is NULL\n");
-		_ASSERTE(pszFiles!=NULL);
-		return NULL;
+		DEBUGSTROVL(L"CreateDragImageBits failed, pszFiles is nullptr\n");
+		_ASSERTE(pszFiles!=nullptr);
+		return nullptr;
 	}
 
 	DestroyDragImageBits();
@@ -1900,10 +1900,10 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 #endif
 
 	DEBUGSTROVL(L"CreateDragImageBits()\n");
-	DragImageBits* pBits = NULL;
+	DragImageBits* pBits = nullptr;
 	HDC hScreenDC = ::GetDC(0);
-	HDC hDrawDC = NULL;
-	HBITMAP hBitmap = NULL, hOldBitmap = NULL;
+	HDC hDrawDC = nullptr;
+	HBITMAP hBitmap = nullptr, hOldBitmap = nullptr;
 	int nMaxX = 0, nMaxY = 0;
 	POINT ptCursor = {0,0};
 
@@ -1916,7 +1916,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		#endif
 		))
 	{
-		//HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
+		//HFONT hOldF = nullptr, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
 
 		//if (hf) hOldF = (HFONT)SelectObject(hDrawDC, hf);
 
@@ -2021,7 +2021,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		//GdiFlush();
 
 		//#ifdef DEBUG_DUMP_IMAGE
-		//DumpImage(hDrawDC, NULL, MAX_OVERLAY_WIDTH, nMaxY, L"T:\\DragDump.bmp");
+		//DumpImage(hDrawDC, nullptr, MAX_OVERLAY_WIDTH, nMaxY, L"T:\\DragDump.bmp");
 		//#endif
 
 		if (nMaxX>2 && nMaxY>2)
@@ -2037,10 +2037,10 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 				bih.biPlanes = 1;
 				bih.biBitCount = 32;
 				bih.biCompression = BI_RGB;
-				MyRgbQuad* pSrc = NULL;
-				HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+				MyRgbQuad* pSrc = nullptr;
+				HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, nullptr, 0);
 
-				DragImageBits* pDst = NULL;
+				DragImageBits* pDst = nullptr;
 				bool UseDragHelper = false;
 
 				if (hBitsBitmap)
@@ -2149,17 +2149,17 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						if (AllocDragImageBits())
 						{
 							*mp_Bits = *pDst;
-							pBits = pDst; pDst = NULL; //OK
-							mh_BitsDC = hBitsDC; hBitsDC = NULL;
-							mh_BitsBMP = hBitsBitmap; hBitsBitmap = NULL;
+							pBits = pDst; pDst = nullptr; //OK
+							mh_BitsDC = hBitsDC; hBitsDC = nullptr;
+							mh_BitsBMP = hBitsBitmap; hBitsBitmap = nullptr;
 						}
 						else
 						{
-							if (pDst) GlobalFree(pDst); pDst = NULL;  // Ошибка
+							if (pDst) GlobalFree(pDst); pDst = nullptr;  // Ошибка
 						}
 					}
 
-					Assert((hBitsDC==NULL) && (hBitsBitmap==NULL) && "AllocDragImageBits was not succeeded");
+					Assert((hBitsDC==nullptr) && (hBitsBitmap==nullptr) && "AllocDragImageBits was not succeeded");
 
 					if (hBitsDC)
 					{
@@ -2168,7 +2168,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 					if (hBitsBitmap)
 					{
-						DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
+						DeleteObject(hBitsBitmap); hBitsBitmap = nullptr;
 					}
 				}
 
@@ -2177,7 +2177,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 			if (hBitsDC)
 			{
-				DeleteDC(hBitsDC); hBitsDC = NULL;
+				DeleteDC(hBitsDC); hBitsDC = nullptr;
 			}
 		}
 
@@ -2186,18 +2186,18 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 	if (hDrawDC)
 	{
-		DeleteDC(hDrawDC); hDrawDC = NULL;
+		DeleteDC(hDrawDC); hDrawDC = nullptr;
 	}
 
 	if (hBitmap)
 	{
-		DeleteObject(hBitmap); hBitmap = NULL;
+		DeleteObject(hBitmap); hBitmap = nullptr;
 	}
 
 	if (hScreenDC)
 	{
 		::ReleaseDC(0, hScreenDC);
-		hScreenDC = NULL;
+		hScreenDC = nullptr;
 	}
 
 	return pBits;
@@ -2232,7 +2232,7 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 
 		if (shRc)
 		{
-			nDrawRC = DrawIconEx(hDrawDC, nX, *nMaxY, sfi.hIcon, 16, 16, 0, NULL, DI_NORMAL);
+			nDrawRC = DrawIconEx(hDrawDC, nX, *nMaxY, sfi.hIcon, 16, 16, 0, nullptr, DI_NORMAL);
 		}
 		else
 		{
@@ -2245,14 +2245,14 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 	rcText.right = std::min<int>(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
 	wchar_t szText[MAX_PATH+1]; lstrcpyn(szText, pszText, MAX_PATH); szText[MAX_PATH] = 0;
 	nDrawRC = DrawTextEx(hDrawDC, szText, _tcslen(szText), &rcText,
-	                     DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, NULL);
+	                     DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, nullptr);
 
 	if (*nMaxY < (rcText.bottom+1))
 		*nMaxY = std::min<int>(rcText.bottom+1, 300);
 
 	if (sfi.hIcon)
 	{
-		DestroyIcon(sfi.hIcon); sfi.hIcon = NULL;
+		DestroyIcon(sfi.hIcon); sfi.hIcon = nullptr;
 	}
 
 	UNREFERENCED_PARAMETER(nDrawRC);
@@ -2288,14 +2288,14 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	// Это пока что-то не работает
 	//if (gpSet->isDragOverlay == 1) {
-	//	wchar_t* pszFiles = NULL;
+	//	wchar_t* pszFiles = nullptr;
 	//	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILENAMEW/*L"FileNameW"*/);
 	//	TODO("А освобождать полученное надо?");
 	//	if (S_OK == pDataObject->QueryGetData(&fmtetc)) {
-	//		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
+	//		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == nullptr) {
 	//			pszFiles = (wchar_t*)GlobalLock(stgMedium.hGlobal);
 	//			if (pszFiles) {
-	//				return (CreateDragImageBits(pszFiles) != NULL);
+	//				return (CreateDragImageBits(pszFiles) != nullptr);
 	//			}
 	//		}
 	//	}
@@ -2308,7 +2308,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	}
 
 	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL)
+	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == nullptr)
 	{
 		return FALSE; // Формат отсутствует
 	}
@@ -2388,9 +2388,9 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 			bih.biCompression = BI_RGB;
 			bih.biXPelsPerMeter = 96;
 			bih.biYPelsPerMeter = 96;
-			LPBYTE pDst = NULL;
-			mh_BitsBMP_Old = NULL;
-			mh_BitsBMP = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pDst, NULL, 0);
+			LPBYTE pDst = nullptr;
+			mh_BitsBMP_Old = nullptr;
+			mh_BitsBMP = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pDst, nullptr, 0);
 
 			if (mh_BitsBMP && pDst)
 			{
@@ -2456,23 +2456,23 @@ void CDragDropData::DestroyDragImageBits()
 		{
 			if (mh_BitsBMP_Old)
 			{
-				SelectObject(mh_BitsDC, mh_BitsBMP_Old); mh_BitsBMP_Old = NULL;
+				SelectObject(mh_BitsDC, mh_BitsBMP_Old); mh_BitsBMP_Old = nullptr;
 			}
 
 			DeleteDC(mh_BitsDC);
-			mh_BitsDC = NULL;
+			mh_BitsDC = nullptr;
 		}
 
 		if (mh_BitsBMP)
 		{
 			DeleteObject(mh_BitsBMP);
-			mh_BitsBMP = NULL;
+			mh_BitsBMP = nullptr;
 		}
 
 		if (mp_Bits)
 		{
 			free(mp_Bits);
-			mp_Bits = NULL;
+			mp_Bits = nullptr;
 		}
 	}
 }
@@ -2489,8 +2489,8 @@ BOOL CDragDropData::CreateDragImageWindow()
 #endif
 		HBRUSH hBackBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 		WNDCLASS wc = {0/*CS_OWNDC*/ /*CS_SAVEBITS*/, DragBitsWndProc, 0, 0,
-		               g_hInstance, NULL, NULL/*LoadCursor(NULL, IDC_ARROW)*/,
-		               hBackBrush,  NULL, DRAGBITSCLASS
+		               g_hInstance, nullptr, nullptr/*LoadCursor(nullptr, IDC_ARROW)*/,
+		               hBackBrush,  nullptr, DRAGBITSCLASS
 		              };
 
 		if (!RegisterClass(&wc))
@@ -2507,7 +2507,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
 
-	_ASSERTE(mh_Overlapped==NULL);
+	_ASSERTE(mh_Overlapped==nullptr);
 	int nWidth = MAX_OVERLAY_WIDTH, nHeight = MAX_OVERLAY_HEIGHT;
 	UNREFERENCED_PARAMETER(nWidth); UNREFERENCED_PARAMETER(nHeight);
 
@@ -2524,30 +2524,30 @@ BOOL CDragDropData::CreateDragImageWindow()
 #if defined(USE_CHILD_OVL)
 	if (!ghWnd)
 	{
-		_ASSERTE(ghWnd!=NULL && "Must be created as child of ghWnd!");
+		_ASSERTE(ghWnd!=nullptr && "Must be created as child of ghWnd!");
 		return FALSE;
 	}
 	// WS_EX_TRANSPARENT does not fit for our drawing behavior?
 	mh_Overlapped = CreateWindowEx(0, DRAGBITSCLASS, DRAGBITSTITLE,
 						WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS,
 	                    -32000, -32000, nWidth, nHeight,
-	                    hParent, NULL, g_hInstance, (LPVOID)(CDragDropData*)this);
+	                    hParent, nullptr, g_hInstance, (LPVOID)(CDragDropData*)this);
 #elif defined(PERSIST_OVL)
 	mh_Overlapped = CreateWindowEx(
 	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
 	                    DRAGBITSCLASS, DRAGBITSTITLE, WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS/*|WS_BORDER|WS_SYSMENU*/,
 	                    -32000, -32000, nWidth, nHeight,
-	                    hParent, NULL, g_hInstance, (LPVOID)(CDragDropData*)this);
+	                    hParent, nullptr, g_hInstance, (LPVOID)(CDragDropData*)this);
 #else
 	mh_Overlapped = CreateWindowEx(
 	                    WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
 	                    DRAGBITSCLASS, DRAGBITSTITLE, WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
-	                    0, 0, mp_Bits->nWidth, mp_Bits->nHeight, hParent, NULL, g_hInstance, (LPVOID)(CDragDropData*)this);
+	                    0, 0, mp_Bits->nWidth, mp_Bits->nHeight, hParent, nullptr, g_hInstance, (LPVOID)(CDragDropData*)this);
 #endif
 
 	if (!mh_Overlapped)
 	{
-		_ASSERTE(mh_Overlapped!=NULL);
+		_ASSERTE(mh_Overlapped!=nullptr);
 #ifdef PERSIST_OVL
 		//DestroyDragImageBits(); -- смысла уже нет, т.к. создается только при старте
 #else
@@ -2587,7 +2587,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	if (!mh_Overlapped)
 	{
 		DEBUGSTRBACK(L"MoveDragWindow skipped, Overlay was not created\n");
-		ghWndDrag = NULL;
+		ghWndDrag = nullptr;
 		return;
 	}
 
@@ -2597,7 +2597,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 
 	if (abVisible && !mh_BitsDC)
 	{
-		_ASSERTE(mh_BitsDC!=NULL);
+		_ASSERTE(mh_BitsDC!=nullptr);
 		abVisible = FALSE;
 	}
 
@@ -2607,7 +2607,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	{
 		GetCursorPos(&p);
 		#if defined(USE_CHILD_OVL)
-		MapWindowPoints(NULL, ghWnd, &p, 1);
+		MapWindowPoints(nullptr, ghWnd, &p, 1);
 		#endif
 
 		if (mp_Bits)
@@ -2622,7 +2622,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	else
 	{
 		p.x = p.y = -32000;
-		ghWndDrag = NULL;
+		ghWndDrag = nullptr;
 	}
 
 	//POINT p2 = {0, 0};
@@ -2660,7 +2660,7 @@ void CDragDropData::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 	p.x -= mp_Bits->nXCursor; p.y -= mp_Bits->nYCursor;
 	POINT p2 = {0, 0};
 	SIZE  sz = {mp_Bits->nWidth,mp_Bits->nHeight};
-	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0,
+	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, nullptr, &p, &sz, mh_BitsDC, &p2, 0,
 	                        &bf, ULW_ALPHA /*ULW_OPAQUE*/);
 	UNREFERENCED_PARAMETER(bRet);
 	//_ASSERTE(bRet);
@@ -2676,9 +2676,9 @@ void CDragDropData::DestroyDragImageWindow()
 	{
 		DEBUGSTROVL(L"DestroyDragImageWindow()\n");
 		DestroyWindow(mh_Overlapped);
-		mh_Overlapped = NULL;
+		mh_Overlapped = nullptr;
 	}
-	ghWndDrag = NULL;
+	ghWndDrag = nullptr;
 }
 
 LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -2730,7 +2730,7 @@ LRESULT CDragDropData::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPA
 				}
 				else
 				{
-					//_ASSERTE(pDrag->mp_Bits!=NULL); -- вполне допустимо, WM_PAINT приходит сразу после создания окна
+					//_ASSERTE(pDrag->mp_Bits!=nullptr); -- вполне допустимо, WM_PAINT приходит сразу после создания окна
 				}
 
 				if (nWidth<MAX_OVERLAY_WIDTH || nHeight<MAX_OVERLAY_HEIGHT)
@@ -2799,7 +2799,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 //		DestroyDragImageWindow();
 //#endif
 //		DestroyDragImageBits();
-		gpConEmu->SetDragCursor(NULL);
+		gpConEmu->SetDragCursor(nullptr);
 	}
 	else
 	{
@@ -2860,7 +2860,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 			//{
 			//	#ifdef PERSIST_OVL
 			//	//CreateDragImageWindow(); -- должно быть создано при запуске ConEmu
-			//	_ASSERTE(mh_Overlapped!=NULL);
+			//	_ASSERTE(mh_Overlapped!=nullptr);
 			//	#else
 			//	CreateDragImageWindow();
 			//	#endif
@@ -2874,8 +2874,8 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 	}
 
 	//2009-08-20
-	//MSG Msg = {NULL};
-	//while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
+	//MSG Msg = {nullptr};
+	//while (PeekMessage(&Msg, nullptr, 0, 0, PM_REMOVE))
 	//{
 	//	ConEmuMsgLogger::Log(Msg);
 	//	TranslateMessage(&Msg);
@@ -2914,7 +2914,7 @@ BOOL CDragDropData::IsDragStarting()
 
 	BOOL lbDragStarting = FALSE;
 	//std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
+	CEDragSource* pds = nullptr;
 
 	//for (iter = m_Sources.begin(); iter != m_Sources.end(); ++iter)
 	for (INT_PTR j = 0; j < m_Sources.size(); j++)
@@ -2942,7 +2942,7 @@ BOOL CDragDropData::ForwardMessage(UINT messg, WPARAM wParam, LPARAM lParam)
 
 	BOOL lbDragStarting = FALSE;
 	//std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
+	CEDragSource* pds = nullptr;
 
 	//for (iter = m_Sources.begin(); iter != m_Sources.end(); ++iter)
 	for (INT_PTR j = 0; j < m_Sources.size(); j++)
@@ -3006,7 +3006,7 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			gpConEmu->DebugStep(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
 			MCHKHEAP;
 			pds->pDrag->mp_DataObject->Release();
-			pds->pDrag->mp_DataObject = NULL;
+			pds->pDrag->mp_DataObject = nullptr;
 			pDropSource->Release();
 			pds->pDrag->mb_DragStarting = FALSE;
 			pds->bInDrag = FALSE;
@@ -3033,9 +3033,9 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 
 	pds->hWnd = CreateWindowEx(WS_EX_TOOLWINDOW, pds->pDrag->ms_SourceClass, L"ConEmu Drag Source",
 	                           WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-	                           NULL, NULL, (HINSTANCE)g_hInstance, pds);
+	                           nullptr, nullptr, (HINSTANCE)g_hInstance, pds);
 
-	if (pds->hWnd == NULL)
+	if (pds->hWnd == nullptr)
 	{
 		DisplayLastError(L"Can't create drag source window.");
 		return 100;
@@ -3047,7 +3047,7 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 	//if (hr != S_OK) {
 	//	DisplayLastError(L"Can't register Drop target (thread)", hr);
 	//	DestroyWindow(pds->hWnd);
-	//	pds->hWnd = NULL;
+	//	pds->hWnd = nullptr;
 	//	nResult = 100;
 	//} else {
 	MSG msg;
@@ -3074,15 +3074,15 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 		wcscpy_c(ms_SourceClass, VirtualConsoleClass);
 		wcscat_c(ms_SourceClass, L"DragSource");
 		WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, DragProc, 0, 0,
-		                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
-		                 NULL, NULL, ms_SourceClass, hClassIconSm
+		                 g_hInstance, hClassIcon, LoadCursor(nullptr, IDC_ARROW),
+		                 nullptr, nullptr, ms_SourceClass, hClassIconSm
 		                };// | CS_DROPSHADOW
 		mh_SourceClass = RegisterClassEx(&wc);
 
 		if (!mh_SourceClass)
 		{
 			DisplayLastError(L"Can't register drag class.");
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -3091,12 +3091,12 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 	pds->pDrag = this;
 	pds->hThread = apiCreateThread(DragThread, pds, &(pds->nTID), "CDragDropData::DragThread");
 
-	if (pds->hThread == NULL)
+	if (pds->hThread == nullptr)
 	{
 		DisplayLastError(L"Can't create drag thread");
 		SafeCloseHandle(pds->hReady);
 		free(pds);
-		return NULL;
+		return nullptr;
 	}
 
 	m_Sources.push_back(pds);
@@ -3106,7 +3106,7 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 {
 	//std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
+	CEDragSource* pds = nullptr;
 
 	//for (iter = m_Sources.begin(); iter != m_Sources.end(); ++iter)
 	for (INT_PTR j = 0; j < m_Sources.size(); j++)
@@ -3130,12 +3130,12 @@ CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 	{
 		gpConEmu->DebugStep(L"Drag: waiting for drag thread initialization");
 		DWORD nWait = WaitForSingleObject(pds->hReady, 10000);
-		gpConEmu->DebugStep(NULL);
+		gpConEmu->DebugStep(nullptr);
 
 		if (nWait != WAIT_OBJECT_0)
 		{
 			MBoxA(L"Drag thread initialization failed!");
-			pds = NULL;
+			pds = nullptr;
 		}
 	}
 
@@ -3145,7 +3145,7 @@ CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 void CDragDropData::TerminateDrag()
 {
 	//std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
+	CEDragSource* pds = nullptr;
 
 	// Сначала во все нити послать QUIT
 	//for (iter = m_Sources.begin(); iter != m_Sources.end(); ++iter)

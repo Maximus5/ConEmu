@@ -74,13 +74,13 @@ bool CVConGuard::Attach(CVirtualConsole* apRef)
 {
 	if (!CVConGroup::setRef(mp_Ref, apRef))
 	{
-		_ASSERTE(mp_Ref == NULL);
+		_ASSERTE(mp_Ref == nullptr);
 	}
 
 	mi_Valid = mp_Ref ? CVConGroup::isValid(mp_Ref) ? 1 : -1 : 0;
 	Assert(mi_Valid >= 0);
 
-	return (mp_Ref != NULL);
+	return (mp_Ref != nullptr);
 }
 
 CVConGuard::~CVConGuard()

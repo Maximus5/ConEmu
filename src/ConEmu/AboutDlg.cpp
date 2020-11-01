@@ -58,7 +58,7 @@ namespace ConEmuAbout
 {
 	void InitCommCtrls();
 	bool mb_CommCtrlsInitialized = false;
-	HWND mh_AboutDlg = NULL;
+	HWND mh_AboutDlg = nullptr;
 	DWORD nLastCrashReported = 0;
 	CDpiForDialog* mp_DpiAware = nullptr;
 
@@ -68,7 +68,7 @@ namespace ConEmuAbout
 	void OnInfo_DonateLink();
 	void OnInfo_FlattrLink();
 
-	CImgButtons* mp_ImgBtn = NULL;
+	CImgButtons* mp_ImgBtn = nullptr;
 
 	static struct {LPCWSTR Title; LPCWSTR Text;} Pages[] =
 	{
@@ -88,7 +88,7 @@ namespace ConEmuAbout
 
 	void TabSelected(HWND hDlg, int idx);
 
-	wchar_t* gsSysInfo = NULL;
+	wchar_t* gsSysInfo = nullptr;
 	void ReloadSysInfo();
 	void LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine);
 
@@ -116,7 +116,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			CDynDialog::LocalizeDialog(hDlg);
 
-			_ASSERTE(mp_ImgBtn==NULL);
+			_ASSERTE(mp_ImgBtn==nullptr);
 			SafeDelete(mp_ImgBtn);
 			mp_ImgBtn = new CImgButtons(hDlg, pIconCtrl, IDOK);
 			mp_ImgBtn->AddDonateButtons();
@@ -144,7 +144,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				gpConEmu->GetDefaultTitle(),
 				L" ",
 				psStage,
-				NULL);
+				nullptr);
 			if (lsTitle)
 			{
 				SetWindowText(hDlg, lsTitle);
@@ -170,7 +170,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			wchar_t* pszLabel = GetDlgItemTextPtr(hDlg, stConEmuVersion);
 			if (pszLabel)
 			{
-				wchar_t* pszSet = NULL;
+				wchar_t* pszSet = nullptr;
 
 				if (gpUpd)
 				{
@@ -222,7 +222,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 			else
 			{
-				_ASSERTE(pszActivePage==NULL && "Unknown page name?");
+				_ASSERTE(pszActivePage==nullptr && "Unknown page name?");
 			}
 
 			SetFocus(hTab);
@@ -251,7 +251,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			{
 				if (GetWindowLongPtr((HWND)wParam, GWLP_ID) == stConEmuUrl)
 				{
-					SetCursor(LoadCursor(NULL, IDC_HAND));
+					SetCursor(LoadCursor(nullptr, IDC_HAND));
 					SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
 					return TRUE;
 				}
@@ -315,7 +315,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		case WM_CLOSE:
-			//if (ghWnd == NULL)
+			//if (ghWnd == nullptr)
 			gpConEmu->OnOurDialogClosed();
 			if (mp_DpiAware)
 				mp_DpiAware->Detach();
@@ -324,7 +324,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		case WM_DESTROY:
-			mh_AboutDlg = NULL;
+			mh_AboutDlg = nullptr;
 			break;
 
 		default:
@@ -425,10 +425,10 @@ void ConEmuAbout::InitCommCtrls()
 	mb_CommCtrlsInitialized = true;
 }
 
-void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= NULL*/)
+void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= nullptr*/)
 {
 	CEStr szUrl(CEWIKIBASE, asPageName ? asPageName : L"TableOfContents", L".html");
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -451,7 +451,7 @@ void ConEmuAbout::OnInfo_Donate()
 
 void ConEmuAbout::OnInfo_DonateLink()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDonatePage, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDonatePage, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -459,7 +459,7 @@ void ConEmuAbout::OnInfo_DonateLink()
 }
 void ConEmuAbout::OnInfo_FlattrLink()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsFlattrPage, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsFlattrPage, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -485,7 +485,7 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 
 void ConEmuAbout::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
 {
-	lstrmerge(&gsSysInfo, asText, bNewLine ? L"\r\n" : NULL);
+	lstrmerge(&gsSysInfo, asText, bNewLine ? L"\r\n" : nullptr);
 
 	if (bFirst && gpConEmu)
 	{
@@ -506,7 +506,7 @@ void ConEmuAbout::ReloadSysInfo()
 	Pages[countof(Pages)-1].Text = gsSysInfo;
 }
 
-void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
+void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= nullptr*/)
 {
 	InitCommCtrls();
 
@@ -528,7 +528,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_ABOUT, hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 
-		mh_AboutDlg = NULL;
+		mh_AboutDlg = nullptr;
 		if (mp_DpiAware)
 			mp_DpiAware->Detach();
 
@@ -545,7 +545,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
 			szTitle.ms_Val,
-			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
+			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, nullptr, LANG_NEUTRAL
 		};
 		MSetter lInCall(&gnInMsgBox);
 		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
@@ -563,7 +563,7 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 
 		if (FileExists(sFile))
 		{
-			iExec = (INT_PTR)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
+			iExec = (INT_PTR)ShellExecute(ghWnd, L"open", sFile, nullptr, nullptr, SW_SHOWNORMAL);
 			if (iExec >= 32)
 			{
 				return;
@@ -571,7 +571,7 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 		}
 	}
 
-	iExec = (INT_PTR)ShellExecute(ghWnd, L"open", gsWhatsNew, NULL, NULL, SW_SHOWNORMAL);
+	iExec = (INT_PTR)ShellExecute(ghWnd, L"open", gsWhatsNew, nullptr, nullptr, SW_SHOWNORMAL);
 	if (iExec >= 32)
 	{
 		return;
@@ -582,7 +582,7 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 
 void ConEmuAbout::OnInfo_Help()
 {
-	static HMODULE hhctrl = NULL;
+	static HMODULE hhctrl = nullptr;
 
 	if (!hhctrl) hhctrl = GetModuleHandle(L"hhctrl.ocx");
 
@@ -603,15 +603,15 @@ void ConEmuAbout::OnInfo_Help()
 			// lstrcat(szHelpFile, L::/Intro.htm");
 			#define HH_HELP_CONTEXT 0x000F
 			#define HH_DISPLAY_TOC  0x0001
-			//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
-			fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
+			//fHTMLHelpW(nullptr /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
+			fHTMLHelpW(nullptr /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
 		}
 	}
 }
 
 void ConEmuAbout::OnInfo_HomePage()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -620,7 +620,7 @@ void ConEmuAbout::OnInfo_HomePage()
 
 void ConEmuAbout::OnInfo_DownloadPage()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDownlPage, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDownlPage, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -629,7 +629,7 @@ void ConEmuAbout::OnInfo_DownloadPage()
 
 void ConEmuAbout::OnInfo_FirstStartPage()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsFirstStart, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsFirstStart, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -638,7 +638,7 @@ void ConEmuAbout::OnInfo_FirstStartPage()
 
 void ConEmuAbout::OnInfo_ReportBug()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -660,10 +660,10 @@ void ConEmuAbout::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 
 	if (asDumpWasCreatedMsg && !*asDumpWasCreatedMsg)
 	{
-		asDumpWasCreatedMsg = NULL;
+		asDumpWasCreatedMsg = nullptr;
 	}
 
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportCrash, NULL, NULL, SW_SHOWNORMAL);
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportCrash, nullptr, nullptr, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);

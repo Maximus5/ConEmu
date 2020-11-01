@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgKeys.h"
 
 CSetPgKeys::CSetPgKeys()
-	: mp_ActiveHotKey(NULL)
+	: mp_ActiveHotKey(nullptr)
 	, mn_LastShowType(hkfv_All)
 	, mb_LastHideEmpties(false)
 {
@@ -75,7 +75,7 @@ LRESULT CSetPgKeys::OnInitDialog(HWND hDlg, bool abInitial)
 	}
 
 	HWND hList = GetDlgItem(hDlg, lbConEmuHotKeys);
-	mp_ActiveHotKey = NULL;
+	mp_ActiveHotKey = nullptr;
 
 	HWND hTip = ListView_GetToolTips(hList);
 	SetWindowPos(hTip, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
@@ -149,7 +149,7 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 	lvi.state = 0;
 	lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
 	lvi.pszText = szName;
-	const ConEmuHotKey *ppHK = NULL;
+	const ConEmuHotKey *ppHK = nullptr;
 	int ItemsCount = (int)ListView_GetItemCount(hList);
 	int nItem = -1; // если -1 то будет добавлен новый
 
@@ -324,14 +324,14 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		{
 			HWND hList = GetDlgItem(hDlg, lbConEmuHotKeys);
 			LVITEM lvi = {LVIF_PARAM, iItem};
-			ConEmuHotKey* pk = NULL;
+			ConEmuHotKey* pk = nullptr;
 			if (ListView_GetItem(hList, &lvi))
 				pk = (ConEmuHotKey*)lvi.lParam;
 			if (pk && !(pk->DescrLangID /*&& (pk->VkMod || pk->HkType == chk_Macro)*/))
 			{
 				//_ASSERTE(pk->DescrLangID && (pk->VkMod || pk->HkType == chk_Macro));
 				_ASSERTE(pk->DescrLangID);
-				pk = NULL;
+				pk = nullptr;
 			}
 			mp_ActiveHotKey = pk;
 
@@ -421,7 +421,7 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			mp_ActiveHotKey = NULL;
+			mp_ActiveHotKey = nullptr;
 		}
 
 		//if (!mp_ActiveHotKey)
@@ -433,10 +433,10 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		EnableWindow(GetDlgItem(hDlg, stGuiMacro), (bMacroEnabled==TRUE));
 		SetDlgItemText(hDlg, stGuiMacro, bMacroEnabled ? L"GUI Macro:" : L"Description:");
 		HWND hMacro = GetDlgItem(hDlg, tGuiMacro);
-		EnableWindow(hMacro, (mp_ActiveHotKey!=NULL));
+		EnableWindow(hMacro, (mp_ActiveHotKey!=nullptr));
 		SendMessage(hMacro, EM_SETREADONLY, !bMacroEnabled, 0);
 		SetDlgItemText(hDlg, tGuiMacro, pszDescription);
-		EnableWindow(GetDlgItem(hDlg, cbGuiMacroHelp), (mp_ActiveHotKey!=NULL) && (bMacroEnabled || mp_ActiveHotKey->GuiMacro));
+		EnableWindow(GetDlgItem(hDlg, cbGuiMacroHelp), (mp_ActiveHotKey!=nullptr) && (bMacroEnabled || mp_ActiveHotKey->GuiMacro));
 		if (!bHotKeyEnabled)
 			CHotKeyDialog::SetHotkeyField(hHk, 0);
 			//SendMessage(hHk, HKM_SETHOTKEY, 0, 0);
@@ -591,7 +591,7 @@ void CSetPgKeys::ReInitHotkeys()
 
 	CSetPgKeys* pPage;
 	if (gpSetCls->GetPageObj(pPage))
-		pPage->mp_ActiveHotKey = NULL;
+		pPage->mp_ActiveHotKey = nullptr;
 }
 
 bool CSetPgKeys::QueryDialogCancel()
@@ -837,7 +837,7 @@ void CSetPgKeys::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 {
 	if (!pHK)
 	{
-		_ASSERTE(pHK!=NULL);
+		_ASSERTE(pHK!=nullptr);
 		return;
 	}
 

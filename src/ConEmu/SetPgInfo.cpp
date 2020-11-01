@@ -50,7 +50,7 @@ CSetPgInfo::~CSetPgInfo()
 
 LRESULT CSetPgInfo::OnInitDialog(HWND hDlg, bool abInitial)
 {
-	CVirtualConsole* pVCon = NULL;
+	CVirtualConsole* pVCon = nullptr;
 	CVConGuard VCon;
 	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 		pVCon = VCon.VCon();
@@ -68,7 +68,7 @@ LRESULT CSetPgInfo::OnInitDialog(HWND hDlg, bool abInitial)
 
 void CSetPgInfo::OnPostLocalize(HWND hDlg)
 {
-	CVirtualConsole* pVCon = NULL;
+	CVirtualConsole* pVCon = nullptr;
 	CVConGuard VCon;
 	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 		pVCon = VCon.VCon();
@@ -87,7 +87,7 @@ void CSetPgInfo::FillFontInfo(HWND hDlg)
 	CFontPtr font;
 	wchar_t szMain[32] = L"", szAlt[32] = L"";
 
-	if (gpFontMgr->QueryFont(fnt_Normal, NULL, font))
+	if (gpFontMgr->QueryFont(fnt_Normal, nullptr, font))
 		swprintf_c(szMain, L"%ix%ix%i", font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_tm.tmAveCharWidth);
 	swprintf_c(szAlt, L"%ix%i", gpFontMgr->BorderFontHeight(), gpFontMgr->BorderFontWidth());
 

@@ -464,7 +464,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 void CGestures::SendRClick(HWND hWnd, const LONG ldx, const LONG ldy)
 {
 	CVConGuard VCon;
-	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
+	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : nullptr;
 	if (pRCon)
 	{
 		POINT pt = {ldx, ldy};
@@ -527,7 +527,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 	if (ldy)
 	{
 		CVConGuard VCon;
-		CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
+		CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : nullptr;
 		if (pRCon)
 		{
 			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontHeight()");
@@ -562,7 +562,7 @@ bool CGestures::ProcessRotate(HWND hWnd, const LONG lAngle, const LONG lOx, cons
 {
 	if (!gpConEmu->mp_TabBar)
 	{
-		_ASSERTE(gpConEmu->mp_TabBar!=NULL);
+		_ASSERTE(gpConEmu->mp_TabBar!=nullptr);
 		return false;
 	}
 

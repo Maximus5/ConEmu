@@ -103,9 +103,9 @@ public:
 	// Per-monitor DPI support
 	BOOL AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
 private:
-	HMODULE mh_User32 = NULL;
-	HMODULE mh_DwmApi = NULL;
-	HMODULE mh_UxTheme = NULL;
+	HMODULE mh_User32 = nullptr;
+	HMODULE mh_DwmApi = nullptr;
+	HMODULE mh_UxTheme = nullptr;
 private:
 	// Initialize dlls and functions
 	void InitDwm();

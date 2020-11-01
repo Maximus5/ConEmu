@@ -53,7 +53,7 @@ class CConEmuPipe
 		~CConEmuPipe();
 		void Close();
 		BOOL Init(LPCTSTR asOp, BOOL abSilent=FALSE);
-		BOOL Execute(int nCmd, LPCVOID apData=NULL, UINT anDataSize=0);
+		BOOL Execute(int nCmd, LPCVOID apData=nullptr, UINT anDataSize=0);
 		BOOL Read(LPVOID pData, DWORD nSize, DWORD* nRead);
-		LPBYTE GetPtr(DWORD* pdwLeft=NULL);
+		LPBYTE GetPtr(DWORD* pdwLeft=nullptr);
 };

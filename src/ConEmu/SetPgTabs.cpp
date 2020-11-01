@@ -72,7 +72,7 @@ LRESULT CSetPgTabs::OnInitDialog(HWND hDlg, bool abInitial)
 	{
 		if (abInitial)
 		{
-			CSetPgFonts* pFonts = NULL;
+			CSetPgFonts* pFonts = nullptr;
 			if (gpSetCls->GetPageObj(pFonts))
 			{
 				pFonts->CopyFontsTo(hDlg, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Fonts]

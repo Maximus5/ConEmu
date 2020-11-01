@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // *****************
 CESwitch::CESwitch(CESwitchType aType /*= sw_None*/)
 {
-	Str = NULL;
+	Str = nullptr;
 	Type = aType;
 	Exists = false;
 }
@@ -69,7 +69,7 @@ void CESwitch::Clear()
 {
 	if (GetStr())
 		free(Str);
-	Str = NULL; // empty most wide variable from union
+	Str = nullptr; // empty most wide variable from union
 	Type = sw_None;
 	Exists = false;
 }
@@ -138,7 +138,7 @@ void CESwitch::SetInt(int NewVal)
 
 void CESwitch::SetInt(LPCWSTR NewVal, int Radix /*= 10*/)
 {
-	wchar_t* EndPtr = NULL;
+	wchar_t* EndPtr = nullptr;
 	int iVal = wcstol(NewVal, &EndPtr, Radix);
 	SetInt(iVal);
 }
@@ -146,9 +146,9 @@ void CESwitch::SetInt(LPCWSTR NewVal, int Radix /*= 10*/)
 LPCWSTR CESwitch::GetStr()
 {
 	if (!Exists || !(Type == sw_Str || Type == sw_EnvStr || Type == sw_PathStr))
-		return NULL;
+		return nullptr;
 	if (!Str || !*Str)
-		return NULL;
+		return nullptr;
 	return Str;
 }
 
@@ -156,7 +156,7 @@ void CESwitch::SetStr(LPCWSTR NewVal, CESwitchType NewType /*= sw_Str*/)
 {
 	if (GetStr())
 		free(Str);
-	Str = (NewVal && *NewVal) ? lstrdup(NewVal) : NULL;
+	Str = (NewVal && *NewVal) ? lstrdup(NewVal) : nullptr;
 	Exists = true;
 	if (Type != NewType)
 	{
@@ -170,7 +170,7 @@ void CESwitch::SetStr(LPCWSTR NewVal, CESwitchType NewType /*= sw_Str*/)
 CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 {
 	mp_ConEmu = pOwner;
-	_ASSERTE(mp_ConEmu!=NULL);
+	_ASSERTE(mp_ConEmu!=nullptr);
 
 	m_StartDetached = crb_Undefined;
 	mb_ConEmuHere = false;
@@ -198,7 +198,7 @@ CConEmuStart::~CConEmuStart()
 
 void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 {
-	// !!! gpConEmu may be NULL during starting time !!!
+	// !!! gpConEmu may be nullptr during starting time !!!
 	if (gpConEmu && gpConEmu->isMingwMode() && gpConEmu->isMSysStartup())
 	{
 		// Here we get from CConEmuMain constructor.
@@ -206,7 +206,7 @@ void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 		FindBashLocation(szSearch);
 
 		swprintf_c(szDefCmd,
-			(wcschr(szSearch, L' ') != NULL)
+			(wcschr(szSearch, L' ') != nullptr)
 				? L"\"%s\" --login -i" /* -new_console:n" */
 				: L"%s --login -i" /* -new_console:n" */,
 			(LPCWSTR)szSearch);
@@ -225,7 +225,7 @@ void CConEmuStart::SetCurCmd(LPCWSTR pszNewCmd, bool bIsCmdList)
 	isCurCmdList = bIsCmdList;
 }
 
-LPCTSTR CConEmuStart::GetCurCmd(bool *pIsCmdList /*= NULL*/)
+LPCTSTR CConEmuStart::GetCurCmd(bool *pIsCmdList /*= nullptr*/)
 {
 	if (!szCurCmd.IsEmpty())
 	{
@@ -234,12 +234,12 @@ LPCTSTR CConEmuStart::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 		return szCurCmd;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 {
-	LPCWSTR pszCmd = NULL;
+	LPCWSTR pszCmd = nullptr;
 
 	// true - если передали "скрипт" (как бы содержимое Task вытянутое в строку)
 	// например: "ConEmu.exe -cmdlist cmd ||| powershell ||| far"
@@ -249,7 +249,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	// User's chosen default task?
 	if (mp_ConEmu->GetStartupStage() >= CConEmuMain::ss_Started)
 	{
-		if ((pszCmd = GetDefaultTask()) != NULL)
+		if ((pszCmd = GetDefaultTask()) != nullptr)
 			return pszCmd;
 	}
 
@@ -265,19 +265,19 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 		break;
 	case 1:
 		if (bNoTask)
-			return NULL;
+			return nullptr;
 		if (gpSet->psStartTasksFile && *gpSet->psStartTasksFile)
 			return gpSet->psStartTasksFile;
 		break;
 	case 2:
 		if (bNoTask)
-			return NULL;
+			return nullptr;
 		if (gpSet->psStartTasksName && *gpSet->psStartTasksName)
 			return gpSet->psStartTasksName;
 		break;
 	case 3:
 		if (bNoTask)
-			return NULL;
+			return nullptr;
 		return AutoStartTaskName;
 	default:
 		break; // try to determine default command automatically
@@ -414,7 +414,7 @@ void CConEmuStart::ResetCmdArg()
 
 	if (isCurCmdList)
 	{
-		wchar_t* pszReset = NULL;
+		wchar_t* pszReset = nullptr;
 		SetCurCmd(pszReset, false);
 	}
 }
@@ -428,7 +428,7 @@ bool CConEmuStart::FindBashLocation(CEStr& lsBash)
 		L"\\msys\\1.0\\bin\\bash.exe",  // Msys/MinGW
 		L"\\bin\\bash.exe",             // Git-Bash
 		L"\\usr\\bin\\bash.exe",        // Git-For-Windows
-		NULL
+		nullptr
 	};
 
 	// Before ConEmu.exe was intended to be in /bin/ folder
@@ -463,7 +463,7 @@ void CConEmuStart::ResetConman()
 	// 24.09.2010 Maks - Только если ключ конмана уже создан!
 	// сбросить CreateInNewEnvironment для ConMan
 	//if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
-	//        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+	//        nullptr, nullptr, nullptr, KEY_ALL_ACCESS, nullptr, &hk, &dw))
 	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"), 0, KEY_ALL_ACCESS, &hk))
 	{
 		RegSetValueEx(hk, _T("CreateInNewEnvironment"), 0, REG_DWORD,
@@ -543,7 +543,7 @@ void CConEmuStart::ProcessConEmuArgsVar()
 	// Full command line: config switches AND -cmd/-cmdlist
 	_ASSERTE(!opt.cmdLine.IsEmpty());
 
-	// Don't set `NULL`, it would remove var from env block!
+	// Don't set `nullptr`, it would remove var from env block!
 	LPCWSTR pszValue;
 
 	pszValue = opt.cfgSwitches.IsEmpty() ? L"" : opt.cfgSwitches.ms_Val;
@@ -573,7 +573,7 @@ GetCommandLineW(): "T:\XChange\VCProject\TestRunArg\ShowArg.exe" "test1" test2
 CreateProcess("ShowArg.exe", "\"test1\" test2");
 GetCommandLineW(): "test1" test2
 
-CreateProcess(NULL, "\"ShowArg.exe\" \"test1\" test2");
+CreateProcess(nullptr, "\"ShowArg.exe\" \"test1\" test2");
 GetCommandLineW(): "ShowArg.exe" "test1" test2
 
 */
@@ -590,21 +590,21 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	bool bRc = false;
 	iResult = 100;
 
-	_ASSERTE(pszCmdLine!=NULL);
+	_ASSERTE(pszCmdLine!=nullptr);
 	opt.cmdLine.Set(pszCmdLine ? pszCmdLine : L"");
 
 	// pszCmdLine *may* or *may not* start with our executable or full path to our executable
 	LPCWSTR pszTemp = opt.cmdLine;
 	LPCWSTR cmdLineRest = SkipNonPrintable(opt.cmdLine);
 	LPCWSTR pszName, pszArgStart;
-	LPCWSTR psUnknown = NULL;
+	LPCWSTR psUnknown = nullptr;
 	CmdArg  szArg, szNext;
 	CEStr   szExeName, szExeNameOnly;
 
 	// Set %ConEmuArgs% env var
 	// It may be useful if we need to restart ConEmu
 	// from batch/script with the same arguments (selfupdate etc.)
-	LPCWSTR pszCopyToEnvStart = NULL;
+	LPCWSTR pszCopyToEnvStart = nullptr;
 
 	// Have to get our exectuable name and name without extension
 	szExeName.Set(PointToName(gpConEmu->ms_ConEmuExe));
@@ -650,7 +650,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				// Save it for further use
 				opt.runCommand.Set(cmdLineRest);
 				// And do not process it (no switches at all)
-				cmdLineRest = NULL;
+				cmdLineRest = nullptr;
 				opt.params = -1;
 			}
 		}
@@ -724,11 +724,11 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 
-					HKEY hk = NULL; DWORD dw;
+					HKEY hk = nullptr; DWORD dw;
 					int nSetupRc = 100;
 
 					if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Command Processor"),
-										   0, NULL, 0, KEY_ALL_ACCESS, NULL, &hk, &dw))
+										   0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hk, &dw))
 					{
 						iResult = 103;
 						goto wrap;
@@ -737,7 +737,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					if (lbTurnOn)
 					{
 						size_t cchMax = szNext.GetLen();
-						LPCWSTR pszArg1 = NULL;
+						LPCWSTR pszArg1 = nullptr;
 						if (*cmdLineRest)
 						{
 							// May be ‘/GHWND=NEW’ or smth else
@@ -850,26 +850,26 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (szArg.IsSwitch(L"-demote"))
 					{
-						b = CreateProcessDemoted(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						b = CreateProcessDemoted(opt.runCommand.ms_Val, nullptr, nullptr, FALSE, NORMAL_PRIORITY_CLASS, nullptr,
 							szCurDir, &si, &pi, &nErr);
 					}
 					else if (szArg.IsSwitch(L"-system:"))
 					{
-						DWORD nSessionID = wcstoul(szArg.ms_Val+wcslen(L"-system:"), NULL, 10);
-						b = CreateProcessSystem(nSessionID, opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						DWORD nSessionID = wcstoul(szArg.ms_Val+wcslen(L"-system:"), nullptr, 10);
+						b = CreateProcessSystem(nSessionID, opt.runCommand.ms_Val, nullptr, nullptr, FALSE, NORMAL_PRIORITY_CLASS, nullptr,
 							szCurDir, &si, &pi);
 					}
 					else if (szArg.IsSwitch(L"-interactive:"))
 					{
-						DWORD nSessionID = wcstoul(szArg.ms_Val+wcslen(L"-interactive:"), NULL, 10);
-						b = CreateProcessInteractive(nSessionID, NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
+						DWORD nSessionID = wcstoul(szArg.ms_Val+wcslen(L"-interactive:"), nullptr, 10);
+						b = CreateProcessInteractive(nSessionID, nullptr, opt.runCommand.ms_Val, nullptr, nullptr, TRUE, NORMAL_PRIORITY_CLASS, nullptr,
 							szCurDir, &si, &pi, &nErr);
 						bFromScheduler = true;
 					}
 					else // -bypass, -apparent
 					{
-						b = CreateProcess(NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
-							NULL, &si, &pi);
+						b = CreateProcess(nullptr, opt.runCommand.ms_Val, nullptr, nullptr, TRUE, NORMAL_PRIORITY_CLASS, nullptr,
+							nullptr, &si, &pi);
 						nErr = b ? 0 : GetLastError();
 						bFromScheduler = true;
 					}
@@ -1094,7 +1094,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					bool bRunAsAdmin = RunAsAdmin::Check(szArg.ms_Val);
 					bool bSyncDir = false;
-					LPCWSTR pszSyncFmt = NULL;
+					LPCWSTR pszSyncFmt = nullptr;
 
 					gpConEmu->mb_ConEmuHere = true;
 					gpConEmu->StoreWorkDir();
@@ -1106,7 +1106,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						pszSyncFmt = szArg.ms_Val+8; // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 					}
 
-					CConEmuInside::InitInside(bRunAsAdmin, bSyncDir, pszSyncFmt, 0, NULL);
+					CConEmuInside::InitInside(bRunAsAdmin, bSyncDir, pszSyncFmt, 0, nullptr);
 				}
 				else if (szArg.IsSwitch(L"-InsidePID"))
 				{
@@ -1119,7 +1119,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					DWORD nInsideParentPID = wcstol(szNext, &pszEnd, 10);
 					if (nInsideParentPID)
 					{
-						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, nInsideParentPID, NULL);
+						CConEmuInside::InitInside(bRunAsAdmin, false, nullptr, nInsideParentPID, nullptr);
 					}
 				}
 				else if (szArg.IsSwitch(L"-InsideWnd"))
@@ -1140,7 +1140,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					HWND hParent = (HWND)(DWORD_PTR)wcstoul(pszHWnd, &pszEnd, 16);
 					if (hParent && IsWindow(hParent))
 					{
-						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, 0, hParent);
+						CConEmuInside::InitInside(bRunAsAdmin, false, nullptr, 0, hParent);
 					}
 				}
 				else if (szArg.IsSwitch(L"-icon"))
@@ -1161,7 +1161,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					{
 						// Например, "%USERPROFILE%"
 						CEStr szExpand;
-						if (wcschr(szNext, L'%') && ((szExpand = ExpandEnvStr(szNext)) != NULL))
+						if (wcschr(szNext, L'%') && ((szExpand = ExpandEnvStr(szNext)) != nullptr))
 						{
 							gpConEmu->StoreWorkDir(szExpand);
 						}
@@ -1280,7 +1280,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 
-					if ((gpConEmu->opt.Monitor.Mon = MonitorFromParam(psz.Str)) != NULL)
+					if ((gpConEmu->opt.Monitor.Mon = MonitorFromParam(psz.Str)) != nullptr)
 					{
 						gpConEmu->opt.Monitor.Exists = true;
 						gpConEmu->opt.Monitor.Type = sw_Int;

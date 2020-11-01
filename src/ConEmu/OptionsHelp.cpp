@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool CEHelpPopup::GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWORD cchHelpMax)
 {
 	_ASSERTE(rsHelp && cchHelpMax);
-	_ASSERTE((wID!=0 && wID!=-1) || (hCtrl!=NULL));
+	_ASSERTE((wID!=0 && wID!=-1) || (hCtrl!=nullptr));
 
 	*rsHelp = 0;
 
@@ -61,7 +61,7 @@ bool CEHelpPopup::GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWO
 		if ((wID == -1) && (lstrcmpi(szClass, L"Static") == 0))
 		{
 			// If it is STATIC with IDC_STATIC - get next ctrl (edit/combo/so on)
-			wID = GetWindowLong(FindWindowEx(GetParent(hCtrl), hCtrl, NULL, NULL), GWL_ID);
+			wID = GetWindowLong(FindWindowEx(GetParent(hCtrl), hCtrl, nullptr, nullptr), GWL_ID);
 		}
 		else if (lstrcmpi(szClass, L"Button") == 0)
 		{

@@ -35,29 +35,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "ToolImg.h"
 
-/*
-#include "Options.h"
-*/
-
-#ifdef _DEBUG
-#include "LoadImg.h"
-#endif
 
 CToolImg::CToolImg()
 {
-	mh_Bmp = NULL;
-	mh_BmpDc = NULL;
-	mh_OldBmp = NULL;
+	mh_Bmp = nullptr;
+	mh_BmpDc = nullptr;
+	mh_OldBmp = nullptr;
 	mn_BtnWidth = 14; mn_BtnHeight = 14;
 	mcr_Background = GetSysColor(COLOR_BTNFACE);
 	mn_BtnCount = 0;
 	mn_MaxBtnCount = 0;
-	mprc_Btns = NULL;
+	mprc_Btns = nullptr;
 	mb_HasAlpha = false;
 
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
-	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : nullptr);
 	#endif
 }
 
@@ -80,9 +73,9 @@ void CToolImg::FreeDC()
 	if (mh_BmpDc)
 	{
 		SelectObject(mh_BmpDc, mh_OldBmp);
-		mh_OldBmp = NULL;
+		mh_OldBmp = nullptr;
 		DeleteDC(mh_BmpDc);
-		mh_BmpDc = NULL;
+		mh_BmpDc = nullptr;
 	}
 
 	SafeFree(mprc_Btns);
@@ -93,7 +86,7 @@ void CToolImg::FreeBMP()
 	if (mh_Bmp)
 	{
 		DeleteObject(mh_Bmp);
-		mh_Bmp = NULL;
+		mh_Bmp = nullptr;
 	}
 
 	mn_BtnCount = 0;
@@ -119,23 +112,23 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 
 bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground)
 {
-	_ASSERTE(mh_BmpDc == NULL);
+	_ASSERTE(mh_BmpDc == nullptr);
 
 	int nBPP = -1;
 	bool bComp = (gnOsVer < 0x600);
 	if (!bComp)
 	{
-		mh_BmpDc = CreateCompatibleDC(NULL);
+		mh_BmpDc = CreateCompatibleDC(nullptr);
 		nBPP = GetDeviceCaps(mh_BmpDc, BITSPIXEL);
 		if (nBPP < 32)
 		{
 			bComp = true;
 			DeleteDC(mh_BmpDc);
-			mh_BmpDc = NULL;
+			mh_BmpDc = nullptr;
 		}
 	}
 
-	HDC hScreen = bComp ? GetDC(NULL) : NULL;
+	HDC hScreen = bComp ? GetDC(nullptr) : nullptr;
 
 	// Create memory DC
 	if (!mh_BmpDc)
@@ -143,7 +136,7 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 
 	if (!mh_BmpDc)
 	{
-		_ASSERTE(mh_BmpDc!=NULL);
+		_ASSERTE(mh_BmpDc!=nullptr);
 	}
 	else
 	{
@@ -151,11 +144,11 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 		if (bComp)
 			mh_Bmp = CreateCompatibleBitmap(hScreen, nImgWidth, nImgHeight);
 		else
-			mh_Bmp = CreateBitmap(nImgWidth, nImgHeight, 1, 32, NULL);
+			mh_Bmp = CreateBitmap(nImgWidth, nImgHeight, 1, 32, nullptr);
 	}
 
 	if (hScreen)
-		ReleaseDC(NULL, hScreen);
+		ReleaseDC(nullptr, hScreen);
 
 	if (!mh_Bmp)
 	{
@@ -291,7 +284,7 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 	{
 		//HBITMAP hbm = CreateMappedBitmap(g_hInstance, (INT_PTR)pBtns[i].szName, 0, &colorMap, 1);
 		HBITMAP hbm = (HBITMAP)LoadImage(g_hInstance, pBtns[i].szName, IMAGE_BITMAP, 0, 0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
-		if (hbm == NULL)
+		if (hbm == nullptr)
 		{
 			nErrCode = GetLastError();
 			bRc = false;
@@ -324,14 +317,14 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 }
 #endif
 
-bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, bool bHasAlpha /*= false*/)
+bool CToolImg::CreateButtonField(LPCWSTR szImgRes, const COLORREF clrBackground, ButtonRowInfo* pBtns, const int nRowCount, const bool bHasAlpha)
 {
 	FreeDC();
 	FreeBMP();
 
 	mb_HasAlpha = bHasAlpha;
 
-	mprc_Btns = (LPRECT)calloc(nRowCount, sizeof(*mprc_Btns));
+	mprc_Btns = static_cast<LPRECT>(calloc(nRowCount, sizeof(*mprc_Btns)));
 	if (!mprc_Btns)
 		return false;
 	mn_MaxBtnCount = nRowCount;
@@ -349,22 +342,26 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	bool bRc = true;
 
 	_ASSERTE(mn_BtnCount == 0);
-	_ASSERTE(mh_Bmp == NULL);
+	_ASSERTE(mh_Bmp == nullptr);
 
 	DWORD nErrCode = 0;
 	UINT flags = bHasAlpha ? (LR_CREATEDIBSECTION) : (LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
 	mh_Bmp = (HBITMAP)LoadImage(g_hInstance, szImgRes, IMAGE_BITMAP, 0, 0, flags);
 
-	if (mh_Bmp == NULL)
+	if (mh_Bmp == nullptr)
 	{
 		nErrCode = GetLastError();
 		#ifdef _DEBUG
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HRSRC hFind = FindResource(g_hInstance, szImgRes, RT_BITMAP);
-		HGLOBAL hLoad = hFind ? LoadResource(g_hInstance, hFind) : NULL;
-		DWORD nSize = hFind ? SizeofResource(g_hInstance, hFind) : NULL;
-		BITMAPINFO* ptr = hLoad ? (BITMAPINFO*)LockResource(hLoad) : NULL;
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HGLOBAL hLoad = hFind ? LoadResource(g_hInstance, hFind) : nullptr;
+		// ReSharper disable once CppDeclaratorNeverUsed
+		DWORD nSize = hFind ? SizeofResource(g_hInstance, hFind) : 0;
+		// ReSharper disable once CppDeclaratorNeverUsed
+		BITMAPINFO* ptr = hLoad ? static_cast<BITMAPINFO*>(LockResource(hLoad)) : nullptr;
 		#endif
-		_ASSERTE(mh_Bmp!=NULL && "LoadImage from app resources was failed");
+		_ASSERTE(mh_Bmp!=nullptr && "LoadImage from app resources was failed");
 		bRc = false;
 	}
 	else
@@ -376,7 +373,7 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	{
 		for (int i = 0; i < nRowCount; i++)
 		{
-			RECT rc = {0, pBtns[i].nY, pBtns[i].nWidth, pBtns[i].nY + pBtns[i].nHeight};
+			const RECT rc = {0, pBtns[i].nY, pBtns[i].nWidth, pBtns[i].nY + pBtns[i].nHeight};
 			mprc_Btns[i] = rc;
 		}
 
@@ -394,7 +391,8 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 {
 	if (nPreferHeight <= 0)
 		return false;
-	if (this == NULL || mn_BtnCount <= 0 || mprc_Btns == NULL)
+	AssertThisRet(false);
+	if (mn_BtnCount <= 0 || mprc_Btns == nullptr)
 		return false;
 
 	// 100%, 125%, 150%, 200%, and some physical sized for search button
@@ -404,7 +402,7 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 	int nMaxW = 0, nMaxH = 0;
 	for (int i = 0; i < mn_BtnCount; i++)
 	{
-		int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
+		const int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
 		if (h > nMaxH)
 		{
 			nMaxH = h;
@@ -415,17 +413,19 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 	if (nMaxW <= 0 || nMaxH <= 0)
 		return false;
 
-	bool byWidth = false; // (nMaxW > nMaxH);
+	const bool byWidth = false; // (nMaxW > nMaxH);
 
-	int nNeed = nPreferHeight; // (byWidth ? nMaxW : nMaxH) * nDisplayDpi * 100 / (96 * 200);
+	const int nNeed = nPreferHeight; // (byWidth ? nMaxW : nMaxH) * nDisplayDpi * 100 / (96 * 200);
 	nDispW = 0; nDispH = 0;
 
 	for (int i = 0; i < mn_BtnCount; i++)
 	{
 		int w = (mprc_Btns[i].right - mprc_Btns[i].left);
 		int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
-		int n = (byWidth ? w : h);
+		// ReSharper disable once CppUnreachableCode
+		const int n = (byWidth ? w : h);
 
+		// ReSharper disable once CppUnreachableCode
 		if ((n <= nNeed) && (n > (byWidth ? nDispW : nDispH)))
 		{
 			nDispW = w; nDispH = h;
@@ -436,7 +436,7 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 	return (nDispH > 0);
 }
 
-bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight)
+bool CToolImg::PaintButton(int iBtn, HDC hdcDst, const int nDstX, const int nDstY, const int nDstWidth, const int nDstHeight) const
 {
 	if (!mh_Bmp || !mprc_Btns || (iBtn >= mn_BtnCount) || (mn_BtnCount <= 0))
 		return false;
@@ -448,7 +448,7 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 
 		for (int i = 1; i < mn_BtnCount; i++)
 		{
-			int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
+			const int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
 			if ((h <= nDstHeight) && (h > iFoundHeight))
 			{
 				iBtn = i;
@@ -458,10 +458,10 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 		}
 	}
 
-	RECT rc = mprc_Btns[iBtn];
+	const RECT rc = mprc_Btns[iBtn];
 
 	int y = nDstY;
-	int w = std::min<int>(nDstWidth, (rc.right - rc.left));
+	const int w = std::min<int>(nDstWidth, (rc.right - rc.left));
 	int h = nDstHeight;
 
 	if (nDstHeight > (rc.bottom - rc.top))
@@ -472,7 +472,7 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 
 	bool bRc = false;
 
-	if (mh_BmpDc != NULL)
+	if (mh_BmpDc != nullptr)
 	{
 		// Due to some adjustment errors after dpi downscaling the cropping may be occured, so use StretchBlt
 		if ((rc.bottom - rc.top) > h)
@@ -482,21 +482,24 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 	}
 	else
 	{
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HDC hCompDC = CreateCompatibleDC(hdcDst);
 		if (hCompDC)
 		{
-			HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_Bmp);
+			// ReSharper disable once CppLocalVariableMayBeConst
+			HBITMAP hOld = static_cast<HBITMAP>(SelectObject(hCompDC, mh_Bmp));
 
-			if (mb_HasAlpha && ((void*)GdiAlphaBlend != NULL))
+			// ReSharper disable once CppRedundantBooleanExpressionArgument
+			if (mb_HasAlpha && (GdiAlphaBlend != nullptr))  // NOLINT(clang-diagnostic-tautological-pointer-compare)
 			{
-				BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+				const BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
 				// -- int iPrev = SetStretchBltMode(hdc, STRETCH_HALFTONE);
 				bRc = (GdiAlphaBlend(hdcDst, nDstX, y, w, h, hCompDC, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, bf) != FALSE);
 				// -- SetStretchBltMode(hdc, iPrev);
 			}
 			else if ((rc.bottom - rc.top) > h)
 			{
-				// Due to some adjustment errors after dpi downscaling the cropping may be occured, so use StretchBlt
+				// Due to some adjustment errors after dpi downscaling the cropping may be occurred, so use StretchBlt
 				// -- int iPrev = SetStretchBltMode(hdc, STRETCH_HALFTONE);
 				bRc = (StretchBlt(hdcDst, nDstX, y, w, h, hCompDC, rc.left, rc.top, rc.right-rc.left+1, rc.bottom-rc.top+1, SRCCOPY) != FALSE);
 				// -- SetStretchBltMode(hdc, iPrev);
@@ -506,6 +509,7 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 				bRc = (BitBlt(hdcDst, nDstX, y, w, h, hCompDC, rc.left, rc.top, SRCCOPY) != FALSE);
 			}
 
+			// ReSharper disable once CppDeclaratorNeverUsed
 			DEBUGTEST(DWORD nErr = GetLastError());
 
 			if (hOld && hCompDC)
@@ -517,17 +521,17 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 	return bRc;
 }
 
-int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
+int CToolImg::AddBitmap(HBITMAP hbm, const int iNumBtns)
 {
 	BITMAP bm = {};
-	int ccb = hbm ? GetObject(hbm, sizeof(bm), &bm) : -1;
+	const int ccb = hbm ? GetObject(hbm, sizeof(bm), &bm) : -1;
 	if ((ccb <= 0) || (bm.bmWidth <= 0) || (bm.bmHeight == 0))
 	{
 		_ASSERTE((ccb > 0) && "Invalid bitmap loaded?");
 		return 0;
 	}
 
-	int iSrcBtnWidth = bm.bmWidth / iNumBtns;
+	const int iSrcBtnWidth = bm.bmWidth / iNumBtns;
 	int iAdded = iNumBtns;
 	if (iAdded > (mn_MaxBtnCount - mn_BtnCount))
 	{
@@ -539,11 +543,11 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 			return 0;
 		}
 	}
-	int iSrcHeight = _abs(bm.bmHeight);
-	int iSrcWidth = iAdded * iSrcBtnWidth;
+	const int iSrcHeight = _abs(bm.bmHeight);
+	const int iSrcWidth = iAdded * iSrcBtnWidth;
 
 	// Where we must paint to
-	int x = mn_BtnCount * mn_BtnWidth;
+	const int x = mn_BtnCount * mn_BtnWidth;
 
 	#ifdef _DEBUG
 	//SaveImageEx(L"C:\\ConEmu\\Pre.png", mh_Bmp);
@@ -551,7 +555,7 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 	#endif
 
 	// And go
-	bool blitRc = PaintBitmap(hbm, iSrcWidth, iSrcHeight, mh_BmpDc, x, 0, iAdded*mn_BtnWidth, mn_BtnHeight);
+	const bool blitRc = PaintBitmap(hbm, iSrcWidth, iSrcHeight, mh_BmpDc, x, 0, iAdded*mn_BtnWidth, mn_BtnHeight);
 
 	#ifdef _DEBUG
 	//SaveImageEx(L"C:\\ConEmu\\Post.png", mh_Bmp);
@@ -569,12 +573,15 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 	return iAdded;
 }
 
-bool CToolImg::PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight)
+bool CToolImg::PaintBitmap(HBITMAP hbmSrc, const int nSrcWidth, const int nSrcHeight,
+	HDC hdcDst, const int nDstX, const int nDstY, const int nDstWidth, const int nDstHeight)
 {
-	HDC hdc = CreateCompatibleDC(NULL);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HDC hdc = CreateCompatibleDC(nullptr);
 	if (!hdc)
 		return false;
-	HBITMAP hOld = (HBITMAP)SelectObject(hdc, hbmSrc);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HBITMAP hOld = static_cast<HBITMAP>(SelectObject(hdc, hbmSrc));
 
 	// And go
 	BOOL blitRc;
@@ -595,10 +602,11 @@ bool CToolImg::PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hd
 	return (blitRc != FALSE);
 }
 
-int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns)
+int CToolImg::AddButtons(HINSTANCE hInst, INT_PTR resId, const int iNumBtns)
 {
 	int iAdded = 0;
-	HBITMAP hbm = (HBITMAP)LoadImage(hinst, (LPCWSTR)resId, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HBITMAP hbm = static_cast<HBITMAP>(LoadImage(hInst, reinterpret_cast<LPCWSTR>(resId), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
 	if (hbm)
 	{
 		#ifdef _DEBUG
@@ -614,12 +622,13 @@ int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns)
 	return iAdded;
 }
 
-int CToolImg::AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...)
+int CToolImg::AddButtonsMapped(HINSTANCE hInst, INT_PTR resId, const int iNumBtns, const int iNumMaps, const COLORREF from, const COLORREF to, ...)
 {
 	int iAdded = 0;
 	_ASSERTE(iNumMaps <= 1);
 	COLORMAP colorMap = {from, to};
-	HBITMAP hbm = CreateMappedBitmap(hinst, resId, 0, &colorMap, 1);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HBITMAP hbm = CreateMappedBitmap(hInst, resId, 0, &colorMap, 1);
 	if (hbm)
 	{
 		iAdded = AddBitmap(hbm, iNumBtns);
@@ -642,7 +651,7 @@ HBITMAP CToolImg::LoadImageForWindow(HWND hwnd, HINSTANCE hinst, INT_PTR resId, 
 	int nDisplayDpi = gpSetCls->QueryDpi();
 
 	if (!Create(iStdWidth * nDisplayDpi / 96, iStdHeight * nDisplayDpi / 96, 1, clrBackground))
-		return NULL;
+		return nullptr;
 
 	int iAdded = 0;
 	_ASSERTE(iNumMaps <= 1);

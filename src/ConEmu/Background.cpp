@@ -43,25 +43,25 @@ CBackground::CBackground()
 {
 	bgSize = MakeCoord(-1,-1);
 	VConOffset = {};
-	hBgDc = NULL;
-	hBgBitmap = NULL;
-	hOldBitmap = NULL;
+	hBgDc = nullptr;
+	hBgBitmap = nullptr;
+	hOldBitmap = nullptr;
 	//// Alpha blending
 	//mh_MsImg32 = LoadLibrary(L"Msimg32.dll");
 	//if (mh_MsImg32) {
 	//	fAlphaBlend = (AlphaBlend_t)GetProcAddress(mh_MsImg32, "AlphaBlend");
 	//} else {
-	//	fAlphaBlend = NULL;
+	//	fAlphaBlend = nullptr;
 	//}
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
-	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : nullptr);
 	#endif
 
 	mb_NeedBgUpdate = false; mb_BgLastFade = false;
-	mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
-	mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
-	mcs_BkImgData = NULL;
+	mp_BkImgData = nullptr; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
+	mp_BkEmfData = nullptr; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
+	mcs_BkImgData = nullptr;
 	mn_BkImgWidth = mn_BkImgHeight = 0;
 }
 
@@ -71,7 +71,7 @@ CBackground::~CBackground()
 	//if (mh_MsImg32)
 	//{
 	//	FreeLibrary(mh_MsImg32);
-	//	fAlphaBlend = NULL;
+	//	fAlphaBlend = nullptr;
 	//}
 
 	MSectionLock SC;
@@ -97,19 +97,19 @@ void CBackground::Destroy()
 	if (hBgDc && hOldBitmap)
 	{
 		SelectObject(hBgDc, hOldBitmap);
-		hOldBitmap = NULL;
+		hOldBitmap = nullptr;
 	}
 
 	if (hBgBitmap)
 	{
 		DeleteObject(hBgBitmap);
-		hBgBitmap = NULL;
+		hBgBitmap = nullptr;
 	}
 
 	if (hBgDc)
 	{
 		DeleteDC(hBgDc);
-		hBgDc = NULL;
+		hBgDc = nullptr;
 	}
 }
 
@@ -164,7 +164,7 @@ bool CBackground::FillBackground(
 	RECT rcFull = MakeRect(X,Y,Width,Height);
 	FillRect(hBgDc, &rcFull, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
-	if (apBkImgData == NULL ||
+	if (apBkImgData == nullptr ||
 	        apBkImgData->bfType != 0x4D42/*BM*/ ||
 	        IsBadReadPtr(apBkImgData, apBkImgData->bfSize))
 	{
@@ -172,11 +172,11 @@ bool CBackground::FillBackground(
 	}
 
 	bool lbRc = false;
-	HDC         hLoadDC = NULL;
-	HBITMAP     hLoadBmp = NULL;
+	HDC         hLoadDC = nullptr;
+	HBITMAP     hLoadBmp = nullptr;
 	BITMAPINFO* pBmp  = (BITMAPINFO*)(apBkImgData+1);
 	LPBYTE      pBits = ((LPBYTE)apBkImgData) + apBkImgData->bfOffBits;
-	LPVOID      pDstBits = NULL;
+	LPVOID      pDstBits = nullptr;
 	BITMAPINFOHEADER* pHdr = &pBmp->bmiHeader;
 
 	if (pHdr->biPlanes != 1 || pHdr->biCompression != BI_RGB)  // BI_JPEG|BI_PNG
@@ -201,7 +201,7 @@ bool CBackground::FillBackground(
 
 		if (hLoadDC)
 		{
-			hLoadBmp = CreateDIBSection(hLoadDC, pBmp, DIB_RGB_COLORS, &pDstBits, NULL, 0);
+			hLoadBmp = CreateDIBSection(hLoadDC, pBmp, DIB_RGB_COLORS, &pDstBits, nullptr, 0);
 
 			if (hLoadBmp && pDstBits)
 			{
@@ -328,11 +328,11 @@ bool CBackground::FillBackground(
 			if (hLoadBmp)
 			{
 				DeleteObject(hLoadBmp);
-				hLoadBmp = NULL;
+				hLoadBmp = nullptr;
 			}
 
 			DeleteDC(hLoadDC);
-			hLoadDC = NULL;
+			hLoadDC = nullptr;
 		}
 	}
 
@@ -421,7 +421,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 
 	if (!nSize)
 	{
-		_ASSERTE(FALSE && "!IsBackgroundValid(apImgData, NULL)");
+		_ASSERTE(FALSE && "!IsBackgroundValid(apImgData, nullptr)");
 		return esbr_InvalidArg;
 	}
 
@@ -482,7 +482,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 	//}
 
 	// Ссылку на актуальный - не сбрасываем. Она просто информационная, и есть возможность наколоться с многопоточностью
-	//mp_LastImgData = NULL;
+	//mp_LastImgData = nullptr;
 
 	//UINT nSize = IsBackgroundValid(apImgData);
 	//if (!nSize)
@@ -508,7 +508,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 		{
 			if (mp_BkEmfData)
 			{
-				free(mp_BkEmfData); mp_BkEmfData = NULL;
+				free(mp_BkEmfData); mp_BkEmfData = nullptr;
 				mb_BkImgChanged = mb_BkEmfChanged = TRUE;
 				mb_BkImgExist = FALSE;
 				mn_BkImgWidth = mn_BkImgHeight = 0;
@@ -524,7 +524,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 		{
 			if (mp_BkImgData)
 			{
-				free(mp_BkImgData); mp_BkImgData = NULL;
+				free(mp_BkImgData); mp_BkImgData = nullptr;
 				mb_BkImgChanged = TRUE;
 				mb_BkImgExist = FALSE;
 				mn_BkImgWidth = mn_BkImgHeight = 0;
@@ -538,7 +538,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 
 	if (!(bIsEmf ? mp_BkEmfData : mp_BkImgData))
 	{
-		_ASSERTE((bIsEmf ? mp_BkEmfData : mp_BkImgData)!=NULL);
+		_ASSERTE((bIsEmf ? mp_BkEmfData : mp_BkImgData)!=nullptr);
 		rc = esbr_Unexpected;
 	}
 	else
@@ -556,7 +556,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 		NeedBackgroundUpdate();
 
 		//// Это была копия данных - нужно освободить
-		//free(apImgData); apImgData = NULL;
+		//free(apImgData); apImgData = nullptr;
 
 		if (/*gpConEmu->isVisible(this) &&*/ gpSet->isBgPluginAllowed)
 		{
@@ -574,7 +574,7 @@ void CBackground::NeedBackgroundUpdate()
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return;
 	}
 
@@ -584,7 +584,7 @@ void CBackground::NeedBackgroundUpdate()
 // Создает (или возвращает уже созданный) HDC (CompatibleDC) для mp_BkImgData
 bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG Y, LONG Width, LONG Height)
 {
-	if (!this) return NULL;
+	if (!this) return nullptr;
 
 	_ASSERTE(isMainThread());
 
@@ -593,7 +593,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 
 	/*if (mb_BkImgDelete && mp_BkImgData)
 	{
-		free(mp_BkImgData); mp_BkImgData = NULL;
+		free(mp_BkImgData); mp_BkImgData = nullptr;
 		mb_BkImgExist = FALSE;
 		return false;
 	}*/
@@ -610,7 +610,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 
 		if (!mp_BkEmfData)
 		{
-			_ASSERTE(mp_BkEmfData!=NULL);
+			_ASSERTE(mp_BkEmfData!=nullptr);
 			return false;
 		}
 
@@ -625,7 +625,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 			mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nWholeSize);
 			if (!mp_BkImgData)
 			{
-				_ASSERTE(mp_BkImgData!=NULL);
+				_ASSERTE(mp_BkImgData!=nullptr);
 				return false;
 			}
 		}
@@ -635,26 +635,26 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 		mp_BkImgData->bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 
 		// Теперь нужно сформировать DIB и нарисовать в нем EMF
-		HDC hScreen = GetDC(NULL);
+		HDC hScreen = GetDC(nullptr);
 		//RECT rcMeta = {0,0, mn_BkImgWidth, mn_BkImgHeight}; // (in pixels)
 		//RECT rcMetaMM = {0,0, mn_BkImgWidth*10, mn_BkImgHeight*10}; // (in .01-millimeter units)
-		//HDC hdcEmf = CreateEnhMetaFile(NULL, NULL, &rcMetaMM, L"ConEmu\0Far Background\0\0");
+		//HDC hdcEmf = CreateEnhMetaFile(nullptr, nullptr, &rcMetaMM, L"ConEmu\0Far Background\0\0");
 		//if (!hdcEmf)
 		//{
-		//	_ASSERTE(hdcEmf!=NULL);
+		//	_ASSERTE(hdcEmf!=nullptr);
 		//	return;
 		//}
 
 		HDC hdcDib = CreateCompatibleDC(hScreen);
 		if (!hdcDib)
 		{
-			_ASSERTE(hdcDib!=NULL);
+			_ASSERTE(hdcDib!=nullptr);
 			//DeleteEnhMetaFile(hdcEmf);
 			return false;
 		}
-		COLORREF* pBits = NULL;
-		HBITMAP hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
-		ReleaseDC(NULL, hScreen); hScreen = NULL;
+		COLORREF* pBits = nullptr;
+		HBITMAP hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, nullptr, 0);
+		ReleaseDC(nullptr, hScreen); hScreen = nullptr;
 		if (!hDib || !pBits)
 		{
 			_ASSERTE(hDib && pBits);
@@ -685,12 +685,12 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 			if( GetEnhMetaFileHeader( hdcEmf, sizeof( ENHMETAHEADER ), &emh ) )
 			{
 				// Get the characteristics of the output device
-				HDC hDC = GetDC(NULL);
+				HDC hDC = GetDC(nullptr);
 				PixelsX = GetDeviceCaps( hDC, HORZRES );
 				PixelsY = GetDeviceCaps( hDC, VERTRES );
 				MMX = GetDeviceCaps( hDC, HORZSIZE ) * 100;
 				MMY = GetDeviceCaps( hDC, VERTSIZE ) * 100;
-				ReleaseDC(NULL, hDC);
+				ReleaseDC(nullptr, hDC);
 
 				// Calculate the rect in which to draw the metafile based on the
 				// intended size and the current output device resolution
@@ -734,7 +734,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 	if (!mp_BkImgData)
 	{
 		// Нужен ли тут? Или допустимая ситуация?
-		_ASSERTE(mp_BkImgData!=NULL);
+		_ASSERTE(mp_BkImgData!=nullptr);
 		return false;
 	}
 
@@ -754,7 +754,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return false;
 	}
 
@@ -783,7 +783,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		//if (mp_PluginBg)
 		//{
 		//	delete mp_PluginBg;
-		//	mp_PluginBg = NULL;
+		//	mp_PluginBg = nullptr;
 		//}
 
 		#ifndef APPDISTINCTBACKGROUND
@@ -801,7 +801,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		if (!mb_NeedBgUpdate)
 		{
-			if ((hBgDc == NULL)
+			if ((hBgDc == nullptr)
 				|| (mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
 				|| (!gpSet->isFadeInactive && mb_BgLastFade))
 			{
@@ -838,7 +838,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 				lMaxBgHeight = rcWork.bottom - rcWork.top;
 				// Correct aspect ratio
 				const BITMAPFILEHEADER* pBgImgData = pBgFile->GetBgImgData();
-				const BITMAPINFOHEADER* pBmp = pBgImgData ? (const BITMAPINFOHEADER*)(pBgImgData+1) : NULL;
+				const BITMAPINFOHEADER* pBmp = pBgImgData ? (const BITMAPINFOHEADER*)(pBgImgData+1) : nullptr;
 				if (pBmp
 					&& (rcWork.bottom - rcWork.top) > 0 && (rcWork.right - rcWork.left) > 0)
 				{
@@ -885,7 +885,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			//BITMAPFILEHEADER* pImgData = mp_BgImgData;
 			BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
 			const BITMAPFILEHEADER* pBgImgData = pBgFile->GetBgImgData();
-			BOOL lbImageExist = (pBgImgData != NULL);
+			BOOL lbImageExist = (pBgImgData != nullptr);
 			//BOOL lbVConImage = FALSE;
 			//LONG lBgWidth = 0, lBgHeight = 0;
 			//CVirtualConsole* pVCon = gpConEmu->ActiveCon();
@@ -921,7 +921,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 				//	        !apVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
 				//	{
 				//		delete mp_Bg;
-				//		mp_Bg = NULL;
+				//		mp_Bg = nullptr;
 				//	}
 				//}
 				//else
@@ -988,7 +988,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			}
 		}
 
-		//if (mp_PluginBg == NULL)
+		//if (mp_PluginBg == nullptr)
 		//{
 		//	NeedBackgroundUpdate();
 		//}
@@ -1009,7 +1009,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 				!PutPluginBackgroundImage(0,0, lBgWidth, lBgHeight))
 			{
 				//delete mp_PluginBg;
-				//mp_PluginBg = NULL;
+				//mp_PluginBg = nullptr;
 				bSucceeded = false;
 			}
 		}
@@ -1023,7 +1023,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 			))
 		{
 			lbForceUpdate = false;
-			phBgDc = NULL;
+			phBgDc = nullptr;
 			pbgBmpSize = MakeCoord(0, 0);
 			goto wrap;
 		}
@@ -1036,7 +1036,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 	}
 	else
 	{
-		phBgDc = NULL;
+		phBgDc = nullptr;
 		pbgBmpSize = MakeCoord(0,0);
 	}
 
@@ -1094,7 +1094,7 @@ CBackgroundInfo* CBackgroundInfo::CreateBackgroundObject(LPCWSTR inPath, bool ab
 	{
 		if (abShowErrors)
 			MBoxA(L"Invalid 'BgImagePath' in CBackgroundInfo::CreateBackgroundObject");
-		return NULL;
+		return nullptr;
 	}
 
 	// Допускается и пустой путь!
@@ -1102,13 +1102,13 @@ CBackgroundInfo* CBackgroundInfo::CreateBackgroundObject(LPCWSTR inPath, bool ab
 	if (!inPath)
 		inPath = L"";
 
-	CBackgroundInfo* p = NULL;
+	CBackgroundInfo* p = nullptr;
 
 	for (INT_PTR i = 0; i < g_Backgrounds.size(); i++)
 	{
 		if (!g_Backgrounds[i])
 		{
-			_ASSERTE(g_Backgrounds[i]!=NULL);
+			_ASSERTE(g_Backgrounds[i]!=nullptr);
 			continue;
 		}
 		if (lstrcmpi(g_Backgrounds[i]->BgImage(), inPath) == 0)
@@ -1143,7 +1143,7 @@ CBackgroundInfo::CBackgroundInfo(LPCWSTR inPath)
 	//mb_IsFade = bFade;
 	//mb_NeedBgUpdate = false;
 	mb_IsBackgroundImageValid = false;
-	mp_BgImgData = NULL;
+	mp_BgImgData = nullptr;
 
 	CBackgroundInfo* p = this;
 	g_Backgrounds.push_back(p);
@@ -1179,12 +1179,12 @@ const wchar_t* CBackgroundInfo::BgImage()
 //bool CBackgroundInfo::IsImageExist()
 //{
 //	if (!this) return false;
-//	return (mp_BgImgData != NULL);
+//	return (mp_BgImgData != nullptr);
 //}
 
 const BITMAPFILEHEADER* CBackgroundInfo::GetBgImgData()
 {
-	if (!this) return NULL;
+	if (!this) return nullptr;
 	return mp_BgImgData;
 }
 
@@ -1238,9 +1238,9 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 	_ASSERTE(isMainThread());
 	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
-	BITMAPFILEHEADER* pBkImgData = NULL;
+	BITMAPFILEHEADER* pBkImgData = nullptr;
 
-	if (wcspbrk(ms_BgImage, L"%\\.") == NULL)
+	if (wcspbrk(ms_BgImage, L"%\\.") == nullptr)
 	{
 		// May be "Solid color"
 		COLORREF clr = (COLORREF)-1;

@@ -31,8 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace ConEmuAbout
 {
 	void OnInfo_Donate();
-	void OnInfo_About(LPCWSTR asPageName = NULL);
-	void OnInfo_OnlineWiki(LPCWSTR asPageName = NULL);
+	void OnInfo_About(LPCWSTR asPageName = nullptr);
+	void OnInfo_OnlineWiki(LPCWSTR asPageName = nullptr);
 	void OnInfo_WhatsNew(bool bLocal);
 	void OnInfo_Help();
 	void OnInfo_HomePage();

@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 
 // struct TabPanelWinMap { CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
-static MMap<HWND,TabPanelWinMap>* gp_TabPanelWinMap = NULL;
+static MMap<HWND,TabPanelWinMap>* gp_TabPanelWinMap = nullptr;
 
 CWinObjBase::CWinObjBase()
 {
@@ -59,7 +59,7 @@ bool CWinObjBase::InitObjMap()
 		gp_TabPanelWinMap->Init(8); // Rebar+Tabbar+Searchbar+Toolbar, only 4 windows at the moment max
 	}
 
-	return (gp_TabPanelWinMap!=NULL);
+	return (gp_TabPanelWinMap!=nullptr);
 }
 
 CWinObjBase* CWinObjBase::GetObj(HWND hWnd, TabPanelWinMap* val, bool Remove /*= false*/)
@@ -67,7 +67,7 @@ CWinObjBase* CWinObjBase::GetObj(HWND hWnd, TabPanelWinMap* val, bool Remove /*=
 	TabPanelWinMap objMap = {};
 
 	if (!gp_TabPanelWinMap || !gp_TabPanelWinMap->Get(hWnd, &objMap, Remove))
-		return NULL;
+		return nullptr;
 	if (val)
 		*val = objMap;
 

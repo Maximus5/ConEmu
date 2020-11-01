@@ -47,7 +47,7 @@ enum class StorageType : int
 struct SettingsStorage
 {
 	StorageType Type = StorageType::BASIC;
-	LPCWSTR     File = nullptr;   // NULL or full path to storage file
+	LPCWSTR     File = nullptr;   // nullptr or full path to storage file
 	LPCWSTR     Config = nullptr; // Name of configuration
 	bool        ReadOnly = false; // If xml file is write-prohibited (created in "C:\Program Files"?)
 
@@ -156,7 +156,7 @@ struct SettingsRegistry : public SettingsBase
 		virtual void Delete(const wchar_t *regName) override;
 		virtual void DeleteKey(const wchar_t *regName) override;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
+		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и nullptr
 		virtual void Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) override;
 
 	public:
@@ -181,7 +181,7 @@ struct SettingsINI : public SettingsBase
 		virtual void Delete(const wchar_t *regName) override;
 		virtual void DeleteKey(const wchar_t *regName) override;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
+		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и nullptr
 		virtual void Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) override;
 
 	public:

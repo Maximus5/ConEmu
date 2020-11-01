@@ -90,16 +90,16 @@ LRESULT CSetPgGeneral::OnInitDialog(HWND hDlg, bool abInitial)
 		CEStr command(prefix, gpSet->psStartTasksFile);
 		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)command.c_str());
 	}
-	const CommandTasks* pGrp = NULL;
-	for (int nGroup = 0; (pGrp = gpSet->CmdTaskGet(nGroup)) != NULL; nGroup++)
+	const CommandTasks* pGrp = nullptr;
+	for (int nGroup = 0; (pGrp = gpSet->CmdTaskGet(nGroup)) != nullptr; nGroup++)
 	{
 		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
 	}
 	RECT rcCombo = {}, rcButton = {};
 	GetWindowRect(GetDlgItem(hDlg, lbStartupShellFast), &rcCombo);
 	GetWindowRect(GetDlgItem(hDlg, cbStartupShellFast), &rcButton);
-	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcCombo, 2);
-	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcButton, 2);
+	MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcCombo, 2);
+	MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcButton, 2);
 	MoveWindow(GetDlgItem(hDlg, cbStartupShellFast), rcButton.left, rcCombo.top, RectWidth(rcButton), RectHeight(rcCombo), TRUE);
 
 	// Show startup task or shell command line
@@ -114,8 +114,8 @@ LRESULT CSetPgGeneral::OnInitDialog(HWND hDlg, bool abInitial)
 
 	// Palettes (console color sets)
 	SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_RESETCONTENT, 0, 0);
-	const ColorPalette* pPal = NULL;
-	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != NULL; nPal++)
+	const ColorPalette* pPal = nullptr;
+	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != nullptr; nPal++)
 	{
 		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
 	}
@@ -144,7 +144,7 @@ LRESULT CSetPgGeneral::OnInitDialog(HWND hDlg, bool abInitial)
 
 	// Quake style and show/hide key
 	CheckDlgButton(hDlg, cbQuakeFast, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
-	const ConEmuHotKey* pHK = NULL;
+	const ConEmuHotKey* pHK = nullptr;
 	if (gpSet->GetHotkeyById(vkMinimizeRestore, &pHK) && pHK)
 	{
 		wchar_t szKey[128] = L"";
@@ -212,11 +212,11 @@ INT_PTR CSetPgGeneral::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					lbWasPos = true;
 					GetWindowRect(ghOpWnd, &rcWnd);
 					DestroyWindow(ghOpWnd);
-					_ASSERTE(ghOpWnd == NULL);
+					_ASSERTE(ghOpWnd == nullptr);
 
 					CSettings::Dialog(IDD_SPG_GENERAL);
 					if (ghOpWnd)
-						SetWindowPos(ghOpWnd, NULL, rcWnd.left, rcWnd.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
+						SetWindowPos(ghOpWnd, nullptr, rcWnd.left, rcWnd.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
 				}
 			}
 		}
@@ -244,7 +244,7 @@ LRESULT CSetPgGeneral::ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			if (!colorOptions.palette)
 			{
-				_ASSERTE(colorOptions.palette!=NULL);
+				_ASSERTE(colorOptions.palette!=nullptr);
 				break;
 			}
 			FastConfig::DoPaintColorBox(hwnd, *colorOptions.palette);
@@ -260,7 +260,7 @@ LRESULT CSetPgGeneral::ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				if (pPal)
 				{
 					colorOptions.palette = pPal;
-					InvalidateRect(hwnd, NULL, FALSE);
+					InvalidateRect(hwnd, nullptr, FALSE);
 
 					gpSetCls->ChangeCurrentPalette(pPal, false);
 				}

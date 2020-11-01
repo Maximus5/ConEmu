@@ -57,9 +57,9 @@ public:
 
 public:
 	// Methods
-	static LPCWSTR getControl(LONG id, CEStr& lsText, LPCWSTR asDefault = NULL);
+	static LPCWSTR getControl(LONG id, CEStr& lsText, LPCWSTR asDefault = nullptr);
 	static bool getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax);
-	static LPCWSTR getRsrc(UINT id, CEStr* lpText = NULL);
+	static LPCWSTR getRsrc(UINT id, CEStr* lpText = nullptr);
 	static LPCWSTR getLanguage();
 	static bool getLanguages(MArray<const wchar_t*>& languages);
 

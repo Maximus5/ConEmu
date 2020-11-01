@@ -116,8 +116,8 @@ HWND getForegroundWindow();
 
 extern HWND ghDlgPendingFrom;
 extern LONG gnInMsgBox;
-int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true);
-void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = nullptr, HWND ahParent = (HWND)-1, bool abModal = true);
+void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = nullptr);
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 
 #include "../ConEmu/version_stage.h"

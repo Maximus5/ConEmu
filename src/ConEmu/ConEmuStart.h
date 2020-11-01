@@ -135,10 +135,10 @@ public:
 public:
 	/* Store/retrieve command line, specified with "-run" or "-runlist" switches */
 	void SetCurCmd(LPCWSTR pszNewCmd, bool bIsCmdList);
-	LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
+	LPCTSTR GetCurCmd(bool *pIsCmdList = nullptr);
 
 	/* "Active" command line */
-	LPCTSTR GetCmd(bool *pIsCmdList = NULL, bool bNoTask = false);
+	LPCTSTR GetCmd(bool *pIsCmdList = nullptr, bool bNoTask = false);
 	/* If some task was marked ad "Default for new consoles" */
 	LPCTSTR GetDefaultTask();
 

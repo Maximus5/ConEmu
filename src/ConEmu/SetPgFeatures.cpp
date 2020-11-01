@@ -100,7 +100,7 @@ void CSetPgFeatures::UpdateLogLocation() const
 	// Cut log file to directory only
 	const auto pLogger = gpConEmu->GetLogger();
 	CEStr lsLogPath(pLogger ? pLogger->GetLogFileName() : L"");
-	LPCWSTR pszName = lsLogPath.IsEmpty() ? NULL : PointToName(lsLogPath.ms_Val);
+	LPCWSTR pszName = lsLogPath.IsEmpty() ? nullptr : PointToName(lsLogPath.ms_Val);
 	if (pszName)
 		*(wchar_t*)pszName = 0;
 	SetDlgItemText(gpSetCls->GetPage(thi_Features), tDebugLogDir, lsLogPath);

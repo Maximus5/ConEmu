@@ -218,7 +218,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_ERASEBKGND:
 		return CFrameHolder::OnEraseBkgnd(hWnd, uMsg, wParam, lParam, lResult);
 	case WM_PAINT:
-		return OnPaint(hWnd, NULL/*use BeginPaint,EndPaint*/, WM_PAINT, lResult);
+		return OnPaint(hWnd, nullptr/*use BeginPaint,EndPaint*/, WM_PAINT, lResult);
 
 	case WM_SYSCOMMAND:
 		return CFrameHolder::OnSysCommand(hWnd, uMsg, wParam, lParam, lResult);
@@ -254,7 +254,7 @@ bool CFrameHolder::OnMouseMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		if (ht != HTNOWHERE && ht != HTCLIENT)
 		{
 			POINT ptScr = point;
-			MapWindowPoints(hWnd, NULL, &ptScr, 1);
+			MapWindowPoints(hWnd, nullptr, &ptScr, 1);
 			LPARAM lParamMain = MAKELONG(ptScr.x, ptScr.y);
 			lResult = mp_ConEmu->WndProc(hWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), ht, lParamMain);
 			return true;
@@ -487,15 +487,15 @@ void CFrameHolder::NC_Redraw()
 	SetWindowPos(ghWnd, 0, 0, 0, 0, 0,
 		SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_DRAWFRAME);
 
-	//SetWindowPos(ghWnd, NULL, 0, 0, 0, 0,
+	//SetWindowPos(ghWnd, nullptr, 0, 0, 0, 0,
 	//		SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
-	//RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-	//RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME);
+	//RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+	//RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME);
 
 	// В Aero отрисовка идет как бы на клиентской части
 	if (mp_ConEmu->DrawType() == fdt_Aero)
 	{
-		mp_ConEmu->Invalidate(NULL, FALSE);
+		mp_ConEmu->Invalidate(nullptr, FALSE);
 	}
 }
 
@@ -597,13 +597,13 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	int nCaptionY = GetSystemMetrics(SM_CYCAPTION);
 
 	SelectObject(hdc, hPenLight);
-	MoveToEx(hdc, cr.left, cr.bottom-1, NULL); LineTo(hdc, cr.left, 0); LineTo(hdc, cr.right-1, 0);
+	MoveToEx(hdc, cr.left, cr.bottom-1, nullptr); LineTo(hdc, cr.left, 0); LineTo(hdc, cr.right-1, 0);
 	SelectObject(hdc, hPenHilight);
-	MoveToEx(hdc, cr.left+1, cr.bottom-2, NULL); LineTo(hdc, cr.left+1, 1); LineTo(hdc, cr.right-2, 1);
+	MoveToEx(hdc, cr.left+1, cr.bottom-2, nullptr); LineTo(hdc, cr.left+1, 1); LineTo(hdc, cr.right-2, 1);
 	SelectObject(hdc, hPenDkShadow);
-	MoveToEx(hdc, cr.left, cr.bottom-1, NULL); LineTo(hdc, cr.right-1, cr.bottom-1); LineTo(hdc, cr.right-1, -1);
+	MoveToEx(hdc, cr.left, cr.bottom-1, nullptr); LineTo(hdc, cr.right-1, cr.bottom-1); LineTo(hdc, cr.right-1, -1);
 	SelectObject(hdc, hPenShadow);
-	MoveToEx(hdc, cr.left+1, cr.bottom-2, NULL); LineTo(hdc, cr.right-2, cr.bottom-2); LineTo(hdc, cr.right-2, 0);
+	MoveToEx(hdc, cr.left+1, cr.bottom-2, nullptr); LineTo(hdc, cr.right-2, cr.bottom-2); LineTo(hdc, cr.right-2, 0);
 	// рамка. обычно это 1 пиксел цвета кнопки
 	SelectObject(hdc, hPenBorder); //TODO: но может быть и более одного пиксела
 	Rectangle(hdc, cr.left+2, cr.top+2, cr.right-2, cr.bottom-2);
@@ -632,14 +632,14 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 
 bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 {
-	if (hdc == NULL)
+	if (hdc == nullptr)
 	{
-		DBGFUNCTION("WM_PAINT (NULL)");
+		DBGFUNCTION("WM_PAINT (nullptr)");
 		LRESULT& lRc = lResult;
 		PAINTSTRUCT ps = {0};
 		hdc = BeginPaint(hWnd, &ps);
 
-		if (hdc != NULL)
+		if (hdc != nullptr)
 		{
 			if (!mp_ConEmu->isIconic() && !mp_ConEmu->InMinimizing())
 			{
@@ -650,7 +650,7 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 		}
 		else
 		{
-			_ASSERTE(hdc != NULL);
+			_ASSERTE(hdc != nullptr);
 		}
 
 		return true;
@@ -662,7 +662,7 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 	RECT rcClientReal = {}; GetClientRect(hWnd, &rcClientReal);
 	#ifdef _DEBUG
 	RECT rcClientMapped = rcClientReal;
-	MapWindowPoints(hWnd, NULL, (LPPOINT)&rcClientMapped, 2);
+	MapWindowPoints(hWnd, nullptr, (LPPOINT)&rcClientMapped, 2);
 	#endif
 
 	// Если "завис" PostUpdate
@@ -814,7 +814,7 @@ bool CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		if (state_changed)
 		{
 			mp_ConEmu->InvalidateFrame();
-			//CFrameHolder::OnPaint(hWnd, NULL, WM_PAINT, lPaintRc);
+			//CFrameHolder::OnPaint(hWnd, nullptr, WM_PAINT, lPaintRc);
 		}
 	}
 	return true;
@@ -865,7 +865,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		NCCALCSIZE_PARAMS* pParm = (NCCALCSIZE_PARAMS*)lParam;
 		if (!pParm)
 		{
-			_ASSERTE(pParm!=NULL);
+			_ASSERTE(pParm!=nullptr);
 			lResult = 0;
 			return true;
 		}
@@ -947,7 +947,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		LPRECT nccr = (LPRECT)lParam;
 		if (!nccr)
 		{
-			_ASSERTE(nccr!=NULL);
+			_ASSERTE(nccr!=nullptr);
 			lResult = 0;
 			return true;
 		}
@@ -1167,7 +1167,7 @@ LRESULT CFrameHolder::DoNcHitTest(const POINT& point, int width, int height, LPA
 //		RECT wr; GetWindowRect(hWnd, &wr);
 //		point.x = (int)(short)LOWORD(lParam) - wr.left;
 //		point.y = (int)(short)HIWORD(lParam) - wr.top;
-//		//MapWindowPoints(NULL, hWnd, &point, 1);
+//		//MapWindowPoints(nullptr, hWnd, &point, 1);
 //
 //		int nTab = mp_ConEmu->TabFromCursor(point);
 //		if (nTab >= 0)
@@ -1208,8 +1208,8 @@ void CFrameHolder::RecalculateFrameSizes()
 	if (mp_ConEmu->DrawType() >= fdt_Themed)
 	{
 	//	//SIZE sz = {}; RECT tmpRc = MakeRect(600,400);
-	//	//HANDLE hTheme = mp_ConEmu->OpenThemeData(NULL, L"WINDOW");
-	//	//HRESULT hr = mp_ConEmu->GetThemePartSize(hTheme, NULL/*dc*/, 18/*WP_CLOSEBUTTON*/, 1/*CBS_NORMAL*/, &tmpRc, 2/*TS_DRAW*/, &sz);
+	//	//HANDLE hTheme = mp_ConEmu->OpenThemeData(nullptr, L"WINDOW");
+	//	//HRESULT hr = mp_ConEmu->GetThemePartSize(hTheme, nullptr/*dc*/, 18/*WP_CLOSEBUTTON*/, 1/*CBS_NORMAL*/, &tmpRc, 2/*TS_DRAW*/, &sz);
 	//	//if (SUCCEEDED(hr))
 	//	//	nCaptionDragHeight = std::max(sz.cy - mn_FrameHeight,10);
 	//	//mp_ConEmu->CloseThemeData(hTheme);

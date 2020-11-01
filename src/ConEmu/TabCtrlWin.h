@@ -100,6 +100,6 @@ private:
 	HWND CreateTabbar();
 	HWND CreateToolbar();
 	void UpdateToolbarPos();
-	LRESULT TabHitTest(bool abForce = false, int* pnOverTabHit = NULL);
+	LRESULT TabHitTest(bool abForce = false, int* pnOverTabHit = nullptr);
 	RECT GetRect();
 };

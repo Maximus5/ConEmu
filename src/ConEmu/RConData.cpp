@@ -45,9 +45,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void ConsoleLinePtr::clear()
 {
-	pChar = NULL;
-	pAttr = NULL;
-	pAttrEx = NULL;
+	pChar = nullptr;
+	pAttr = nullptr;
+	pAttrEx = nullptr;
 	nLen = 0;
 }
 
@@ -60,7 +60,7 @@ bool ConsoleLinePtr::get(int index, wchar_t& chr, CharAttr& atr)
 
 	chr = pChar[index];
 
-	if (pAttrEx != NULL)
+	if (pAttrEx != nullptr)
 	{
 		atr = pAttrEx[index];
 	}
@@ -107,7 +107,7 @@ bool CRConData::Allocate(CRConDataGuard& data, CRealConsole* apRCon, size_t anMa
 	{
 		if (p)
 			delete p;
-		p = NULL;
+		p = nullptr;
 		data.Release();
 		return false;
 	}
@@ -139,13 +139,13 @@ CRConData::CRConData(CRealConsole* apRCon)
 	: mp_RCon(apRCon)
 	, nMaxCells(0)
 	, nWidth(0), nHeight(0)
-	, pConChar(NULL)
-	, pConAttr(NULL)
-	, pDataCmp(NULL)
+	, pConChar(nullptr)
+	, pConAttr(nullptr)
+	, pDataCmp(nullptr)
 	, m_sbi()
 	, bExternal(false)
-	, pszBlock1(NULL)
-	, pcaBlock1(NULL)
+	, pszBlock1(nullptr)
+	, pcaBlock1(nullptr)
 {
 }
 
@@ -153,9 +153,9 @@ CRConData::CRConData(CRealConsole* apRCon, wchar_t* apszBlock1, CharAttr* apcaBl
 	: mp_RCon(apRCon)
 	, nMaxCells(acrSize.X * acrSize.Y)
 	, nWidth(acrSize.X), nHeight(acrSize.Y)
-	, pConChar(NULL)
-	, pConAttr(NULL)
-	, pDataCmp(NULL)
+	, pConChar(nullptr)
+	, pConAttr(nullptr)
+	, pDataCmp(nullptr)
 	, m_sbi(sbi)
 	, bExternal(true)
 	, pszBlock1(apszBlock1)
@@ -227,8 +227,8 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 
 	Assert(pszSrcStart==pszSrc && pnSrcStart==pnSrc);
 
-	const AnnotationInfo *pcolSrc = NULL;
-	const AnnotationInfo *pcolEnd = NULL;
+	const AnnotationInfo *pcolSrc = nullptr;
+	const AnnotationInfo *pcolEnd = nullptr;
 	BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
 
 	if (gpSet->isTrueColorer && TrueMap.IsValid() && pTrueData)
@@ -480,8 +480,8 @@ bool CRConData::GetConsoleLine(int nLine, ConsoleLinePtr& rpLine) const
 		}
 
 		size_t lineShift = nLine * nWidth;
-		rpLine.pChar = pConChar ? (pConChar + lineShift) : NULL;
-		rpLine.pAttr = pConAttr ? (pConAttr + lineShift) : NULL;
+		rpLine.pChar = pConChar ? (pConChar + lineShift) : nullptr;
+		rpLine.pAttr = pConAttr ? (pConAttr + lineShift) : nullptr;
 		rpLine.nLen = nWidth;
 	}
 	else
@@ -493,8 +493,8 @@ bool CRConData::GetConsoleLine(int nLine, ConsoleLinePtr& rpLine) const
 		}
 
 		size_t lineShift = ((m_sbi.srWindow.Top + nLine) * nWidth) + m_sbi.srWindow.Left;
-		rpLine.pChar = pszBlock1 ? (pszBlock1 + lineShift) : NULL;
-		rpLine.pAttrEx = pcaBlock1 ? (pcaBlock1 + lineShift) : NULL;
+		rpLine.pChar = pszBlock1 ? (pszBlock1 + lineShift) : nullptr;
+		rpLine.pAttrEx = pcaBlock1 ? (pcaBlock1 + lineShift) : nullptr;
 		rpLine.nLen = nWidth;
 	}
 
@@ -554,7 +554,7 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 	bool bFarShowColNames = true;
 	bool bFarShowSortLetter = true;
 	bool bFarShowStatus = true;
-	const CEFAR_INFO_MAPPING *pFar = NULL;
+	const CEFAR_INFO_MAPPING *pFar = nullptr;
 	if (mp_RCon->m_FarInfo.cbSize)
 	{
 		pFar = &mp_RCon->m_FarInfo;

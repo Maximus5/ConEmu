@@ -57,13 +57,13 @@ LRESULT CSetPgFarMacro::OnInitDialog(HWND hDlg, bool abInitial)
 		LPCWSTR pszVariants[6];
 	} Macros[] = {
 		{tRClickMacro, gpSet->RClickMacro(fmv_Default),
-			{FarRClickMacroDefault2, FarRClickMacroDefault3, NULL}},
+			{FarRClickMacroDefault2, FarRClickMacroDefault3, nullptr}},
 		{tSafeFarCloseMacro, gpSet->SafeFarCloseMacro(fmv_Default),
-		{FarSafeCloseMacroDefault2, FarSafeCloseMacroDefault3, FarSafeCloseMacroDefaultD2, FarSafeCloseMacroDefaultD3, L"#Close(0)", NULL}},
+		{FarSafeCloseMacroDefault2, FarSafeCloseMacroDefault3, FarSafeCloseMacroDefaultD2, FarSafeCloseMacroDefaultD3, L"#Close(0)", nullptr}},
 		{tCloseTabMacro, gpSet->TabCloseMacro(fmv_Default),
-			{FarTabCloseMacroDefault2, FarTabCloseMacroDefault3, NULL}},
+			{FarTabCloseMacroDefault2, FarTabCloseMacroDefault3, nullptr}},
 		{tSaveAllMacro, gpSet->SaveAllMacro(fmv_Default),
-			{FarSaveAllMacroDefault2, FarSaveAllMacroDefault3, NULL}},
+			{FarSaveAllMacroDefault2, FarSaveAllMacroDefault3, nullptr}},
 		{0}
 	};
 
@@ -88,8 +88,8 @@ INT_PTR CSetPgFarMacro::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	{
 		if ((code == CBN_EDITCHANGE) || (code == CBN_SELCHANGE))
 		{
-			wchar_t** ppszMacro = NULL;
-			LPCWSTR pszDefaultMacro = NULL;
+			wchar_t** ppszMacro = nullptr;
+			LPCWSTR pszDefaultMacro = nullptr;
 			switch (nCtrlId)
 			{
 			case tRClickMacro:

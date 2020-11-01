@@ -115,7 +115,7 @@ struct CEFONT
 		CustomFont* pCustomFont;
 	};
 
-	CEFONT() : iType(CEFONT_NONE), hFont(NULL) {}
+	CEFONT() : iType(CEFONT_NONE), hFont(nullptr) {}
 	CEFONT(HFONT hFont) : iType(CEFONT_GDI), hFont(hFont) {}
 
 	BOOL IsSet() const
@@ -125,9 +125,9 @@ struct CEFONT
 		case CEFONT_NONE:
 			return FALSE;
 		case CEFONT_GDI:
-			return hFont != NULL;
+			return hFont != nullptr;
 		case CEFONT_CUSTOM:
-			return pCustomFont != NULL;
+			return pCustomFont != nullptr;
 		}
 		_ASSERT(0);
 		return FALSE;
@@ -144,7 +144,7 @@ struct CEFONT
 			if (hFont)
 			{
 				result = DeleteObject(hFont);
-				hFont = NULL;
+				hFont = nullptr;
 			}
 			break;
 		case CEFONT_CUSTOM:
@@ -152,7 +152,7 @@ struct CEFONT
 			{
 				result = TRUE;
 				// delete pCustomFont; // instance is owned by OptionsClass
-				pCustomFont = NULL;
+				pCustomFont = nullptr;
 			}
 			break;
 		default:

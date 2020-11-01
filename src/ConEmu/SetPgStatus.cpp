@@ -55,7 +55,7 @@ LRESULT CSetPgStatus::OnInitDialog(HWND hDlg, bool abInitial)
 
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
 	{
-		CSetPgFonts* pFonts = NULL;
+		CSetPgFonts* pFonts = nullptr;
 		if (gpSetCls->GetPageObj(pFonts))
 		{
 			pFonts->CopyFontsTo(hDlg, tStatusFontFace, 0); // можно скопировать список с вкладки [thi_Fonts]
@@ -92,24 +92,24 @@ LRESULT CSetPgStatus::OnInitDialog(HWND hDlg, bool abInitial)
 
 void CSetPgStatus::UpdateStatusItems(HWND hDlg)
 {
-	HWND hAvail = GetDlgItem(hDlg, lbStatusAvailable); _ASSERTE(hAvail!=NULL);
+	HWND hAvail = GetDlgItem(hDlg, lbStatusAvailable); _ASSERTE(hAvail!=nullptr);
 	INT_PTR iMaxAvail = -1, iCurAvail = SendMessage(hAvail, LB_GETCURSEL, 0, 0);
 	DEBUGTEST(INT_PTR iCountAvail = SendMessage(hAvail, LB_GETCOUNT, 0, 0));
-	HWND hSeltd = GetDlgItem(hDlg, lbStatusSelected); _ASSERTE(hSeltd!=NULL);
+	HWND hSeltd = GetDlgItem(hDlg, lbStatusSelected); _ASSERTE(hSeltd!=nullptr);
 	INT_PTR iMaxSeltd = -1, iCurSeltd = SendMessage(hSeltd, LB_GETCURSEL, 0, 0);
 	DEBUGTEST(INT_PTR iCountSeltd = SendMessage(hSeltd, LB_GETCOUNT, 0, 0));
 
 	SendMessage(hAvail, LB_RESETCONTENT, 0, 0);
 	SendMessage(hSeltd, LB_RESETCONTENT, 0, 0);
 
-	StatusColInfo* pColumns = NULL;
+	StatusColInfo* pColumns = nullptr;
 	size_t nCount = CStatus::GetAllStatusCols(&pColumns);
-	_ASSERTE(pColumns!=NULL);
+	_ASSERTE(pColumns!=nullptr);
 
 	for (size_t i = 0; i < nCount; i++)
 	{
 		CEStatusItems nID = pColumns[i].nID;
-		if ((nID == csi_Info) || (pColumns[i].sSettingName == NULL))
+		if ((nID == csi_Info) || (pColumns[i].sSettingName == nullptr))
 			continue;
 
 		if (gpSet->isStatusColumnHidden[nID])

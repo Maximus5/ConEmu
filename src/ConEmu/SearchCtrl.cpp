@@ -73,22 +73,22 @@ struct CEIconHintOthers
 	WNDPROC  lpPrevWndFunc;
 };
 
-static MMap<HWND,CEIconHintInfo>* gpIconHints = NULL;
-static MMap<HWND,CEIconHintOthers>* gpIconOthers = NULL;
+static MMap<HWND,CEIconHintInfo>* gpIconHints = nullptr;
+static MMap<HWND,CEIconHintOthers>* gpIconOthers = nullptr;
 // Map the font height (actually CEIconHintInfo.iRes) to hFont and pIcon
-static MMap<int,CEIconDrawHandles>* gpIconHandles = NULL;
+static MMap<int,CEIconDrawHandles>* gpIconHandles = nullptr;
 
 // Returns the index (new or existing) in the gpIconHandles
-static int EditIconHintCreateHandles(HWND hEditCtrl, CToolImg** pIcon = NULL, HFONT* phFont = NULL)
+static int EditIconHintCreateHandles(HWND hEditCtrl, CToolImg** pIcon = nullptr, HFONT* phFont = nullptr)
 {
 	if (pIcon)
-		*pIcon = NULL;
+		*pIcon = nullptr;
 	if (phFont)
-		*phFont = NULL;
+		*phFont = nullptr;
 
 	if (!gpIconHandles)
 	{
-		_ASSERTE(gpIconHandles!=NULL && "Must be already initialized!");
+		_ASSERTE(gpIconHandles!=nullptr && "Must be already initialized!");
 		return 0;
 	}
 
@@ -99,7 +99,7 @@ static int EditIconHintCreateHandles(HWND hEditCtrl, CToolImg** pIcon = NULL, HF
 	//CreateFont(nFontHeight, 0, 0, 0, FW_NORMAL, TRUE/*Italic*/, FALSE, 0,
 	//           DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
 	//           L"Tahoma");
-	if ((hf == NULL)
+	if ((hf == nullptr)
 		|| (GetObject(hf, sizeof(lf), &lf) <= 0))
 	{
 		ZeroStruct(lf);
@@ -131,7 +131,7 @@ static int EditIconHintCreateHandles(HWND hEditCtrl, CToolImg** pIcon = NULL, HF
 		dh.hFont = CreateFontIndirect(&lf);
 		if (!dh.hFont)
 		{
-			_ASSERTE(dh.hFont!=NULL);
+			_ASSERTE(dh.hFont!=nullptr);
 			return 0;
 		}
 
@@ -153,7 +153,7 @@ static bool EditIconHintGetHandles(int iRes, CEIconDrawHandles& dh)
 
 	if (!gpIconHandles)
 	{
-		_ASSERTE(gpIconHandles!=NULL && "Must be already initialized!");
+		_ASSERTE(gpIconHandles!=nullptr && "Must be already initialized!");
 		return false;
 	}
 
@@ -169,7 +169,7 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 {
 	LRESULT lRc = 0;
 
-	_ASSERTE(p!=NULL);
+	_ASSERTE(p!=nullptr);
 
 	CEIconDrawHandles dh = {};
 	gpIconHandles->Get(p->iRes, &dh);
@@ -274,7 +274,7 @@ static bool EditIconHintOverIcon(HWND hEditCtrl, CEIconHintInfo* p, LPARAM* lpPa
 	else
 	{
 		GetCursorPos(&ptCur);
-		MapWindowPoints(NULL, hEditCtrl, &ptCur, 1);
+		MapWindowPoints(nullptr, hEditCtrl, &ptCur, 1);
 	}
 
 	bool bOverIcon = (PtInRect(&rcClient, ptCur) != 0);
@@ -329,12 +329,12 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 		if (gpIconHandles->Get(hi.iRes, &dh) && dh.pIcon)
 		{
 			// Cursor over icon?
-			if (EditIconHintOverIcon(hEditCtrl, &hi, (Msg==WM_SETCURSOR)?NULL:&lParam))
+			if (EditIconHintOverIcon(hEditCtrl, &hi, (Msg==WM_SETCURSOR)?nullptr:&lParam))
 			{
 				switch (Msg)
 				{
 				case WM_SETCURSOR:
-					SetCursor(LoadCursor(NULL, IDC_ARROW));
+					SetCursor(LoadCursor(nullptr, IDC_ARROW));
 					lRc = TRUE;
 					break;
 				default:
@@ -349,7 +349,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 			else if (Msg != WM_SETCURSOR)
 			{
 				// Redraw search icon
-				SetTimer(hEditCtrl, SEARCH_CTRL_REFRID, SEARCH_CTRL_REFR, NULL);
+				SetTimer(hEditCtrl, SEARCH_CTRL_REFRID, SEARCH_CTRL_REFR, nullptr);
 			}
 		}
 		break;
@@ -364,7 +364,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 			MSetter lSet(&lInCall);
 			// Find control under mouse cursor
 			POINT ptCur = {}; GetCursorPos(&ptCur);
-			HWND hPrevParent = NULL;
+			HWND hPrevParent = nullptr;
 			HWND hParent = hi.hRootDlg;
 			if (hParent)
 			{
@@ -377,7 +377,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 				if (lstrcmp(szClass, L"#32770") == 0)
 				{
 					// Find first control with VScroll
-					HWND hSubItem = NULL;
+					HWND hSubItem = nullptr;
 					EnumChildWindows(hCtrlOver, EditIconHint_FindScrollCtrl, (LPARAM)&hSubItem);
 					hCtrlOver = hSubItem;
 				}
@@ -437,7 +437,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 				dwStyle = GetWindowLong(hDefBtn, GWL_STYLE);
 				SetWindowLong(hDefBtn, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
 			}
-			::InvalidateRect(hDefBtn, NULL, FALSE);
+			::InvalidateRect(hDefBtn, nullptr, FALSE);
 		}
 		break;
 
@@ -548,7 +548,7 @@ bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, I
 					{
 					case EN_UPDATE:
 						// Redraw search icon
-						SetTimer(hEdit, SEARCH_CTRL_REFRID, SEARCH_CTRL_REFR, NULL);
+						SetTimer(hEdit, SEARCH_CTRL_REFRID, SEARCH_CTRL_REFR, nullptr);
 						break;
 					case EN_CHANGE:
 						// Start search delay on typing
@@ -587,9 +587,9 @@ bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, I
 	case UM_FILTER_FOCUS:
 		{
 			CEIconHintInfo hi = {};
-			HWND h = NULL;
+			HWND h = nullptr;
 			BOOL bSearch = (messg == UM_SEARCH_FOCUS);
-			while (gpIconHints->GetNext(h ? &h : NULL, &h, &hi))
+			while (gpIconHints->GetNext(h ? &h : nullptr, &h, &hi))
 			{
 				if ((hi.bSearchIcon == bSearch)
 					&& (hi.hRootDlg == hDlg)
@@ -676,19 +676,19 @@ static LRESULT WINAPI EditIconHintOtherProc(HWND hCtrl, UINT Msg, WPARAM wParam,
 
 static BOOL CALLBACK EditIconHint_Enum(HWND hCtrl, LPARAM lParam)
 {
-	if (!gpIconHints || gpIconHints->Get(hCtrl, NULL))
+	if (!gpIconHints || gpIconHints->Get(hCtrl, nullptr))
 		return TRUE;
-	if (!gpIconOthers || gpIconOthers->Get(hCtrl, NULL))
+	if (!gpIconOthers || gpIconOthers->Get(hCtrl, nullptr))
 		return TRUE;
 	CEIconHintOthers add = {hCtrl, (HWND)lParam};
-	if ((add.lpPrevWndFunc = (WNDPROC)SetWindowLongPtr(hCtrl, GWLP_WNDPROC, (LONG_PTR)EditIconHintOtherProc)) != NULL)
+	if ((add.lpPrevWndFunc = (WNDPROC)SetWindowLongPtr(hCtrl, GWLP_WNDPROC, (LONG_PTR)EditIconHintOtherProc)) != nullptr)
 	{
 		gpIconOthers->Set(hCtrl, add);
 	}
 	return TRUE;
 }
 
-void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg /*= NULL*/)
+void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg /*= nullptr*/)
 {
 	if (!hRootDlg)
 		hRootDlg = hDlg;
@@ -720,15 +720,15 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 
 	CEIconHintInfo hi = {hEditCtrl, hRootDlg};
 	hi.lpPrevWndFunc = (WNDPROC)GetWindowLongPtr(hEditCtrl, GWLP_WNDPROC);
-	_ASSERTE(hi.lpPrevWndFunc!=NULL);
+	_ASSERTE(hi.lpPrevWndFunc!=nullptr);
 	if (sHint)
 	{
 		lstrcpyn(hi.sHint, sHint, countof(hi.sHint));
 		hi.clrHint = GetSysColor(COLOR_GRAYTEXT);
 	}
-	CToolImg* pIcon = NULL;
-	hi.iRes = EditIconHintCreateHandles(hEditCtrl, bSearchIcon ? &pIcon : NULL);
-	hi.bSearchIcon = (pIcon != NULL);
+	CToolImg* pIcon = nullptr;
+	hi.iRes = EditIconHintCreateHandles(hEditCtrl, bSearchIcon ? &pIcon : nullptr);
+	hi.bSearchIcon = (pIcon != nullptr);
 	DWORD_PTR nMargins = SendMessage(hEditCtrl, EM_GETMARGINS, 0, 0);
 	hi.nMargins = (DWORD)nMargins;
 	hi.nSearchMsg = nSearchMsg;
@@ -749,5 +749,5 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 
 	// Done
 	if (bRedraw)
-		InvalidateRect(hEditCtrl, NULL, TRUE);
+		InvalidateRect(hEditCtrl, nullptr, TRUE);
 }

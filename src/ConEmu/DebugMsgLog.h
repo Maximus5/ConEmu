@@ -269,18 +269,18 @@ void DebugLogFile(LPCSTR asMessage)
 
 	HANDLE hLogFile = INVALID_HANDLE_VALUE;
 
-	if (LogFilePath==NULL)
+	if (LogFilePath==nullptr)
 	{
 		//WCHAR LogFilePath[MAX_PATH+1];
 		LogFilePath = (WCHAR*)calloc(MAX_PATH+1,sizeof(WCHAR));
 		GetModuleFileNameW(0,LogFilePath,MAX_PATH);
 		WCHAR* pszDot = wcsrchr(LogFilePath, L'.');
 		lstrcpyW(pszDot, L".log");
-		hLogFile = CreateFileW(LogFilePath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		hLogFile = CreateFileW(LogFilePath, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	}
 	else
 	{
-		hLogFile = CreateFileW(LogFilePath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		hLogFile = CreateFileW(LogFilePath, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	}
 
 	if (hLogFile!=INVALID_HANDLE_VALUE)
@@ -291,8 +291,8 @@ void DebugLogFile(LPCSTR asMessage)
 		GetLocalTime(&st);
 		char szWhole[32];
 		wsprintfA(szWhole, "%02i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-		WriteFile(hLogFile, szWhole, lstrlenA(szWhole), &dwSize, NULL);
-		WriteFile(hLogFile, asMessage, lstrlenA(asMessage), &dwSize, NULL);
+		WriteFile(hLogFile, szWhole, lstrlenA(szWhole), &dwSize, nullptr);
+		WriteFile(hLogFile, asMessage, lstrlenA(asMessage), &dwSize, nullptr);
 		CloseHandle(hLogFile);
 	}
 }

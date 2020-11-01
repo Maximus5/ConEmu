@@ -37,8 +37,8 @@ class CDpiForDialog;
 class CHotKeyDialog
 {
 private:
-	HWND mh_Dlg = NULL;
-	HWND mh_Parent = NULL;
+	HWND mh_Dlg = nullptr;
+	HWND mh_Parent = nullptr;
 	ConEmuHotKey m_HK = {};
 	CDpiForDialog* mp_DpiAware = nullptr;
 public:

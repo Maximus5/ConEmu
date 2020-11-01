@@ -54,7 +54,7 @@ bool OleInitializer::Initialize()
 	if (isInitialized())
 		return true;
 
-	initialized = OleInitialize(NULL);
+	initialized = OleInitialize(nullptr);
 	return isInitialized();
 }
 

@@ -112,23 +112,23 @@ void CFormatCopy::RawAdd(LPCWSTR asText, INT_PTR cchLen)
 	}
 }
 
-HGLOBAL CFormatCopy::CreateResultInternal(const char* pszHdr /*= NULL*/, INT_PTR nHdrLen /*= 0*/)
+HGLOBAL CFormatCopy::CreateResultInternal(const char* pszHdr /*= nullptr*/, INT_PTR nHdrLen /*= 0*/)
 {
 	INT_PTR nCharCount = (nHdrLen/*Header*/ + mn_AllItemsLen + 3);
 	HGLOBAL hCopy = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, (nCharCount + 1) * (bCopyRawCodes ? sizeof(wchar_t) : sizeof(char)));
 
 	if (!hCopy)
 	{
-		Assert(hCopy != NULL);
+		Assert(hCopy != nullptr);
 	}
 	else if (bCopyRawCodes)
 	{
 		wchar_t* pch = (wchar_t*)GlobalLock(hCopy);
 		if (!pch)
 		{
-			Assert(pch != NULL);
+			Assert(pch != nullptr);
 			GlobalFree(hCopy);
-			hCopy = NULL;
+			hCopy = nullptr;
 		}
 		else
 		{
@@ -149,9 +149,9 @@ HGLOBAL CFormatCopy::CreateResultInternal(const char* pszHdr /*= NULL*/, INT_PTR
 		char* pch = (char*)GlobalLock(hCopy);
 		if (!pch)
 		{
-			Assert(pch != NULL);
+			Assert(pch != nullptr);
 			GlobalFree(hCopy);
-			hCopy = NULL;
+			hCopy = nullptr;
 		}
 		else
 		{
@@ -343,7 +343,7 @@ HGLOBAL CHtmlCopy::CreateResult()
 	}
 
 	// Just compile all string to one block
-	HGLOBAL hCopy = CreateResultInternal(bCopyRawCodes ? NULL : szHdr, nHdrLen);
+	HGLOBAL hCopy = CreateResultInternal(bCopyRawCodes ? nullptr : szHdr, nHdrLen);
 	return hCopy;
 }
 
@@ -521,6 +521,6 @@ HGLOBAL CAnsiCopy::CreateResult()
 	}
 
 	// Just compile all string to one block
-	HGLOBAL hCopy = CreateResultInternal(NULL, 0);
+	HGLOBAL hCopy = CreateResultInternal(nullptr, 0);
 	return hCopy;
 }

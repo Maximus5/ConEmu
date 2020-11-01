@@ -61,7 +61,7 @@ namespace PipeServerLogger
 
 CGuiServer::CGuiServer()
 {
-	//mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
+	//mn_GuiServerThreadId = 0; mh_GuiServerThread = nullptr; mh_GuiServerThreadTerminate = nullptr;
 	mp_GuiServer = (PipeServer<CESERVER_REQ>*)calloc(1, sizeof(*mp_GuiServer));
 	mp_GuiServer->SetMaxCount(2);
 	ms_ServerPipe[0] = 0;
@@ -93,18 +93,18 @@ bool CGuiServer::Start()
 	mp_GuiServerPID->SetLoopCommands(false);
 	mp_GuiServerPID->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-	PipeServer<CESERVER_REQ>::PipeServerConnected_t lpfnOnConnected = NULL;
+	PipeServer<CESERVER_REQ>::PipeServerConnected_t lpfnOnConnected = nullptr;
 	#ifdef _DEBUG
 	lpfnOnConnected = CGuiServer::OnGuiServerConnected;
 	#endif
 
-	if (!mp_GuiServer->StartPipeServer(false, ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
+	if (!mp_GuiServer->StartPipeServer(false, ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, nullptr))
 	{
 		// Ошибка уже показана
 		return false;
 	}
 
-	mp_GuiServerPID->StartPipeServer(false, ms_ServerPipePID, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL);
+	mp_GuiServerPID->StartPipeServer(false, ms_ServerPipePID, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, nullptr);
 
 	return true;
 }
@@ -121,7 +121,7 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 		if (abDeinitialize)
 		{
 			free(mp_GuiServer);
-			mp_GuiServer = NULL;
+			mp_GuiServer = nullptr;
 		}
 
 		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer - done");
@@ -136,7 +136,7 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 		if (abDeinitialize)
 		{
 			free(mp_GuiServerPID);
-			mp_GuiServerPID = NULL;
+			mp_GuiServerPID = nullptr;
 		}
 
 		ShutdownGuiStep(L"mp_GuiServerPID->StopPipeServer - done");
@@ -177,7 +177,7 @@ static bool AllocateStartStopRet(CECMD cmd, CESERVER_REQ_SRVSTARTSTOPRET& Ret, C
 		else
 		{
 			_ASSERTE(ppReply->SrvStartStopRet.EnvCommands.cchCount == 0);
-			_ASSERTE(Ret.EnvCommands.psz == NULL);
+			_ASSERTE(Ret.EnvCommands.psz == nullptr);
 		}
 
 		// Current VCon Palette name
@@ -201,14 +201,14 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 	if (!pGSrv)
 	{
-		_ASSERTE(((CGuiServer*)lParam)!=NULL);
+		_ASSERTE(((CGuiServer*)lParam)!=nullptr);
 		pGSrv = &gpConEmu->m_GuiServer;
 	}
 
 	if (pIn->hdr.bAsync)
 		pGSrv->mp_GuiServer->BreakConnection(pInst);
 
-	CSetPgDebug::debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv ? pGSrv->ms_ServerPipe : NULL);
+	CSetPgDebug::debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv ? pGSrv->ms_ServerPipe : nullptr);
 
 	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
@@ -221,7 +221,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		wchar_t szMsg[128];
 		msprintf(szMsg, countof(szMsg), L"CGuiServer::GuiServerCommand.\nGUI TID=%u\nSrcPID=%u, SrcTID=%u, Cmd=%u",
 			GetCurrentThreadId(), pIn->hdr.nSrcPID, pIn->hdr.nSrcThreadId, pIn->hdr.nCmd);
-		MsgBox(szMsg, MB_ICONINFORMATION, NULL, NULL, false);
+		MsgBox(szMsg, MB_ICONINFORMATION, nullptr, nullptr, false);
 	}
 	#endif
 
@@ -233,7 +233,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			DEBUGSTRCMD(L"GUI recieved CECMD_NEWCMD\n");
 
 			LPCWSTR pszCommand = pIn->NewCmd.GetCommand();
-			_ASSERTE(pszCommand!=NULL && "Must be at least empty string but NOT NULL");
+			_ASSERTE(pszCommand!=nullptr && "Must be at least empty string but NOT nullptr");
 
 			if (pIn->NewCmd.isAdvLogging && !gpSet->isLogging())
 			{
@@ -440,7 +440,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					{
 						MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
 
-						HWND hWndDC = NULL;
+						HWND hWndDC = nullptr;
 
 						DWORD nServerPID = pArg->nSrcPID;
 						HWND  hWndCon = pArg->hConWnd;
@@ -455,9 +455,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 						UNREFERENCED_PARAMETER(hWndCon);
 
 						pArg->timeFin = timeGetTime();
-						if (hWndDC == NULL)
+						if (hWndDC == nullptr)
 						{
-							_ASSERTE(hWndDC!=NULL);
+							_ASSERTE(hWndDC!=nullptr);
 						}
 						else
 						{
@@ -481,7 +481,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 				HWND hWndDC = arg.Ret.Info.hWndDc;
 				HWND hWndBack = arg.Ret.Info.hWndBack;
-				_ASSERTE(hWndDC!=NULL);
+				_ASSERTE(hWndDC!=nullptr);
 
 				#ifdef _DEBUG
 				DWORD dwErr = GetLastError(), nEndTick = timeGetTime(), nDelta = nEndTick - nStartTick;
@@ -505,7 +505,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
 				// Процесс сервера завершается
-				CRealConsole* pRCon = NULL;
+				CRealConsole* pRCon = nullptr;
 				CVConGuard VCon;
 
 				for (size_t i = 0;; i++)
@@ -518,7 +518,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					{
 						break;
 					}
-					pRCon = NULL;
+					pRCon = nullptr;
 				}
 
 				gpConEmu->mn_ShellExitCode = pIn->SrvStartStop.nShellExitCode;
@@ -549,7 +549,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//               pOut,         // buffer to write from
 			//               pOut->hdr.cbSize,  // number of bytes to write
 			//               &cbWritten,   // number of bytes written
-			//               NULL);        // not overlapped I/O
+			//               nullptr);        // not overlapped I/O
 
 			//ExecuteFreeResult(pOut);
 			break;
@@ -557,7 +557,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_ASSERT:
 		{
-			DWORD nBtn = MsgBox(pIn->AssertInfo.szDebugInfo, pIn->AssertInfo.nBtns, pIn->AssertInfo.szTitle, NULL, false);
+			DWORD nBtn = MsgBox(pIn->AssertInfo.szDebugInfo, pIn->AssertInfo.nBtns, pIn->AssertInfo.szTitle, nullptr, false);
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
@@ -574,7 +574,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//               pIn,         // buffer to write from
 			//               pIn->hdr.cbSize,  // number of bytes to write
 			//               &cbWritten,   // number of bytes written
-			//               NULL);        // not overlapped I/O
+			//               nullptr);        // not overlapped I/O
 			break;
 		} // CECMD_ASSERT
 
@@ -590,12 +590,12 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//Out.AttachGuiApp = pIn->AttachGuiApp;
 
 			#ifdef SHOW_GUIATTACH_START
-			if (pIn->AttachGuiApp.hWindow == NULL)
+			if (pIn->AttachGuiApp.hWindow == nullptr)
 			{
 				wchar_t szDbg[1024];
 				swprintf_c(szDbg, L"AttachGuiApp requested from:\n%s\nPID=%u", pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
 				//MBoxA(szDbg);
-				MsgBox(szDbg, MB_SYSTEMMODAL, L"ConEmu", NULL, false);
+				MsgBox(szDbg, MB_SYSTEMMODAL, L"ConEmu", nullptr, false);
 			}
 			#endif
 
@@ -612,11 +612,11 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				//ppReply->AttachGuiApp.rcWindow.right -= ppReply->AttachGuiApp.rcWindow.left;
 				//ppReply->AttachGuiApp.rcWindow.bottom -= ppReply->AttachGuiApp.rcWindow.top;
 				//ppReply->AttachGuiApp.rcWindow.left = ppReply->AttachGuiApp.rcWindow.top = 0;
-				////MapWindowPoints(NULL, hBack, (LPPOINT)&ppReply->AttachGuiApp.rcWindow, 2);
+				////MapWindowPoints(nullptr, hBack, (LPPOINT)&ppReply->AttachGuiApp.rcWindow, 2);
 				//pRCon->CorrectGuiChildRect(ppReply->AttachGuiApp.nStyle, ppReply->AttachGuiApp.nStyleEx, ppReply->AttachGuiApp.rcWindow);
 
 				// Уведомить RCon и ConEmuC, что гуй подцепился
-				// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
+				// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==nullptr, второй - после фактического создания окна
 				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID, pIn->hdr.nBits, rcPrev);
 
 				ppReply->AttachGuiApp.nFlags = agaf_Success | (pRCon->isActive(false) ? 0 : agaf_Inactive);
@@ -645,7 +645,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//               &Out,         // buffer to write from
 			//               Out.hdr.cbSize,  // number of bytes to write
 			//               &cbWritten,   // number of bytes written
-			//               NULL);        // not overlapped I/O
+			//               nullptr);        // not overlapped I/O
 			break;
 		} // CECMD_ATTACHGUIAPP
 
@@ -667,7 +667,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			// Допустимо, если GuiMacro пытаются выполнить извне
 			CVConGuard VCon;
-			CRealConsole* pRCon = NULL;
+			CRealConsole* pRCon = nullptr;
 
 			#if 0
 			// GuiMacro may come from API before GUI initialization finishes
@@ -718,7 +718,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			// Logging will be done in the CRealServer::cmdStartStop
 
-			CRealServer* pRSrv = NULL;
+			CRealServer* pRSrv = nullptr;
 			CVConGuard VCon;
 
 			DWORD nSrvPID = pIn->hdr.nSrcPID;
@@ -794,7 +794,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	//// Освободить память
 	//if (pIn && (LPVOID)pIn != (LPVOID)&in)
 	//{
-	//	free(pIn); pIn = NULL;
+	//	free(pIn); pIn = nullptr;
 	//}
 wrap:
 	return lbRc;

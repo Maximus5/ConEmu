@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgMarkCopy.h"
 
 CSetPgMarkCopy::CSetPgMarkCopy()
-	: mf_MarkCopyPreviewProc(NULL)
+	: mf_MarkCopyPreviewProc(nullptr)
 {
 }
 
@@ -115,7 +115,7 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 	unsigned idxBack = CONBACKCOLOR(gpSet->isCTSColorIndex);
 	unsigned idxFore = CONFORECOLOR(gpSet->isCTSColorIndex);
 	RECT rcClient = {};
-	CSetPgMarkCopy* pPage = NULL;
+	CSetPgMarkCopy* pPage = nullptr;
 
 	switch (uMsg)
 	{
@@ -132,10 +132,10 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 		FillRect(hdc, &rcClient, hbr);
 		if (uMsg == WM_PAINT)
 		{
-			HFONT hOld = NULL;
-			HFONT hNew = NULL;
+			HFONT hOld = nullptr;
+			HFONT hNew = nullptr;
 			CFontPtr pFont;
-			if (gpFontMgr->QueryFont(fnt_Normal, NULL, pFont) && (pFont->iType == CEFONT_GDI))
+			if (gpFontMgr->QueryFont(fnt_Normal, nullptr, pFont) && (pFont->iType == CEFONT_GDI))
 				hNew = pFont->hFont;
 			else
 				hNew = (HFONT)SendMessage(GetParent(hCtrl), WM_GETFONT, 0, 0);
@@ -206,7 +206,7 @@ INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				UINT nFore = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSForeIdx, CSetDlgLists::eColorIdx16, nFore);
 				gpSet->isCTSColorIndex = MAKECONCOLOR((nFore & 0xF), CONBACKCOLOR(gpSet->isCTSColorIndex));
-				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), NULL, FALSE);
+				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), nullptr, FALSE);
 				gpConEmu->Update(true);
 			} break;
 		case lbCTSBackIdx:
@@ -214,7 +214,7 @@ INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				UINT nBack = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSBackIdx, CSetDlgLists::eColorIdx16, nBack);
 				gpSet->isCTSColorIndex = MAKECONCOLOR(CONFORECOLOR(gpSet->isCTSColorIndex), (nBack & 0xF));
-				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), NULL, FALSE);
+				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), nullptr, FALSE);
 				gpConEmu->Update(true);
 			} break;
 		default:

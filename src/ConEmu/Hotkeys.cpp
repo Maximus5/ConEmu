@@ -225,7 +225,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t(&szFull)[128], bool bShowNone /*= tr
 LPCWSTR ConEmuHotKey::CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1, LPCWSTR asDescr2, CEStr& rsWarning)
 {
 	CEStr lsFmt(CLngRc::getRsrc(lng_HotkeyDuplicated/*"Hotkey <%s> is not unique"*/));
-	wchar_t* ptrPoint = lsFmt.ms_Val ? (wchar_t*)wcsstr(lsFmt.ms_Val, L"%s") : NULL;
+	wchar_t* ptrPoint = lsFmt.ms_Val ? (wchar_t*)wcsstr(lsFmt.ms_Val, L"%s") : nullptr;
 	if (!ptrPoint)
 	{
 		rsWarning.Attach(lstrmerge(L"Hotkey <", asHotkey, L"> is not unique",

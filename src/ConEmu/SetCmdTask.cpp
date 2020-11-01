@@ -73,7 +73,7 @@ void CommandTasks::SetName(LPCWSTR asName, int anCmdIndex)
 		pszName = static_cast<wchar_t*>(malloc(cchNameMax*sizeof(wchar_t)));
 		if (!pszName)
 		{
-			_ASSERTE(pszName!=NULL);
+			_ASSERTE(pszName!=nullptr);
 			return;
 		}
 	}
@@ -111,7 +111,7 @@ bool CommandTasks::SetGuiArg(LPCWSTR asGuiArg)
 		wchar_t* pszNew = static_cast<wchar_t*>(malloc(cchNew * sizeof(wchar_t)));
 		if (!pszNew)
 		{
-			_ASSERTE(pszNew!=NULL);
+			_ASSERTE(pszNew!=nullptr);
 			return false;
 		}
 		std::swap(pszNew, pszGuiArgs);
@@ -141,7 +141,7 @@ bool CommandTasks::SetCommands(LPCWSTR asCommands)
 		wchar_t* pszNew = static_cast<wchar_t*>(malloc(cchNew * sizeof(wchar_t)));
 		if (!pszNew)
 		{
-			_ASSERTE(pszNew!=NULL);
+			_ASSERTE(pszNew!=nullptr);
 			return false;
 		}
 		std::swap(pszNew, pszCommands);
@@ -158,7 +158,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 {
 	if (!pArgs)
 	{
-		_ASSERTE(pArgs!=NULL);
+		_ASSERTE(pArgs!=nullptr);
 		return;
 	}
 
@@ -271,7 +271,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	//	goto wrap;
 	//}
 
-	_ASSERTE(pszName == NULL && pszGuiArgs == NULL && pszCommands == NULL);
+	_ASSERTE(pszName == nullptr && pszGuiArgs == nullptr && pszCommands == nullptr);
 
 	this->SetName(pszNameSet, iIndex);
 

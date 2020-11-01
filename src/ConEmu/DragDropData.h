@@ -133,7 +133,7 @@ class CDragDropData
 		bool IsDragImageOsSupported();
 	protected:
 		ITEMIDLIST m_DesktopID;
-		void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
+		void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = nullptr);
 		//DragImageBits m_BitsInfo;
 		//HWND mh_Overlapped;
 		//HDC mh_BitsDC;

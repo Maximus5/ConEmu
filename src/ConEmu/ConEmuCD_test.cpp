@@ -301,9 +301,9 @@ TEST_F(ServerDllTest, RunGuiMacro_CMD_NoPrint)
 		swprintf_s(command, L"-GuiMacro:x%p IsConEmu", hByConEmuHWND);
 
 		const auto macroRc = consoleMain3(ConsoleMainMode::GuiMacro, command);
-		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=nullptr";
 		EXPECT_TRUE(capture.GetTopString().empty());
-		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
+		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=nullptr";
 	}
 }
 
@@ -326,9 +326,9 @@ TEST_F(ServerDllTest, RunGuiMacro_CMD_Print)
 		swprintf_s(command, L"-GuiMacro:x%p IsConEmu", hByConEmuHWND);
 
 		const auto macroRc = consoleMain3(ConsoleMainMode::Normal, command);
-		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=nullptr";
 		EXPECT_EQ(std::wstring(L"Yes"), capture.GetTopString()) << "should print to console";
-		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
+		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=nullptr";
 	}
 }
 
@@ -373,9 +373,9 @@ TEST_F(ServerDllTest, RunGuiMacro_API)
 		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 		swprintf_s(szInstance, L"0x%p", static_cast<void*>(hTopConEmu));
 		const auto macroRc = guiMacro(szInstance, L"IsConEmu", nullptr);
-		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=nullptr";
 		EXPECT_TRUE(capture.GetTopString().empty());
-		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
+		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=nullptr";
 	}
 
 	// With BSTR result
@@ -384,8 +384,8 @@ TEST_F(ServerDllTest, RunGuiMacro_API)
 		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 		BSTR result = nullptr;
 		const auto macroRc = guiMacro(szInstance, L"IsConEmu", &result);
-		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=NULL";
-		EXPECT_EQ(nullptr, GetEnvVar()) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=nullptr";
+		EXPECT_EQ(nullptr, GetEnvVar()) << "hByConEmuHWND!=nullptr";
 		EXPECT_TRUE(capture.GetTopString().empty());
 		EXPECT_STREQ(L"Yes", result);
 		SysFreeString(result);
@@ -396,9 +396,9 @@ TEST_F(ServerDllTest, RunGuiMacro_API)
 	{
 		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 		const auto macroRc = guiMacro(szInstance, L"IsConEmu", static_cast<BSTR*>(INVALID_HANDLE_VALUE));
-		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=nullptr";
 		EXPECT_TRUE(capture.GetTopString().empty());
-		EXPECT_EQ(nullptr, GetEnvVar()) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(nullptr, GetEnvVar()) << "hByConEmuHWND!=nullptr";
 	}
 }
 

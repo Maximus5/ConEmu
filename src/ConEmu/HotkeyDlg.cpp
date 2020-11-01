@@ -75,7 +75,7 @@ DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/
 	DWORD nCtrlMods = HIBYTE(LOWORD(nCtrlValue));
 
 	bool bList = false;
-	const ListBoxItem* pItems = NULL;
+	const ListBoxItem* pItems = nullptr;
 	unsigned nKeyCount = CSetDlgLists::GetListItems(CSetDlgLists::eKeysHot, pItems);
 	for (size_t i = 0; i < nKeyCount; i++)
 	{
@@ -125,7 +125,7 @@ void CHotKeyDialog::FillModifierBoxes(const ConEmuHotKey& HK, HWND hDlg)
 
 INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	CHotKeyDialog* pDlg = NULL;
+	CHotKeyDialog* pDlg = nullptr;
 	if (messg == WM_INITDIALOG)
 	{
 		pDlg = (CHotKeyDialog*)lParam;

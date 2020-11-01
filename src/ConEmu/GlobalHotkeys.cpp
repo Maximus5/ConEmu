@@ -197,7 +197,7 @@ void GlobalHotkeys::RegisterHooks()
 							sprintf_c(szErr, "GlobalHotkeys::RegisterHooks() failed, Code=%u", dwErr);
 							if (pLogger) pLogger->LogString(szErr, TRUE);
 						}
-						_ASSERTE(mh_LLKeyHook!=NULL);
+						_ASSERTE(mh_LLKeyHook!=nullptr);
 					}
 					else
 					{
@@ -570,5 +570,5 @@ void GlobalHotkeys::UpdateActiveGhost(CVirtualConsole* apVCon) const
 
 void GlobalHotkeys::OnTerminate() const
 {
-	_ASSERTE(mh_LLKeyHookDll==NULL);
+	_ASSERTE(mh_LLKeyHookDll==nullptr);
 }

@@ -50,9 +50,9 @@ CRunQueue::CRunQueue()
 
 	mn_ThreadId = 0;
 	mb_Terminate = false;
-	mh_AdvanceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	mh_AdvanceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	// Don't start Queue processor now, wait until MainWindow is created
-	mh_Thread = NULL; mn_ThreadId = 0;
+	mh_Thread = nullptr; mn_ThreadId = 0;
 }
 
 CRunQueue::~CRunQueue()
@@ -73,12 +73,12 @@ void CRunQueue::StartQueue()
 
 	if (mh_Thread)
 	{
-		_ASSERTE(mh_Thread == NULL);
+		_ASSERTE(mh_Thread == nullptr);
 		return;
 	}
 
 	mh_Thread = apiCreateThread(RunQueueThreadHelper, this, &mn_ThreadId, "RunQueueThreadHelper");
-	_ASSERTE(mh_Thread != NULL);
+	_ASSERTE(mh_Thread != nullptr);
 
 	// Don't wait, start first RCon immediately
 	AdvanceQueue();

@@ -84,7 +84,7 @@ class CConEmuChild
 		void OnAlwaysShowScrollbar(bool abSync = true);
 
 		int IsDcLocked(RECT* CurrentConLockedRect);
-		void LockDcRect(bool bLock, RECT* Rect = NULL);
+		void LockDcRect(bool bLock, RECT* Rect = nullptr);
 
 		void SetAutoCopyTimer(bool bEnabled);
 

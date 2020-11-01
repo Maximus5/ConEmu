@@ -48,13 +48,13 @@ CToolBarClass::CToolBarClass()
 	mn_SeparatorWidth = 2;
 	mn_PaddingWidth = 4;
 	mn_DropArrowWidth = 11;
-	mh_LitePen = /*mh_DarkPen =*/ NULL;
-	mh_HoverBrush = mh_CheckedBrush = NULL;
+	mh_LitePen = /*mh_DarkPen =*/ nullptr;
+	mh_HoverBrush = mh_CheckedBrush = nullptr;
 	mn_ToolWidth = mn_ToolHeight = 14;
 	m_Hover.nPane = m_Hover.nCmd = -1;
 	mn_MaxPaneId = 1000;
 	mn_LastCmdID = 1000;
-	mh_PaneDC = NULL;
+	mh_PaneDC = nullptr;
 }
 
 CToolBarClass::~CToolBarClass()
@@ -67,7 +67,7 @@ CToolBarClass::~CToolBarClass()
 		PaneInfo* pane = m_Panels[i];
 		if (!pane)
 		{
-			_ASSERTE(pane != NULL);
+			_ASSERTE(pane != nullptr);
 			continue;
 		}
 
@@ -137,7 +137,7 @@ void CToolBarClass::Lock()
 	mb_Locked = true;
 }
 
-int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP ahBmp, LPARAM lParam, ToolbarCommand_f OnToolbarCommand, ToolbarMenu_f OnToolbarMenu /*= NULL*/, ToolBarDraw_f OnToolBarDraw /*= NULL*/)
+int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP ahBmp, LPARAM lParam, ToolbarCommand_f OnToolbarCommand, ToolbarMenu_f OnToolbarMenu /*= nullptr*/, ToolBarDraw_f OnToolBarDraw /*= nullptr*/)
 {
 	TODO("anPriority is ignored still");
 
@@ -147,8 +147,8 @@ int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP a
 		return -1;
 	}
 
-	_ASSERTE(OnToolbarCommand!=NULL);
-	_ASSERTE(ahBmp!=NULL);
+	_ASSERTE(OnToolbarCommand!=nullptr);
+	_ASSERTE(ahBmp!=nullptr);
 
 	if (anPane)
 	{
@@ -158,7 +158,7 @@ int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP a
 
 			if (!pane)
 			{
-				_ASSERTE(pane != NULL);
+				_ASSERTE(pane != nullptr);
 				continue;
 			}
 
@@ -177,7 +177,7 @@ int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP a
 	PaneInfo* pane = (PaneInfo*)calloc(sizeof(*pane),1);
 	if (!pane)
 	{
-		_ASSERTE(pane!=NULL);
+		_ASSERTE(pane!=nullptr);
 		return -1;
 	}
 
@@ -215,7 +215,7 @@ bool CToolBarClass::ShowPane(int anPane, bool abShow)
 
 		if (!pane)
 		{
-			_ASSERTE(pane != NULL);
+			_ASSERTE(pane != nullptr);
 			continue;
 		}
 
@@ -252,7 +252,7 @@ bool CToolBarClass::DeletePane(int anPane)
 
 		if (!pane)
 		{
-			_ASSERTE(pane != NULL);
+			_ASSERTE(pane != nullptr);
 			continue;
 		}
 
@@ -299,7 +299,7 @@ int CToolBarClass::AddTool(int anPane, int anCmd, const RECT& rcBmp, DWORD anFla
 	if (anCmd)
 	{
 		ToolInfo* t = GetToolById(p, anCmd);
-		if (t != NULL)
+		if (t != nullptr)
 		{
 			_ASSERTE(FALSE && "Button with this ID already exists!");
 			return -1;
@@ -399,7 +399,7 @@ BOOL CToolBarClass::AddSeparator(int anPane)
 		return FALSE;
 
 	RECT rcNil = {};
-	AddTool(p, -1, TIS_SEPARATOR, rcNil, NULL);
+	AddTool(p, -1, TIS_SEPARATOR, rcNil, nullptr);
 	return TRUE;
 }
 
@@ -423,7 +423,7 @@ void CToolBarClass::Invalidate()
 {
 	TODO("Обновить Frame/Caption?");
 	// -- gpConEmu->RedrawFrame();
-	InvalidateRect(ghWnd, NULL, TRUE);
+	InvalidateRect(ghWnd, nullptr, TRUE);
 }
 
 void CToolBarClass::Paint(const PaintDC& dc, const RECT& rcTB)
@@ -456,7 +456,7 @@ void CToolBarClass::Paint(const PaintDC& dc, const RECT& rcTB)
 
 	#ifdef DEBUG_SHOW_RECT
 		FillRect(dc.hDC, &rcTB, (HBRUSH)GetStockObject(WHITE_BRUSH));
-		//MoveToEx(hdc, rcTB.left-1, rcTB.top-1, NULL);
+		//MoveToEx(hdc, rcTB.left-1, rcTB.top-1, nullptr);
 		//LineTo(hdc, rcTB.right+1, rcTB.top-1);
 		//LineTo(hdc, rcTB.right+1, rcTB.bottom+1);
 		//LineTo(hdc, rcTB.left-1, rcTB.bottom+1);
@@ -505,13 +505,13 @@ void CToolBarClass::Paint(const PaintDC& dc, const RECT& rcTB)
 
 	//SelectObject(hdc, hOldPen);
 	//DeleteObject(mh_DarkPen);
-	//mh_DarkPen = NULL;
+	//mh_DarkPen = nullptr;
 	DeleteObject(mh_LitePen);
-	mh_LitePen = NULL;
+	mh_LitePen = nullptr;
 	DeleteObject(mh_HoverBrush);
-	mh_HoverBrush = NULL;
+	mh_HoverBrush = nullptr;
 	DeleteObject(mh_CheckedBrush);
-	mh_CheckedBrush = NULL;
+	mh_CheckedBrush = nullptr;
 
 	LeaveCriticalSection(&m_CS);
 }
@@ -524,7 +524,7 @@ void CToolBarClass::PaintPane(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 		return;
 	}
 
-	HBITMAP hOld = NULL;
+	HBITMAP hOld = nullptr;
 	if (p->hBmp)
 	{
 		mh_PaneDC = CreateCompatibleDC(dc.hDC);
@@ -557,7 +557,7 @@ void CToolBarClass::PaintPane(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	if (hOld)
 		SelectObject(mh_PaneDC, hOld);
 	DeleteDC(mh_PaneDC);
-	mh_PaneDC = NULL;
+	mh_PaneDC = nullptr;
 }
 
 void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, ToolInfo* t, int x, int y)
@@ -596,7 +596,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 		//};
 
 		HPEN hp = (HPEN)SelectObject(dc.hDC, mh_LitePen /*lbClicked ? mh_LitePen : mh_DarkPen*/);
-		HBRUSH hb = (HBRUSH)SelectObject(dc.hDC, lbChecked ? mh_CheckedBrush : mh_HoverBrush); // (lbChecked ? SelectObject(dc.hDC, GetSysColorBrush(COLOR_3DSHADOW)) : NULL);
+		HBRUSH hb = (HBRUSH)SelectObject(dc.hDC, lbChecked ? mh_CheckedBrush : mh_HoverBrush); // (lbChecked ? SelectObject(dc.hDC, GetSysColorBrush(COLOR_3DSHADOW)) : nullptr);
 		//if (lbChecked)
 		//	Polygon(dc.hDC, ptFrame, countof(ptFrame));
 		//else
@@ -675,7 +675,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	}
 	else
 	{
-		_ASSERTE(mh_PaneDC!=NULL);
+		_ASSERTE(mh_PaneDC!=nullptr);
 	}
 }
 
@@ -683,10 +683,10 @@ void CToolBarClass::PaintSeparator(const PaintDC& dc, const RECT& rcTB, int x, i
 {
 	/*
 	HPEN hold = (HPEN)SelectObject(hdc, mh_DarkPen);
-	MoveToEx(hdc, x, y, NULL);
+	MoveToEx(hdc, x, y, nullptr);
 	LineTo(hdc, x, y+h+1);
 	SelectObject(hdc, mh_LitePen);
-	MoveToEx(hdc, x+1, y, NULL);
+	MoveToEx(hdc, x+1, y, nullptr);
 	LineTo(hdc, x+1, y+h+1);
 	SelectObject(hdc, hold);
 	*/
@@ -699,7 +699,7 @@ CToolBarClass::ToolInfo* CToolBarClass::AddTool(PaneInfo* aPane, int anCmd, DWOR
 		if (rcBmp.right <= rcBmp.left || rcBmp.bottom <= rcBmp.top)
 		{
 			_ASSERTE(!(rcBmp.right <= rcBmp.left || rcBmp.bottom <= rcBmp.top));
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -709,8 +709,8 @@ CToolBarClass::ToolInfo* CToolBarClass::AddTool(PaneInfo* aPane, int anCmd, DWOR
 		ToolInfo* pt = (ToolInfo*)calloc(aPane->nMax, sizeof(*pt));
 		if (!pt)
 		{
-			_ASSERTE(pt!=NULL);
-			return NULL;
+			_ASSERTE(pt!=nullptr);
+			return nullptr;
 		}
 		if (aPane->pTool && aPane->nCount > 0)
 			memmove(pt, aPane->pTool, sizeof(ToolInfo)*aPane->nCount);
@@ -767,13 +767,13 @@ CToolBarClass::PaneInfo* CToolBarClass::GetPaneById(int anPane)
 			return pane;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 CToolBarClass::ToolInfo* CToolBarClass::GetToolById(PaneInfo* aPane, int anCmd)
 {
 	if (!aPane || !aPane->pTool)
-		return NULL;
+		return nullptr;
 
 	for (int t = 0; t < aPane->nCount; t++)
 	{
@@ -781,7 +781,7 @@ CToolBarClass::ToolInfo* CToolBarClass::GetToolById(PaneInfo* aPane, int anCmd)
 			return (aPane->pTool+t);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void CToolBarClass::UnHover()
@@ -805,7 +805,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	EnterCriticalSection(&m_CS);
 	ToolId hover = {{{-1,-1}}};
-	PaneInfo* hoverPane = NULL;
+	PaneInfo* hoverPane = nullptr;
 	POINT ptWhere = {};
 	RECT rcTool = {};
 
@@ -833,7 +833,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 					{
 						ptWhere.x = rcTool.left - 2;
 						ptWhere.y = rcTool.bottom + 2;
-						MapWindowPoints(ghWnd, NULL, &ptWhere, 1);
+						MapWindowPoints(ghWnd, nullptr, &ptWhere, 1);
 					}
 					else
 					{
@@ -874,8 +874,8 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 			if (hover.nID == m_Clicked.nID)
 			{
-				_ASSERTE(hoverPane!=NULL);
-				//MapWindowPoints(ghWnd, NULL, &ptWhere, 1);
+				_ASSERTE(hoverPane!=nullptr);
+				//MapWindowPoints(ghWnd, nullptr, &ptWhere, 1);
 				if (hoverPane && hoverPane->OnToolbarCommand)
 				{
 					hoverPane->OnToolbarCommand(hoverPane->lParam, hover.nPane, hover.nCmd, mb_ArrowClicked, ptWhere, rcTool);
@@ -892,8 +892,8 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 			m_Clicked = hover;
 			Invalidate();
-			_ASSERTE(hoverPane!=NULL);
-			//MapWindowPoints(ghWnd, NULL, &ptWhere, 1);
+			_ASSERTE(hoverPane!=nullptr);
+			//MapWindowPoints(ghWnd, nullptr, &ptWhere, 1);
 			if (hoverPane && hoverPane->OnToolbarCommand)
 			{
 				hoverPane->OnToolbarCommand(hoverPane->lParam, hover.nPane, hover.nCmd, mb_ArrowClicked, ptWhere, rcTool);
@@ -939,7 +939,7 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 //void* CToolBarClass::ToolFromPoint(POINT pt)
 //{
-//	ToolInfo* p = NULL;
+//	ToolInfo* p = nullptr;
 //	EnterCriticalSection(&m_CS);
 //	HoverInfo hover = {-1,-1};
 //	for (std::vector<PaneInfo>::iterator i = m_Panels.begin(); i != m_Panels.end(); i++)

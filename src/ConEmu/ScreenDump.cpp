@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *dwSize, bool PreserveTransparency=true)
 {
-	*pScreen = NULL;
+	*pScreen = nullptr;
 	*dwSize = 0;
 	int iBitPerPixel = PreserveTransparency ? 32 : 24;
 	int iHdrSize = sizeof(BITMAPINFOHEADER);
@@ -64,7 +64,7 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 	char * pData = (char*)calloc(iMemSize,1);
 	//char * pDataEnd = pData + iMemSize;
 
-	if (pData==NULL || bi==NULL)
+	if (pData==nullptr || bi==nullptr)
 	{
 		if (bi) free(bi);
 
@@ -75,20 +75,20 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 
 	//char *pDataCur = pData;
 	HDC hMem = CreateCompatibleDC(hScreen);
-	char* ppvBits = NULL;
-	HBITMAP hScreenBmp = CreateDIBSection(hMem, (const BITMAPINFO*) bi, DIB_RGB_COLORS, (LPVOID*)&ppvBits, NULL, 0);
+	char* ppvBits = nullptr;
+	HBITMAP hScreenBmp = CreateDIBSection(hMem, (const BITMAPINFO*) bi, DIB_RGB_COLORS, (LPVOID*)&ppvBits, nullptr, 0);
 	HBITMAP hOldBmp = (HBITMAP) SelectObject(hMem, hScreenBmp);
 	BOOL bRc = FALSE;
 
 	bool lbHasAlpha = true;
 	#ifdef __GNUC__
-	static AlphaBlend_t GdiAlphaBlend = NULL;
+	static AlphaBlend_t GdiAlphaBlend = nullptr;
 	if (!GdiAlphaBlend)
 	{
 		HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
-		GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+		GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : nullptr);
 	}
-	lbHasAlpha = (GdiAlphaBlend != NULL);
+	lbHasAlpha = (GdiAlphaBlend != nullptr);
 	#endif
 
 	if (lbHasAlpha)
@@ -142,7 +142,7 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 //{
 //	UINT  num = 0;          // number of image encoders
 //	UINT  size = 0;         // size of the image encoder array in bytes
-//	Gdiplus::ImageCodecInfo* pImageCodecInfo = NULL;
+//	Gdiplus::ImageCodecInfo* pImageCodecInfo = nullptr;
 //	Gdiplus::GetImageEncodersSize(&num, &size);
 //
 //	if (size == 0)
@@ -150,7 +150,7 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 //
 //	pImageCodecInfo = (Gdiplus::ImageCodecInfo*)(malloc(size));
 //
-//	if (pImageCodecInfo == NULL)
+//	if (pImageCodecInfo == nullptr)
 //		return -1;  // Failure
 //
 //	Gdiplus::GetImageEncoders(num, size, pImageCodecInfo);
@@ -175,10 +175,10 @@ BOOL LoadScreen(HDC hScreen, int anX, int anY, int anWidth, int anHeight, LPBYTE
 BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int anHeight, LPCWSTR pszFile, bool PreserveTransparency/*=true*/)
 {
 	BOOL lbRc = FALSE;
-	LPBYTE pScreen = NULL;
+	LPBYTE pScreen = nullptr;
 	DWORD cbOut = 0;
 
-	wchar_t* pszDot = NULL;
+	wchar_t* pszDot = nullptr;
 	wchar_t szFile[MAX_PATH+1] = {};
 
 	if (pszFile)
@@ -231,7 +231,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 		ofn.lpstrTitle = L"Save screenshot";
 		ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 		        | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
-		if (!GetSaveFileName(&ofn) || ((pszDot = (wchar_t*)PointToExt(szFile)) == NULL))
+		if (!GetSaveFileName(&ofn) || ((pszDot = (wchar_t*)PointToExt(szFile)) == nullptr))
 		{
 			lbRc = TRUE; // чтобы не ругалось...
 			goto wrap;

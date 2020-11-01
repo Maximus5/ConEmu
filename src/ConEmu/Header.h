@@ -137,8 +137,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_RENAME_TAB_LEN 128
 
 #define MBox(rt) MsgBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, Title)
-#define MBoxA(rt) MsgBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, NULL)
-#define MBoxError(rt) MsgBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONSTOP, NULL)
+#define MBoxA(rt) MsgBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION, nullptr)
+#define MBoxError(rt) MsgBox(rt, /*MB_SYSTEMMODAL |*/ MB_ICONSTOP, nullptr)
 #define MBoxAssert(V) _ASSERTE(V)
 #define AssertThis() if (this == nullptr) { _ASSERT(this!=nullptr); return; }
 #define AssertThisRet(dummy) if (this == nullptr) { _ASSERT(this!=nullptr); return (dummy); }
@@ -211,7 +211,7 @@ void LogFocusInfo(LPCWSTR asInfo, int Level=1);
 
 bool PtMouseDblClickTest(const MSG& msg1, const MSG msg2);
 
-bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase = 10, LPCWSTR* rsEnd = NULL);
+bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase = 10, LPCWSTR* rsEnd = nullptr);
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin = 0, int nMax = 0);
 bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin = 0, DWORD nMax = 0);
 wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
@@ -229,8 +229,8 @@ enum CESelectFileFlags
 	sff_Cygwin       = 2,
 	sff_SaveNewFile  = 4,
 };
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = NULL);
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = NULL);
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = nullptr, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = nullptr);
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = nullptr, LPCWSTR asDefPath = nullptr, HWND hParent = ghWnd, LPCWSTR asFilter = nullptr, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = nullptr);
 
 #include "../common/RConStartArgsEx.h"
 

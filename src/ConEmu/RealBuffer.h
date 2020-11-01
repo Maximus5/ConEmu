@@ -140,11 +140,11 @@ public:
 	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 
 	bool GetRBtnDrag(COORD* pcrMouse);
-	void SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse = NULL);
+	void SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse = nullptr);
 
 private:
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
-	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL, HGLOBAL* phUnicode = NULL);
+	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = nullptr, HGLOBAL* phUnicode = nullptr);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
 	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
 	bool CanProcessHyperlink(const COORD& crMouse);
@@ -153,14 +153,14 @@ private:
 public:
 	void OnTimerCheckSelection();
 	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
-	void StartSelection(bool abTextMode, SHORT anX=-1, SHORT anY=-1, bool abByMouse = false, UINT anFromMsg = 0, COORD *pcrTo = NULL, DWORD anAnchorFlag = 0);
+	void StartSelection(bool abTextMode, SHORT anX=-1, SHORT anY=-1, bool abByMouse = false, UINT anFromMsg = 0, COORD *pcrTo = nullptr, DWORD anAnchorFlag = 0);
 	void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 	void ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection);
 	UINT CorrectSelectionAnchor();
-	bool DoSelectionFinalize(bool abCopy, CECopyMode CopyMode = cm_CopySel, WPARAM wParam = 0, HGLOBAL* phUnicode = NULL);
+	bool DoSelectionFinalize(bool abCopy, CECopyMode CopyMode = cm_CopySel, WPARAM wParam = 0, HGLOBAL* phUnicode = nullptr);
 	void DoCopyPaste(bool abCopy, bool abPaste);
 	void DoSelectionStop();
-	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL, HGLOBAL* phUnicode = NULL);
+	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = nullptr, HGLOBAL* phUnicode = nullptr);
 	void UpdateSelection();
 	void UpdateHyperlink();
 	bool isConSelectMode();
@@ -176,8 +176,8 @@ public:
 
 	//bool IsConsoleDataChanged();
 
-	bool GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData = NULL);
-	bool GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData = NULL);
+	bool GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData = nullptr);
+	bool GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData = nullptr);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 
 	void ResetConData();
@@ -199,7 +199,7 @@ public:
 	void StorePausedState(CEPauseCmd state);
 
 	void QueryCellInfo(wchar_t* pszInfo, int cchMax);
-	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow = NULL, TOPLEFTCOORD* pTopLeft = NULL);
+	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow = nullptr, TOPLEFTCOORD* pTopLeft = nullptr);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
 	void ConsoleCursorPos(COORD* pcr);
 	void GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci);
@@ -223,7 +223,7 @@ private:
 	void ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate);
 	bool IsBufferHeightTurnedOn(const CONSOLE_SCREEN_BUFFER_INFO& psbi);
 	bool SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID = CECMD_SETSIZESYNC);
-	bool InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0, CRConDataGuard* pData = NULL);
+	bool InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0, CRConDataGuard* pData = nullptr);
 	bool InitBuffers(CRConDataGuard* pData);
 	bool CheckBufferSize();
 	bool IsTrueColorerBufferChanged();
@@ -236,7 +236,7 @@ private:
 
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
-	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = NULL);
+	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = nullptr);
 	bool StoreLastTextRange(ExpandTextRangeType etr);
 
 	void PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTableExt, CharAttr** pcaTableOrg);

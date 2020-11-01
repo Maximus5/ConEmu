@@ -63,7 +63,7 @@ HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragOver(DWORD grfKeyState, POINTL pt
 
 HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect)
 {
-	//gpConEmu->SetDragCursor(NULL);
+	//gpConEmu->SetDragCursor(nullptr);
 	return 0;
 }
 
@@ -125,7 +125,7 @@ ULONG __stdcall CBaseDropTarget::Release(void)
 CDropSource::CDropSource(CDragDropData* pCallback)
 {
 	m_lRefCount = 1;
-	mh_CurCopy = NULL; mh_CurMove = NULL; mh_CurLink = NULL;
+	mh_CurCopy = nullptr; mh_CurMove = nullptr; mh_CurLink = nullptr;
 	mp_Callback = pCallback;
 }
 
@@ -233,7 +233,7 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 {
 	HRESULT hr = DRAGDROP_S_USEDEFAULTCURSORS;
-	HCURSOR hCur = NULL;
+	HCURSOR hCur = nullptr;
 	DEBUGTEST(HRESULT hrTest = S_FALSE);
 
 	//-- пока CFSTR_DROPDESCRIPTION не заводится...
@@ -262,7 +262,7 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 		}
 		else
 		{
-			hCur = LoadCursor(NULL, IDC_NO);
+			hCur = LoadCursor(nullptr, IDC_NO);
 		}
 	}
 
@@ -392,7 +392,7 @@ HGLOBAL DupMem(HGLOBAL hMem)
 	SIZE_T  len    = GlobalSize(hMem);
 	PVOID   source = GlobalLock(hMem);
 	if (!source)
-		return NULL;
+		return nullptr;
 	// create a fixed "global" block - i.e. just
 	// a regular lump of our process heap
 	PVOID   dest   = GlobalAlloc(GMEM_FIXED, len);
@@ -503,7 +503,7 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		case TYMED_HGLOBAL:
 			//ReleaseStgMedium(pMedium);
 			pMedium->hGlobal = DupMem(m_Data[idx].StgMedium.hGlobal);
-			pMedium->pUnkForRelease = NULL; // m_Data[idx].StgMedium.pUnkForRelease;
+			pMedium->pUnkForRelease = nullptr; // m_Data[idx].StgMedium.pUnkForRelease;
 			hr = S_OK;
 			break;
 
@@ -536,8 +536,8 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		// found a match! transfer the data into the supplied storage-medium
 		//
 		pMedium->tymed			 = m_Data[idx].FormatEtc.tymed;
-		//Assert(pMedium->pUnkForRelease==NULL && m_Data[idx].StgMedium.pUnkForRelease==NULL);
-		//pMedium->pUnkForRelease  = NULL;
+		//Assert(pMedium->pUnkForRelease==nullptr && m_Data[idx].StgMedium.pUnkForRelease==nullptr);
+		//pMedium->pUnkForRelease  = nullptr;
 	}
 	else
 	{
@@ -595,8 +595,8 @@ HRESULT __stdcall CDataObject::QueryGetData(FORMATETC *pFormatEtc)
 //
 HRESULT __stdcall CDataObject::GetCanonicalFormatEtc(FORMATETC *pFormatEct, FORMATETC *pFormatEtcOut)
 {
-	// Apparently we have to set this field to NULL even though we don't do anything else
-	pFormatEtcOut->ptd = NULL;
+	// Apparently we have to set this field to nullptr even though we don't do anything else
+	pFormatEtcOut->ptd = nullptr;
 	return E_NOTIMPL;
 }
 
@@ -633,7 +633,7 @@ HRESULT CDataObject::SetDataInt(LPCWSTR sFmtName, const void* hData, DWORD nData
 //
 HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
 {
-	_ASSERTE(pMedium && pMedium->pUnkForRelease==NULL);
+	_ASSERTE(pMedium && pMedium->pUnkForRelease==nullptr);
 
 	#ifdef _DEBUG
 	LPCWSTR pszName = GetFormatName(pFormatEtc->cfFormat, true);
@@ -718,7 +718,7 @@ HRESULT __stdcall CDataObject::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC *
 		// to support all Windows platforms we need to implement IEnumFormatEtc ourselves.
 
 		UINT nNumFormats = m_Data.size();
-		FORMATETC *pFormats = nNumFormats ? (FORMATETC*)calloc(nNumFormats, sizeof(*pFormats)) : NULL;
+		FORMATETC *pFormats = nNumFormats ? (FORMATETC*)calloc(nNumFormats, sizeof(*pFormats)) : nullptr;
 		if (!pFormats)
 		{
 			return E_OUTOFMEMORY;
@@ -838,7 +838,7 @@ CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 	m_lRefCount   = 1;
 	m_nIndex      = 0;
 	m_nNumFormats = nNumFormats;
-	m_pFormatEtc  = nNumFormats ? (FORMATETC*)calloc(nNumFormats, sizeof(FORMATETC)) : NULL;
+	m_pFormatEtc  = nNumFormats ? (FORMATETC*)calloc(nNumFormats, sizeof(FORMATETC)) : nullptr;
 
 	// copy the FORMATETC structures
 	for (int i = 0; i < nNumFormats; i++)

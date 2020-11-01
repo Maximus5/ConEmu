@@ -116,7 +116,7 @@ void TabName::Release()
 }
 LPCWSTR TabName::Ptr() const
 {
-	// Must not return NULL. Never.
+	// Must not return nullptr. Never.
 	return sz;
 }
 int TabName::Length() const
@@ -155,8 +155,8 @@ LPCWSTR CTabID::GetName()
 {
 	// Empty strings must be substed in CRealConsole::GetTabTitle only!
 	LPCWSTR pszName = ((Info.Type & fwt_Renamed) && (Renamed.Length() > 0)) ? Renamed.Ptr() : Name.Ptr();
-	// Must not return NULL
-	_ASSERTE(pszName != NULL);
+	// Must not return nullptr
+	_ASSERTE(pszName != nullptr);
 	return pszName;
 }
 
@@ -281,7 +281,7 @@ void CTabID::ReleaseDrawRegion()
 	if (DrawInfo.rgnTab)
 	{
 		DeleteObject(DrawInfo.rgnTab);
-		DrawInfo.rgnTab = NULL;
+		DrawInfo.rgnTab = nullptr;
 	}
 }
 
@@ -323,7 +323,7 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType an
 		return false;
 
 	LPCWSTR psz = this->Name.Ptr();
-	_ASSERTE(psz!=NULL);
+	_ASSERTE(psz!=nullptr);
 	if (asName && wmemcmp(psz, asName, nNameLen))
 		return false;
 
@@ -366,7 +366,7 @@ void CTabID::DelPlace(const TabRefPlace& drp)
 
 CTab::CTab(LPCSTR asFile, int anLine)
 {
-	mp_Tab = NULL;
+	mp_Tab = nullptr;
 	#ifdef TAB_REF_PLACE
 	m_RefPlace.SetPlace(asFile, anLine);
 	#endif
@@ -440,7 +440,7 @@ CTabStack::~CTabStack()
 	{
 		ReleaseTabs(FALSE);
 		free(mpp_Stack);
-		mpp_Stack = NULL;
+		mpp_Stack = nullptr;
 	}
 	SafeDelete(mpc_Section);
 }
@@ -496,7 +496,7 @@ int CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC
 	if (abMoveFirst && mn_Used > 0)
 	{
 		memmove(mpp_Stack+1, mpp_Stack, mn_Used*sizeof(CTabID*));
-		mpp_Stack[0] = NULL;
+		mpp_Stack[0] = nullptr;
 	}
 
 	int i = abMoveFirst ? 0 : mn_Used;
@@ -560,11 +560,11 @@ bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 	}
 	else
 	{
-		rTab.Init(NULL);
+		rTab.Init(nullptr);
 	}
 
 	SC.Unlock();
-	return (rTab.Tab() != NULL);
+	return (rTab.Tab() != nullptr);
 }
 
 int CTabStack::GetIndexByTab(const CTabID* pTab)
@@ -593,7 +593,7 @@ int CTabStack::GetIndexByTab(const CTabID* pTab)
 bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTab)
 {
 	MSectionLockSimple SC; SC.Lock(mpc_Section);
-	CTabID* pNextTab = NULL;
+	CTabID* pNextTab = nullptr;
 
 	for (int i = 0; i < mn_Used; i++)
 	{
@@ -615,7 +615,7 @@ bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTa
 	rTab.Init(pNextTab);
 
 	SC.Unlock();
-	return (pNextTab!=NULL);
+	return (pNextTab!=nullptr);
 }
 
 bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
@@ -635,7 +635,7 @@ bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 		}
 		else
 		{
-			_ASSERTE(pTab!=NULL);
+			_ASSERTE(pTab!=nullptr);
 		}
 	}
 	else
@@ -667,7 +667,7 @@ bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 		}
 		else
 		{
-			_ASSERTE(pTab!=NULL);
+			_ASSERTE(pTab!=nullptr);
 		}
 	}
 	else
@@ -722,12 +722,12 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 	if (mn_UpdatePos < 0 || !pUpdateLock)
 	{
 		_ASSERTE(mn_UpdatePos>=0);
-		_ASSERTE(pUpdateLock!=NULL);
+		_ASSERTE(pUpdateLock!=nullptr);
 		return false;
 	}
 
 	bool bChanged = false;
-	CTabID* pTab = NULL;
+	CTabID* pTab = nullptr;
 
 	mb_FarUpdateMode = true;
 
@@ -773,7 +773,7 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 	}
 
 	// Если таб новый
-	if (pTab == NULL)
+	if (pTab == nullptr)
 	{
 		// это новая вкладка, добавляемая в конец
 		pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
@@ -802,7 +802,7 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 #if 0
 void CTabStack::TabDeleted(MSectionLockSimple* pUpdateLock, int i)
 {
-	PRAGMA_ERROR("FAIL. Нужно убрать из стека все NULL-ячейки");
+	PRAGMA_ERROR("FAIL. Нужно убрать из стека все nullptr-ячейки");
 	if ((i >= 0) && (i < mn_MaxCount))
 	{
 		if (i < mn_Used)
@@ -812,7 +812,7 @@ void CTabStack::TabDeleted(MSectionLockSimple* pUpdateLock, int i)
 			#else
 			pUpdateLock->RelockExclusive();
 			#endif
-			// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
+			// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито nullptr
 			memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID*));
 		}
 		mn_Used -= (i - mn_UpdatePos);
@@ -835,7 +835,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 	if (mn_UpdatePos < 0 || !pUpdateLock)
 	{
 		_ASSERTE(mn_UpdatePos>=0);
-		_ASSERTE(pUpdateLock!=NULL);
+		_ASSERTE(pUpdateLock!=nullptr);
 		return;
 	}
 
@@ -844,7 +844,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 
 	if (!pTab)
 	{
-		_ASSERTE(pTab != NULL);
+		_ASSERTE(pTab != nullptr);
 		return;
 	}
 
@@ -923,7 +923,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 //void CTabStack::UpdateEnd()
 //{
 //	bool lbExclusive = false;
-//	_ASSERTE(mp_MarkTemp!=NULL);
+//	_ASSERTE(mp_MarkTemp!=nullptr);
 //
 //	for (int i = 0; i < mn_Used; i++)
 //	{
@@ -945,7 +945,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 //
 //	mp_MarkTemp->Unlock();
 //	delete mp_MarkTemp;
-//	mp_MarkTemp = NULL;
+//	mp_MarkTemp = nullptr;
 //}
 
 // Возвращает "true" если были изменения в КОЛИЧЕСТВЕ табов (ЗДЕСЬ больше ничего не проверяется)
@@ -1039,7 +1039,7 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 				#endif
 				pTab->Release();
 				// Remove from list
-				mpp_Stack[i] = NULL;
+				mpp_Stack[i] = nullptr;
 
 				bChanged = true;
 			}
@@ -1059,7 +1059,7 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 		#endif
 		pTab->Release();
 		// Remove from list
-		mpp_Stack[i] = NULL;
+		mpp_Stack[i] = nullptr;
 
 		bChanged = true;
 	}
@@ -1087,7 +1087,7 @@ void CTabStack::RecheckPassive()
 
 			if (pTab)
 			{
-				_ASSERTE(pTab->Info.pVCon!=NULL);
+				_ASSERTE(pTab->Info.pVCon!=nullptr);
 				if (abRConTabs && pTab->Info.pVCon)
 				{
 					bool bVConValid = false, bPidValid = false, bPassive = false;
@@ -1119,11 +1119,11 @@ void CTabStack::RecheckPassive()
 
 				// Kill this tab
 				pTab->Release();
-				mpp_Stack[i] = NULL;
+				mpp_Stack[i] = nullptr;
 			}
 
 			DEBUGTEST(iPrev = mn_Used);
-			PRAGMA_ERROR("FAIL. Нужно убрать из стека все NULL-ячейки");
+			PRAGMA_ERROR("FAIL. Нужно убрать из стека все nullptr-ячейки");
 			TabDeleted(pUpdateLock, i);
 			_ASSERTE(mn_Used < iPrev);
 		}
@@ -1135,7 +1135,7 @@ void CTabStack::RecheckPassive()
 
 void CTabStack::CleanNulls()
 {
-	// Убрать дырки (NULL) из списка
+	// Убрать дырки (nullptr) из списка
 	int i = 0;
 	while (i < mn_Used)
 	{
@@ -1148,14 +1148,14 @@ void CTabStack::CleanNulls()
 				if (mpp_Stack[j])
 				{
 					mpp_Stack[i] = mpp_Stack[j];
-					mpp_Stack[j] = NULL;
+					mpp_Stack[j] = nullptr;
 					break;
 				}
 				j++;
 			}
 		}
 
-		// Still NULL?
+		// Still nullptr?
 		if (!(mpp_Stack[i]))
 			break;
 
@@ -1183,7 +1183,7 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 				continue;
 		}
 		CTabID *p = mpp_Stack[i];
-		mpp_Stack[i] = NULL;
+		mpp_Stack[i] = nullptr;
 		#ifdef TAB_REF_PLACE
 		p->DelPlace(m_rp);
 		#endif
@@ -1343,7 +1343,7 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveI
 			iActive = iFirstPanels;
 			// There was no one "Active" tab. Mark panels tab as active!
 			_ASSERTE(nFarPID == 0); // returning from "far /e ..."?
-			_ASSERTE(mpp_Stack[iFirstPanels] != NULL); // Protected with CS, no need to check
+			_ASSERTE(mpp_Stack[iFirstPanels] != nullptr); // Protected with CS, no need to check
 			mpp_Stack[iFirstPanels]->Info.Status = tisValid;
 			iCount = 1;
 		}
@@ -1362,7 +1362,7 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveI
 
 	rbHasModalTab = (iModal >= 0);
 	rnActiveCount = iCount;
-	rActiveTab.Init((iActive >= 0) ? mpp_Stack[iActive] : NULL);
+	rActiveTab.Init((iActive >= 0) ? mpp_Stack[iActive] : nullptr);
 	rnActiveIndex = iActive;
 
 	return bChanged;

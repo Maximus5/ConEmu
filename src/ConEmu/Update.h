@@ -105,7 +105,7 @@ protected:
 
 	bool bNeedRunElevation;
 
-	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, BOOL abPackage = FALSE, LARGE_INTEGER* rpSize = NULL);
+	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, BOOL abPackage = FALSE, LARGE_INTEGER* rpSize = nullptr);
 
 	void ReportError(LPCWSTR asFormat, DWORD nErrCode);
 	void ReportError(LPCWSTR asFormat, LPCWSTR asArg, DWORD nErrCode);
@@ -167,5 +167,5 @@ protected:
 	#endif
 	bool StartLocalUpdate(LPCWSTR asDownloadedPackage);
 	bool LoadVersionInfoFromServer();
-	wchar_t* CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix = NULL);
+	wchar_t* CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix = nullptr);
 };

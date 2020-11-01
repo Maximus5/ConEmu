@@ -69,7 +69,7 @@ bool CDefaultTerminal::IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA)
 	if (iLen > 0)
 	{
 		bCurState = true;
-		bLeaveTSA = (StrStrI(lsData.c_str(L""), L"/Exit") == NULL);
+		bLeaveTSA = (StrStrI(lsData.c_str(L""), L"/Exit") == nullptr);
 	}
 
 	if (rszData)
@@ -107,7 +107,7 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 		L"\"", gpConEmu->ms_ConEmuExe, L"\" ",
 		pszAddArgs, // -config, -loadcfgfile and others...
 		L"-SetDefTerm -Detached -MinTSA",
-		gpSet->isRegisterOnOsStartupTSA ? NULL : L" -Exit");
+		gpSet->isRegisterOnOsStartupTSA ? nullptr : L" -Exit");
 
 	// Compare with current
 	CEStr szCurValue;
@@ -128,7 +128,7 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 		}
 		else
 		{
-			if (0 != (lRc = RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, NULL)))
+			if (0 != (lRc = RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, nullptr)))
 			{
 				DisplayLastError(L"Failed to remove ConEmuDefaultTerminal value from HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
 			}
@@ -183,7 +183,7 @@ CDefTermBase* CDefaultTerminal::GetInterface()
 	return this;
 }
 
-int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)
+int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=nullptr*/, HWND hParent/*=nullptr*/)
 {
 	return ::DisplayLastError(asLabel, dwError, dwMsgFlags, asTitle, hParent);
 }
@@ -210,7 +210,7 @@ void CDefaultTerminal::ReloadSettings()
 	m_Opt.bExternalPointers = true;
 	m_Opt.pszConEmuExe = gpConEmu->ms_ConEmuExe;
 	m_Opt.pszConEmuBaseDir = gpConEmu->ms_ConEmuBaseDir;
-	m_Opt.pszCfgFile = gpConEmu->opt.LoadCfgFile.Exists ? (wchar_t*)gpConEmu->opt.LoadCfgFile.GetStr() : NULL;
+	m_Opt.pszCfgFile = gpConEmu->opt.LoadCfgFile.Exists ? (wchar_t*)gpConEmu->opt.LoadCfgFile.GetStr() : nullptr;
 	m_Opt.pszConfigName = (wchar_t*)gpSetCls->GetConfigName();
 	m_Opt.pszzHookedApps = (wchar_t*)gpSet->GetDefaultTerminalAppsMSZ(); // ASCIIZZ
 }

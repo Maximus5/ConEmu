@@ -50,17 +50,17 @@ CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 {
 	mp_VCon = apVCon;
 
-	mh_Ghost = NULL;
+	mh_Ghost = nullptr;
 	mb_TaskbarRegistered = false;
 	memset(&m_TabSize, 0, sizeof(m_TabSize));
-	mh_Snap = NULL;
+	mh_Snap = nullptr;
 	mn_LastUpdate = 0;
 
 	mb_SimpleBlack = TRUE;
 
 	mn_MsgUpdateThumbnail = RegisterWindowMessage(L"ConEmu::TaskBarGhost");
 
-	mh_SkipActivateEvent = NULL;
+	mh_SkipActivateEvent = nullptr;
 	mb_WasSkipActivate = false;
 	ms_LastTitle[0] = 0;
 	ZeroStruct(mpt_Offset);
@@ -68,7 +68,7 @@ CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 	ZeroStruct(mpt_Size);
 	ZeroStruct(mpt_ViewSize);
 	ZeroMemory(&mbmi_Snap, sizeof(mbmi_Snap));
-	mpb_DS = NULL;
+	mpb_DS = nullptr;
 }
 
 CTaskBarGhost::~CTaskBarGhost()
@@ -76,7 +76,7 @@ CTaskBarGhost::~CTaskBarGhost()
 	if (mh_Snap)
 	{
 		DeleteObject(mh_Snap);
-		mh_Snap = NULL;
+		mh_Snap = nullptr;
 	}
 	if (mh_Ghost && IsWindow(mh_Ghost))
 	{
@@ -91,7 +91,7 @@ CTaskBarGhost::~CTaskBarGhost()
 	if (mh_SkipActivateEvent)
 	{
 		CloseHandle(mh_SkipActivateEvent);
-		mh_SkipActivateEvent = NULL;
+		mh_SkipActivateEvent = nullptr;
 	}
 }
 
@@ -105,7 +105,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 		wcex.cbSize         = sizeof(wcex);
 		wcex.lpfnWndProc    = GhostStatic;
 		wcex.hInstance      = g_hInstance;
-		wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+		wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
 		wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
 		wcex.lpszClassName  = VirtualConsoleClassGhost;
 
@@ -120,7 +120,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 	if (!pGhost->CreateTabSnapshoot(...))
 	{
 		delete pGhost;
-		return NULL;
+		return nullptr;
 	}
 #endif
 
@@ -134,7 +134,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 	{
 		dwStyleEx = WS_EX_NOACTIVATE | WS_EX_APPWINDOW | WS_EX_ACCEPTFILES;
 		dwStyle = WS_OVERLAPPED | WS_BORDER | WS_SYSMENU | WS_CAPTION;
-		if ((gpConEmu->isVConValid(apVCon) > 0) /*&& (gpConEmu->GetVCon(1) == NULL)*/)
+		if ((gpConEmu->isVConValid(apVCon) > 0) /*&& (gpConEmu->GetVCon(1) == nullptr)*/)
 			dwStyle |= WS_VISIBLE;
 	}
 
@@ -142,12 +142,12 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 			VirtualConsoleClassGhost, pGhost->CheckTitle(),
 			dwStyle,
 			-32000, -32000, 10, 10,
-			ghWnd, NULL, g_hInstance, (LPVOID)pGhost);
+			ghWnd, nullptr, g_hInstance, (LPVOID)pGhost);
 
 	if (!pGhost->mh_Ghost)
 	{
 		delete pGhost;
-		return NULL;
+		return nullptr;
 	}
 
 	return pGhost;
@@ -157,8 +157,8 @@ HWND CTaskBarGhost::GhostWnd()
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
-		return NULL;
+		_ASSERTE(this!=nullptr);
+		return nullptr;
 	}
 	return mh_Ghost;
 }
@@ -179,7 +179,7 @@ void CTaskBarGhost::UpdateGhostSize()
 			if ((rcGhost.right - rcGhost.left) != nShowWidth || (rcGhost.bottom - rcGhost.top) != nShowHeight
 				|| rcGhost.left != -32000 || rcGhost.top != -32000)
 			{
-				SetWindowPos(mh_Ghost, NULL, -32000, -32000, nShowWidth, nShowHeight, SWP_NOZORDER|SWP_NOACTIVATE);
+				SetWindowPos(mh_Ghost, nullptr, -32000, -32000, nShowWidth, nShowHeight, SWP_NOZORDER|SWP_NOACTIVATE);
 			}
 		}
 	}
@@ -244,7 +244,7 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 
 		if (lbChanged)
 		{
-			DeleteObject(mh_Snap); mh_Snap = NULL;
+			DeleteObject(mh_Snap); mh_Snap = nullptr;
 		}
 		//abForce = TRUE;
 	}
@@ -263,10 +263,10 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 	bool bUsedRectChanged = (memcmp(&rcNewUsedRect, &m_TabSize.UsedRect, sizeof(m_TabSize.UsedRect)) != 0);
 	m_TabSize.UsedRect = rcNewUsedRect;
 
-	HDC hdcMem = CreateCompatibleDC(NULL);
-	if (hdcMem != NULL)
+	HDC hdcMem = CreateCompatibleDC(nullptr);
+	if (hdcMem != nullptr)
 	{
-		if (mh_Snap == NULL)
+		if (mh_Snap == nullptr)
 		{
 			ZeroMemory(&mbmi_Snap.bmiHeader, sizeof(BITMAPINFOHEADER));
 			mbmi_Snap.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -275,12 +275,12 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 			mbmi_Snap.bmiHeader.biPlanes = 1;
 			mbmi_Snap.bmiHeader.biBitCount = 32;
 
-			mh_Snap = CreateDIBSection(hdcMem, &mbmi_Snap, DIB_RGB_COLORS, (VOID**)&mpb_DS, NULL, 0);
+			mh_Snap = CreateDIBSection(hdcMem, &mbmi_Snap, DIB_RGB_COLORS, (VOID**)&mpb_DS, nullptr, 0);
 
 			bUsedRectChanged = true;
 		}
 
-		if (mh_Snap != NULL)
+		if (mh_Snap != nullptr)
 		{
 			// Ensure that there would be no garbage on screen
 			if (bUsedRectChanged && mpb_DS)
@@ -302,7 +302,7 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 				if (gpConEmu->IsDwm())
 				{
 					// Если уже всплыл "DWM-ное" окошко с иконками...
-					HWND hFind = FindWindowEx(NULL, NULL, L"TaskListOverlayWnd", NULL);
+					HWND hFind = FindWindowEx(nullptr, nullptr, L"TaskListOverlayWnd", nullptr);
 					if (hFind)
 					{
 						RECT rcDwm = {}; GetWindowRect(hFind, &rcDwm);
@@ -320,14 +320,14 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 					// Этот метод вроде срабатывает, но
 					// - если снапшот запрашивается в момент отображения DWM-иконок
 					//   то он (снапшот) захватит и само плавающее окно DWM для иконок
-					HDC hdcScrn = GetDC(NULL);
+					HDC hdcScrn = GetDC(nullptr);
 					BitBlt(hdcMem, mpt_ViewOffset.x,mpt_ViewOffset.y, mpt_ViewSize.x,mpt_ViewSize.y, hdcScrn, rcSnap.left,rcSnap.top, SRCCOPY);
-					ReleaseDC(NULL, hdcScrn);
+					ReleaseDC(nullptr, hdcScrn);
 					#else
 					HDC hdcScrn;
 					// -- Этот метод не захватывает содержимое других окон (PicView, GUI-apps, и т.п.)
 					hdcScrn = GetDC(hView);
-					//hdcScrn = GetDCEx(hView, NULL, 0);
+					//hdcScrn = GetDCEx(hView, nullptr, 0);
 					BitBlt(hdcMem, mpt_ViewOffset.x,mpt_ViewOffset.y, mpt_ViewSize.x,mpt_ViewSize.y, hdcScrn, 0,0, SRCCOPY);
 					ReleaseDC(hView, hdcScrn);
 					#endif
@@ -347,7 +347,7 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 	}
 
 	mn_LastUpdate = GetTickCount();
-	return (mh_Snap != NULL);
+	return (mh_Snap != nullptr);
 }
 
 bool CTaskBarGhost::CalcThumbnailSize(int nWidth, int nHeight, int &nShowWidth, int &nShowHeight)
@@ -379,7 +379,7 @@ bool CTaskBarGhost::NeedSnapshotCache()
 	}
 
 	HWND hView = mp_VCon->GetView();
-	HWND hChild = FindWindowEx(hView, NULL, NULL, NULL);
+	HWND hChild = FindWindowEx(hView, nullptr, nullptr, nullptr);
 	DWORD nCurPID = GetCurrentProcessId();
 	DWORD nPID, nStyle;
 	while (hChild)
@@ -390,16 +390,16 @@ bool CTaskBarGhost::NeedSnapshotCache()
 			if (nStyle & WS_VISIBLE)
 				return true;
 		}
-		hChild = FindWindowEx(hView, hChild, NULL, NULL);
+		hChild = FindWindowEx(hView, hChild, nullptr, nullptr);
 	}
 	return false;
 }
 
 HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 {
-	HBITMAP hbm = NULL;
-	HDC hdcMem = CreateCompatibleDC(NULL);
-	if (hdcMem != NULL)
+	HBITMAP hbm = nullptr;
+	HDC hdcMem = CreateCompatibleDC(nullptr);
+	if (hdcMem != nullptr)
 	{
 		int nShowWidth = nWidth, nShowHeight = nHeight;
 		int nX = 0, nY = 0;
@@ -423,9 +423,9 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 		bmi.bmiHeader.biPlanes = 1;
 		bmi.bmiHeader.biBitCount = 32;
 
-		PBYTE pbDS = NULL;
-		hbm = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, (VOID**)&pbDS, NULL, 0);
-		if (hbm != NULL)
+		PBYTE pbDS = nullptr;
+		hbm = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, (VOID**)&pbDS, nullptr, 0);
+		if (hbm != nullptr)
 		{
 			HBITMAP hOldMem = (HBITMAP)SelectObject(hdcMem, hbm);
 
@@ -443,7 +443,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 
 						if (mh_Snap)
 						{
-							HDC hdcSrc = CreateCompatibleDC(NULL);
+							HDC hdcSrc = CreateCompatibleDC(nullptr);
 							BITMAP bi = {}; GetObject(mh_Snap, sizeof(bi), &bi);
 							HBITMAP hOldSrc = (HBITMAP)SelectObject(hdcSrc, mh_Snap);
 							SetStretchBltMode(hdcMem, HALFTONE);
@@ -464,7 +464,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 				#if 0
 				if (mh_Snap)
 				{
-					HDC hdcSheet = CreateCompatibleDC(NULL);
+					HDC hdcSheet = CreateCompatibleDC(nullptr);
 					HBITMAP hOld = (HBITMAP)SelectObject(hdcSheet, mh_Snap);
 					SetStretchBltMode(hdcMem, HALFTONE);
 					StretchBlt(hdcMem, nX,nY,nShowWidth,nShowHeight, hdcSheet, 0,0,m_TabSize.VConSize.x, m_TabSize.VConSize.y, SRCCOPY);
@@ -474,7 +474,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 				#endif
 
 				// Apply Alpha Channel
-				PBYTE pbRow = NULL;
+				PBYTE pbRow = nullptr;
 				if (nWidth > nShowWidth)
 				{
 					for (int y = 0; y < nShowHeight; y++)
@@ -517,7 +517,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 
 LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 {
-	LPCWSTR pszTitle = NULL;
+	LPCWSTR pszTitle = nullptr;
 	TODO("Разбивка по табам консоли");
 	if (mp_VCon && (abSkipValidation || gpConEmu->isValid(mp_VCon)) && mp_VCon->RCon())
 	{
@@ -526,7 +526,7 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 	if (!pszTitle)
 	{
 		pszTitle = gpConEmu->GetDefaultTitle();
-		_ASSERTE(pszTitle!=NULL);
+		_ASSERTE(pszTitle!=nullptr);
 	}
 
 	if (mh_Ghost)
@@ -571,7 +571,7 @@ LRESULT CALLBACK CTaskBarGhost::GhostStatic(HWND hWnd, UINT message, WPARAM wPar
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgGhost);
 
 	CTaskBarGhost *pWnd = (CTaskBarGhost*)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
-	if (pWnd == NULL && message == WM_NCCREATE)
+	if (pWnd == nullptr && message == WM_NCCREATE)
 	{
 		LPCREATESTRUCTW lpcs = (LPCREATESTRUCTW)lParam;
 		pWnd = (CTaskBarGhost*)lpcs->lpCreateParams;
@@ -579,7 +579,7 @@ LRESULT CALLBACK CTaskBarGhost::GhostStatic(HWND hWnd, UINT message, WPARAM wPar
 		::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pWnd);
 		lResult = ::DefWindowProcW(hWnd, message, wParam, lParam);
 	}
-	else if (pWnd != NULL)
+	else if (pWnd != nullptr)
 	{
 		lResult = pWnd->GhostProc(message, wParam, lParam);
 	}
@@ -593,12 +593,12 @@ LRESULT CALLBACK CTaskBarGhost::GhostStatic(HWND hWnd, UINT message, WPARAM wPar
 
 LRESULT CTaskBarGhost::OnCreate()
 {
-	SetTimer(mh_Ghost, 101, 2500, NULL);
+	SetTimer(mh_Ghost, 101, 2500, nullptr);
 
 	wchar_t szEvtName[64];
 	swprintf_c(szEvtName, CEGHOSTSKIPACTIVATE, LODWORD(mh_Ghost));
 	SafeCloseHandle(mh_SkipActivateEvent);
-	mh_SkipActivateEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+	mh_SkipActivateEvent = CreateEvent(nullptr, FALSE, FALSE, szEvtName);
 
 	UpdateGhostSize();
 
@@ -724,7 +724,7 @@ LRESULT CTaskBarGhost::OnSysCommand(WPARAM wParam, LPARAM lParam)
 
 HICON CTaskBarGhost::OnGetIcon(WPARAM anIconType)
 {
-	HICON lResult = NULL;
+	HICON lResult = nullptr;
 
 	TODO("Получить иконку активного приложения в консоли");
 	//lResult = SendMessage(ghWnd, message, wParam, lParam);
@@ -802,7 +802,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	//}
 	//else
 	//{
-	//	_ASSERTE(hView!=NULL && "mp_VCon->GetView() must returns DC window");
+	//	_ASSERTE(hView!=nullptr && "mp_VCon->GetView() must returns DC window");
 	//	// Если View не сформирован - получить размер всей рабочей области (но БЕЗ табов, прокруток, статусов)
 	//	rcView = rcWork;
 	//}
@@ -849,7 +849,7 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 		BITMAP bi = {};
 		GetObject(mh_Snap, sizeof(bi), &bi);
 
-		PBYTE pbRow = NULL;
+		PBYTE pbRow = nullptr;
 		int nHeight = (bi.bmHeight < 0) ? -bi.bmHeight : bi.bmHeight;
 		for (int y = 0; y < nHeight; y++)
 		{
@@ -863,13 +863,13 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 
 #if 0
 		//defined(_DEBUG)
-		HDC hdc = GetDC(NULL);
+		HDC hdc = GetDC(nullptr);
 		HDC hdcComp = CreateCompatibleDC(hdc);
 		HBITMAP hOld = (HBITMAP)SelectObject(hdcComp, mh_Snap);
 		BitBlt(hdc, 0,0,200,150, hdcComp, 0,0, SRCCOPY);
 		SelectObject(hdcComp, hOld);
 		DeleteDC(hdcComp);
-		ReleaseDC(NULL, hdc);
+		ReleaseDC(nullptr, hdc);
 #endif
 
 		hr = gpConEmu->DwmSetIconicLivePreviewBitmap(mh_Ghost, mh_Snap, &ptOffset);
@@ -889,7 +889,7 @@ LRESULT CTaskBarGhost::OnDestroy()
 	HWND hParent = GetParent(ghWnd);
 	if (hParent == mh_Ghost)
 	{
-		gpConEmu->SetParent(NULL);
+		gpConEmu->SetParent(nullptr);
 	}
 	#endif
 

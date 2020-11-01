@@ -220,7 +220,7 @@ union CESize
 	{
 		if (!sValue || !*sValue)
 			return false;
-		wchar_t* pszEnd = NULL;
+		wchar_t* pszEnd = nullptr;
 		// Try to convert
 		int NewValue = wcstol(sValue, &pszEnd, 10);
 		if (!NewValue)

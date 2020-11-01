@@ -101,7 +101,7 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 
 CTabBarClass::CTabBarClass()
 {
-	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels|fwt_CurrentFarWnd, 0, 0, 0);
+	mp_DummyTab = new CTabID(nullptr, nullptr, fwt_Panels|fwt_CurrentFarWnd, 0, 0, 0);
 	#ifdef _DEBUG // due to unittests
 	_ASSERTE(mp_DummyTab->RefCount()==1);
 	#endif
@@ -208,7 +208,7 @@ void CTabBarClass::Retrieve()
 	//                  cds.dwData = nTabCount;
 	//                  cds.lpData = pipe.GetPtr(); // хвост
 	//                  gpConEmu->OnCopyData(&cds);
-	//                  gpConEmu->DebugStep(NULL);
+	//                  gpConEmu->DebugStep(nullptr);
 	//              }
 	//          }
 	//      }
@@ -225,9 +225,9 @@ int CTabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 HIMAGELIST CTabBarClass::GetTabIcons(int nTabItemHeight)
 {
 	if (!gpSet->isTabIcons)
-		return NULL;
+		return nullptr;
 	if (!m_TabIcons.IsInitialized())
-		return NULL;
+		return nullptr;
 	return (HIMAGELIST)m_TabIcons;
 }
 
@@ -455,7 +455,7 @@ bool CTabBarClass::IsTabsActive() const
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return false;
 	}
 	#ifdef _DEBUG // due to unittests
@@ -476,7 +476,7 @@ bool CTabBarClass::IsTabsShown()
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return false;
 	}
 
@@ -527,7 +527,7 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 HWND CTabBarClass::ActivateSearchPane(bool bActivate)
 {
 	if (!IsSearchShown(false))
-		return NULL;
+		return nullptr;
 	return mp_Rebar->ActivateSearchPaneInt(bActivate);
 }
 
@@ -557,7 +557,7 @@ void CTabBarClass::CheckRebarCreated()
 {
 	if (!mp_Rebar)
 	{
-		_ASSERTE(mp_Rebar!=NULL);
+		_ASSERTE(mp_Rebar!=nullptr);
 		return;
 	}
 
@@ -614,7 +614,7 @@ int  CTabBarClass::UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool&
 	CRealConsole *pRCon = pVCon->RCon();
 	if (!pRCon)
 	{
-		_ASSERTE(pRCon!=NULL);
+		_ASSERTE(pRCon!=nullptr);
 		return 0;
 	}
 
@@ -828,7 +828,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	MCHKHEAP
 	HANDLE hUpdate = m_Tabs.UpdateBegin();
-	_ASSERTE(hUpdate!=NULL);
+	_ASSERTE(hUpdate!=nullptr);
 
 	bool bStackChanged = false;
 
@@ -1097,8 +1097,8 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 				return true;
 
 			CVConGuard VCon;
-			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-			LPCWSTR pszTitle = pVCon ? pVCon->RCon()->GetTitle() : NULL;
+			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
+			LPCWSTR pszTitle = pVCon ? pVCon->RCon()->GetTitle() : nullptr;
 
 			if (pszTitle)
 			{
@@ -1166,7 +1166,7 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 			OnChooseTabPopup();
 			break;
 		case TID_CREATE_CON:
-			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
+			gpConEmu->mp_Menu->OnNewConPopupMenu(nullptr, 0, isPressed(VK_SHIFT));
 			break;
 		#ifdef _DEBUG
 		default:
@@ -1181,9 +1181,9 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 	{
 		LPNMTTDISPINFO pDisp = (LPNMTTDISPINFO)nmhdr;
 		DWORD wndIndex = 0;
-		pDisp->hinst = NULL;
+		pDisp->hinst = nullptr;
 		pDisp->szText[0] = 0;
-		pDisp->lpszText = NULL;
+		pDisp->lpszText = nullptr;
 		POINT ptScr = {}; GetCursorPos(&ptScr);
 		int iPage = mp_Rebar->GetTabFromPoint(ptScr);
 
@@ -1238,7 +1238,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (gpConEmu->IsGesturesEnabled())
 		{
 			LogString(L"ToolBar: TID_CREATE_CON/gesture");
-			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
+			gpConEmu->mp_Menu->OnNewConPopupMenu(nullptr, 0, isPressed(VK_SHIFT));
 		}
 		else
 		{
@@ -1250,7 +1250,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		LogString(L"ToolBar: TID_ALTERNATIVE");
 		CVConGuard VCon;
-		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
 		// Вернуть на тулбар _текущее_ состояние режима
 		mp_Rebar->SetToolBtnChecked(TID_ALTERNATIVE, pVCon ? pVCon->RCon()->isAlternative() : false);
 		// И собственно Action
@@ -1260,7 +1260,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		LogString(L"ToolBar: TID_SCROLL");
 		CVConGuard VCon;
-		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
 		// Вернуть на тулбар _текущее_ состояние режима
 		mp_Rebar->SetToolBtnChecked(TID_SCROLL, pVCon ? pVCon->RCon()->isBufferHeight() : false);
 		// И собственно Action
@@ -1390,7 +1390,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	const int min_allowed_tab_width = 15, max_allowed_tab_width = MAX_PATH;
 	CEStr sFileName, sFormat, sBuffer;
 
-	CRealConsole* pRCon = apVCon ? apVCon->RCon() : NULL;
+	CRealConsole* pRCon = apVCon ? apVCon->RCon() : nullptr;
 	bool bIsFar = pRCon ? pRCon->isFar() : false;
 
 	// Far 4040 - new "Desktop" window type has "0" index
@@ -1497,9 +1497,9 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	// Пример: "%i-[%s] *"
 	////pszNo = wcsstr(szFormat, L"%i");
 	////pszTitle = wcsstr(szFormat, L"%s");
-	////if (pszNo == NULL)
+	////if (pszNo == nullptr)
 	////	swprintf_c(fileName, szFormat, tFileName);
-	////else if (pszNo < pszTitle || pszTitle == NULL)
+	////else if (pszNo < pszTitle || pszTitle == nullptr)
 	////	swprintf_c(fileName, szFormat, pTab->Pos, tFileName);
 	////else
 	////	swprintf_c(fileName, szFormat, tFileName, pTab->Pos);
@@ -1520,9 +1520,9 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	bool bRenamedTab = false;
 	if (pTab->Flags() & fwt_Renamed)
 	{
-		if (wcsstr(pszFmt, L"%s") == NULL)
+		if (wcsstr(pszFmt, L"%s") == nullptr)
 		{
-			if (wcsstr(pszFmt, L"%n") != NULL)
+			if (wcsstr(pszFmt, L"%n") != nullptr)
 				bRenamedTab = true;
 			else
 				pszFmt = _T("%s");
@@ -1539,7 +1539,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		{
 			pszFmt++;
 			bool bDynamic = false; // Allowed to trim this part
-			LPCTSTR pszText = NULL;
+			LPCTSTR pszText = nullptr;
 			switch (*pszFmt)
 			{
 				case _T('m'): case _T('M'): // %m...m, %M...M - mark ‘...’ for active (m) and inactive (M) tab
@@ -1587,7 +1587,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					break;
 				case _T('n'): case _T('N'): // %n - Active process name
 					{
-						pszText = bRenamedTab ? sFileName.c_str() : pRCon ? pRCon->GetActiveProcessName() : NULL;
+						pszText = bRenamedTab ? sFileName.c_str() : pRCon ? pRCon->GetActiveProcessName() : nullptr;
 						if (!pszText || !*pszText)
 							pszText = L"?";
 					}
@@ -1598,7 +1598,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 						// CTabBarClass::Update will be triggered from CRealConsole::StoreCurWorkDir
 						// https://conemu.github.io/en/ShellWorkDir.html
 						bDynamic = true;
-						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg, false) : NULL;
+						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg, false) : nullptr;
 						if (pszText && (*pszFmt == _T('f') || *pszFmt == _T('F')))
 						{
 							pszText = PointToName(pszText);
@@ -1609,7 +1609,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					}
 					break;
 				case _T('a'): case _T('A'): // %a - ‘Admin’
-					pszText = bAppendAdmin ? gpSet->szAdminTitleSuffix : NULL;
+					pszText = bAppendAdmin ? gpSet->szAdminTitleSuffix : nullptr;
 					bAppendAdmin = false;
 					break;
 				case _T('%'): // %% - %
@@ -1692,7 +1692,7 @@ void CTabBarClass::PrintRecentStack()
 			continue;
 		if (!p)
 		{
-			_ASSERTE(p!=NULL);
+			_ASSERTE(p!=nullptr);
 			continue;
 		}
 		swprintf_c(szDbg, L"%2u: %s", i+1,
@@ -1963,9 +1963,9 @@ bool CTabBarClass::CheckStack()
 	// Remove all absent items
 	while (j < m_TabStack.size())
 	{
-		if (m_TabStack[j] == NULL)
+		if (m_TabStack[j] == nullptr)
 		{
-			_ASSERTE(FALSE && "m_TabStack[j] != NULL");
+			_ASSERTE(FALSE && "m_TabStack[j] != nullptr");
 			m_TabStack.erase(j);
 			bStackChanged = true;
 		}
@@ -2194,7 +2194,7 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVConGuard* rpVCon
 // -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
 int CTabBarClass::ActivateTabByPoint(LPPOINT pptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
 {
-	int iHoverTab = GetTabFromPoint(NULL);
+	int iHoverTab = GetTabFromPoint(nullptr);
 	if (iHoverTab < 0)
 		return iHoverTab;
 	if (iHoverTab == GetCurSel())

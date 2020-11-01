@@ -71,7 +71,7 @@ protected:
 	ITaskbarList3 *mp_TaskBar3 = nullptr; // Win7
 	ITaskbarList2 *mp_TaskBar2 = nullptr; // WinXP
 	ITaskbarList  *mp_TaskBar1 = nullptr; // Win2k
-	HICON mh_Shield = NULL;
+	HICON mh_Shield = nullptr;
 	OleInitializer m_OleInitalizer;
 protected:
 	// We need ordered array, so MMap is not suitable here
