@@ -896,7 +896,8 @@ bool CRealConsole::ChangeAffinityPriority(LPCWSTR asAffinity /*= nullptr*/, LPCW
 
 RealBufferType CRealConsole::GetActiveBufferType()
 {
-	if (!this || !mp_ABuf)
+	AssertThisRet(rbt_Undefined);
+	if (!mp_ABuf)
 		return rbt_Undefined;
 	return mp_ABuf->m_Type;
 }
@@ -910,8 +911,7 @@ void CRealConsole::DumpConsole(HANDLE ahFile)
 
 bool CRealConsole::LoadDumpConsole(LPCWSTR asDumpFile)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (!mp_SBuf)
 	{
@@ -936,8 +936,7 @@ bool CRealConsole::LoadDumpConsole(LPCWSTR asDumpFile)
 
 bool CRealConsole::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (!mp_SBuf)
 	{
@@ -962,8 +961,7 @@ bool CRealConsole::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 
 bool CRealConsole::SetActiveBuffer(RealBufferType aBufferType)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	bool lbRc;
 	switch (aBufferType)
@@ -995,8 +993,7 @@ bool CRealConsole::SetActiveBuffer(RealBufferType aBufferType)
 
 bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent /*= true*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (!aBuffer || (aBuffer != mp_RBuf && aBuffer != mp_EBuf && aBuffer != mp_SBuf))
 	{
@@ -1077,7 +1074,7 @@ void CRealConsole::DoLockUnlock(bool bLock)
 
 bool CRealConsole::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	// Всегда меняем _реальный_ буфер консоли.
 	return (mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID) != FALSE);
@@ -1093,8 +1090,7 @@ void CRealConsole::EndSizing()
 
 void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
@@ -1146,8 +1142,7 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 // для опережающего ресайза консоли (во избежание мелькания отрисовки панелей)
 void CRealConsole::SyncConsole2Window(bool abNtvdmOff/*=FALSE*/, LPRECT prcNewWnd/*=nullptr*/)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	//2009-06-17 Попробуем так. Вроде быстрее и наверное ничего блокироваться не должно
 	/*
@@ -1446,8 +1441,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 
 void CRealConsole::ShowKeyBarHint(WORD nID)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (mp_RBuf)
 		mp_RBuf->ShowKeyBarHint(nID);
@@ -1455,8 +1449,7 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 
 void CRealConsole::PasteExplorerPath(bool bDoCd /*= true*/, bool bSetFocus /*= true*/)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	wchar_t* pszPath = getFocusedExplorerWindowPath();
 
@@ -1479,7 +1472,8 @@ void CRealConsole::PasteExplorerPath(bool bDoCd /*= true*/, bool bSetFocus /*= t
 
 bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 {
-	if (!this || !asCmd || !*asCmd)
+	AssertThisRet(false);
+	if (!asCmd || !*asCmd)
 		return false;
 
 	bool lbRc = false;
@@ -1644,7 +1638,8 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 void CRealConsole::OnKeysSending()
 {
-	if (!this || !mp_RBuf)
+	AssertThis();
+	if (!mp_RBuf)
 		return;
 	mp_RBuf->OnKeysSending();
 }
@@ -1850,8 +1845,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 
 bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (!hConWnd)
 	{
@@ -1926,8 +1920,7 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 
 bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode /*= -1*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (ScanCode == -1)
 		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
@@ -1969,7 +1962,8 @@ bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 // Used for previously executed by ConEmuHk: CECMD_BSDELETEWORD & case CECMD_MOUSECLICK
 bool CRealConsole::IsPromptActionAllowed(bool bFromMouse, const AppSettings* pApp)
 {
-	if (!this || !mp_RBuf || !pApp)
+	AssertThisRet(false);
+	if (!mp_RBuf || !pApp)
 		return false;
 
 	// Some global checks to prevent translation
@@ -2309,11 +2303,7 @@ bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 
 bool CRealConsole::PostLeftClickSync(COORD crDC)
 {
-	if (!this)
-	{
-		_ASSERTE(this!=nullptr);
-		return false;
-	}
+	AssertThisRet(false);
 
 	const DWORD nFarPID = GetFarPID();
 	if (!nFarPID)
@@ -2350,8 +2340,7 @@ bool CRealConsole::PostLeftClickSync(COORD crDC)
 
 bool CRealConsole::PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
 		return false; // Сервер еще не стартовал. События будут пропущены...
@@ -2380,7 +2369,8 @@ bool CRealConsole::PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId)
 
 bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false*/)
 {
-	if (!this || !piRec)
+	AssertThisRet(false);
+	if (!piRec)
 		return false;
 
 	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
@@ -2543,7 +2533,8 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 // Highlight icon (flashing actually) on modified console contents
 bool CRealConsole::isHighlighted()
 {
-	if (!this || !tabs.bConsoleDataChanged)
+	AssertThisRet(false);
+	if (!tabs.bConsoleDataChanged)
 		return false;
 
 	if (mp_VCon->isVisible())
@@ -2562,9 +2553,10 @@ bool CRealConsole::isHighlighted()
 // Вызывается при изменения текста/атрибутов в реальной консоли (mp_RBuf)
 void CRealConsole::OnConsoleDataChanged()
 {
+	AssertThis();
 	// Do not take into account gpSet->nTabFlashChanged
 	// because bConsoleDataChanged may be used in tab template
-	if (!this || mp_VCon->isVisible())
+	if (mp_VCon->isVisible())
 		return;
 
 	if (!mb_WasVisibleOnce && (GetRunTime() < HIGHLIGHT_RUNTIME_MIN))
@@ -2593,8 +2585,8 @@ void CRealConsole::OnConsoleDataChanged()
 
 void CRealConsole::OnTimerCheck()
 {
-	if (!this)
-		return;
+	AssertThis();
+
 	if (InCreateRoot() || InRecreate())
 		return;
 
@@ -3806,102 +3798,19 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	}
 }
 
-//// Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
-//wchar_t* CRealConsole::ParseConEmuSubst(LPCWSTR asCmd)
-//{
-//	if (!this || !mp_VCon || !asCmd || !*asCmd)
-//		return nullptr;
-//
-//	size_t cchMax = _tcslen(asCmd) + 1;
-//
-//	// Прикинуть, сколько путей нужно будет заменять
-//	size_t nPathCount = 0;
-//	wchar_t* pszCount = StrStrI(asCmd, ENV_CONEMUWORKDIR_VAR_W);
-//	while (pszCount)
-//	{
-//		nPathCount++;
-//		pszCount = StrStrI(pszCount+_tcslen(ENV_CONEMUWORKDIR_VAR_W), ENV_CONEMUWORKDIR_VAR_W);
-//	}
-//	LPCWSTR pszStartupDir = nullptr;
-//	if (nPathCount > 0)
-//	{
-//		pszStartupDir = GetStartupDir();
-//		cchMax += _tcslen(pszStartupDir)*nPathCount;
-//	}
-//
-//
-//	wchar_t* pszChange = (wchar_t*)calloc(cchMax, sizeof(*pszChange)); //lstrdup(asCmd);
-//	_wcscpy_c(pszChange, cchMax, asCmd);
-//	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W, ENV_CONEMUWORKDIR_VAR_W};
-//	struct { HWND hWnd; LPCWSTR pszStr; } Repl[] = {{ghWnd}, {mp_VCon->GetView()}, {mp_VCon->GetBack()}, {nullptr, pszStartupDir}};
-//	bool bChanged = false;
-//
-//	for (size_t i = 0; i < countof(szNames); ++i)
-//	{
-//		wchar_t szTemp[16];
-//		LPCWSTR pszReplace = nullptr;
-//		if (Repl[i].hWnd)
-//		{
-//			swprintf_c(szTemp, L"0x%08X", (DWORD)(DWORD_PTR)(Repl[i].hWnd));
-//			pszReplace = szTemp;
-//		}
-//		else if (Repl[i].pszStr)
-//		{
-//			pszReplace = Repl[i].pszStr;
-//		}
-//		else
-//		{
-//			continue;
-//		}
-//
-//		size_t rLen = _tcslen(pszReplace); _ASSERTE(rLen==10 || Repl[i].pszStr!=nullptr);
-//
-//		size_t iLen = _tcslen(szNames[i]); _ASSERTE(iLen>=rLen || Repl[i].pszStr!=nullptr);
-//
-//		wchar_t* pszStart = StrStrI(pszChange, szNames[i]);
-//		if (!pszStart /*|| pszStart == pszChange*/)
-//			continue;
-//		while (pszStart)
-//		{
-//			if ((pszStart > pszChange)
-//				&& ((*(pszStart-1) == L'!' && *(pszStart+iLen) == L'!')
-//					|| (*(pszStart-1) == L'%' && *(pszStart+iLen) == L'%')))
-//			{
-//				bChanged = true;
-//				pszStart--;
-//				wchar_t* pszEnd = pszStart + iLen+2;
-//				_ASSERTE(*(pszEnd-1)==L'!' || *(pszEnd-1)==L'%');
-//
-//				size_t cchLeft = _tcslen(pszEnd)+1;
-//				// Сначала - двигаем хвост, т.к. тело может быть перетерто, если rLen>iLen
-//				memmove(pszStart+rLen, pszEnd, cchLeft*sizeof(*pszEnd));
-//				memmove(pszStart, pszReplace, rLen*sizeof(*pszReplace));
-//			}
-//			pszStart = StrStrI(pszStart+2, szNames[i]);
-//		}
-//	}
-//
-//	if (!bChanged)
-//		SafeFree(pszChange);
-//	return pszChange;
-//}
-
 void CRealConsole::OnStartProcessAllowed()
 {
-	if (!this || !mb_NeedStartProcess)
+	AssertThis();
+
+	if (!mb_NeedStartProcess)
 	{
-		_ASSERTE(this && mb_NeedStartProcess);
-
-		if (this)
-		{
-			mb_StartResult = TRUE;
-			SetEvent(mh_StartExecuted);
-		}
-
+		_ASSERTE(mb_NeedStartProcess);
+		mb_StartResult = TRUE;
+		SetEvent(mh_StartExecuted);
 		return;
 	}
 
-	_ASSERTE(mh_MainSrv==nullptr);
+	_ASSERTE(mh_MainSrv == nullptr);
 
 	if (!PreInit())
 	{
@@ -3932,10 +3841,11 @@ void CRealConsole::OnStartProcessAllowed()
 
 void CRealConsole::ConHostSearchPrepare()
 {
+	AssertThis();
 	CRefGuard<CConHostSearch> search(m_ConHostSearch.Ptr());
-	if (!this || !search)
+	if (!search)
 	{
-		_ASSERTE(this && search);
+		_ASSERTE(search);
 		return;
 	}
 
@@ -3963,10 +3873,11 @@ void CRealConsole::ConHostSearchPrepare()
 
 DWORD CRealConsole::ConHostSearch(bool bFinal)
 {
+	AssertThisRet(0);
 	CRefGuard<CConHostSearch> search(m_ConHostSearch.Ptr());
-	if (!this || !search)
+	if (!search)
 	{
-		_ASSERTE(this && search);
+		_ASSERTE(search);
 		return 0;
 	}
 
@@ -5182,17 +5093,15 @@ void CRealConsole::InitNames()
 }
 
 // Если включена прокрутка - скорректировать индекс ячейки из экранных в буферные
-COORD CRealConsole::ScreenToBuffer(COORD crMouse)
+COORD CRealConsole::ScreenToBuffer(const COORD crMouse)
 {
-	if (!this)
-		return crMouse;
+	AssertThisRet(crMouse);
 	return mp_ABuf->ScreenToBuffer(crMouse);
 }
 
-COORD CRealConsole::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool bVertOnly /*= false*/)
+COORD CRealConsole::BufferToScreen(const COORD crMouse, const bool bFixup /*= true*/, const bool bVertOnly /*= false*/)
 {
-	if (!this)
-		return crMouse;
+	AssertThisRet(crMouse);
 	return mp_ABuf->BufferToScreen(crMouse, bFixup, bVertOnly);
 }
 
@@ -5240,7 +5149,8 @@ void CRealConsole::OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFrom
 
 bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 {
-	if (!this || !hConWnd)
+	AssertThisRet(false);
+	if (!hConWnd)
 		return false;
 
 	if (isSelectionPresent()
@@ -5256,6 +5166,8 @@ bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
 bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
 {
+	AssertThisRet(false);
+
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
 #endif
@@ -5271,7 +5183,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	lastMsg = messg;
 #endif
 
-	if (!this || !hConWnd)
+	if (!hConWnd)
 	{
 		return false;
 	}
@@ -5807,8 +5719,7 @@ wrap:
 
 void CRealConsole::DoFindText(int nDirection)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (gpSet->FindOptions.bFreezeConsole)
 	{
@@ -5835,8 +5746,7 @@ void CRealConsole::DoFindText(int nDirection)
 
 void CRealConsole::DoEndFindText()
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (mp_ABuf && (mp_ABuf->m_Type == rbt_Find))
 	{
@@ -6151,12 +6061,11 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 
 void CRealConsole::StopSignal()
 {
+	AssertThis();
+
 	DEBUGSTRCON(L"CRealConsole::StopSignal()\n");
 
 	LogString(L"CRealConsole::StopSignal()");
-
-	if (!this)
-		return;
 
 	if (mn_ProcessCount)
 	{
@@ -6200,8 +6109,7 @@ void CRealConsole::StopSignal()
 
 bool CRealConsole::StartStopTermMode(TermModeCommand mode, ChangeTermAction action)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	bool bOk = true;
 	bool bValue = (action == cta_Enable);
@@ -6472,7 +6380,8 @@ void CRealConsole::StopThread(bool abRecreating)
 
 bool CRealConsole::InScroll()
 {
-	if (!this || !mp_VCon || !isBufferHeight())
+	AssertThisRet(false);
+	if (!mp_VCon || !isBufferHeight())
 		return false;
 
 	return mp_VCon->InScroll();
@@ -6480,8 +6389,7 @@ bool CRealConsole::InScroll()
 
 bool CRealConsole::isGuiVisible()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (m_ChildGui.isGuiWnd())
 	{
@@ -6502,8 +6410,7 @@ bool CRealConsole::isGuiVisible()
 
 bool CRealConsole::isGuiOverCon()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
@@ -6516,8 +6423,7 @@ bool CRealConsole::isGuiOverCon()
 // Проверить, включен ли буфер (TRUE). Или высота окна равна высоте буфера (FALSE).
 bool CRealConsole::isBufferHeight()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (m_ChildGui.hGuiWnd)
 	{
@@ -6530,8 +6436,7 @@ bool CRealConsole::isBufferHeight()
 // TRUE - если консоль "заморожена" (альтернативный буфер)
 bool CRealConsole::isAlternative()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (m_ChildGui.hGuiWnd)
 		return false;
@@ -6541,7 +6446,8 @@ bool CRealConsole::isAlternative()
 
 bool CRealConsole::isConSelectMode()
 {
-	if (!this || !mp_ABuf)
+	AssertThisRet(false);
+	if (!mp_ABuf)
 	{
 		return false;
 	}
@@ -6568,8 +6474,7 @@ bool CRealConsole::isDetached()
 
 bool CRealConsole::isWindowVisible()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (!hConWnd)
 		return false;
@@ -6581,9 +6486,9 @@ bool CRealConsole::isWindowVisible()
 
 LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 {
+	AssertThisRet(nullptr);
+
 	// На старте mn_ProcessCount==0, а кнопку в тулбаре показывать уже нужно
-	if (!this /*|| !mn_ProcessCount*/)
-		return nullptr;
 
 	// Здесь нужно возвращать "переименованным" активный таб, а не только первый
 	// Пока abGetRenamed используется только в ConfirmCloseConsoles и CTaskBarGhost::CheckTitle
@@ -6652,7 +6557,8 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 
 void CRealConsole::ResetTopLeft()
 {
-	if (!this || !mp_RBuf)
+	AssertThis();
+	if (!mp_RBuf)
 		return;
 	mp_RBuf->ResetTopLeft();
 }
@@ -6660,7 +6566,8 @@ void CRealConsole::ResetTopLeft()
 // nDirection is one of the standard SB_xxx constants
 LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 {
-	if (!this || !mp_ABuf)
+	AssertThisRet(0);
+	if (!mp_ABuf)
 		return 0;
 
 	LRESULT lRc = 0;
@@ -6782,7 +6689,7 @@ const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(const ConEmuChord& VkSt
 
 void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg)
 {
-	if (!this) return;
+	AssertThis();
 
 	//LRESULT result = 0;
 	_ASSERTE(pszChars!=nullptr);
@@ -7641,16 +7548,13 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 
 DWORD CRealConsole::GetProgramStatus()
 {
-	if (!this)
-		return 0;
-
+	AssertThisRet(0);
 	return mn_ProgramStatus;
 }
 
 DWORD CRealConsole::GetFarStatus()
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
 		return 0;
@@ -7660,7 +7564,8 @@ DWORD CRealConsole::GetFarStatus()
 
 bool CRealConsole::isServerAlive()
 {
-	if (!this || !mh_MainSrv || mh_MainSrv == INVALID_HANDLE_VALUE)
+	AssertThisRet(false);
+	if (!mh_MainSrv || mh_MainSrv == INVALID_HANDLE_VALUE)
 		return false;
 
 #ifdef _DEBUG
@@ -7719,15 +7624,13 @@ bool CRealConsole::isServerClosing(bool bStrict /*= false*/)
 
 DWORD CRealConsole::GetMonitorThreadID()
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 	return mn_MonitorThreadID;
 }
 
 DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	#if 0
 	// During multiple tabs/splits initialization we may get bunch
@@ -7748,8 +7651,7 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 
 DWORD CRealConsole::GetTerminalPID()
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 	return mn_Terminal_PID;
 }
 
@@ -7982,8 +7884,7 @@ bool CRealConsole::isServerCreated(bool bFullRequired /*= false*/)
 
 DWORD CRealConsole::GetFarPID(bool abPluginRequired/*=false*/)
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	if (!mn_FarPID  // Должен быть известен код PID
 	        || ((mn_ProgramStatus & CES_FARACTIVE) == 0) // выставлен флаг
@@ -8224,8 +8125,7 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 // Used in StatusBar
 LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
 {
-	if (!this)
-		return nullptr;
+	AssertThisRet(nullptr);
 
 	DWORD nPID = 0;
 	ConProcess Process = {};
@@ -8297,8 +8197,7 @@ LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
 // Вернуть PID "условно активного" процесса в консоли
 DWORD CRealConsole::GetActivePID(ConProcess* rpProcess /*= nullptr*/)
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	DWORD nPID = 0;
 
@@ -8317,7 +8216,8 @@ DWORD CRealConsole::GetActivePID(ConProcess* rpProcess /*= nullptr*/)
 
 bool CRealConsole::GetProcessInformation(DWORD nPID, ConProcess* rpProcess /*= nullptr*/)
 {
-	if (!this || !nPID)
+	AssertThisRet(false);
+	if (!nPID)
 		return false;
 
 	bool bFound = false;
@@ -8366,8 +8266,7 @@ bool CRealConsole::GetProcessInformation(DWORD nPID, ConProcess* rpProcess /*= n
 
 DWORD CRealConsole::GetInteractivePID()
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	DWORD nPID = 0;
 
@@ -8428,8 +8327,7 @@ DWORD CRealConsole::GetLoadedPID()
 // PID или совпадает с GetActivePID или 0
 DWORD CRealConsole::GetRunningPID()
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	if (m_ChildGui.hGuiWnd)
 	{
@@ -8490,7 +8388,8 @@ DWORD CRealConsole::GetRunningPID()
 
 LPCWSTR CRealConsole::GetActiveProcessName()
 {
-	if (!this || !m_ActiveProcess.ProcessID)
+	AssertThisRet(nullptr);
+	if (!m_ActiveProcess.ProcessID)
 		return nullptr;
 	return m_ActiveProcess.Name;
 }
@@ -8503,8 +8402,7 @@ void CRealConsole::ResetActiveAppSettingsId()
 // Вызывается перед запуском процесса
 int CRealConsole::GetDefaultAppSettingsId()
 {
-	if (!this)
-		return -1;
+	AssertThisRet(-1);
 
 	int iAppId = -1;
 	LPCWSTR lpszCmd = nullptr;
@@ -8603,11 +8501,10 @@ wrap:
 
 int CRealConsole::GetActiveAppSettingsId(bool bReload /*= false*/)
 {
-	if (!this)
-		return -1;
+	AssertThisRet(-1);
 
-	int   iLastId = mn_LastAppSettingsId;
-	bool  isAdmin = isAdministrator();
+	const int   iLastId = mn_LastAppSettingsId;
+	const bool  isAdmin = isAdministrator();
 
 	if (!m_AppDistinctProcess.ProcessID)
 	{
@@ -9369,27 +9266,6 @@ bool CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 	return lbRc;
 }
 
-// -- заменено на перехват функции ScreenToClient
-//void CRealConsole::RemoveFromCursor()
-//{
-//	if (!this) return;
-//	//
-//	if (gpSet->isLockRealConsolePos) return;
-//	// Сделано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
-//	// а не в положении мыши (что смотрится отвратно - оно может сплющиться до 2-3 строк).
-//	// Только при скрытой консоли.
-//	if (!isWindowVisible())
-//	{  // просто подвинем скрытое окно консоли так, чтобы курсор был ВНЕ него
-//		RECT con; POINT ptCur;
-//		GetWindowRect(hConWnd, &con);
-//		GetCursorPos(&ptCur);
-//		short x = ptCur.x + 1;
-//		short y = ptCur.y + 1;
-//		if (con.left != x || con.top != y)
-//			MOVEWINDOW(hConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
-//	}
-//}
-
 void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - Show
 {
 	if (this == nullptr) return;
@@ -9426,10 +9302,11 @@ void CRealConsole::ShowGuiClientInt(bool bShow)
 }
 
 // The only way to show ChildGui's window system menu,
-// if used's chosen to hide children window caption
+// if user's chosen to hide children window caption
 void CRealConsole::ChildSystemMenu()
 {
-	if (!this || !m_ChildGui.hGuiWnd)
+	AssertThis();
+	if (!m_ChildGui.hGuiWnd)
 		return;
 
 	//Seems like we need to bring focus to ConEmu window before
@@ -9754,8 +9631,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, bool abForceApprove /*= FALSE*/)
 
 void CRealConsole::CheckVConRConPointer(bool bForceSet)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	_ASSERTE(hConWnd != nullptr);
 	HWND hVCon = mp_VCon->GetView();
@@ -9781,7 +9657,7 @@ void CRealConsole::CheckVConRConPointer(bool bForceSet)
 
 void CRealConsole::OnFocus(bool abFocused)
 {
-	if (!this) return;
+	AssertThis();
 
 	if ((mn_Focused == -1) ||
 	        ((mn_Focused == 0) && abFocused) ||
@@ -9853,7 +9729,7 @@ unsigned CRealConsole::isLogging(unsigned level /*= 1*/)
 
 bool CRealConsole::LogString(LPCWSTR asText)
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	if (!asText) return false;
 
@@ -9871,7 +9747,7 @@ bool CRealConsole::LogString(LPCWSTR asText)
 
 bool CRealConsole::LogString(LPCSTR asText)
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	if (!asText) return false;
 
@@ -9889,8 +9765,9 @@ bool CRealConsole::LogString(LPCSTR asText)
 
 bool CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= nullptr*/)
 {
+	AssertThisRet(false);
 	// Есть еще вообще-то и WM_UNICHAR, но ввод UTF-32 у нас пока не поддерживается
-	if (!this || !mp_Log || !isLogging())
+	if (!mp_Log || !isLogging())
 		return false;
 	if (!(uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR
 		|| uMsg == WM_SYSCHAR || uMsg == WM_DEADCHAR || uMsg == WM_SYSDEADCHAR
@@ -9979,7 +9856,9 @@ bool CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 
 bool CRealConsole::LogInput(INPUT_RECORD* pRec)
 {
-	if (!this || !mp_Log || !isLogging()) return false;
+	AssertThisRet(false);
+	if (!mp_Log || !isLogging())
+		return false;
 
 	char szInfo[192] = {0};
 	SYSTEMTIME st; GetLocalTime(&st);
@@ -10080,8 +9959,7 @@ void CRealConsole::PrepareNewConArgs()
 // Послать в консоль запрос на закрытие
 bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	_ASSERTE((hConWnd && mh_MainSrv) || isDetached());
 
@@ -10285,7 +10163,7 @@ bool CRealConsole::RecreateProcessStart()
 
 bool CRealConsole::IsConsoleDataChanged()
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	#ifdef _DEBUG
 	if (mb_DebugLocked)
@@ -10329,7 +10207,7 @@ bool CRealConsole::IsFarHyperlinkAllowed(bool abFarRequired)
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
 void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr)
 {
-	if (!this) return;
+	AssertThis();
 
 	if (mb_ABufChaged)
 		mb_ABufChaged = false; // сбросим
@@ -10339,8 +10217,9 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 bool CRealConsole::SetFullScreen()
 {
-	DWORD nServerPID;
-	if (!this || ((nServerPID = GetServerPID()) == 0))
+	AssertThisRet(false);
+	const DWORD nServerPID = GetServerPID();
+	if (nServerPID == 0)
 		return false;
 
 	COORD crNewSize = {};
@@ -10653,8 +10532,7 @@ void CRealConsole::ShowHideViews(bool abShow)
 
 void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	wchar_t szInfo[120];
 	swprintf_c(szInfo, L"RCon was activated Index=%i OldIndex=%i", nNewNum+1, nOldNum+1);
@@ -10748,7 +10626,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 void CRealConsole::OnDeactivate(int nNewNum)
 {
-	if (!this) return;
+	AssertThis();
 
 	HWND hFore = GetForegroundWindow();
 	HWND hGui = mp_VCon->GuiWnd();
@@ -10787,8 +10665,7 @@ void CRealConsole::OnDeactivate(int nNewNum)
 
 void CRealConsole::OnGuiFocused(bool abFocus, bool abForceChild /*= FALSE*/)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (!abFocus)
 		mp_VCon->RestoreChildFocusPending(false);
@@ -10888,7 +10765,7 @@ void CRealConsole::OnGuiFocused(bool abFocus, bool abForceChild /*= FALSE*/)
 // а заодно заставить перечитать содержимое консоли (если abActive == TRUE)
 void CRealConsole::UpdateServerActive(bool abImmediate /*= FALSE*/)
 {
-	if (!this) return;
+	AssertThis();
 
 	//mb_UpdateServerActive = abActive;
 	bool bActiveNonSleep = false;
@@ -11350,8 +11227,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 void CRealConsole::DoRenameTab()
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	DontEnable de;
 	CDpiForDialog::Create(mp_RenameDpiAware);
@@ -11368,7 +11244,7 @@ void CRealConsole::DoRenameTab()
 // Запустить Elevated копию фара с теми же папками на панелях
 void CRealConsole::AdminDuplicate()
 {
-	if (!this) return;
+	AssertThis();
 
 	DuplicateRoot(false, true);
 }
@@ -11544,8 +11420,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 
 void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= nullptr*/)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	CTab tab(__FILE__,__LINE__);
 	if (GetTab(tabs.nActiveIndex, tab))
@@ -11570,8 +11445,7 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= nullptr*/)
 
 void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= nullptr*/)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	DWORD dwServerPID = GetServerPID(true);
 	if (!dwServerPID)
@@ -11599,13 +11473,14 @@ void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= nullptr*/)
 
 int CRealConsole::GetRootProcessIcon()
 {
-	if (!this) return -1;
+	AssertThisRet(-1);
 	return gpSet->isTabIcons ? mn_RootProcessIcon : -1;
 }
 
 LPCWSTR CRealConsole::GetRootProcessName()
 {
-	if (!this || !*ms_RootProcessName)
+	AssertThisRet(nullptr);
+	if (!*ms_RootProcessName)
 		return nullptr;
 	return ms_RootProcessName;
 }
@@ -11618,8 +11493,7 @@ void CRealConsole::NeedRefreshRootProcessIcon()
 
 int CRealConsole::GetTabCount(bool abVisibleOnly /*= FALSE*/)
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	if (abVisibleOnly)
 	{
@@ -11653,8 +11527,7 @@ int CRealConsole::GetTabCount(bool abVisibleOnly /*= FALSE*/)
 
 int CRealConsole::GetActiveTab()
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	return tabs.nActiveIndex;
 }
@@ -11750,8 +11623,7 @@ void CRealConsole::UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab)
 // Если такого таба нет - pTab НЕ ОБНУЛЯТЬ!!!
 bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	#ifdef _DEBUG
 	// Должен быть как минимум один (хотя бы пустой) таб
@@ -11889,8 +11761,7 @@ void CRealConsole::CheckPanelTitle()
 
 DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 {
-	if (!this)
-		return 0;
+	AssertThisRet(0);
 
 	WARNING("CantActivateInfo: Хорошо бы при отображении хинта 'Can't activate tab' сказать 'почему'");
 
@@ -12012,8 +11883,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
 bool CRealConsole::IsSwitchFarWindowAllowed()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (mb_InCloseConsole || mn_TermEventTick)
 	{
@@ -12029,8 +11899,7 @@ bool CRealConsole::IsSwitchFarWindowAllowed()
 
 LPCWSTR CRealConsole::GetActivateFarWindowError(wchar_t* pszBuffer, size_t cchBufferMax)
 {
-	if (!this)
-		return L"this==nullptr";
+	AssertThisRet(L"this==nullptr");
 
 	if (!pszBuffer || !cchBufferMax)
 	{
@@ -12049,8 +11918,7 @@ LPCWSTR CRealConsole::GetActivateFarWindowError(wchar_t* pszBuffer, size_t cchBu
 
 bool CRealConsole::ActivateFarWindow(int anWndIndex)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	tabs.sTabActivationErr[0] = 0;
 
@@ -12197,9 +12065,9 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 
 bool CRealConsole::IsConsoleThread()
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
-	DWORD dwCurThreadId = GetCurrentThreadId();
+	const DWORD dwCurThreadId = GetCurrentThreadId();
 	return dwCurThreadId == mn_MonitorThreadID;
 }
 
@@ -12211,8 +12079,7 @@ void CRealConsole::SetForceRead()
 // Вызывается из TabBar->ConEmu
 void CRealConsole::ChangeBufferHeightMode(bool abBufferHeight)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	TODO("Тут бы не высоту менять, а выполнять подмену буфера на длинный вывод последней команды");
 	// Пока, для совместимости, оставим как было
@@ -12391,7 +12258,7 @@ bool CRealConsole::PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathNam
 
 void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLayout)
 {
-	if (!this) return;
+	AssertThis();
 
 	if (m_ChildGui.hGuiWnd && dwNewKeyboardLayout)
 	{
@@ -12456,8 +12323,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 
 void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText /*= nullptr*/, bool abNoConfirm /*= false*/, PosixPasteMode posixMode /*= pxm_Auto*/)
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (!hConWnd)
 	{
@@ -12674,8 +12540,7 @@ wrap:
 // So, it may cause a rubbish, if console has running applications!
 bool CRealConsole::Write(LPCWSTR pszText, int nLen /*= -1*/, DWORD* pnWritten /*= nullptr*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (nLen == -1)
 		nLen = wcslen(pszText);
@@ -12751,8 +12616,7 @@ bool CRealConsole::isConsoleClosing()
 
 bool CRealConsole::isConsoleReady()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	if (hConWnd && mn_MainSrv_PID && mb_MainSrv_Ready)
 		return true;
 	return false;
@@ -12999,7 +12863,7 @@ bool CRealConsole::TerminateActiveProcess(bool abConfirm, DWORD nPID)
 
 void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro /*= true*/)
 {
-	if (!this) return;
+	AssertThis();
 
 	_ASSERTE(!mb_ProcessRestarted);
 
@@ -13252,17 +13116,13 @@ void CRealConsole::CloseTab()
 
 unsigned CRealConsole::TextWidth()
 {
-	_ASSERTE(this!=nullptr);
-
-	if (!this) return MIN_CON_WIDTH;
+	AssertThisRet(MIN_CON_WIDTH);
 	return mp_ABuf->TextWidth();
 }
 
 unsigned CRealConsole::TextHeight()
 {
-	_ASSERTE(this!=nullptr);
-
-	if (!this) return MIN_CON_HEIGHT;
+	AssertThisRet(MIN_CON_HEIGHT);
 	return mp_ABuf->TextHeight();
 }
 
@@ -13284,7 +13144,8 @@ void CRealConsole::OnBufferHeight()
 
 bool CRealConsole::isActive(bool abAllowGroup)
 {
-	if (!this || !mp_VCon)
+	AssertThisRet(false);
+	if (!mp_VCon)
 		return false;
 	return mp_VCon->isActive(abAllowGroup);
 }
@@ -13292,7 +13153,8 @@ bool CRealConsole::isActive(bool abAllowGroup)
 // Проверяет не только активность, но и "в фокусе ли ConEmu"
 bool CRealConsole::isInFocus()
 {
-	if (!this || !mp_VCon)
+	AssertThisRet(false);
+	if (!mp_VCon)
 		return false;
 
 	TODO("DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях");
@@ -13307,7 +13169,9 @@ bool CRealConsole::isInFocus()
 
 bool CRealConsole::isVisible()
 {
-	if (!this || !mp_VCon) return false;
+	AssertThisRet(false);
+	if (!mp_VCon)
+		return false;
 
 	return mp_VCon->isVisible();
 }
@@ -13508,7 +13372,7 @@ short CRealConsole::CheckProgressInTitle()
 
 void CRealConsole::OnTitleChanged()
 {
-	if (!this) return;
+	AssertThis();
 
 	#ifdef _DEBUG
 	if (mb_DebugLocked)
@@ -13633,8 +13497,7 @@ void CRealConsole::OnTitleChanged()
 // Если фар запущен как "far /e ..." то панелей в нем вообще нет
 bool CRealConsole::isFarPanelAllowed()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	// Если текущий процесс НЕ фар - то и проверять нечего, "консоль" считается за "панель"
 	DWORD nActivePID = GetActivePID();
 	bool  bRootIsFar = IsFarExe(ms_RootProcessName);
@@ -13685,7 +13548,7 @@ DWORD CRealConsole::GetActiveDlgFlags()
 
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/, bool abSkipDialogCheck /*= false*/)
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	if (Title[0] == 0) return false;
 
@@ -13728,14 +13591,14 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditVi
 
 bool CRealConsole::isEditor()
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	return ((GetFarStatus() & CES_EDITOR) == CES_EDITOR);
 }
 
 bool CRealConsole::isEditorModified()
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	if (!isEditor()) return false;
 
@@ -13762,7 +13625,7 @@ bool CRealConsole::isEditorModified()
 
 bool CRealConsole::isViewer()
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	return ((GetFarStatus() & CES_VIEWER) == CES_VIEWER);
 }
@@ -13819,7 +13682,7 @@ void CRealConsole::SetPaletteName(LPCWSTR asPaletteName)
 
 LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 {
-	if (!this) return L"";
+	AssertThisRet(L"");
 
 	if (m_Args.pszSpecialCmd)
 		return m_Args.pszSpecialCmd;
@@ -13831,7 +13694,7 @@ LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 
 wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 {
-	if (!this) return nullptr;
+	AssertThisRet(nullptr);
 
 	// m_Args.pszStartupDir is used in GetStartupDir()
 	// thats why we save the value before showing the current one
@@ -14022,8 +13885,7 @@ short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFrom
 
 bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= nullptr*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	bool lbOk = false;
 
@@ -14106,7 +13968,7 @@ void CRealConsole::UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo)
 // Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
 void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANGED* rpSetEnvVar /*= nullptr*/)
 {
-	if (!this) return;
+	AssertThis();
 
 	if (rpSetEnvVar)
 		memset(rpSetEnvVar, 0, sizeof(*rpSetEnvVar));
@@ -14147,7 +14009,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 
 void CRealConsole::UpdateTextColorSettings(bool ChangeTextAttr /*= TRUE*/, bool ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= nullptr*/)
 {
-	if (!this) return;
+	AssertThis();
 
 	// Обновлять, только если наши настройки сменились
 	if (apDistinct)
@@ -14238,7 +14100,7 @@ BOOL CRealConsole::FindChildGuiWindowProc(HWND hwnd, LPARAM lParam)
 // рассчитывать на него при определения "Просмотра" - нельзя
 HWND CRealConsole::isPictureView(bool abIgnoreNonModal/*=FALSE*/)
 {
-	if (!this) return nullptr;
+	AssertThisRet(nullptr);
 
 	if (m_ChildGui.Process.ProcessID && !m_ChildGui.hGuiWnd)
 	{
@@ -14365,14 +14227,14 @@ HWND CRealConsole::isPictureView(bool abIgnoreNonModal/*=FALSE*/)
 
 HWND CRealConsole::ConWnd()
 {
-	if (!this) return nullptr;
+	AssertThisRet(nullptr);
 
 	return hConWnd;
 }
 
 HWND CRealConsole::GetView()
 {
-	if (!this) return nullptr;
+	AssertThisRet(nullptr);
 
 	return mp_VCon->GetView();
 }
@@ -14380,13 +14242,15 @@ HWND CRealConsole::GetView()
 // Если работаем в Gui-режиме (Notepad, Putty, ...)
 HWND CRealConsole::GuiWnd()
 {
-	if (!this || !m_ChildGui.isGuiWnd())
+	AssertThisRet(nullptr);
+	if (!m_ChildGui.isGuiWnd())
 		return nullptr;
 	return m_ChildGui.hGuiWnd;
 }
 DWORD CRealConsole::GuiWndPID()
 {
-	if (!this || !m_ChildGui.hGuiWnd)
+	AssertThisRet(0);
+	if (!m_ChildGui.hGuiWnd)
 		return 0;
 	return m_ChildGui.Process.ProcessID;
 }
@@ -14416,7 +14280,8 @@ bool CRealConsole::isGuiEagerFocus()
 // Иначе PuTTY глючит с обработкой мышки
 void CRealConsole::GuiNotifyChildWindow()
 {
-	if (!this || !m_ChildGui.hGuiWnd || m_ChildGui.bGuiExternMode)
+	AssertThis();
+	if (!m_ChildGui.hGuiWnd || m_ChildGui.bGuiExternMode)
 		return;
 
 	DEBUGTEST(BOOL bValid1 = IsWindow(m_ChildGui.hGuiWnd));
@@ -14458,7 +14323,8 @@ void CRealConsole::GuiNotifyChildWindow()
 
 void CRealConsole::GuiWndFocusStore()
 {
-	if (!this || !m_ChildGui.hGuiWnd)
+	AssertThis();
+	if (!m_ChildGui.hGuiWnd)
 		return;
 
 	mp_VCon->RestoreChildFocusPending(false);
@@ -14500,7 +14366,8 @@ void CRealConsole::GuiWndFocusStore()
 // Если (bForce == false) - то по "настройкам", юзер мог просить переключиться в ConEmu
 void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 {
-	if (!this || !m_ChildGui.hGuiWnd)
+	AssertThis();
+	if (!m_ChildGui.hGuiWnd)
 		return;
 
 	// Temp workaround for Issue 876: Ctrl+N and Win-Alt-Delete hotkey randomly break
@@ -14546,7 +14413,8 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 
 void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr)
 {
-	if (!this || !m_ChildGui.hGuiWnd)
+	AssertThis();
+	if (!m_ChildGui.hGuiWnd)
 		return;
 
 	bAttached = FALSE;
@@ -14578,9 +14446,10 @@ void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAtt
 // Вызывается после завершения вставки дочернего GUI-окна в ConEmu
 void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 {
-	if (!this || !m_ChildGui.hGuiWnd)
+	AssertThis();
+	if (!m_ChildGui.hGuiWnd)
 	{
-		_ASSERTE(this && m_ChildGui.hGuiWnd);
+		_ASSERTE(m_ChildGui.hGuiWnd);
 		return;
 	}
 
@@ -14607,11 +14476,7 @@ void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 
 void CRealConsole::UpdateStartArgs(RConStartArgsEx::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane, bool active)
 {
-	if (!this)
-	{
-		_ASSERTE(this!=nullptr);
-		return;
-	}
+	AssertThis();
 
 	m_Args.eSplit = aSplitType;
 	m_Args.nSplitValue = aSplitValue;
@@ -14627,11 +14492,7 @@ void CRealConsole::UpdateStartArgs(RConStartArgsEx::SplitType aSplitType, UINT a
 
 void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev)
 {
-	if (!this)
-	{
-		_ASSERTE(this!=nullptr);
-		return;
-	}
+	AssertThis();
 
 	if ((m_ChildGui.hGuiWnd != nullptr) && !IsWindow(m_ChildGui.hGuiWnd))
 	{
@@ -14868,7 +14729,8 @@ void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcG
 
 int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
 {
-	if (!this || !isFar())
+	AssertThisRet(0);
+	if (!isFar())
 		return 0;
 
 	// Должен вызываться только при активном реальном буфере
@@ -14879,7 +14741,8 @@ int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
 // abIncludeEdges - включать
 int CRealConsole::CoordInPanel(COORD cr, bool abIncludeEdges /*= FALSE*/)
 {
-	if (!this || !mp_ABuf || (mp_ABuf != mp_RBuf))
+	AssertThisRet(0);
+	if (!mp_ABuf || (mp_ABuf != mp_RBuf))
 		return 0;
 
 #ifdef _DEBUG
@@ -14904,11 +14767,14 @@ int CRealConsole::CoordInPanel(COORD cr, bool abIncludeEdges /*= FALSE*/)
 
 bool CRealConsole::GetPanelRect(bool abRight, RECT* prc, bool abFull /*= FALSE*/, bool abIncludeEdges /*= FALSE*/)
 {
-	if (!this || mp_ABuf != mp_RBuf)
+	if (prc)
+		*prc = MakeRect(-1, -1);
+
+	AssertThisRet(false);
+	if (mp_ABuf != mp_RBuf)
 	{
 		if (prc)
 			*prc = MakeRect(-1,-1);
-
 		return false;
 	}
 
@@ -14917,7 +14783,8 @@ bool CRealConsole::GetPanelRect(bool abRight, RECT* prc, bool abFull /*= FALSE*/
 
 CEActiveAppFlags CRealConsole::GetActiveAppFlags()
 {
-	if (!this || !hConWnd || !m_AppMap.IsValid())
+	AssertThisRet(caf_Standard);
+	if (!hConWnd || !m_AppMap.IsValid())
 		return caf_Standard;
 
 	#ifdef _DEBUG
@@ -14981,7 +14848,7 @@ bool CRealConsole::isPosixConvertAllowed()
 
 bool CRealConsole::isFar(bool abPluginRequired/*=false*/)
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	return GetFarPID(abPluginRequired)!=0;
 }
@@ -15009,8 +14876,7 @@ bool CRealConsole::isFarInStack()
 // Комбинации типа CtrlUp, CtrlDown и мышку - тоже передавать в фар.
 bool CRealConsole::isFarBufferSupported()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	return (m_FarInfo.cbSize && m_FarInfo.bBufferSupport && (m_FarInfo.nFarPID == GetFarPID()));
 }
@@ -15019,7 +14885,8 @@ bool CRealConsole::isFarBufferSupported()
 // Программы могут отключать прием через SetConsoleMode
 bool CRealConsole::isSendMouseAllowed()
 {
-	if (!this || (mp_ABuf->m_Type != rbt_Primary))
+	AssertThisRet(false);
+	if (mp_ABuf->m_Type != rbt_Primary)
 		return false;
 
 	if (mp_ABuf->GetConInMode() & ENABLE_QUICK_EDIT_MODE)
@@ -15072,22 +14939,19 @@ bool CRealConsole::isFarKeyBarShown()
 
 bool CRealConsole::isSelectionAllowed()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	return mp_ABuf->isSelectionAllowed();
 }
 
 bool CRealConsole::isSelectionPresent()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	return mp_ABuf->isSelectionPresent();
 }
 
 bool CRealConsole::isMouseSelectionPresent()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	return mp_ABuf->isMouseSelectionPresent();
 }
 
@@ -15105,8 +14969,7 @@ bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 // We can "pause" applications which are using simple WriteFile to output data
 bool CRealConsole::isPaused()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	return mp_RBuf->isPaused();
 }
 
@@ -15148,7 +15011,8 @@ CEPauseCmd CRealConsole::Pause(CEPauseCmd cmd)
 
 bool CRealConsole::QueryPromptStart(COORD *cr)
 {
-	if (!this || !hConWnd || !m_AppMap.IsValid())
+	AssertThisRet(false);
+	if (!hConWnd || !m_AppMap.IsValid())
 		return false;
 
 	#ifdef _DEBUG
@@ -15244,7 +15108,7 @@ void CRealConsole::QueryCellInfo(wchar_t* pszInfo, int cchMax)
 
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)
 {
-	if (!this) return;
+	AssertThis();
 
 	if (ci)
 		mp_ABuf->ConsoleCursorInfo(ci);
@@ -15255,7 +15119,7 @@ void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)
 
 void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 {
-	if (!this) return;
+	AssertThis();
 	mp_ABuf->ConsoleScreenBufferInfo(sbi);
 }
 
@@ -15267,7 +15131,8 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 {
 	szFull.Empty();
 
-	if (!this || !asSrc || !*asSrc)
+	AssertThisRet(nullptr);
+	if (!asSrc || !*asSrc)
 	{
 		_ASSERTE(this && asSrc && *asSrc);
 		return nullptr;
@@ -15285,7 +15150,7 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 // Returns true on changes
 bool CRealConsole::ReloadFarWorkDir()
 {
-	DWORD nFarPID = GetFarPID(true);
+	const DWORD nFarPID = GetFarPID(true);
 	if (!nFarPID)
 		return false;
 
@@ -15309,8 +15174,8 @@ bool CRealConsole::ReloadFarWorkDir()
 const SYSTEMTIME& CRealConsole::GetStartTime() const
 {
 	// TODO: use shared_ptr, drop this
-	if (!this) {
-		static SYSTEMTIME null_time = {};
+	if (!this) {  // NOLINT(clang-diagnostic-undefined-bool-conversion)
+		static const SYSTEMTIME null_time = {};
 		return null_time;
 	} else {
 		return m_StartTime;
@@ -15330,7 +15195,7 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir, bool NeedRealPath)
 	AssertThisRet(nullptr);
 
 	// Пути берем из мэппинга текущего плагина
-	DWORD nFarPID = GetFarPID(true);
+	const DWORD nFarPID = GetFarPID(true);
 	if (nFarPID)
 	{
 		ReloadFarWorkDir();
@@ -15356,7 +15221,7 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir, bool NeedRealPath)
 	// Last chance - startup dir of the console
 	szDir.Set(mp_ConEmu->WorkDir(m_Args.pszStartupDir));
 wrap:
-	return szDir.IsEmpty() ? nullptr : (LPCWSTR)szDir;
+	return szDir.IsEmpty() ? nullptr : szDir.c_str();
 }
 
 void CRealConsole::GetPanelDirs(CEStr& szActiveDir, CEStr& szPassive)
@@ -15377,7 +15242,7 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 	LPCWSTR pszArg = pNewCurDir->szDir;
 	for (int i = 0; i <= 1; i++)
 	{
-		int iCch = i ? pNewCurDir->iPassiveCch : pNewCurDir->iActiveCch;
+		const int iCch = i ? pNewCurDir->iPassiveCch : pNewCurDir->iActiveCch;
 
 		CEStr szWinPath;
 		if (iCch)
@@ -15423,11 +15288,6 @@ void CRealConsole::SetMountRoot(CESERVER_REQ* pConnectorInfo)
 	}
 }
 
-//void CRealConsole::GetConsoleCursorPos(COORD *pcr)
-//{
-//	if (!this) return;
-//	mp_ABuf->ConsoleCursorPos(pcr);
-//}
 
 // В дальнейшем надо бы возвращать значение для активного приложения
 // По крайней мене в фаре мы можем проверить токены.
@@ -15437,8 +15297,7 @@ void CRealConsole::SetMountRoot(CESERVER_REQ* pConnectorInfo)
 // под разными аккаунтами (точнее elevated/non elevated)
 bool CRealConsole::isAdministrator()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (m_Args.RunAsAdministrator == crb_On)
 		return true;
@@ -15451,7 +15310,7 @@ bool CRealConsole::isAdministrator()
 
 bool CRealConsole::isMouseButtonDown()
 {
-	if (!this) return false;
+	AssertThisRet(false);
 
 	return m_Mouse.bMouseButtonDown;
 }
@@ -15547,11 +15406,7 @@ void CRealConsole::CloseColorMapping()
 
 void CRealConsole::CreateColorMapping()
 {
-	if (!this)
-	{
-		_ASSERTE(this!=nullptr);
-		return;
-	}
+	AssertThis();
 
 	if (mp_TrueColorerData)
 	{
@@ -15793,8 +15648,7 @@ void CRealConsole::CloseMapHeader()
 
 bool CRealConsole::isAlive()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (GetFarPID(TRUE)!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/)
 	{
@@ -15892,7 +15746,8 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 
 void CRealConsole::SetCursorShape(TermCursorShapes xtermShape)
 {
-	if (!this || !mp_VCon)
+	AssertThis();
+	if (!mp_VCon)
 	{
 		return; // Exceptional
 	}
@@ -15905,16 +15760,14 @@ void CRealConsole::SetCursorShape(TermCursorShapes xtermShape)
 
 TermCursorShapes CRealConsole::GetCursorShape()
 {
-	if (!this)
-		return tcs_Default; // Exceptional
+	AssertThisRet(tcs_Default); // Exceptional
 
 	return m_TermCursor.CursorShape;
 }
 
 void CRealConsole::UpdateCursorInfo()
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	if (!isActive(false))
 		return;
@@ -15934,8 +15787,7 @@ void CRealConsole::GetConsoleInfo(ConsoleInfoArg* pInfo)
 
 bool CRealConsole::isNeedCursorDraw()
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	if (GuiWnd())
 	{
@@ -16012,7 +15864,8 @@ bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
 
 int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 {
-	if (!this || !mp_ABuf)
+	AssertThisRet(0);
+	if (!mp_ABuf)
 		return 0;
 
 	return mp_ABuf->GetDetector()->GetDetectedDialogs(anMaxCount, rc, rf);
@@ -16020,8 +15873,7 @@ int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 
 const CRgnDetect* CRealConsole::GetDetector()
 {
-	if (!this)
-		return nullptr;
+	AssertThisRet(nullptr);
 	return mp_ABuf->GetDetector();
 }
 
@@ -16029,7 +15881,7 @@ const CRgnDetect* CRealConsole::GetDetector()
 // (вычесть номер верхней видимой строки и скорректировать видимую высоту)
 bool CRealConsole::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 {
-	if (!this) return false;
+	AssertThisRet(false);
 	return mp_ABuf->ConsoleRect2ScreenRect(rcCon, prcScr);
 }
 
@@ -16064,8 +15916,7 @@ DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 
 void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 {
-	if (!this)
-		return;
+	AssertThis();
 	if (mh_PostMacroThread != nullptr)
 	{
 		DWORD nWait = WaitForSingleObject(mh_PostMacroThread, 0);
@@ -16143,10 +15994,9 @@ void CRealConsole::PostDragCopy(bool abMove)
 
 bool CRealConsole::GetFarVersion(FarVersion* pfv)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
-	DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
+	const DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
 
 	if (!nPID)
 		return false;
@@ -16174,7 +16024,8 @@ bool CRealConsole::IsFarLua()
 
 void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 {
-	if (!this || !asMacro || !*asMacro)
+	AssertThis();
+	if (!asMacro || !*asMacro)
 	{
 		mp_ConEmu->LogString(L"Null Far macro was skipped");
 		return;
@@ -16309,9 +16160,10 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 
 wchar_t* CRealConsole::PostponeMacro(wchar_t*&& asMacro)
 {
-	if (!this || !asMacro)
+	AssertThisRet(lstrdup(L"InvalidPointer"));
+	if (!asMacro)
 	{
-		_ASSERTE(this && asMacro);
+		_ASSERTE(asMacro);
 		return lstrdup(L"InvalidPointer");
 	}
 
@@ -16330,8 +16182,7 @@ wchar_t* CRealConsole::PostponeMacro(wchar_t*&& asMacro)
 
 void CRealConsole::ProcessPostponedMacro()
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	wchar_t* pszMacro = nullptr;
 	wchar_t* pszResult = nullptr;
@@ -16372,8 +16223,7 @@ DWORD CRealConsole::InitiateDetach()
 
 bool CRealConsole::DetachRCon(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/, bool bDontConfirm /*= false*/)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 
 	bool bDetached = false;
 
@@ -16521,8 +16371,7 @@ wrap:
 
 void CRealConsole::Unfasten()
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	// Unfasten of ChildGui is not working yet
 	if (m_ChildGui.hGuiWnd)
@@ -16566,7 +16415,7 @@ void CRealConsole::Unfasten()
 
 const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()
 {
-	if (!this) return nullptr;
+	AssertThisRet(nullptr);
 
 	//return m_FarInfo.Ptr(); -- нельзя, может быть закрыт в другом потоке!
 
@@ -16575,25 +16424,22 @@ const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()
 	return &m_FarInfo;
 }
 
-/*LPCWSTR CRealConsole::GetLngNameTime()
-{
-	if (!this) return nullptr;
-	return ms_NameTitle;
-}*/
-
 bool CRealConsole::InCreateRoot()
 {
-	return (this && mb_InCreateRoot && !mn_MainSrv_PID);
+	AssertThisRet(false);
+	return (mb_InCreateRoot && !mn_MainSrv_PID);
 }
 
 bool CRealConsole::InRecreate()
 {
-	return (this && mb_ProcessRestarted);
+	AssertThisRet(false);
+	return (mb_ProcessRestarted);
 }
 
 DWORD CRealConsole::GetRunTime()
 {
-	if (!this || !mn_StartTick)
+	AssertThisRet(0);
+	if (!mn_StartTick)
 		return 0;
 	mn_RunTime = (GetTickCount() - mn_StartTick);
 	return mn_RunTime;
@@ -16602,8 +16448,7 @@ DWORD CRealConsole::GetRunTime()
 // Можно ли к этой консоли прицепить GUI приложение
 bool CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
-	if (!this)
-		return false;
+	AssertThisRet(false);
 	// Если даже сервер еще не запущен
 	if (InCreateRoot())
 		return false;
@@ -16690,8 +16535,7 @@ bool CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 
 void CRealConsole::ShowPropertiesDialog()
 {
-	if (!this)
-		return;
+	AssertThis();
 
 	// Если в RealConsole два раза подряд послать SC_PROPERTIES_SECRET,
 	// то при закрытии одного из двух (!) открытых диалогов - ConHost падает!
@@ -16743,8 +16587,7 @@ void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmul
 
 void CRealConsole::ResetHighlightHyperlinks()
 {
-	if (!this)
-		return;
+	AssertThis();
 	// Reset flags in buffers
 	if (mp_RBuf)
 		mp_RBuf->ResetHighlightHyperlinks();
@@ -16811,10 +16654,7 @@ void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR 
 
 void CRealConsole::CtrlWinAltSpace()
 {
-	if (!this)
-	{
-		return;
-	}
+	AssertThis();
 
 	static DWORD dwLastSpaceTick = 0;
 
