@@ -91,22 +91,14 @@ CAttachDlg::~CAttachDlg()
 
 HWND CAttachDlg::GetHWND()
 {
-	if (!this)
-	{
-		_ASSERTE(this);  // -V571
-		return NULL;
-	}
+	AssertThisRet(nullptr);
 	return mh_Dlg;
 }
 
 // Открыть диалог со списком окон/процессов, к которым мы можем подцепиться
 void CAttachDlg::AttachDlg()
 {
-	if (!this)
-	{
-		_ASSERTE(this);  // -V571
-		return;
-	}
+	AssertThis();
 
 	if (mh_Dlg && IsWindow(mh_Dlg))
 	{

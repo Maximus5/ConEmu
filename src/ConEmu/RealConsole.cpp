@@ -3536,11 +3536,7 @@ bool CRealConsole::PreInit()
 
 void CRealConsole::SetMonitorThreadEvent()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return;
-	}
+	AssertThis();
 
 	SetEvent(mh_MonitorThreadEvent);
 }
@@ -4382,11 +4378,7 @@ void CRealConsole::CConHostSearch::FinalRelease()
 
 bool CRealConsole::StartProcess()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return false;
-	}
+	AssertThisRet(false);
 
 	// Must be executed in Runner Thread
 	_ASSERTE(mp_ConEmu->mp_RunQueue->isRunnerThread());
@@ -7365,11 +7357,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 // здесь сервер только "запускается" и еще не готов принимать команды
 HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return NULL;
-	}
+	AssertThisRet(nullptr);
 	if ((ahConWnd == NULL) || (hConWnd && (ahConWnd != hConWnd)) || (anServerPID != mn_MainSrv_PID))
 	{
 		MBoxAssert(ahConWnd!=NULL);
@@ -7715,11 +7703,7 @@ bool CRealConsole::isServerAvailable()
 
 bool CRealConsole::isServerClosing(bool bStrict /*= false*/)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return true;
-	}
+	AssertThisRet(true);
 
 	if (m_ServerClosing.nServerPID && (m_ServerClosing.nServerPID == mn_MainSrv_PID))
 		return true;
@@ -10219,7 +10203,7 @@ void CRealConsole::UpdateStartState(RConStartState state, bool force /*= false*/
 
 void CRealConsole::RequestStartup(bool bForce)
 {
-	_ASSERTE(this);
+	AssertThis();
 	// Created as detached?
 	if (bForce)
 	{
@@ -13161,11 +13145,7 @@ bool CRealConsole::CanCloseTab(bool abPluginRequired /*= false*/)
 // для остальных (cmd.exe, и т.п.) WM_CLOSE в консоль. Скорее всего, она закроется сразу
 void CRealConsole::CloseTab()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return;
-	}
+	AssertThis();
 
 	// Если консоль "зависла" после рестарта (или на старте)
 	// То нет смысла пытаться что-то послать в сервер, которого нет
@@ -15338,23 +15318,15 @@ const SYSTEMTIME& CRealConsole::GetStartTime() const
 
 LPCWSTR CRealConsole::GetConsoleStartDir(CEStr& szDir)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return NULL;
-	}
+	AssertThisRet(nullptr);
 
 	szDir.Set(ms_StartWorkDir);
-	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
+	return szDir.IsEmpty() ? nullptr : szDir.c_str();
 }
 
 LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir, bool NeedRealPath)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return NULL;
-	}
+	AssertThisRet(nullptr);
 
 	// Пути берем из мэппинга текущего плагина
 	DWORD nFarPID = GetFarPID(true);
@@ -15851,13 +15823,10 @@ bool CRealConsole::isAlive()
 
 LPCWSTR CRealConsole::GetConStatus()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return NULL;
-	}
+	AssertThisRet(nullptr);
+
 	if (m_ChildGui.hGuiWnd)
-		return NULL;
+		return nullptr;
 	return m_ConStatus.szText;
 }
 

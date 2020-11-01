@@ -1190,7 +1190,7 @@ bool CStatus::IsResizeAllowed()
 // point - coordinates relative to UpperLeft corner of window client rect
 bool CStatus::IsCursorOverResizeMark(const POINT& ptCurClient)
 {
-	_ASSERTE(this);
+	AssertThisRet(false);
 
 	if (!IsResizeAllowed())
 		return false;
@@ -1927,9 +1927,9 @@ void CStatus::OnServerChanged(DWORD nMainServerPID, DWORD nAltServerPID)
 
 LPCWSTR CStatus::GetSettingName(CEStatusItems nID)
 {
-	_ASSERTE(this);
+	AssertThisRet(nullptr);
 	if (nID <= csi_Info || nID >= csi_Last)
-		return NULL;
+		return nullptr;
 
 	_ASSERTE(m_Values[nID].sSettingName!=NULL && m_Values[nID].sSettingName[0]!=0);
 	return m_Values[nID].sSettingName;

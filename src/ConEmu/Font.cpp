@@ -112,11 +112,7 @@ bool CFont::Equal(const CFont* p) const
 
 bool CFont::IsSet() const
 {
-	if (!this)
-	{
-		_ASSERTE(this);  // -V571
-		return false;
-	}
+	AssertThisRet(false);
 
 	switch (iType)
 	{

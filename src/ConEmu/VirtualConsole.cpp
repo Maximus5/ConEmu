@@ -1987,11 +1987,7 @@ void CVirtualConsole::UndoHighlights()
 
 bool CVirtualConsole::CheckTransparent()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return FALSE;
-	}
+	AssertThisRet(false);
 
 	bool lbChanged = FALSE;
 	static LONG llInCheckTransparent = false;

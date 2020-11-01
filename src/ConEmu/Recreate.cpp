@@ -67,22 +67,14 @@ CRecreateDlg::~CRecreateDlg()
 
 HWND CRecreateDlg::GetHWND()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return NULL;
-	}
+	AssertThisRet(nullptr);
 	return mh_Dlg;
 }
 
 // Открыть диалог с подтверждением параметров создания/закрытия/пересоздания консоли
 int CRecreateDlg::RecreateDlg(RConStartArgsEx* apArgs, bool abDontAutoSelCmd /*= false*/)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return IDCANCEL;
-	}
+	AssertThisRet(IDCANCEL);
 
 	mb_DontAutoSelCmd = abDontAutoSelCmd;
 

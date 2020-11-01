@@ -1613,7 +1613,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 // Returns `true` if we must not bypass mouse events to console
 bool CConEmuChild::TrackMouse()
 {
-	_ASSERTE(this);
+	AssertThisRet(false);
 	bool lbCapture = false; // Don't capture mouse by default
 
 	CVirtualConsole* pVCon = mp_VCon;

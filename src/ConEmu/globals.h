@@ -146,4 +146,4 @@ struct NestedCallCounter
 #define NestedCallAssert(level) \
 	static LONG NestedCallLevel = 0; \
 	NestedCallCounter ncCounter(NestedCallLevel); \
-	Assert(NestedCallLevel <= level);
+	Assert(NestedCallLevel <= (level));

@@ -118,7 +118,7 @@ CConEmuSize::~CConEmuSize()
 // mg содержит битмаск, например (CEM_FRAMECAPTION|CEM_TAB|CEM_CLIENT)
 RECT CConEmuSize::CalcMargins(const DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode const wmNewMode /*= wmCurrent*/)
 {
-	_ASSERTE(this!=NULL);
+	AssertThisRet(RECT{});
 
 	// -- функция должна работать только с главным окном
 	// -- VCon тут влиять не должны
@@ -432,7 +432,7 @@ RECT CConEmuSize::CalcMargins_InvisibleFrame() const
 
 RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NULL*/)
 {
-	_ASSERTE(ghWnd!=NULL);
+	_ASSERTE(ghWnd!=nullptr);
 	RECT rcMain = {};
 	WINDOWPLACEMENT wpl = {};
 	int nGetStyle = 0;
@@ -537,7 +537,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 // но тем не менее, после "RECT rc = rFrom;", rc получает правильные значения >:|
 RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction /*= CEM_TAB*/)
 {
-	_ASSERTE(this!=NULL);
+	AssertThisRet(RECT{});
 	_ASSERTE(tWhat!=CER_MAINCLIENT && tWhat!=CER_TAB && tWhat!=CER_WORKSPACE);
 	RECT rc = rFrom; // инициализация, если уж не получится...
 	RECT rcShift = MakeRect(0,0);

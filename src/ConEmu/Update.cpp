@@ -1315,11 +1315,7 @@ wrap:
 
 CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return UpdateStep::NotStarted;
-	}
+	AssertThisRet(UpdateStep::NotStarted);
 
 	DWORD nWait = WAIT_OBJECT_0;
 

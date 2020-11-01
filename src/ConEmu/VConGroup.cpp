@@ -150,16 +150,17 @@ CVConGroup* CVConGroup::CreateVConGroup()
 
 CVConGroup* CVConGroup::SplitVConGroup(RConStartArgsEx::SplitType aSplitType /*eSplitHorz/eSplitVert*/, UINT anPercent10 /*= 500*/)
 {
-	if (!this || !(aSplitType == RConStartArgsEx::eSplitHorz || aSplitType == RConStartArgsEx::eSplitVert))
+	AssertThisRet(nullptr);
+	if (!(aSplitType == RConStartArgsEx::eSplitHorz || aSplitType == RConStartArgsEx::eSplitVert))
 	{
-		_ASSERTE(this);
-		return NULL;
+		_ASSERTE(false && "Invalid split type");
+		return nullptr;
 	}
 
-	if (mp_Item == NULL)
+	if (mp_Item == nullptr)
 	{
 		_ASSERTE(mp_Item && "VCon was not associated");
-		return NULL;
+		return nullptr;
 	}
 
 	// Разбивать можно только то, что еще не разбито ("листья")
@@ -474,11 +475,7 @@ CVConGroup* CVConGroup::GetAnotherGroup() const
 
 void CVConGroup::SetResizeFlags()
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return;
-	}
+	AssertThis();
 
 	CVConGroup* p = GetRootGroup();
 	if (p)
@@ -531,15 +528,10 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 
 void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false*/)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		sz.cx = MIN_CON_WIDTH;
-		sz.cy = MIN_CON_HEIGHT;
-		return;
-	}
+	sz.cx = MIN_CON_WIDTH;
+	sz.cy = MIN_CON_HEIGHT;
 
-	sz.cx = sz.cy = 0;
+	AssertThis();
 
 	_ASSERTE((m_SplitType==RConStartArgsEx::eSplitNone) == (mp_Grp1==NULL && mp_Grp2==NULL && mp_Item!=NULL));
 	if (m_SplitType==RConStartArgsEx::eSplitNone)
@@ -682,11 +674,7 @@ void CVConGroup::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 
 void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return;
-	}
+	AssertThis();
 
 	bool lbPosChanged = false;
 	RECT rcCurCon = {}, rcCurBack = {};
@@ -958,11 +946,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 	rcCon2 = rcNewCon;
 	rcSplitter = MakeRect(0,0);
 
-	if (!this)
-	{
-		_ASSERTE(this);
-		return;
-	}
+	AssertThis();
 
 	// Split is Maximized?
 	if (mb_PaneMaximized)
@@ -1081,18 +1065,13 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 }
 
 // Evaluate rect of exact group (pTarget) from root rectange (CER_WORKSPACE)
-void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, const CVConGroup* pTarget /*= NULL*/) const
+void CVConGroup::CalcSplitRootRect(const RECT rcAll, RECT& rcCon, const CVConGroup* pTarget /*= NULL*/) const
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		rcCon = rcAll;
-		return;
-	}
+	rcCon = rcAll;
+	AssertThis();
 
 	if (!mp_Parent && !pTarget || mb_PaneMaximized)
 	{
-		rcCon = rcAll;
 		return;
 	}
 
@@ -1317,11 +1296,7 @@ CVConGroup* CVConGroup::FindSplitGroup(POINT ptWork, CVConGroup* pFrom)
 
 void CVConGroup::ShowAllVCon(int nShowCmd)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return;
-	}
+	AssertThis();
 
 	CVConGuard VConI(mp_Item);
 
@@ -3898,11 +3873,7 @@ bool CVConGroup::ConActivateNext(bool abNext)
 // Если rPanes==NULL - просто вернуть количество сплитов
 int CVConGroup::GetGroupPanes(MArray<CVConGuard*>* rPanes)
 {
-	if (!this)
-	{
-		_ASSERTE(this);
-		return 0;
-	}
+	AssertThisRet(0);
 
 	int nAdd = 0;
 
@@ -5821,7 +5792,7 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 
 CVConGroup* CVConGroup::GetLeafLeft() const
 {
-	_ASSERTE(this);
+	AssertThisRet(nullptr);
 	const CVConGroup* p = this;
 	while (p->mp_Grp1)
 		p = p->mp_Grp1;
@@ -5830,7 +5801,7 @@ CVConGroup* CVConGroup::GetLeafLeft() const
 
 CVConGroup* CVConGroup::GetLeafRight() const
 {
-	_ASSERTE(this);
+	AssertThisRet(nullptr);
 	CVConGroup* p = mp_Grp2;
 	if (!p)
 		return nullptr;

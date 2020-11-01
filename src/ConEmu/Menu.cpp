@@ -2623,7 +2623,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 
 void CConEmuMenu::CmdTaskPopupItem::Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName)
 {
-	_ASSERTE(this);
+	AssertThis();
 	*this = CmdTaskPopupItem{};
 
 	this->ItemType = newItemType;
