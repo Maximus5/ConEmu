@@ -134,56 +134,56 @@ RECT CConEmuSize::CalcMargins(const DWORD/*enum ConEmuMargins*/ mg, ConEmuWindow
 	DEBUGTEST(ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode);
 
 	// Windows 10 breaks desktop coordinate system
-	if ((mg & ((DWORD)CEM_WIN10FRAME)) && isWin10InvisibleFrame())
+	if ((mg & static_cast<DWORD>(CEM_WIN10FRAME)) && isWin10InvisibleFrame())
 	{
-		RECT rcHiddenFrame = CalcMargins_Win10Frame();
+		const RECT rcHiddenFrame = CalcMargins_Win10Frame();
 		AddMargins(rc, rcHiddenFrame, rcop_MathAdd);
 	}
 
 	// Difference between whole window size and its client area (frame + caption)
-	if (mg & ((DWORD)CEM_FRAMECAPTION))
+	if (mg & static_cast<DWORD>(CEM_FRAMECAPTION))
 	{
 		// CEM_FRAMEONLY|CEM_CAPTION
-		RECT rcFrameCaption = CalcMargins_FrameCaption(mg, wmNewMode);
+		const RECT rcFrameCaption = CalcMargins_FrameCaption(mg, wmNewMode);
 		AddMargins(rc, rcFrameCaption, rcop_MathAdd);
 	}
 
 	// Сколько занимают табы (по идее меняется только rc.top or rc.bottom)
-	if (mg & ((DWORD)CEM_TAB))
+	if (mg & static_cast<DWORD>(CEM_TAB))
 	{
-		RECT rcTab = CalcMargins_TabBar(mg);
+		const RECT rcTab = CalcMargins_TabBar(mg);
 		AddMargins(rc, rcTab, rcop_MathAdd);
 	}
 
-	if (mg & ((DWORD)CEM_PAD))
+	if (mg & static_cast<DWORD>(CEM_PAD))
 	{
-		RECT rcPad = CalcMargins_Padding();
+		const RECT rcPad = CalcMargins_Padding();
 		AddMargins(rc, rcPad, rcop_MathAdd);
 	}
 
-	if (mg & ((DWORD)CEM_SCROLL))
+	if (mg & static_cast<DWORD>(CEM_SCROLL))
 	{
-		RECT rcScroll = CalcMargins_Scrolling();
+		const RECT rcScroll = CalcMargins_Scrolling();
 		AddMargins(rc, rcScroll, rcop_MathAdd);
 	}
 
-	if (mg & ((DWORD)CEM_STATUS))
+	if (mg & static_cast<DWORD>(CEM_STATUS))
 	{
-		RECT rcStatus = CalcMargins_StatusBar();
+		const RECT rcStatus = CalcMargins_StatusBar();
 		AddMargins(rc, rcStatus, rcop_MathAdd);
 	}
 
-	if (mg & ((DWORD)CEM_VISIBLE_FRAME))
+	if (mg & static_cast<DWORD>(CEM_VISIBLE_FRAME))
 	{
 		MBoxAssert(mg == CEM_VISIBLE_FRAME); // Nothing else yet allowed
-		RECT rcFrameOnly = CalcMargins_VisibleFrame();
+		const RECT rcFrameOnly = CalcMargins_VisibleFrame();
 		AddMargins(rc, rcFrameOnly, rcop_MathAdd);
 	}
 
-	if (mg & ((DWORD)CEM_INVISIBLE_FRAME))
+	if (mg & static_cast<DWORD>(CEM_INVISIBLE_FRAME))
 	{
 		MBoxAssert(mg == CEM_INVISIBLE_FRAME); // Nothing else yet allowed
-		RECT rcFrameOnly = CalcMargins_InvisibleFrame();
+		const RECT rcFrameOnly = CalcMargins_InvisibleFrame();
 		AddMargins(rc, rcFrameOnly, rcop_MathAdd);
 	}
 
@@ -207,35 +207,35 @@ RECT CConEmuSize::CalcMargins_Win10Frame() const
 // CEM_FRAMECAPTION : Difference between whole window size and its client area (frame + caption)
 // CEM_CAPTION      : only window title bar (height), if applicable
 // CEM_FRAMEONLY    : only frame borders, if applicable
-RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode /*= wmCurrent*/) const
+RECT CConEmuSize::CalcMargins_FrameCaption(const DWORD/*enum ConEmuMargins*/ mg, const ConEmuWindowMode wmNewMode /*= wmCurrent*/) const
 {
 	RECT rc = {};
-	if (!(mg & ((DWORD)CEM_FRAMECAPTION)) || mp_ConEmu->mp_Inside)
+	if (!(mg & static_cast<DWORD>(CEM_FRAMECAPTION)) || mp_ConEmu->mp_Inside)
 		return rc;
 
-	ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
+	const ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
 	// We remove all frames and caption in FullScreen mode
 	if (wm == wmFullScreen)
 		return rc;
 
-	bool bHideCaption = isCaptionHidden(wmNewMode);
+	const bool bHideCaption = isCaptionHidden(wmNewMode);
 	// If there is no caption, nothing to evaluate
-	if (bHideCaption && ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION))
+	if (bHideCaption && ((mg & static_cast<DWORD>(CEM_FRAMECAPTION)) == CEM_CAPTION))
 		return rc;
 
 	bool processed = false;
 
-	const MonitorInfoCache mi = NearestMonitorInfo(NULL);
+	const MonitorInfoCache mi = NearestMonitorInfo(nullptr);
 
 	if (!processed && bHideCaption)
 	{
-		_ASSERTE((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION);
-		if ((mg & ((DWORD)CEM_FRAMECAPTION)) & CEM_FRAMEONLY)
+		_ASSERTE((mg & (static_cast<DWORD>(CEM_FRAMECAPTION))) != CEM_CAPTION);
+		if ((mg & static_cast<DWORD>(CEM_FRAMECAPTION)) & CEM_FRAMEONLY)
 		{
 			if (isSelfFrame())
 			{
-				UINT frame = mp_ConEmu->GetSelfFrameWidth();
-				rc = RECT{(LONG)frame, (LONG)frame, (LONG)frame, (LONG)frame};
+				const auto frame = static_cast<LONG>(mp_ConEmu->GetSelfFrameWidth());
+				rc = RECT{frame, frame, frame, frame};
 			}
 			else
 			{
@@ -250,14 +250,14 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 		DWORD dwStyle = mp_ConEmu->GetWindowStyle();
 		if (wmNewMode != wmCurrent)
 			dwStyle = mp_ConEmu->FixWindowStyle(dwStyle, wmNewMode);
-		DWORD dwStyleEx = mp_ConEmu->GetWindowStyleEx();
+		const DWORD dwStyleEx = mp_ConEmu->GetWindowStyleEx();
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 
 		_ASSERTE(!bHideCaption);
 		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, dwStyle, FALSE, dwStyleEx, mi.dpi.Ydpi))
 		{
-			if ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION)
+			if ((mg & static_cast<DWORD>(CEM_FRAMECAPTION)) == CEM_CAPTION)
 			{
 				rc.top  = (-rcTest.top) - (rcTest.bottom - nTestHeight);
 			}
@@ -266,7 +266,7 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 				rc.left = -rcTest.left;
 				rc.right = rcTest.right - nTestWidth;
 				rc.bottom = rcTest.bottom - nTestHeight;
-				if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
+				if ((mg & static_cast<DWORD>(CEM_CAPTION)) && !bHideCaption)
 					rc.top = -rcTest.top;
 				else
 					rc.top = rc.bottom;
@@ -279,12 +279,12 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 	if (!processed)
 	{
 		_ASSERTE(FALSE && "Must not get here, our AdjustWindowRectExForDpi is expected to be OK");
-		if ((mg & ((DWORD)CEM_FRAMECAPTION)) & (DWORD)CEM_FRAMEONLY)
+		if ((mg & static_cast<DWORD>(CEM_FRAMECAPTION)) & static_cast<DWORD>(CEM_FRAMEONLY))
 		{
 			rc.left = rc.right = rc.bottom = rc.top = mp_ConEmu->GetWinFrameWidth();
 		}
 
-		if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
+		if ((mg & static_cast<DWORD>(CEM_CAPTION)) && !bHideCaption)
 		{
 			rc.top += mp_ConEmu->GetWinCaptionHeight();
 		}
@@ -293,18 +293,19 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 	return rc;
 }
 
-RECT CConEmuSize::CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg) const
+RECT CConEmuSize::CalcMargins_TabBar(const DWORD/*enum ConEmuMargins*/ mg) const
 {
 	RECT rc = {};
 
 	// The place (height) used by TabBar. Only rc.top or rc.bottom may be set
-	if (mg & ((DWORD)CEM_TAB))
+	if (mg & static_cast<DWORD>(CEM_TAB))
 	{
 		#ifdef _DEBUG
 		if (ghWnd)
 		{
 			const bool isActive = mp_ConEmu->isTabsShown();
-			_ASSERTE(((mg & CEM_TAB_MASK) == CEM_TAB) || (isActive == ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE))));
+			_ASSERTE(((mg & CEM_TAB_MASK) == CEM_TAB)
+				|| (isActive == ((mg & (static_cast<DWORD>(CEM_TABACTIVATE))) == (static_cast<DWORD>(CEM_TABACTIVATE)))));
 		}
 		#endif
 
@@ -312,7 +313,7 @@ RECT CConEmuSize::CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg) const
 		SizeInfo temp(*static_cast<const SizeInfo*>(this));
 		temp.RequestSize(600, 300);
 		// #SIZE_TODO get dpi and coordinates for destination monitor?
-		RECT rcTabs = temp.RebarRect();
+		const RECT rcTabs = temp.RebarRect();
 		switch (gpSet->nTabsLocation)
 		{
 		case 0: // top
@@ -328,7 +329,7 @@ RECT CConEmuSize::CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg) const
 	return rc;
 }
 
-RECT CConEmuSize::CalcMargins_StatusBar() const
+RECT CConEmuSize::CalcMargins_StatusBar()
 {
 	RECT rc = {};
 
@@ -341,7 +342,7 @@ RECT CConEmuSize::CalcMargins_StatusBar() const
 	return rc;
 }
 
-RECT CConEmuSize::CalcMargins_Padding() const
+RECT CConEmuSize::CalcMargins_Padding()
 {
 	RECT rc = {};
 
@@ -356,7 +357,7 @@ RECT CConEmuSize::CalcMargins_Padding() const
 	return rc;
 }
 
-RECT CConEmuSize::CalcMargins_Scrolling() const
+RECT CConEmuSize::CalcMargins_Scrolling()
 {
 	RECT rc = {};
 
@@ -369,7 +370,7 @@ RECT CConEmuSize::CalcMargins_Scrolling() const
 	return rc;
 }
 
-RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= NULL*/) const
+RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= nullptr*/) const
 {
 	RECT rcFrameOnly = {};
 	if (mp_ConEmu->isInside())
@@ -379,7 +380,7 @@ RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= NULL*/) const
 		return rcFrameOnly;
 	}
 
-	int iVisibleFrameWidth = isSelfFrame() ? gpSet->HideCaptionAlwaysFrame() : -1;
+	const int iVisibleFrameWidth = isSelfFrame() ? gpSet->HideCaptionAlwaysFrame() : -1;
 	const RECT rcReal = CalcMargins_FrameCaption(CEM_FRAMEONLY);
 	if (prcFrame)
 		*prcFrame = rcReal;
@@ -430,7 +431,7 @@ RECT CConEmuSize::CalcMargins_InvisibleFrame() const
 	return rcInvisible;
 }
 
-RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NULL*/)
+RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= nullptr*/)
 {
 	_ASSERTE(ghWnd!=nullptr);
 	RECT rcMain = {};
@@ -450,6 +451,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 	}
 	else if (bNeedCalc)
 	{
+		// ReSharper disable once CppAssignedValueIsNeverUsed
 		nGetStyle = 1;
 
 		if (gpSet->isQuakeStyle)
@@ -648,7 +650,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//MBoxAssert(!(rFrom.left || rFrom.top));
 			_ASSERTE(tWhat!=CER_CONSOLE_ALL && tWhat!=CER_CONSOLE_CUR);
 			//if (gpSetCls->FontWidth()==0) {
-			//    MBoxAssert(pVCon!=NULL);
+			//    MBoxAssert(pVCon!=nullptr);
 			//    pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
 			//}
 			// ЭТО размер окна отрисовки DC
@@ -745,14 +747,14 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_RESTORE:    // switch (tWhat)
 			//case CER_CORRECTED:
 		{
-			//HMONITOR hMonitor = NULL;
+			//HMONITOR hMonitor = nullptr;
 			_ASSERTE(tFrom==tWhat || tFrom==CER_MAIN);
 
 			DEBUGTEST(bool bIconic = isIconic());
 
 			//if (tWhat != CER_CORRECTED)
 			//    tFrom = tWhat;
-			auto mi = (tFrom == CER_MAIN) ? NearestMonitorInfo(rFrom) : NearestMonitorInfo(NULL);
+			auto mi = (tFrom == CER_MAIN) ? NearestMonitorInfo(rFrom) : NearestMonitorInfo(nullptr);
 
 			{
 				//switch (tFrom) // --было
@@ -915,13 +917,13 @@ void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations re
 // bCells==true - вернуть расчетный консольный размер, bCells==false - размер в пикселях (только консоль, без рамок-отступов-табов-прочая)
 // pSizeW и pSizeH указываются если нужно установить конкретные размеры
 // hMon может быть указан при переносе окна между мониторами например
-SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, const CESize* pSizeH /*= NULL*/, HMONITOR hMon /*= NULL*/)
+SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= nullptr*/, const CESize* pSizeH /*= nullptr*/, HMONITOR hMon /*= nullptr*/)
 {
 	NestedCallAssert(1);
 
 	//WARNING! Function must NOT call CalcRect to avoid nested loops!
 
-	_ASSERTE(mp_ConEmu->mp_Inside == NULL); // Must not be called in "Inside"?
+	_ASSERTE(mp_ConEmu->mp_Inside == nullptr); // Must not be called in "Inside"?
 
 	SetRequestedMonitor(hMon ? hMon : mh_RequestedMonitor);
 
@@ -1014,7 +1016,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		|| gpSet->isQuakeStyle
 		|| (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
 	{
-		if (hMon != NULL)
+		if (hMon != nullptr)
 		{
 			GetMonitorInfoSafe(hMon, mi);
 		}
@@ -1143,7 +1145,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	return sz;
 }
 
-HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
+HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= nullptr*/)
 {
 	// Too large or too small values may cause wrong monitor detection if on the edge of screen
 	const int kSizeDefault = 100;
@@ -1179,7 +1181,7 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	RECT rcDef = {WndPos.x, WndPos.y, WndPos.x + iWidth, WndPos.y + iHeight};
 
 	MONITORINFO mi = {sizeof(mi)};
-	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcDef);
+	HMONITOR hMon = GetNearestMonitorInfo(&mi, nullptr, &rcDef);
 
 	if (pmi)
 		*pmi = mi;
@@ -2335,8 +2337,10 @@ void CConEmuSize::CascadedPosFix()
 {
 	if (gpSet->wndCascade && (ghWnd == NULL) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
 	{
-		// Сдвиг при каскаде
-		int nShift = (int)(1.5*(GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION)));
+		constexpr float cascadeMultiplier = 1.5;
+		const auto captionHeight = GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION);
+		// Shift distance on Cascade
+		const int nShift = static_cast<int>(cascadeMultiplier * captionHeight);
 		// Preferred window size
 		int nDefWidth = 0, nDefHeight = 0;
 
@@ -2349,21 +2353,20 @@ void CConEmuSize::CascadedPosFix()
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
 			}*/
-			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
-
-			if (!GetWindowPlacement(hPrev, &wpl))
+			const WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(hPrev); // Workspace coordinates!!!
+			if (!wpl.length)
 			{
 				break;
 			}
 
 			// Screen coordinates!
-			RECT rcWnd = {}; GetWindowRect(hPrev, &rcWnd);
-			auto mi = NearestMonitorInfo(rcWnd);
+			const RECT rcWnd = WinApi::GetWindowRect(hPrev);
+			const auto mi = NearestMonitorInfo(rcWnd);
 
 			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
-			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
-			        /* Max в режиме скрытия заголовка */
-			        || (wpl.rcNormalPosition.left<mi.mi.rcWork.left || wpl.rcNormalPosition.top<mi.mi.rcWork.top))
+				|| wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
+				/* Max in HideCaption mode */
+				|| (wpl.rcNormalPosition.left < mi.mi.rcWork.left || wpl.rcNormalPosition.top < mi.mi.rcWork.top))
 			{
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
@@ -2377,7 +2380,7 @@ void CConEmuSize::CascadedPosFix()
 				SizeInfo::RequestPos((rcWnd.left + rcWnd.right)/2, (rcWnd.top + rcWnd.bottom)/2);
 				SizeInfo::RequestSize(minWidth, minHeight);
 
-				RECT rcDef = GetDefaultRect();
+				const RECT rcDef = GetDefaultRect();
 				nDefWidth = rcDef.right - rcDef.left;
 				nDefHeight = rcDef.bottom - rcDef.top;
 			}

@@ -76,7 +76,7 @@ protected:
 	void ShowAllVCon(int nShowCmd);
 	static void ShowActiveGroup(CVirtualConsole* pOldActive);
 
-	void GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal = false);
+	void GetAllTextSize(SIZE& sz, SIZE& splits, bool abMinimal = false);
 	void SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync);
 
 	void StoreActiveVCon(CVirtualConsole* pVCon);

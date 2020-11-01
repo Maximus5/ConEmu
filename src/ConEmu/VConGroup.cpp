@@ -526,7 +526,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	mp_Parent = NULL;
 }
 
-void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false*/)
+void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& splits, const bool abMinimal /*= false*/)
 {
 	sz.cx = MIN_CON_WIDTH;
 	sz.cy = MIN_CON_HEIGHT;
@@ -536,7 +536,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false
 	_ASSERTE((m_SplitType==RConStartArgsEx::eSplitNone) == (mp_Grp1==NULL && mp_Grp2==NULL && mp_Item!=NULL));
 	if (m_SplitType==RConStartArgsEx::eSplitNone)
 	{
-		CVConGuard VCon(mp_Item);
+		const CVConGuard VCon(mp_Item);
 		if (!abMinimal && mp_Item && mp_Item->RCon())
 		{
 			sz.cx = mp_Item->RCon()->TextWidth();
@@ -579,12 +579,12 @@ void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false
 		if (m_SplitType == RConStartArgsEx::eSplitHorz)
 		{
 			sz.cx += sz2.cx;
-			Splits.cx++;
+			splits.cx++;
 		}
 		else if (m_SplitType == RConStartArgsEx::eSplitVert)
 		{
 			sz.cy += sz2.cy;
-			Splits.cy++;
+			splits.cy++;
 		}
 		else
 		{

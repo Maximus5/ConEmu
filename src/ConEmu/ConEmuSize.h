@@ -344,9 +344,9 @@ protected:
 	RECT CalcMargins_Win10Frame() const;
 	RECT CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent) const;
 	RECT CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg) const;
-	RECT CalcMargins_StatusBar() const;
-	RECT CalcMargins_Padding() const;
-	RECT CalcMargins_Scrolling() const;
+	static RECT CalcMargins_StatusBar();
+	static RECT CalcMargins_Padding();
+	static RECT CalcMargins_Scrolling();
 	RECT CalcMargins_VisibleFrame(LPRECT prcFrame = NULL) const;
 	RECT CalcMargins_InvisibleFrame() const;
 	static LRESULT OnDpiChangedCall(LPARAM lParam);
