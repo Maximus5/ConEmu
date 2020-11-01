@@ -638,6 +638,7 @@ void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue)
 	SafeFree(pszTemp);
 }
 
+// ReSharper disable once CppParameterMayBeConst
 WINDOWPLACEMENT WinApi::GetWindowPlacement(HWND hWnd)
 {
 	WINDOWPLACEMENT wpl{};
@@ -647,4 +648,15 @@ WINDOWPLACEMENT WinApi::GetWindowPlacement(HWND hWnd)
 		wpl = WINDOWPLACEMENT{};
 	}
 	return wpl;
+}
+
+// ReSharper disable once CppParameterMayBeConst
+RECT WinApi::GetWindowRect(HWND hWnd)
+{
+	RECT rect{};
+	if (!::GetWindowRect(hWnd, &rect))
+	{
+		rect = RECT{};
+	}
+	return rect;
 }

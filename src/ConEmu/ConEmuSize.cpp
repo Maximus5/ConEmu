@@ -97,10 +97,10 @@ void CConEmuSize::ThickFrameDisabler::Enable()
 
 /// Part of ConEmu GUI related to sizing functions
 CConEmuSize::CConEmuSize()
-	: mp_ConEmu(static_cast<CConEmuMain*>(this))
-	, SizeInfo(static_cast<CConEmuMain*>(this))
+	: SizeInfo(static_cast<CConEmuMain*>(this))
+	, mp_ConEmu(static_cast<CConEmuMain*>(this))
 {
-	_ASSERTE(mp_ConEmu!=NULL);
+	_ASSERTE(mp_ConEmu!=nullptr);
 
 	//mb_PostUpdateWindowSize = false;
 
@@ -116,7 +116,7 @@ CConEmuSize::~CConEmuSize()
 /*!!!static!!*/
 // Функция расчитывает смещения (относительные)
 // mg содержит битмаск, например (CEM_FRAMECAPTION|CEM_TAB|CEM_CLIENT)
-RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
+RECT CConEmuSize::CalcMargins(const DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode const wmNewMode /*= wmCurrent*/)
 {
 	_ASSERTE(this!=NULL);
 
@@ -2181,9 +2181,16 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 {
 	mp_ConEmu->mouse.bCheckNormalRect = false;
 
+	const auto mode = GetWindowMode();
+
+	if (mp_ConEmu->isInside() || isIconic())
+	{
+		return;
+	}
+
 	// Обновить координаты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
-	if ((GetWindowMode() == wmNormal) && !mp_ConEmu->isInside() && !isIconic())
+	if (mode == wmNormal)
 	{
 		ConEmuWindowCommand curTileMode = cwc_Current;
 
@@ -2201,7 +2208,7 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 		}
 		else
 		{
-			GetWindowRect(ghWnd, &rcNormal);
+			rcNormal = WinApi::GetWindowRect(ghWnd);
 			curTileMode = GetTileMode(false/*Estimate*/);
 		}
 
@@ -2253,8 +2260,8 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 			// При ресайзе через окно настройки - mp_ VActive еще не перерисовался
 			// так что и TextWidth/TextHeight не обновился
 			//-- gpSetCls->UpdateSize(mp_ VActive->TextWidth, mp_ VActive->TextHeight);
-			CESize w = {this->WndWidth.Raw};
-			CESize h = {this->WndHeight.Raw};
+			CESize w = { this->WndWidth.Raw };
+			CESize h = { this->WndHeight.Raw };
 
 			// Если хранятся размеры в ячейках - нужно позвать CVConGroup::AllTextRect()
 			if ((w.Style == ss_Standard) || (h.Style == ss_Standard))
@@ -2281,21 +2288,46 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 			if ((w.Style == ss_Percents) || (h.Style == ss_Percents))
 			{
 				MONITORINFO mi;
-				GetNearestMonitorInfo(&mi, NULL, &rcNormal);
+				GetNearestMonitorInfo(&mi, nullptr, &rcNormal);
 
 				if (w.Style == ss_Percents)
-					w.Set(true, ss_Percents, (rcNormal.right-rcNormal.left)*100/(mi.rcWork.right - mi.rcWork.left) );
+					w.Set(true, ss_Percents, (rcNormal.right - rcNormal.left) * 100 / (mi.rcWork.right - mi.rcWork.left));
 				if (h.Style == ss_Percents)
-					h.Set(false, ss_Percents, (rcNormal.bottom-rcNormal.top)*100/(mi.rcWork.bottom - mi.rcWork.top) );
+					h.Set(false, ss_Percents, (rcNormal.bottom - rcNormal.top) * 100 / (mi.rcWork.bottom - mi.rcWork.top));
 			}
 
 			if (w.Style == ss_Pixels)
-				w.Set(true, ss_Pixels, rcNormal.right-rcNormal.left);
+				w.Set(true, ss_Pixels, rcNormal.right - rcNormal.left);
 			if (h.Style == ss_Pixels)
-				h.Set(false, ss_Pixels, rcNormal.bottom-rcNormal.top);
+				h.Set(false, ss_Pixels, rcNormal.bottom - rcNormal.top);
 
 			gpSetCls->UpdateSize(w, h);
 		}
+	}
+	else if (mode == wmMaximized || mode == wmFullScreen)
+	{
+		RECT rc = WinApi::GetWindowRect(ghWnd);
+		WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(ghWnd);
+		mrc_StoredTiledRect = RECT{};
+		if (!IsRectMinimized(mrc_StoredNormalRect))
+		{
+			const auto miOld = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
+			const auto miNew = GetNearestMonitorInfo(nullptr, &rc, nullptr);
+			EvalNewNormalPos(miOld.mi, miNew.hMon, miNew.mi, mrc_StoredNormalRect, mrc_StoredNormalRect);
+		}
+#ifdef _DEBUG
+		// Just for checking that everything works as expected
+		MonitorInfo miMy{}, miOs{}, miRc{};
+		if (!IsRectMinimized(mrc_StoredNormalRect))
+		{
+			miMy = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
+			miOs = GetNearestMonitorInfo(nullptr, &wpl.rcNormalPosition, nullptr);
+			miRc = GetNearestMonitorInfo(nullptr, &rc, nullptr);
+			_ASSERTE(miMy.hMon == miOs.hMon);  // We expect that OS suggests the same monitor as we stored in NormalRect
+			_ASSERTE(miOs.hMon == miRc.hMon);  // Monitor from GetWindowRect should match with wpl.rcNormalPosition
+		}
+#endif
+		std::ignore = wpl;
 	}
 }
 
@@ -2688,9 +2720,9 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			RECT rc = CalcRect(CER_MAIN);
 			mp_ConEmu->mp_Status->OnWindowReposition(&rc);
 
-			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
+			if (changeFromWindowMode == wmNotChanging)
 			{
-				StoreNormalRect(&rc);
+				StoreNormalRect(isWindowNormal() ? &rc : nullptr);
 			}
 
 			if (mb_MonitorDpiChanged)

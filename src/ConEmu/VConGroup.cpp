@@ -603,53 +603,6 @@ void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false
 	return;
 }
 
-//uint CVConGroup::AllTextHeight()
-//{
-//	if (!this)
-//	{
-//		_ASSERTE(this);
-//		return 0;
-//	}
-//	uint nSize = 0;
-//	_ASSERTE((m_SplitType==RConStartArgsEx::eSplitNone) == (mp_Grp1==NULL && mp_Grp2==NULL && mp_Item!=NULL));
-//	if (m_SplitType==RConStartArgsEx::eSplitNone)
-//	{
-//		CVConGuard VCon(mp_Item);
-//		if (mp_Item && mp_Item->RCon())
-//		{
-//			nSize = mp_Item->RCon()->TextHeight();
-//		}
-//		else
-//		{
-//			_ASSERTE(mp_Item!=NULL);
-//		}
-//	}
-//	else
-//	{
-//		CVConGuard VCon1(mp_Grp1->mp_Item);
-//		CVConGuard VCon2(mp_Grp2->mp_Item);
-//
-//		if (mp_Grp1)
-//		{
-//			nSize += mp_Grp1->AllTextHeight();
-//		}
-//		else
-//		{
-//			_ASSERTE(mp_Grp1!=NULL);
-//		}
-//
-//		if (mp_Grp2 && (m_SplitType == RConStartArgsEx::eSplitVert))
-//		{
-//			nSize += mp_Grp2->AllTextHeight();
-//		}
-//		else
-//		{
-//			_ASSERTE(mp_Grp2!=NULL);
-//		}
-//	}
-//	return nSize;
-//}
-
 void CVConGroup::LogString(LPCSTR asText)
 {
 	if (gpSet->isLogging() && gp_VActive)
