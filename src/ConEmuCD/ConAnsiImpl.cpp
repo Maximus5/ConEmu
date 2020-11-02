@@ -458,9 +458,9 @@ int SrvAnsiImpl::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDum
 										Code.ArgV[Code.ArgC++] = nValue;
 									return true;
 								}
-								else if (!nDigits && !Code.ArgC)
+								else
 								{
-									if ((Code.PvtLen+1) < (int)countof(Code.Pvt))
+									if ((size_t(Code.PvtLen) + 2) < countof(Code.Pvt))
 									{
 										Code.Pvt[Code.PvtLen++] = wc; // Skip private symbols
 										Code.Pvt[Code.PvtLen] = 0;
