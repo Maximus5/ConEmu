@@ -9,13 +9,13 @@
 <owners>Maximus5</owners>
 <tags>graphical console emulator tabs farmanager powershell cmd bash cygwin msys git</tags>
 
-<projectUrl>http://conemu.github.io/</projectUrl>
-<iconUrl>http://conemu.github.io/img/logo-128.png</iconUrl>
-<releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
+<projectUrl>https://conemu.github.io/</projectUrl>
+<icon>images\icon.png</icon>
+<releaseNotes>https://conemu.github.io/en/Whats_New.html</releaseNotes>
 
 <requireLicenseAcceptance>false</requireLicenseAcceptance>
 <license type="file">license\license.txt</license>
-<copyright>© 2015, Maximus5</copyright>
+<copyright>© 2020, Maksim Moisiuk</copyright>
 
 <summary>
 ConEmu (short for Console Emulator) is a handy and full featured Windows console window (local terminal) with a lot of enhancements.
@@ -53,6 +53,8 @@ Short list of features:
     <file src="Build\ConEmu.Core.Targets" target="Build" />
     <!-- License -->
     <file src="..\..\Release\ConEmu\License.txt" target="license\license.txt" />
+    <!-- Logo -->
+    <file src="..\..\logo\LOGO_128.png" target="images\icon.png" />
     <!-- Set of ConEmu files. -->
     <file src="..\..\Release\ConEmu.exe" target="Tools\ConEmu" />
     <file src="..\..\Release\ConEmu64.exe" target="Tools\ConEmu" />

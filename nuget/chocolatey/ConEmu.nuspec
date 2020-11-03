@@ -9,19 +9,19 @@
 <owners>Maximus5</owners>
 <tags>graphical console emulator tabs farmanager powershell cmd bash cygwin msys git</tags>
 
-<projectUrl>http://conemu.github.io/</projectUrl>
-<iconUrl>http://conemu.github.io/img/logo-128.png</iconUrl>
-<releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
+<projectUrl>https://conemu.github.io/</projectUrl>
+<iconUrl>https://conemu.github.io/img/logo-128.png</iconUrl>
+<releaseNotes>https://conemu.github.io/en/Whats_New.html</releaseNotes>
 
 <requireLicenseAcceptance>false</requireLicenseAcceptance>
 <licenseUrl>https://github.com/Maximus5/ConEmu/blob/master/Release/ConEmu/License.txt</licenseUrl>
 <copyright>© 2015, Maximus5</copyright>
 
 <!-- new in choco 0.9.9.7 (begin) -->
-<projectSourceUrl>http://github.com/Maximus5/ConEmu</projectSourceUrl>
-<docsUrl>http://conemu.github.io/en/TableOfContents.html</docsUrl>
-<mailingListUrl>http://groups.google.com/group/conemu_ml</mailingListUrl>
-<bugTrackerUrl>http://conemu.github.io/en/Issues.html</bugTrackerUrl>
+<projectSourceUrl>https://github.com/Maximus5/ConEmu</projectSourceUrl>
+<docsUrl>https://conemu.github.io/en/TableOfContents.html</docsUrl>
+<mailingListUrl>https://groups.google.com/group/conemu_ml</mailingListUrl>
+<bugTrackerUrl>https://conemu.github.io/en/Issues.html</bugTrackerUrl>
 <!-- new in choco 0.9.9.7 (end) -->
 
 <summary>
