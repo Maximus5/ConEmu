@@ -1925,23 +1925,23 @@ wrap2:
 // From the cursor position!
 BOOL CEAnsi::ScrollLine(HANDLE hConsoleOutput, int nDir)
 {
-	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
-	BOOL lbRc = ExtScrollLine(&scrl);
+	ExtScrollScreenParm scroll = {sizeof(scroll), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' ', {}};
+	const BOOL lbRc = ExtScrollLine(&scroll);
 	return lbRc;
 }
 
 BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 {
-	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
+	ExtScrollScreenParm scroll = {sizeof(scroll), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' ', {}};
 	if (gDisplayOpt.ScrollRegion)
 	{
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		scrl.Region.top = gDisplayOpt.ScrollStart;
-		scrl.Region.bottom = gDisplayOpt.ScrollEnd;
-		scrl.Flags |= essf_Region;
+		scroll.Region.top = gDisplayOpt.ScrollStart;
+		scroll.Region.bottom = gDisplayOpt.ScrollEnd;
+		scroll.Flags |= essf_Region;
 	}
 
-	BOOL lbRc = ExtScrollScreen(&scrl);
+	const BOOL lbRc = ExtScrollScreen(&scroll);
 
 	return lbRc;
 }
