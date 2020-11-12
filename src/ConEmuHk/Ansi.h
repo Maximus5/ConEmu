@@ -204,7 +204,7 @@ public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
 
-	static void DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
+	static int DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
 
 	BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE, EXTREADWRITEFLAGS AddFlags = ewtf_None);
 	BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);

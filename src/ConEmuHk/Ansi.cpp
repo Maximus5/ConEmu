@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <winnt.h>
 #include <tchar.h>
 #include <limits>
+#include <chrono>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
@@ -806,8 +807,9 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 }
 
 
-void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
+int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 {
+	int result = 0;
 #if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
 	if (!buf || !cchLen)
 	{
@@ -818,7 +820,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 
 	wchar_t szDbg[200];
 	size_t nLen = cchLen;
-	static int nWriteCallNo = 0;
+	static std::atomic_int32_t nWriteCallNo{ 0 };
 
 	switch (iUnknown)
 	{
@@ -844,16 +846,17 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Internal comment: ", GetCurrentThreadId());
 		break;
 	default:
-		msprintf(szDbg, countof(szDbg), L"[%u] AnsiDump #%u: ", GetCurrentThreadId(), ++nWriteCallNo);
+		result = nWriteCallNo.fetch_add(1) + 1;
+		msprintf(szDbg, countof(szDbg), L"[%u] AnsiDump #%u: ", GetCurrentThreadId(), result);
 	}
 
-	size_t nStart = lstrlenW(szDbg);
+	const size_t nStart = lstrlenW(szDbg);
 	wchar_t* pszDst = szDbg + nStart;
 	wchar_t* pszFrom = szDbg;
 
 	if (buf && cchLen)
 	{
-		const wchar_t* pszSrc = (wchar_t*)buf;
+		const wchar_t* pszSrc = static_cast<const wchar_t*>(buf);
 		size_t nCur = 0;
 		while (nLen)
 		{
@@ -910,7 +913,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 	{
 		pszDst -= 2;
 		const wchar_t* psEmptyMessage = L" - <empty sequence>";
-		size_t nMsgLen = lstrlenW(psEmptyMessage);
+		const size_t nMsgLen = lstrlenW(psEmptyMessage);
 		wmemcpy(pszDst, psEmptyMessage, nMsgLen);
 		pszDst += nMsgLen;
 	}
@@ -929,14 +932,15 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 		_ASSERTEX(FALSE && "Unknown Esc Sequence!");
 	}
 #endif
+	return result;
 }
 
 #ifdef DUMP_UNKNOWN_ESCAPES
 #define DumpUnknownEscape(buf, cchLen) DumpEscape(buf, cchLen, de_Unknown)
 #define DumpKnownEscape(buf, cchLen, eType) DumpEscape(buf, cchLen, eType)
 #else
-#define DumpUnknownEscape(buf,cchLen)
-#define DumpKnownEscape(buf, cchLen, eType)
+#define DumpUnknownEscape(buf,cchLen) (0)
+#define DumpKnownEscape(buf, cchLen, eType) (0)
 #endif
 
 static LONG nLastReadId = 0;
@@ -1372,7 +1376,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 	bool bIsConOut = false;
 	bool bIsAnsi = false;
 
-	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfCharsToWrite);
+	FIRST_ANSI_CALL(static_cast<const BYTE*>(lpBuffer), nNumberOfCharsToWrite);
 
 #if 0
 	// Store prompt(?) for clink 0.1.1
@@ -1385,9 +1389,31 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 #endif
 
 	// In debug builds: Write to debug console all console Output
-	DumpKnownEscape((wchar_t*)lpBuffer, nNumberOfCharsToWrite, de_Normal);
+	const auto ansiIndex = DumpKnownEscape(static_cast<const wchar_t*>(lpBuffer), nNumberOfCharsToWrite, de_Normal);
 
-	CEAnsi* pObj = NULL;
+#ifdef _DEBUG
+	struct AnsiDuration  // NOLINT(cppcoreguidelines-special-member-functions)
+	{
+		const int ansiIndex_;
+		const std::chrono::steady_clock::time_point startTime_;
+
+		AnsiDuration(const int ansiIndex)
+			: ansiIndex_(ansiIndex), startTime_(std::chrono::steady_clock::now())
+		{
+		}
+
+		~AnsiDuration()
+		{
+			const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime_);
+			wchar_t info[80] = L"";
+			msprintf(info, countof(info), L"[%u] AnsiDump #%u duration(ms): %u\n", GetCurrentThreadId(), ansiIndex_, duration.count());
+			OutputDebugStringW(info);
+		}
+	};
+	AnsiDuration duration(ansiIndex);
+#endif
+
+	CEAnsi* pObj = nullptr;
 	CEStr CpCvt;
 
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput)
@@ -2915,7 +2941,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 			int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
 			bool resetCursor = false;
-			COORD cr0 = {};
+			COORD cr0 = {0, csbi.srWindow.Top};
 			int nChars = 0;
 			int nScroll = 0;
 
@@ -2925,16 +2951,16 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				// clear from cursor to end of screen
 				cr0 = csbi.dwCursorPosition;
 				nChars = (csbi.dwSize.X - csbi.dwCursorPosition.X)
-					+ csbi.dwSize.X * (csbi.dwSize.Y - csbi.dwCursorPosition.Y - 1);
+					+ csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.dwCursorPosition.Y);
 				break;
 			case 1:
 				// clear from cursor to beginning of the screen
 				nChars = csbi.dwCursorPosition.X + 1
-					+ csbi.dwSize.X * csbi.dwCursorPosition.Y;
+					+ csbi.dwSize.X * (csbi.dwCursorPosition.Y - csbi.srWindow.Top);
 				break;
 			case 2:
 				// clear entire screen and moves cursor to upper left
-				nChars = csbi.dwSize.X * csbi.dwSize.Y;
+				nChars = csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
 				resetCursor = true;
 				break;
 			case 3:
@@ -2943,18 +2969,18 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				{
 					nScroll = -csbi.srWindow.Top;
 					cr0.X = csbi.dwCursorPosition.X;
-					cr0.Y = std::max(0,(csbi.dwCursorPosition.Y-csbi.srWindow.Top));
+					cr0.Y = std::max(0, (csbi.dwCursorPosition.Y - csbi.srWindow.Top));
 					resetCursor = true;
 				}
 				break;
 			default:
-				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+				DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 			}
 
 			if (nChars > 0)
 			{
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars};
+					hConsoleOutput, {}, L' ', cr0, static_cast<DWORD>(nChars)};
 				ExtFillOutput(&fill);
 			}
 
