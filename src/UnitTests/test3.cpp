@@ -1,11 +1,17 @@
 ﻿
-#include <windows.h>
+#include <Windows.h>
 #include <cstdio>
+#include <chrono>
+
+bool auto_mode = false;
 
 struct Handle
 {
 	HANDLE h_ = nullptr;
+	// ReSharper disable once CppNonExplicitConversionOperator
 	operator HANDLE() const { return h_; }
+	// ReSharper disable once CppNonExplicitConvertingConstructor
+	// ReSharper disable once CppParameterMayBeConst
 	Handle(HANDLE h) noexcept : h_(h) {}
 	bool IsValid() const { return h_ != nullptr && h_ != INVALID_HANDLE_VALUE; }
 };
@@ -20,10 +26,18 @@ int Fail(const char* label, const int result)
 
 void WaitKey(const WORD vk)
 {
+	const auto startTime = std::chrono::system_clock::now();
+	const std::chrono::seconds autoDuration{ 10 };
 	const Handle h(GetStdHandle(STD_INPUT_HANDLE));
 	for (;;)
 	{
 		INPUT_RECORD ir{}; DWORD read = 0;
+		if (!PeekConsoleInput(h, &ir, 1, &read) || !read)
+		{
+			if (auto_mode && (std::chrono::system_clock::now() - startTime) >= autoDuration)
+				break;
+			continue;
+		}
 		if (!ReadConsoleInput(h, &ir, 1, &read) || !read)
 			break;
 		if (ir.EventType != KEY_EVENT)
@@ -44,8 +58,14 @@ bool WriteText(const Handle& h, const char* text)
 	return true;
 }
 
-int main()
+int main(const int argc, char** argv)
 {
+	for (int i =0; i < argc; ++i)
+	{
+		if (strcmp(argv[i], "--auto") == 0 || strcmp(argv[i], "-auto") == 0)
+			auto_mode = true;
+	}
+	
 	const Handle origStd(GetStdHandle(STD_OUTPUT_HANDLE));
 	if (!WriteText(origStd, "Press <Enter> to create and change screen buffer\n"))
 		return Fail("Write failed", 1);
@@ -72,7 +92,7 @@ int main()
 			return Fail("Write failed", 1);
 	}
 
-	if (!WriteText(origStd, "Press <Enter> to go back to original screen\n"))
+	if (!WriteText(newBuffer, "Press <Enter> to go back to original screen\n"))
 		return Fail("Write failed", 1);
 	WaitKey(VK_RETURN);
 
@@ -81,5 +101,6 @@ int main()
 
 	CloseHandle(newBuffer);
 
+	WriteText(origStd, "Successfully returned to original buffer\n");
 	return 0;
 }
