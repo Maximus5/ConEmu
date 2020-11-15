@@ -2072,6 +2072,12 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
 	// Apply default color before scrolling!
 	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
 
+	if (static_cast<int>(LinesCount) <= 0)
+	{
+		_ASSERTEX(static_cast<int>(LinesCount) >= 0);
+		return FALSE;
+	}
+
 	BOOL lbRc = FALSE;
 
 	int TopLine, BottomLine;
@@ -2083,14 +2089,14 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
 		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = std::max<int>(gDisplayOpt.ScrollEnd, 0);
 
-		if ((TopLine + (int)LinesCount) <= BottomLine)
+		if (static_cast<int>(LinesCount) <= (BottomLine - TopLine))
 		{
-			ExtScrollScreenParm scrl = {
-				sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-				LinesCount, {}, L' ',
+			ExtScrollScreenParm scroll = {
+				sizeof(scroll), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+				static_cast<int>(LinesCount), {}, L' ',
 				// region to be scrolled (that is not a clipping region)
 				{0, TopLine, csbi.dwSize.X - 1, BottomLine}};
-			lbRc |= ExtScrollScreen(&scrl);
+			lbRc |= ExtScrollScreen(&scroll);
 		}
 		else
 		{
@@ -2108,10 +2114,10 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
 			? csbi.srWindow.Bottom
 			: csbi.dwSize.Y - 1;
 
-		ExtScrollScreenParm scrl = {
-			sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-			LinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
-		lbRc |= ExtScrollScreen(&scrl);
+		ExtScrollScreenParm scroll = {
+			sizeof(scroll), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+			static_cast<int>(LinesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+		lbRc |= ExtScrollScreen(&scroll);
 	}
 
 	return lbRc;
