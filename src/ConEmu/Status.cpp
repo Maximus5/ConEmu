@@ -1738,7 +1738,6 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	else
 	{
 		wcscpy_c(m_Values[csi_BufferSize].sText, L" ");
-		//m_Values[csi_BufferSize].sFormat = L"999x9999"; // на самом деле может быть до 9999, но для уменьшения ширины - по умолчанию так
 		wcscpy_c(m_Values[csi_BufferSize].szFormat, m_Values[csi_BufferSize].sText);
 	}
 

@@ -742,7 +742,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_CapsLock] = true;
 	isStatusColumnHidden[csi_ScrollLock] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
-	isStatusColumnHidden[csi_TermModes] = true; // adjusted in InitVanilla()
+	isStatusColumnHidden[csi_TermModes] = false; // adjusted in InitVanilla()
 	isStatusColumnHidden[csi_RConModes] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
 	isStatusColumnHidden[csi_WindowSize] = true;
@@ -767,7 +767,9 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_CellInfo] = true; // adjusted in InitVanilla()
 	isStatusColumnHidden[csi_ConEmuHWND] = true;
 	isStatusColumnHidden[csi_ConEmuView] = true;
+	isStatusColumnHidden[csi_Server] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
+	isStatusColumnHidden[csi_Transparency] = true;
 	isStatusColumnHidden[csi_Time] = true;
 
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
