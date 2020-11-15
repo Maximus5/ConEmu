@@ -2198,13 +2198,15 @@ void SrvAnsiImpl::WriteAnsiCode_OSC(AnsiEscCode& Code)
 		// ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
 		// ESC ] 9 ; 2 ; "txt" ST        Show GUI MessageBox ( txt ) for dubug purposes
 		// ESC ] 9 ; 3 ; "txt" ST        Set TAB text
-		// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
+		// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100).
+		//                               When _st_ is 2: set error state in progress on Windows 7 taskbar, _pr_ is optional.
+		//                               When _st_ is 3: set indeterminate state. When _st_ is 4: set paused state, _pr_ is optional.
 		// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
 		// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
 		// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
 		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
 		// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
-		// ESC ] 9 ; 10 ST               Request xterm keyboard emulation
+		// ESC ] 9 ; 10 ; p ST           Request xterm keyboard emulation
 		// ESC ] 9 ; 11; "*txt*" ST      Just a ‘comment’, skip it.
 		// ESC ] 9 ; 12 ST               Let ConEmu treat current cursor position as prompt start. Useful with `PS1`.
 		if (Code.ArgSZ[1] == L';')
@@ -2219,10 +2221,18 @@ void SrvAnsiImpl::WriteAnsiCode_OSC(AnsiEscCode& Code)
 				else if (Code.ArgC >= 2 && Code.ArgV[1] == 10)
 				{
 					// ESC ] 9 ; 10 ST
-					if (!m_Owner->gbWasXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] != 0))
+					// ESC ] 9 ; 10 ; 1 ST
+					if (!m_Owner->gbWasXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] == 1))
 						m_Owner->StartXTermMode(true);
+					// ESC ] 9 ; 10 ; 0 ST
 					else if (Code.ArgC >= 3 || Code.ArgV[2] == 0)
 						m_Owner->StartXTermMode(false);
+					// ESC ] 9 ; 10 ; 3 ST
+					else if (Code.ArgC >= 3 || Code.ArgV[2] == 3)
+						m_Owner->StartXTermOutput(true);
+					// ESC ] 9 ; 10 ; 2 ST
+					else if (Code.ArgC >= 3 || Code.ArgV[2] == 2)
+						m_Owner->StartXTermOutput(false);
 				}
 				else if (Code.ArgSZ[3] == L'1' && Code.ArgSZ[4] == L';')
 				{

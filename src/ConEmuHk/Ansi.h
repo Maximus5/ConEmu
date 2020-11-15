@@ -139,7 +139,18 @@ protected:
 
 public:
 	static void ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID = 0);
+	/// <summary>
+	/// Turn on/off xterm mode for both output and input.
+	/// May be triggered by connector, official Vim builds, ENABLE_VIRTUAL_TERMINAL_INPUT, "ESC ] 9 ; 10 ; 1 ST", etc.
+	/// </summary>
+	/// <param name="bStart">true - start xterm mode, false - stop</param>
 	static void StartXTermMode(bool bStart);
+	/// <summary>
+	/// Turn on/off xterm mode only for output (especially for line feeding mode).
+	/// Triggered by ENABLE_VIRTUAL_TERMINAL_PROCESSING.
+	/// </summary>
+	/// <param name="bStart">true - start xterm mode, false - stop</param>
+	static void StartXTermOutput(bool bStart);
 	static void RefreshXTermModes();
 	static void StorePromptBegin();
 	static void StorePromptReset();

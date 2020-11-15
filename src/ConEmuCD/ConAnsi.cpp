@@ -1040,15 +1040,22 @@ void SrvAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0
 	}
 }
 
-void SrvAnsi::StartXTermMode(bool bStart)
+void SrvAnsi::StartXTermMode(const bool bStart)
 {
 	// May be triggered by ConEmuT, official Vim builds and in some other cases
 	//_ASSERTEX((gXTermAltBuffer.Flags & xtb_AltBuffer) && (gbWasXTermOutput!=bStart));
 	_ASSERTEX(gbWasXTermOutput!=bStart);
 
+	StartXTermOutput(bStart);
+
+	// Remember last mode and pass to server
+	ChangeTermMode(tmc_TerminalType, bStart ? te_xterm : te_win32);
+}
+
+void SrvAnsi::StartXTermOutput(const bool bStart)
+{
 	// Remember last mode
 	gbWasXTermOutput = bStart;
-	ChangeTermMode(tmc_TerminalType, bStart ? te_xterm : te_win32);
 }
 
 void SrvAnsi::RefreshXTermModes()
