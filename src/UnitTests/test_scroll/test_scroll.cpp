@@ -54,7 +54,13 @@ class Framework
 	unsigned lastScroll = 0;
 	enum class Clipping { None, View, Smaller } clipping = Clipping::None;
 	enum class ConApi { WinApi, Ansi } conApi = ConApi::Ansi;
+	enum class CursorAction { ScrollData, MoveCursor } cursorAction = CursorAction::ScrollData;
 	bool altBuffer = false;
+	DWORD initOutMode{};
+	DWORD initConCp{};
+	DWORD initConOutCp{};
+	std::wstring escCommand;
+	wchar_t currentChar{};
 
 	struct Action
 	{
@@ -67,6 +73,7 @@ class Framework
 	std::unordered_map<std::string, size_t> keyMap;
 	std::unordered_map<WORD, size_t> vkMap;
 
+protected:
 	void AddAction(const WORD vk, std::string key, std::string description, std::function<void()> action)
 	{
 		const size_t idx = actions.size();
@@ -83,24 +90,36 @@ class Framework
 			{
 				PrintHelp();
 			});
-		AddAction(VK_F2, "F2", "fill current view",
+		AddAction(VK_F2, "F2", "fill current view (colorful)",
 			[this]()
 			{
-				FillCurrentView();
+				FillCurrentView(true);
 			});
-		AddAction(VK_F3, "F3", "switch use of WinAPI/ANSI",
+		AddAction(VK_F3, "F3", "fill current view (black/white)",
+			[this]()
+			{
+				FillCurrentView(false);
+			});
+		AddAction(VK_F4, "F4", "switch use arrows to scroll data/move cursor",
+			[this]()
+			{
+				//SetCursorTopLeft();
+				cursorAction = (cursorAction == CursorAction::ScrollData) ? CursorAction::MoveCursor : CursorAction::ScrollData;
+				UpdateTitle();
+			});
+		AddAction(VK_F5, "F5", "switch use of WinAPI/ANSI",
 			[this]()
 			{
 				conApi = (conApi == ConApi::WinApi) ? ConApi::Ansi : ConApi::WinApi;
 				UpdateTitle();
 			});
-		AddAction(VK_F4, "F4", "switch clipping region None/View/Smaller",
+		AddAction(VK_F6, "F6", "switch clipping region None/View/Smaller",
 			[this]()
 			{
 				clipping = (clipping < Clipping::Smaller) ? Clipping(static_cast<unsigned>(clipping) + 1) : Clipping::None;
 				UpdateTitle();
 			});
-		AddAction(VK_F5, "F5", "switch alternative buffer",
+		AddAction(VK_F7, "F7", "switch alternative buffer",
 			[this]()
 			{
 				SwitchAltBuffer();
@@ -110,20 +129,54 @@ class Framework
 			{
 				Erase();
 			});
-		AddAction(VK_F9, "F9", "run MS example https://docs.microsoft.com/en-us/windows/console/scrolling-a-screen-buffer-s-contents",
+		AddAction(VK_F12, "F12", "run MS example https://docs.microsoft.com/en-us/windows/console/scrolling-a-screen-buffer-s-contents",
 			[this]()
 			{
 				MsExample();
 			});
-		AddAction(VK_UP, "Up", "scrolls the buffer upwards",
+		AddAction(VK_UP, "Up", "scrolls the buffer/move cursor upwards",
 			[this]()
 			{
-				DoScroll(-1);
+				if (cursorAction == CursorAction::ScrollData)
+					DoScroll(-1);
+				else
+					MoveCursorVertically(-1);
 			});
-		AddAction(VK_DOWN, "Down", "scrolls the buffer downwards",
+		AddAction(VK_DOWN, "Down", "scrolls the buffer/move cursor downwards",
 			[this]()
 			{
-				DoScroll(+1);
+				if (cursorAction == CursorAction::ScrollData)
+					DoScroll(+1);
+				else
+					MoveCursorVertically(+1);
+			});
+		AddAction(VK_LEFT, "Left", "move cursor leftwards",
+			[this]()
+			{
+				if (cursorAction == CursorAction::MoveCursor)
+					MoveCursorHorizontally(-1);
+			});
+		AddAction(VK_RIGHT, "Right", "move cursor rightwards",
+			[this]()
+			{
+				if (cursorAction == CursorAction::MoveCursor)
+					MoveCursorHorizontally(+1);
+			});
+		AddAction(VK_INSERT, "Insert", "Insert line/char at cursor position",
+			[this]()
+			{
+				if (cursorAction == CursorAction::ScrollData)
+					InsertLine();
+				else
+					InsertChar();
+			});
+		AddAction(VK_DELETE, "Delete", "Delete line/char at cursor position",
+			[this]()
+			{
+				if (cursorAction == CursorAction::ScrollData)
+					DeleteLine();
+				else
+					DeleteChar();
 			});
 		AddAction(VK_PRIOR, "PgUp", "set viewport -1 Y coordinate (scroll window)",
 			[this]()
@@ -145,6 +198,11 @@ class Framework
 			{
 				GoEnd();
 			});
+		AddAction(VK_ESCAPE, "Esc", "collect escape sequence from input and execute it by Enter",
+			[this]()
+			{
+				EscCommand();
+			});
 		AddAction(VK_F10, "F10", "Exit",
 			[this]()
 			{
@@ -154,17 +212,39 @@ class Framework
 	}
 
 public:
+	Framework()
+	{
+		initConOutCp = GetConsoleOutputCP();
+		initConCp = GetConsoleCP();
+		SetConsoleOutputCP(CP_UTF8);
+		SetConsoleCP(CP_UTF8);
+		setlocale(LC_ALL, ".UTF-8");
+		GetConsoleMode(hConOut, &initOutMode);
+		SetConsoleMode(hConOut, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+	}
+
+	~Framework()
+	{
+		SetConsoleMode(hConOut, initOutMode);
+		SetConsoleOutputCP(initConOutCp);
+		SetConsoleCP(initConCp);
+	}
+
+	Framework(const Framework&) = delete;
+	Framework(Framework&&) = delete;
+	Framework& operator=(const Framework&) = delete;
+	Framework& operator=(Framework&&) = delete;
+
 	void Run(const int argc, char** argv)
 	{
-		DWORD mode{}; GetConsoleMode(hConOut, &mode);
-		SetConsoleMode(hConOut, 7);
 		try {
 			INPUT_RECORD input{};
 			DWORD read;
 
 			UpdateTitle();
 			InitActions();
-			PrintHelp();
+
+			bool wereKeys = false;
 
 			for (int i = 0; i < argc; ++i)
 			{
@@ -173,8 +253,14 @@ public:
 				while (++i < argc)
 				{
 					ProcessKey(argv[i]);
+					wereKeys = true;
 				}
 				break;
+			}
+
+			if (!wereKeys)
+			{
+				PrintHelp();
 			}
 
 			while (ReadConsoleInputW(hConIn, &input, 1, &read))
@@ -192,43 +278,92 @@ public:
 		{
 			std::cout << std::endl << "F10 pressed, exiting" << std::endl;
 		}
-		SetConsoleMode(hConOut, mode);
 	}
 
 	void UpdateTitle() const
 	{
 		std::wstring title = L"Console test tool: ";
-		switch (conApi)
+
+		if (escCommand.empty())
 		{
-		case ConApi::WinApi:
-			title += L"WinAPI"; break;
-		case ConApi::Ansi:
-			title += L"ANSI"; break;
+			title += L"F4=";
+			switch (cursorAction)
+			{
+			case CursorAction::ScrollData:
+				title += L"ScrollData"; break;
+			case CursorAction::MoveCursor:
+				title += L"MoveCursor"; break;
+			}
+			title += L", ";
+
+			title += L"F5=";
+			switch (conApi)
+			{
+			case ConApi::WinApi:
+				title += L"WinAPI"; break;
+			case ConApi::Ansi:
+				title += L"ANSI"; break;
+			}
+			title += L", ";
+
+			title += L"F6=";
+			switch (clipping)
+			{
+			case Clipping::None:
+				title += L"NoClip"; break;
+			case Clipping::View:
+				title += L"ClipView"; break;
+			case Clipping::Smaller:
+				title += L"ClipSmaller"; break;
+			}
 		}
-		title += L", ";
-		switch (clipping)
+		else
 		{
-		case Clipping::None:
-			title += L"NoClip"; break;
-		case Clipping::View:
-			title += L"ClipView"; break;
-		case Clipping::Smaller:
-			title += L"ClipSmaller"; break;
+			title += L"ESC " + escCommand.substr(1);
 		}
+
 		SetConsoleTitleW(title.c_str());
 	}
 
 	void PrintHelp() const
 	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+
+		std::string line; line.reserve(csbi.dwSize.X);
+		auto padLine = [&line, &csbi](const std::string& str)
+		{
+			line = str;
+			if (line.length() < size_t(csbi.dwSize.X))
+				line += std::string(size_t(csbi.dwSize.X) - line.length(), ' ');
+			return line;
+		};
+
+		const std::string bitness =
+#ifdef _WIN64
+			"64bit"
+#else
+			"32bit"
+#endif
+			;
+		char module[MAX_PATH] = "";
+		GetModuleFileNameA(nullptr, module, MAX_PATH);
+		const char* pch = strrchr(module, '\\');
+		std::string name(pch ? pch + 1 : module);
 		std::cout << std::endl
-			<< "Scroll test tool. Use hotkeys:" << std::endl;
+			<< padLine("Scroll test tool " + bitness + ".") << std::endl
+			<< padLine("Usage: " + name + " [--keys key [key ... [key]]]") << std::endl
+			<< padLine("Hotkeys list:") << std::endl
+		;
+
 		for (const auto& action : actions)
 		{
-			std::cout << "  " << action.key << " " << action.description << std::endl;
+			std::cout << padLine("  " + action.key + " " + action.description) << std::endl;
 		}
 	}
 
-	void FillCurrentView()
+	void FillCurrentView(const bool color)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi{};
 		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
@@ -266,12 +401,11 @@ public:
 				line.push_back(ch);
 			}
 
-			//if (y > csbi.srWindow.Top && y < csbi.srWindow.Bottom)
 			if (conApi == ConApi::Ansi)
 			{
 				std::wstring lineStr; lineStr.reserve(line.size() + 64);
 				const float mul = 0.4f + 0.6f * static_cast<float>(y - csbi.srWindow.Top) / static_cast<float>(csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
-				lineStr += RgbBack(static_cast<unsigned>(r * mul), static_cast<unsigned>(g * mul), static_cast<unsigned>(b * mul));
+				lineStr += color ? RgbBack(static_cast<unsigned>(r * mul), static_cast<unsigned>(g * mul), static_cast<unsigned>(b * mul)) : RgbReset();
 				for (const auto& c : line)
 				{
 					lineStr += c.Char.UnicodeChar;
@@ -290,6 +424,67 @@ public:
 			}
 		}
 		SetConsoleCursorPosition(hConOut, csbi.dwCursorPosition);
+		SetConsoleWindowInfo(hConOut, true, &csbi.srWindow);
+	}
+
+	void SetCursorTopLeft() const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		SetConsoleCursorPosition(hConOut, COORD{ csbi.srWindow.Left, csbi.srWindow.Top });
+	}
+
+	void InsertLine() const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		if (conApi == ConApi::Ansi)
+		{
+			const std::wstring command = L"\x1B[1L";
+			DWORD written = 0;
+			WriteConsoleW(hConOut, command.c_str(), command.length(), &written, nullptr);
+		}
+	}
+
+	void DeleteLine() const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		if (conApi == ConApi::Ansi)
+		{
+			const std::wstring command = L"\x1B[1M";
+			DWORD written = 0;
+			WriteConsoleW(hConOut, command.c_str(), command.length(), &written, nullptr);
+		}
+	}
+
+	void InsertChar() const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		if (conApi == ConApi::Ansi)
+		{
+			const std::wstring command = L"\x1B[1@";
+			DWORD written = 0;
+			WriteConsoleW(hConOut, command.c_str(), command.length(), &written, nullptr);
+		}
+	}
+
+	void DeleteChar() const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		if (conApi == ConApi::Ansi)
+		{
+			const std::wstring command = L"\x1B[1P";
+			DWORD written = 0;
+			WriteConsoleW(hConOut, command.c_str(), command.length(), &written, nullptr);
+		}
 	}
 
 	void Erase() const
@@ -363,7 +558,74 @@ public:
 			throw std::system_error(GetLastError(), std::system_category(), "SetConsoleWindowInfo failed");
 	}
 
-	void DoScroll(int direction)
+	void MoveCursorVertically(const int direction) const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		if (conApi == ConApi::WinApi)
+		{
+			COORD newPos = csbi.dwCursorPosition;
+			const int newY = csbi.dwCursorPosition.Y + direction;
+			if (newY < 0)
+				newPos = COORD{ 0, 0 };
+			else if (newY >= csbi.dwSize.Y)
+				newPos = COORD{ SHORT(csbi.dwSize.X - 1), SHORT(csbi.dwSize.Y - 1) };
+			else
+				newPos = COORD{ 0, SHORT(newY) };
+			SetConsoleCursorPosition(hConOut, newPos);
+		}
+		else
+		{
+			const auto command = L"\x1B[" + std::to_wstring(std::abs(direction)) + ((direction < 0) ? L"A" : L"B");
+			DWORD written = 0;
+			WriteConsoleW(hConOut, command.c_str(), command.length(), &written, nullptr);
+		}
+	}
+
+	void MoveCursorHorizontally(const int direction) const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
+			throw std::system_error(GetLastError(), std::system_category(), "GetConsoleScreenBufferInfo failed");
+		if (conApi == ConApi::WinApi)
+		{
+			int newX = csbi.dwCursorPosition.X + direction;
+			int newY = csbi.dwCursorPosition.Y;
+			if (newX < 0)
+			{
+				if (newY > 0)
+				{
+					newX = csbi.dwSize.X - 1; --newY;
+				}
+				else
+				{
+					newX = 0;
+				}
+			}
+			else if (newX >= csbi.dwSize.X)
+			{
+				if (newY + 1 < csbi.dwSize.Y)
+				{
+					newX = 0; ++newY;
+				}
+				else
+				{
+					newX = csbi.dwSize.X - 1;
+				}
+			}
+			const COORD newPos = COORD{ SHORT(newX), SHORT(newY) };
+			SetConsoleCursorPosition(hConOut, newPos);
+		}
+		else
+		{
+			const auto command = L"\x1B[" + std::to_wstring(std::abs(direction)) + ((direction < 0) ? L"D" : L"C");
+			DWORD written = 0;
+			WriteConsoleW(hConOut, command.c_str(), command.length(), &written, nullptr);
+		}
+	}
+
+	void DoScroll(const int direction)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi{};
 		if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
@@ -408,6 +670,28 @@ public:
 			DWORD written = 0;
 			WriteConsoleW(hConOut, scrollCommand.c_str(), scrollCommand.length(), &written, nullptr);
 		}
+	}
+
+	void EscCommand()
+	{
+		if (escCommand.empty())
+		{
+			escCommand = L"\x1B";
+		}
+		else
+		{
+			if (currentChar == L'\r')
+			{
+				DWORD written = 0;
+				WriteConsoleW(hConOut, escCommand.c_str(), escCommand.length(), &written, nullptr);
+				escCommand.clear();
+			}
+			else if (currentChar != 0)
+			{
+				escCommand += currentChar;
+			}
+		}
+		UpdateTitle();
 	}
 
 	void SwitchAltBuffer()
@@ -487,6 +771,12 @@ public:
 		if (!key.bKeyDown)
 			return true;
 		try {
+			currentChar = key.uChar.UnicodeChar;
+			if (!escCommand.empty())
+			{
+				EscCommand();
+				return true;
+			}
 			const auto action = vkMap.find(key.wVirtualKeyCode);
 			if (action == vkMap.end())
 				return true;
@@ -512,6 +802,12 @@ public:
 	bool ProcessKey(const std::string& key)
 	{
 		try {
+			currentChar = (key.size() == 1) ? static_cast<wchar_t>(key[0]) : 0;
+			if (!escCommand.empty())
+			{
+				EscCommand();
+				return true;
+			}
 			const auto keyLower = ToLower(key);
 			const auto action = keyMap.find(keyLower);
 			if (action == keyMap.end())
@@ -539,9 +835,6 @@ public:
 int main(const int argc, char** argv)
 {
 	try {
-		SetConsoleOutputCP(CP_UTF8);
-		SetConsoleCP(CP_UTF8);
-		setlocale(LC_ALL, ".UTF-8");
 		Framework{}.Run(argc, argv);
 		return 0;
 	}
