@@ -1958,13 +1958,15 @@ BOOL CEAnsi::ScrollLine(HANDLE hConsoleOutput, int nDir)
 
 BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 {
-	ExtScrollScreenParm scroll = {sizeof(scroll), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' ', {}};
+	const auto srView = GetWorkingRegion(hConsoleOutput, true);
+	ExtScrollScreenParm scroll = {
+		sizeof(scroll), essf_Current | essf_Commit | essf_Region, hConsoleOutput, nDir, {}, L' ',
+		RECT{ srView.Left, srView.Top, srView.Right, srView.Bottom } };
 	if (gDisplayOpt.ScrollRegion)
 	{
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
 		scroll.Region.top = gDisplayOpt.ScrollStart;
 		scroll.Region.bottom = gDisplayOpt.ScrollEnd;
-		scroll.Flags |= essf_Region;
 	}
 
 	const BOOL lbRc = ExtScrollScreen(&scroll);

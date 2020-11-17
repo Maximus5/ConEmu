@@ -188,7 +188,6 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info);
 
 typedef unsigned __int64 EXTSCROLLSCREENFLAGS;
 static const EXTSCROLLSCREENFLAGS
-	essf_Pad      = 0x0000000000000001ULL, // pad with spaces to right edge first
 	essf_ExtOnly  = 0x0000000000000002ULL, // scroll extended attrs only (don't touch real console text/attr)
 
 	essf_Current  = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
