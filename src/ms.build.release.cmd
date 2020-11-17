@@ -84,7 +84,7 @@ exit /b 1
 set "build_flag=%x32_build_flag%"
 call "%VSInstallDir%\VC\Auxiliary\Build\vcvars32.bat"
 cd /d "%~dp0"
-msbuild CE.sln %build_multi% /p:Configuration=Release,Platform=Win32 /t:%target%
+msbuild CE.sln %build_multi% /p:Configuration=Release,Platform=Win32,XPDeprecationWarning=false /t:%target%
 if errorlevel 1 goto err
 del "%build_flag%" > nul
 echo Success > "%build_flag%.success"

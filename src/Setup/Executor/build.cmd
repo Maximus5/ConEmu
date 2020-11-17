@@ -7,18 +7,20 @@ call "%~dp0..\..\vc.build.set.x32.cmd" 1> nul
 if errorlevel 1 goto err
 
 set DEST_FILE=..\Setupper\Executor.exe
-if exist Executor.obj del Executor.obj
-if exist Executor.res del Executor.res
+if exist Executor.exe del Executor.exe
+if exist Executor.pdb del Executor.pdb
+if exist obj del /q obj
 if exist %DEST_FILE% del %DEST_FILE%
 
+rem
+
 echo Preparing Executor binary
-rc Executor.rc 1> nul
+msbuild Executor.vcxproj /p:Configuration=Release,Platform=Win32,XPDeprecationWarning=false
 if errorlevel 1 goto err
 
-cl /nologo /O1 /D_UNICODE /DUNICODE Executor.cpp /link /machine:x86 /release user32.lib shell32.lib Executor.res 1> nul
-if errorlevel 1 goto err
-
-move Executor.exe %DEST_FILE%
+echo\
+echo Copying bin\Executor.exe to %DEST_FILE%
+copy Executor.exe %DEST_FILE%
 if errorlevel 1 goto err
 
 goto fin

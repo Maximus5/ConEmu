@@ -1,6 +1,6 @@
 -- ConEmu's solution generator script
 -- 1. Download premake5 from https://premake.github.io/download.html
--- 2. Run `premake5 vs2017`
+-- 2. Run `premake5 vs2019`
 
 workspace "CE"
   configurations { "Release", "Debug", "Remote" }

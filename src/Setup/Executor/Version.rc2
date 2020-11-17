@@ -1,6 +1,8 @@
 
 // Manifest
+#ifndef VSBUILD
 1 24 DISCARDABLE "Executor.manifest"
+#endif
 
 #include "../Setupper/VersionI.h"
 
