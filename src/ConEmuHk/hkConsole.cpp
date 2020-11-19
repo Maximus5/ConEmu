@@ -27,10 +27,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 
+#undef SHOWCREATEBUFFERINFO
 #ifdef _DEBUG
-#define DebugString(x) //OutputDebugString(x)
-#define DebugStringConSize(x) //OutputDebugString(x)
-#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+//	#define SHOWCREATEBUFFERINFO
+	#define DebugString(x) //OutputDebugString(x)
+	#define DebugStringConSize(x) //OutputDebugString(x)
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
 #else
 	#define DebugString(x) //OutputDebugString(x)
 	#define DebugStringConSize(x) //OutputDebugString(x)
