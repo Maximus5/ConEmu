@@ -578,8 +578,8 @@ void WorkerServer::ServerInitConsoleSize(bool allowUseCurrent, CONSOLE_SCREEN_BU
 
 	if (allowUseCurrent && gcrVisibleSize.X && gcrVisibleSize.Y)
 	{
-		SMALL_RECT rc = {0};
-		SetConsoleSize(gnBufferHeight, gcrVisibleSize, rc, ":ServerInit.SetFromArg"); // может обломаться? если шрифт еще большой
+		// could fail if the font is still too large
+		SetConsoleSize(gnBufferHeight, gcrVisibleSize, SMALL_RECT{}, ":ServerInit.SetFromArg");
 
 		if (pSbiOut)
 		{

@@ -1999,7 +1999,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	Parm->pAnnotation = nullptr;
 	Parm->Flags &= ~slsf_PrevAltServerPID;
 
-	// Хэндл обновим сразу
+	// If we have a handle to created screen buffer
 	if (Parm->Flags & slsf_SetOutHandle)
 	{
 		ghConOut.SetHandlePtr(Parm->ppConOutBuffer);
@@ -2029,7 +2029,9 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		}
 
 		CONSOLE_SCREEN_BUFFER_INFO csbi{};
-		if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HANDLE hStdOut = (Parm->Flags & slsf_SetOutHandle) ? ghConOut.GetHandle() : GetStdHandle(STD_OUTPUT_HANDLE);
+		if (GetConsoleScreenBufferInfo(hStdOut, &csbi))
 		{
 			gcrVisibleSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 			gcrVisibleSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
