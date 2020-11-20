@@ -572,7 +572,7 @@ int AddEndSlash(wchar_t* rsPath, int cchMax)
 const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 {
 	if (!asParams)
-		return NULL;
+		return nullptr;
 	const wchar_t* psz = asParams;
 	while (*psz == L' ' || *psz == L'\t' || *psz == L'\r' || *psz == L'\n') psz++;
 	return psz;
@@ -698,7 +698,8 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 	wchar_t *pwszEndSpace;
 
-	if (rsArguments) *rsArguments = NULL;
+	if (rsArguments)
+		*rsArguments = nullptr;
 
 	bool lbRc = false;
 	BOOL lbFirstWasGot = FALSE;
@@ -708,10 +709,15 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	CmdArg szDbgFirst;
 	bool bIsBatch = false;
 	#endif
+	// These chars could not exist in paths or file names
+	const wchar_t illegalCharacters[] = L"?*<>|";
+	// Cmd special characters - pipelines, redirections, escaping
+	const wchar_t specialCmdCharacters[] = L"&|<>^";
 
 	if (!asCmdLine || !*asCmdLine)
 	{
 		_ASSERTE(asCmdLine && *asCmdLine);
+		szExe.Empty();
 		goto wrap;
 	}
 
@@ -732,13 +738,6 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 		goto wrap;
 	}
 	szExe.Empty();
-
-	if (!asCmdLine || *asCmdLine == 0)
-	{
-		_ASSERTE(asCmdLine && *asCmdLine);
-		lbRc = true;
-		goto wrap;
-	}
 
 
 	pwszCopy = asCmdLine;
@@ -797,7 +796,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			}
 
 			LPCWSTR pwszQ = pwszCopy + 1 + lstrlen(szExe);
-			wchar_t* pszExpand = NULL;
+			wchar_t* pszExpand = nullptr;
 
 			if (*pwszQ != L'"' && IsExecutable(szExe, &pszExpand))
 			{
@@ -809,7 +808,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 					szExe.Set(pszExpand);
 					SafeFree(pszExpand);
 					if (rsArguments)
-						*rsArguments = pwszQ;
+						*rsArguments = SkipNonPrintable(pwszQ);
 				}
 
 				rbNeedCutStartEndQuot = true;
@@ -840,6 +839,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 		CEStr szTemp;
 		DWORD nTempSize;
+		LPCWSTR firstIllegalChar = wcspbrk(pwszCopy, illegalCharacters);
 		while (pchEnd)
 		{
 			szTemp.Set(pwszCopy, (pchEnd - pwszCopy));
@@ -851,7 +851,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 				INT_PTR len = szTemp.GetLen();
 				if ((len > 2) && (szTemp[0] == L'"') && (szTemp[len-1] == L'"'))
 				{
-					memmove(szTemp.ms_Val, szTemp.ms_Val+1, (len-2)*sizeof(*szTemp.ms_Val));
+					memmove(szTemp.ms_Val, szTemp.ms_Val + 1, (len - 2) * sizeof(*szTemp.ms_Val));
 					szTemp.ms_Val[len-2] = 0;
 				}
 			}
@@ -860,13 +860,13 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			if (!szTemp.IsEmpty()
 				&& ((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
 					// or file/dir may be found via env.var. substitution or searching in %PATH%
-					|| FileExistsSearch((LPCWSTR)szTemp, szTemp))
+					|| FileExistsSearch(szTemp.c_str(), szTemp))
 				// Than check if it is a FILE (not a directory)
 				&& FileExists(szTemp, &nTempSize) && nTempSize)
 			{
 				// OK, it an our executable?
 				if (rsArguments)
-					*rsArguments = pchEnd;
+					*rsArguments = SkipNonPrintable(pchEnd);
 				szExe.Set(szTemp);
 				break;
 			}
@@ -874,7 +874,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			_ASSERTE(*pchEnd == 0 || *pchEnd == L' ');
 			if (!*pchEnd)
 				break;
-			// Find next space after nonspace
+			// Find next space after non-space
 			while (*(pchEnd) == L' ') pchEnd++;
 			// If quoted string starts from here - it's supposed to be an argument
 			if (*pchEnd == L'"')
@@ -886,12 +886,14 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			pchEnd = wcschr(pchEnd, L' ');
 			if (!pchEnd)
 				pchEnd = pwszCopy + lstrlenW(pwszCopy);
+			if (firstIllegalChar && pchEnd >= firstIllegalChar)
+				break;
 		}
 
 		if (szExe.IsEmpty())
 		{
 			CmdArg arg;
-			if (!(pwszCopy = NextArg(pwszCopy, arg)))
+			if (!((pwszCopy = NextArg(pwszCopy, arg))))
 			{
 				//Parsing command line failed
 				#ifdef WARN_NEED_CMD
@@ -903,11 +905,11 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 			_ASSERTE(lstrcmpiW(szExe, L"start") != 0);
 
-			// Обработка переменных окружения и поиск в PATH
-			if (FileExistsSearch((LPCWSTR)szExe, szExe))
+			// Expand environment variables and search in the %PATH%
+			if (FileExistsSearch(szExe.c_str(), szExe))
 			{
 				if (rsArguments)
-					*rsArguments = pwszCopy;
+					*rsArguments = SkipNonPrintable(pwszCopy);
 			}
 		}
 	}
@@ -923,50 +925,37 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 		// редиректом, или это просто один из аргументов команды...
 
 		// "Левые" символы в имени файла (а вот в "первом аргументе" все однозначно)
-		if (wcspbrk(szExe, L"?*<>|"))
+		if (wcspbrk(szExe, illegalCharacters))
 		{
-			rbRootIsCmdExe = TRUE; // запуск через "процессор"
-			lbRc = true; goto wrap; // добавить "cmd.exe"
+			rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
+			lbRc = true; goto wrap; // force add "cmd.exe"
 		}
 
-		// если "путь" не указан
-		if (wcschr(szExe, L'\\') == NULL)
+		// If there is no "path"
+		if (wcschr(szExe, L'\\') == nullptr)
 		{
-			bool bHasExt = (wcschr(szExe, L'.') != NULL);
-			// Проверим, может это команда процессора (типа "DIR")?
+			bool bHasExt = (wcschr(szExe, L'.') != nullptr);
+			// Let's check if it's a processor command, e.g. "DIR"
 			if (!bHasExt)
 			{
-				bool bIsCommand = false;
-				wchar_t* pszUppr = lstrdup(szExe);
-				if (pszUppr)
+				bool isCommand = false;
+				const wchar_t* internalCommand = gsInternalCommands;
+				while (*internalCommand)
 				{
-					// избежать линковки на user32.dll
-					//CharUpperBuff(pszUppr, lstrlen(pszUppr));
-					for (wchar_t* p = pszUppr; *p; p++)
+					if (szExe.Compare(internalCommand, false) == 0)
 					{
-						if (*p >= L'a' && *p <= 'z')
-							*p -= 0x20;
+						isCommand = true;
+						break;
 					}
-
-					const wchar_t* pszFind = gsInternalCommands;
-					while (*pszFind)
-					{
-						if (lstrcmp(pszUppr, pszFind) == 0)
-						{
-							bIsCommand = true;
-							break;
-						}
-						pszFind += lstrlen(pszFind)+1;
-					}
-					free(pszUppr);
+					internalCommand += lstrlen(internalCommand) + 1;
 				}
-				if (bIsCommand)
+				if (isCommand)
 				{
 					#ifdef WARN_NEED_CMD
 					_ASSERTE(FALSE);
 					#endif
-					rbRootIsCmdExe = TRUE; // запуск через "процессор"
-					lbRc = true; goto wrap; // добавить "cmd.exe"
+					rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
+					lbRc = true; goto wrap; // force add "cmd.exe"
 				}
 			}
 
@@ -1024,17 +1013,13 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
 	if (!bRootCmd)
 	{
-		if (wcschr(asCmdLine, L'&') ||
-			wcschr(asCmdLine, L'>') ||
-			wcschr(asCmdLine, L'<') ||
-			wcschr(asCmdLine, L'|') ||
-			wcschr(asCmdLine, L'^') // или экранирования
-			)
+		// only for ComSpec mode here
+		if (wcspbrk(asCmdLine, specialCmdCharacters) != nullptr)
 		{
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			lbRc = true; goto wrap;
+			lbRc = true; goto wrap;  // add cmd.exe
 		}
 	}
 

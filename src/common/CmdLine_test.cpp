@@ -156,7 +156,7 @@ TEST(CmdLine, IsNeedCmd)
 		L"set", L"",
 		false, true, false, false);
 	TestIsNeedCmd(L"cmd.exe /c set var1=val1 & set var2=val2 & pwsh.exe -noprofile", false, false,
-		L"cmd.exe", L" /c set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
+		L"cmd.exe", L"/c set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
 		false, true, true, false);
 	TestIsNeedCmd(L"start", true, false,
 		L"", L"",
@@ -181,21 +181,21 @@ TEST(CmdLine, IsNeedCmd)
 		false, true, false, false);
 	// #FIX expectedResult should be true
 	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output", false, true,
-		L"cacls.exe", L" < input > output",
+		L"cacls.exe", L"< input > output",
 		false, false, false, false);
 	// #FIX expectedResult should be true
 	TestIsNeedCmd(L"%comspec% < input > output", false, true,
-		L"cmd.exe", L" < input > output",
+		L"cmd.exe", L"< input > output",
 		false, true, true, false);
 	TestIsNeedCmd(L"%comspec% /c < input > output", false, true,
-		L"cmd.exe", L" /c < input > output",
+		L"cmd.exe", L"/c < input > output",
 		false, true, true, false);
 	TestIsNeedCmd(L"%comspec% /K < input > output", false, true,
-		L"cmd.exe", L" /K < input > output",
+		L"cmd.exe", L"/K < input > output",
 		false, true, true, false);
 	// #FIX expectedResult should be true
 	TestIsNeedCmd(L"chkdsk < input > output", false, true,
-		L"chkdsk.exe", L" < input > output",
+		L"chkdsk.exe", L"< input > output",
 		false, false, false, false);
 	// #FIX expectedArgs should not end with \"
 	// #FIX expectedNeedCut should be true
@@ -241,11 +241,11 @@ TEST(CmdLine, IsNeedCmd)
 		false, true, true, false);
 	// #FIX expectedAlwaysConfirm?
 	TestIsNeedCmd(L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"", false, false,
-		L"cmd.exe", L" /c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
+		L"cmd.exe", L"/c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		false, true, true, false);
 	// #FIX expectedAlwaysConfirm?
 	TestIsNeedCmd(L"cmd /c \"dir c:\\\"", false, false,
-		L"cmd.exe", L" /c \"dir c:\\\"",
+		L"cmd.exe", L"/c \"dir c:\\\"",
 		false, true, true, false);
 }
 
