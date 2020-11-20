@@ -50,12 +50,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // pnSize заполняется только в том случае, если файл найден
-bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
+bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= nullptr*/)
 {
 	if (!asFilePath || !*asFilePath)
 		return false;
 
-	_ASSERTE(wcschr(asFilePath, L'\t')==NULL);
+	_ASSERTE(wcschr(asFilePath, L'\t')==nullptr);
 
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
@@ -68,7 +68,7 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 		DWORD nErrCode = GetLastError();
 		if (nErrCode == ERROR_ACCESS_DENIED)
 		{
-			hFind = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+			hFind = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 
 			if (hFind && hFind != INVALID_HANDLE_VALUE)
 			{
@@ -214,16 +214,16 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 
 		// Do not allow '/' here
 		LPCWSTR pszFwd = wcschr(asFilePath, L'/');
-		if (pszFwd != NULL)
+		if (pszFwd != nullptr)
 		{
 			return false;
 		}
 	}
 
-	wchar_t* pszSearchPath = NULL;
+	wchar_t* pszSearchPath = nullptr;
 	if (pszSlash)
 	{
-		if ((pszSearchPath = lstrdup(asFilePath)) != NULL)
+		if ((pszSearchPath = lstrdup(asFilePath)) != nullptr)
 		{
 			pszSearchFile = pszSlash + 1;
 			pszSearchPath[pszSearchFile - asFilePath] = 0;
@@ -235,7 +235,7 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 	wchar_t szFind[MAX_PATH+1];
 	LPCWSTR pszExt = PointToExt(asFilePath);
 
-	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? nullptr : L".exe", countof(szFind), szFind, &pszFilePart);
 
 	SafeFree(pszSearchPath);
 
@@ -249,7 +249,7 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 	return false;
 }
 
-SearchAppPaths_t gfnSearchAppPaths = NULL;
+SearchAppPaths_t gfnSearchAppPaths = nullptr;
 
 bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
 {
@@ -264,21 +264,14 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 		return true;
 	}
 
-	// Развернуть переменные окружения
+	// Expand %EnvVars%
 	if (wcschr(asFilePath, L'%'))
 	{
-		bool bFound = false;
-		wchar_t* pszExpand = ExpandEnvStr(asFilePath);
-		if (pszExpand && FileExists(pszExpand))
+		CEStr szExpand(ExpandEnvStr(asFilePath));
+		if (!szExpand.IsEmpty() && FileExists(szExpand.c_str()))
 		{
 			// asFilePath will be invalid after .Set
-			rsFound.Set(pszExpand);
-			bFound = true;
-		}
-		SafeFree(pszExpand);
-
-		if (bFound)
-		{
+			rsFound = std::move(szExpand);
 			return true;
 		}
 	}
@@ -295,8 +288,8 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 
 	#if defined(_DEBUG)
 	CEStr lsExecutable;
-	GetModulePathName(NULL, lsExecutable);
-	_ASSERTE(gfnSearchAppPaths!=NULL || (!IsConsoleServer(lsExecutable) && !IsConEmuGui(lsExecutable)));
+	GetModulePathName(nullptr, lsExecutable);
+	_ASSERTE(gfnSearchAppPaths!=nullptr || (!IsConsoleServer(lsExecutable) && !IsConEmuGui(lsExecutable)));
 	#endif
 
 	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
@@ -305,7 +298,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 	{
 		// Если в asFilePath НЕ указан путь - искать приложение в реестре,
 		// и там могут быть указаны доп. параметры (пока только добавка в %PATH%)
-		if (gfnSearchAppPaths(asFilePath, rsFound, abSetPath, NULL))
+		if (gfnSearchAppPaths(asFilePath, rsFound, abSetPath, nullptr))
 		{
 			// Нашли по реестру, возможно обновили %PATH%
 			return true;
@@ -329,7 +322,7 @@ bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 	if (fnd.cAlternateFileName[0])
 	{
 		if ((abFavorLength && (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName))) //-V303
-		        || (wcschr(fnd.cFileName, L' ') != NULL))
+		        || (wcschr(fnd.cFileName, L' ') != nullptr))
 		{
 			if (lstrlen(fnd.cAlternateFileName) >= cchShortNameMax) //-V303
 				return false;
@@ -337,7 +330,7 @@ bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 			return TRUE;
 		}
 	}
-	else if (wcschr(fnd.cFileName, L' ') != NULL)
+	else if (wcschr(fnd.cFileName, L' ') != nullptr)
 	{
 		return false;
 	}
@@ -353,7 +346,7 @@ bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 {
 	if (!asLong)
-		return NULL;
+		return nullptr;
 
 	int nSrcLen = lstrlenW(asLong); //-V303
 	wchar_t* pszLong = lstrdup(asLong);
@@ -361,7 +354,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
 	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t)); //-V106
 
-	wchar_t* pszResult = NULL;
+	wchar_t* pszResult = nullptr;
 	wchar_t* pszSrc = pszLong;
 	//wchar_t* pszDst = pszShort;
 	wchar_t* pszSlash;
@@ -486,7 +479,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	if (nLen <= MAX_PATH)
 	{
 		pszResult = pszShort;
-		pszShort = NULL;
+		pszShort = nullptr;
 		goto wrap;
 	}
 
@@ -532,7 +525,7 @@ DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName)
 //{
 //	TODO("хорошо бы и сетевые диски обрабатывать");
 //
-//	if (!asLong) return NULL;
+//	if (!asLong) return nullptr;
 //
 //	int nMaxLen = lstrlenW(asLong) + MAX_PATH; // "короткое" имя может оказаться длиннее "длинного"
 //	wchar_t* pszShort = /*lstrdup(asLong);*/(wchar_t*)malloc(nMaxLen*2);
@@ -571,7 +564,7 @@ DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName)
 //
 //wrap:
 //	free(pszShort);
-//	return NULL;
+//	return nullptr;
 //}
 
 // Used in IsWine and IsWinPE
@@ -596,7 +589,7 @@ static bool CheckRegKeyExist(RegKeyExistArg* pKeys)
 
 		while (pKeys->hkParent)
 		{
-			HKEY hk = NULL;
+			HKEY hk = nullptr;
 			LONG lRc = _RegOpenKeyExW(pKeys->hkParent, pKeys->pszKey, 0, KEY_READ, &hk);
 			if (hk)
 				_RegCloseKey(hk);
@@ -624,7 +617,7 @@ bool IsWine()
 	static int ibIsWine = 0;
 	if (!ibIsWine)
 	{
-		RegKeyExistArg Keys[] = {{HKEY_CURRENT_USER, L"Software\\Wine"}, {HKEY_LOCAL_MACHINE, L"Software\\Wine"}, {NULL}};
+		RegKeyExistArg Keys[] = {{HKEY_CURRENT_USER, L"Software\\Wine"}, {HKEY_LOCAL_MACHINE, L"Software\\Wine"}, {nullptr}};
 		ibIsWine = CheckRegKeyExist(Keys) ? 1 : -1;
 	}
 	// В общем случае, на флажок ориентироваться нельзя. Это для информации.
@@ -639,7 +632,7 @@ bool IsWinPE()
 		RegKeyExistArg Keys[] = {
 			{HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\MiniNT"},
 			{HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\PE Builder"},
-			{NULL}};
+			{nullptr}};
 		ibIsWinPE = CheckRegKeyExist(Keys) ? 1 : -1;
 	}
 	// В общем случае, на флажок ориентироваться нельзя. Это для информации.
@@ -661,7 +654,7 @@ bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMas
 
 	// If our dll was loaded into some executable without proper `supportedOS`
 	// in its manifest, the VerifyVersionInfoW fails to check *real* things
-	static BOOL (WINAPI *rtlVerifyVersionInfo)(LPOSVERSIONINFOEXW, DWORD, DWORDLONG) = NULL;
+	static BOOL (WINAPI *rtlVerifyVersionInfo)(LPOSVERSIONINFOEXW, DWORD, DWORDLONG) = nullptr;
 	static int hasRtl = 0;
 	if (hasRtl == 0)
 	{
@@ -836,7 +829,7 @@ bool IsWin10()
 			HMODULE hKernel32 = GetModuleHandle(L"kernel32.dll");
 			if (hKernel32)
 			{
-				FARPROC pfnCheck = hKernel32 ? (FARPROC)GetProcAddress(hKernel32, "FreeMemoryJobObject") : NULL;
+				FARPROC pfnCheck = hKernel32 ? (FARPROC)GetProcAddress(hKernel32, "FreeMemoryJobObject") : nullptr;
 				// Seems like it's a Win10
 				if (pfnCheck)
 				{
@@ -951,7 +944,7 @@ bool IsGDB(LPCWSTR asFilePatName)
 /// Substitute in the pszFormat macros '%1' ... '%9' with pszValues[0] .. pszValues[8]
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)
 {
-	wchar_t* pszCommand = NULL;
+	wchar_t* pszCommand = nullptr;
 	size_t cchCmdMax = 0;
 
 	// Замена %1 и т.п.
@@ -972,7 +965,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 
 		for (LPCWSTR pSrc = pszFormat; *pSrc; pSrc++)
 		{
-			LPCWSTR pszMacro = NULL;
+			LPCWSTR pszMacro = nullptr;
 
 			switch (*pSrc)
 			{
@@ -994,7 +987,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 				else
 				{
 					// Недопустимый управляющий символ, это может быть переменная окружения
-					pszMacro = NULL;
+					pszMacro = nullptr;
 					pSrc--;
 					if (s)
 						*(pDst++) = L'%';
@@ -1037,7 +1030,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	if (!pszComspec || (cchMax < MAX_PATH))
 	{
 		_ASSERTE(pszComspec && (cchMax >= MAX_PATH));
-		return NULL;
+		return nullptr;
 	}
 
 	*pszComspec = 0;
@@ -1092,7 +1085,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 		_ASSERTE(pszComspec[0] != 0); // Уже должен был быть определен
 		//lstrcpyn(pszComspec, L"cmd.exe", cchMax);
 		wchar_t *psFilePart;
-		DWORD n = SearchPathW(NULL, L"cmd.exe", NULL, cchMax, pszComspec, &psFilePart);
+		DWORD n = SearchPathW(nullptr, L"cmd.exe", nullptr, cchMax, pszComspec, &psFilePart);
 		if (!n || (n >= cchMax))
 			_wcscpy_c(pszComspec, cchMax, L"cmd.exe");
 	}
@@ -1103,7 +1096,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 // Найти "ComSpec" и вернуть lstrdup на него
 wchar_t* GetComspec(const ConEmuComspec* pOpt)
 {
-	wchar_t* pszComSpec = NULL;
+	wchar_t* pszComSpec = nullptr;
 
 	if (pOpt)
 	{
@@ -1183,7 +1176,7 @@ void ApplyExportEnvVar(LPCWSTR asEnvNameVal)
 		if (IsExportEnvVarAllowed(pszName))
 		{
 			// Doubt that someone really needs to export empty var instead of its deletion
-			SetEnvironmentVariableW(pszName, *pszVal ? pszVal : NULL);
+			SetEnvironmentVariableW(pszName, *pszVal ? pszVal : nullptr);
 		}
 		asEnvNameVal = pszNext;
 	}
@@ -1194,9 +1187,9 @@ bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc)
 	return (cr.X >= rc.Left && cr.X <= rc.Right && cr.Y >= rc.Top && cr.Y <= rc.Bottom);
 }
 
-UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd /*= NULL*/)
+UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd /*= nullptr*/)
 {
-	UINT nCP = 0; wchar_t* pszEnd = NULL;
+	UINT nCP = 0; wchar_t* pszEnd = nullptr;
 
 	struct KnownCpList {
 		LPCWSTR pszName;
@@ -1210,7 +1203,7 @@ UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd /*= NULL*/)
 		{L"acp", CP_ACP},
 		{L"oemcp", CP_OEMCP},
 		{L"oem", CP_OEMCP},
-		{NULL}
+		{nullptr}
 	};
 
 	if (!asString)

@@ -416,9 +416,9 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	if (!gState.runViaCmdExe_)
 	{
-		nCmdLine += 1; // только место под 0
+		nCmdLine += 1; // '\0' termination
 		if (pszArguments4EnvVar && *szExeTest)
-			nCmdLine += lstrlen(szExeTest)+3;
+			nCmdLine += lstrlen(szExeTest) + 3;
 	}
 	else
 	{

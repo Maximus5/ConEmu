@@ -315,64 +315,6 @@ void DebugFileExistTests()
 	b = FileExists(L"C:\\Documents and Settings\\Maks\\.ipython\\.");
 }
 
-void DebugNeedCmdUnitTests()
-{
-	BOOL b;
-	struct strTests { LPCWSTR pszCmd; BOOL bNeed; }
-	Tests[] = {
-		{L"\"C:\\windows\\notepad.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
-		{L"\"\"C:\\windows\\notepad.exe  -new_console\"\"", FALSE},
-		{L"\"\"cmd\"\"", FALSE},
-		{L"cmd /c \"\"C:\\Program Files\\Windows NT\\Accessories\\wordpad.exe\" -?\"", FALSE},
-		{L"cmd /c \"dir c:\\\"", FALSE},
-		{L"abc.cmd", TRUE},
-		// Do not do too many heuristic. If user really needs redirection (for 'root'!)
-		// he must explicitly call "cmd /c ...". With only exception if first exe not found.
-		{L"notepad text & start explorer", FALSE},
-	};
-	LPCWSTR psArgs;
-	bool bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
-	CEStr szExe;
-	for (INT_PTR i = 0; i < countof(Tests); i++)
-	{
-		szExe.Empty();
-		RConStartArgsEx rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
-		rcs.ProcessNewConArg();
-		// ReSharper disable once CppJoinDeclarationAndAssignment
-		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe, &psArgs, &bNeedCut, &bRootIsCmd, &bAlwaysConfirm, &bAutoDisable);
-		_ASSERTE(b == Tests[i].bNeed);
-	}
-}
-
-void DebugCmdParserTests()
-{
-	struct strTests { wchar_t szTest[100], szCmp[100]; }
-	Tests[] = {
-		{ L"\"Test1 & ^ \"\" Test2\"  Test3  \"Test \"\" 4\"", L"Test1 & ^ \" Test2\0Test3\0Test \" 4\0\0" }
-	};
-
-	LPCWSTR pszSrc, pszCmp;
-	CmdArg ls;
-	int iCmp;
-	for (INT_PTR i = 0; i < countof(Tests); i++)
-	{
-		pszSrc = Tests[i].szTest;
-		pszCmp = Tests[i].szCmp;
-		while ((pszSrc = NextArg(pszSrc, ls)))
-		{
-			DemangleArg(ls, ls.m_bQuoted);
-			iCmp = wcscmp(ls.ms_Val, pszCmp);
-			if (iCmp != 0)
-			{
-				_ASSERTE(lstrcmp(ls.ms_Val, pszCmp) == 0);
-				break;
-			}
-			pszCmp += wcslen(pszCmp)+1;
-		}
-		_ASSERTE(*pszCmp == 0);
-	}
-}
-
 void DebugStrUnitTest()
 {
 	struct strTests { wchar_t szTest[100], szCmp[100]; }
@@ -691,14 +633,6 @@ public:
 };
 
 
-TEST_F(General, DebugNeedCmdUnitTests)
-{
-	DebugNeedCmdUnitTests();
-}
-TEST_F(General, DebugCmdParserTests)
-{
-	DebugCmdParserTests();
-}
 TEST_F(General, UnitMaskTests)
 {
 	UnitMaskTests();

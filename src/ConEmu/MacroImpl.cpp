@@ -535,8 +535,7 @@ void SkipWhiteSpaces(LPWSTR& rsString)
 	}
 
 	// Skip white-spaces
-	while (*rsString == L' ' || *rsString == L'\t' || *rsString == L'\r' || *rsString == L'\n')
-		rsString++;
+	rsString = const_cast<LPWSTR>(SkipNonPrintable(rsString));
 }
 
 /* ***  Функции для парсера параметров  *** */

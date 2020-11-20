@@ -1258,7 +1258,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 				bool lbAutoDisableConfirmExit = FALSE;
 				bool lbNeedCutStartEndQuot = FALSE;
 				ms_ExeTmp.Empty();
-				IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, NULL, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
+				IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, nullptr, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
 
 				if (ms_ExeTmp[0])
 				{
@@ -2543,7 +2543,7 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsEx
 
 		// If path to executable contains specials (spaces, etc.) it may be quoted, or not...
 		// So, we can't just call NextArg, logic is more complicated.
-		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp, NULL, NULL, NULL, NULL, NULL);
+		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp, nullptr, nullptr, nullptr, nullptr, nullptr);
 	}
 
 	return (!rsExeTmp.IsEmpty());

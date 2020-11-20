@@ -755,7 +755,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	// If the server already exists in the console
 	if (LoadSrvMapping(ahAttachWnd, srv))
 	{
-		// TODO: abLeaveOpened
+		// #TODO: abLeaveOpened
 		pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
 		pOut = ExecuteSrvCmd(srv.nServerPID, pIn, ghWnd);
 		if (pOut && (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD))) && (pOut->dwData[0] != 0))
