@@ -252,3 +252,67 @@ bool CheckStrForSpecials(LPCWSTR pszStr, bool* pbSlash /*= NULL*/, bool* pbOther
 		*pbOthers = bOthers;
 	return (bSlash || bOthers);
 }
+
+MakeOneLinerFlags operator|(const MakeOneLinerFlags e1, const MakeOneLinerFlags e2)
+{
+	return static_cast<MakeOneLinerFlags>(static_cast<int>(e1) | static_cast<int>(e2));
+}
+
+MakeOneLinerFlags operator&(const MakeOneLinerFlags e1, const MakeOneLinerFlags e2)
+{
+	return static_cast<MakeOneLinerFlags>(static_cast<int>(e1) & static_cast<int>(e2));
+}
+
+/// The function replaces all \r\n\t with spaces to paste the string safely in command prompt
+CEStr MakeOneLinerString(const CEStr& source, const MakeOneLinerFlags flags)
+{
+	CEStr result(source.c_str(L""));
+
+	const wchar_t* const pszEnd = result.c_str() + result.GetLen();
+	const bool bTrimTailing = (flags & MakeOneLinerFlags::TrimTailing) == MakeOneLinerFlags::TrimTailing;
+
+	wchar_t* pszBuf = result.data();;
+	wchar_t* pszDst = pszBuf;
+	wchar_t* pszSrc = pszBuf;
+	while (pszSrc < pszEnd)
+	{
+		// Find LineFeed
+		wchar_t* pszRN = wcspbrk(pszSrc, L"\r\n");
+		if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
+		// Advance to next line
+		wchar_t* pszNext = pszRN;
+		if (*pszNext == L'\r') pszNext++;
+		if (*pszNext == L'\n') pszNext++;
+		// Find end of line, trim trailing spaces
+		wchar_t* pszEol = pszRN;
+		if (bTrimTailing)
+		{
+			while ((pszEol > pszSrc) && (*(pszEol - 1) == L' ')) pszEol--;
+		}
+		// If line was not empty and there was already some changes
+		const size_t cchLine = pszEol - pszSrc;
+		if ((pszEol > pszSrc) && (pszSrc != pszDst))
+		{
+			memmove(pszDst, pszSrc, cchLine * sizeof(*pszSrc));
+		}
+		// Move src pointer to next line
+		pszSrc = pszNext;
+		// Move dst pointer and add one trailing space (line delimiter)
+		pszDst += cchLine;
+		// No need to check ptr, memory for space-termination was reserved
+		if (pszSrc < pszEnd)
+		{
+			// Delimit lines with space
+			*(pszDst++) = L' ';
+		}
+	}
+	// Z-terminate our string
+	*pszDst = 0;
+	// Done, it is ready for pasting
+	
+	_ASSERTE(result.GetLen() == (pszDst - pszBuf));
+	// Buffer must not contain any line-feeds now! Safe for paste in command line!
+	_ASSERTE(wcspbrk(pszBuf, L"\r\n\t") == nullptr);
+
+	return result;
+}

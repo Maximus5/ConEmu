@@ -29,11 +29,38 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "defines.h"
+#include "CEStr.h"
 
+/// Set escapes: wchar(13) --> "\\r", etc.
+/// pszSrc and pszDst must point to different memory blocks
+/// pszDst must have at least 5 wchars available (four "\\xFF" and final "\0")
 bool EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst);
+
+/// Remove escapes: "\\r" --> wchar(13), etc.
 bool UnescapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst);
 
+/// Set escapes: wchar(13) --> "\\r", etc.
+/// pszSrc and pszDst must point to different memory blocks
+/// pszDst must have at least 1+4*len(pszSrc) wchars available (four "\\xFF" and final "\0")
 bool EscapeString(LPCWSTR& pszSrc, LPWSTR& pszDst);
+
 bool UnescapeString(LPCWSTR& pszSrc, LPWSTR& pszDst);
 
-bool CheckStrForSpecials(LPCWSTR pszStr, bool* pbSlash = NULL, bool* pbOthers = NULL);
+/// Intended for GuiMacro representation
+/// If *pszStr* doesn't contain special symbols with ONLY exception of "\" (paths)
+/// it's more convenient to represent it as *Verbatim* string, otherwise - *C-String*.
+/// Always show as *C-String* those strings, which contain CRLF, Esc, tabs etc.
+bool CheckStrForSpecials(LPCWSTR pszStr, bool* pbSlash = nullptr, bool* pbOthers = nullptr);
+
+/// Bitmask flags for MakeOneLinerString
+enum class MakeOneLinerFlags : int
+{
+	None = 0,
+	TrimTailing = 1,
+};
+
+MakeOneLinerFlags operator|(MakeOneLinerFlags e1, MakeOneLinerFlags e2);
+MakeOneLinerFlags operator&(MakeOneLinerFlags e1, MakeOneLinerFlags e2);
+
+/// The function replaces all \r\n\t with spaces to paste the string safely in command prompt
+CEStr MakeOneLinerString(const CEStr& source, MakeOneLinerFlags flags);

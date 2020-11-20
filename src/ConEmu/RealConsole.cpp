@@ -50,12 +50,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MProcessBits.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"
+#include "../common/MStrEsc.h"
 #include "../common/MWow64Disable.h"
 #include "../common/ProcessData.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -12403,51 +12403,19 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 	}
 
+	CEStr oneLinerBuffer;
 	if (PasteMode == pm_OneLine)
 	{
-		LPCWSTR pszEnd = pszBuf + nBufLen;
 		const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
-		bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
+		const auto flags = MakeOneLinerFlags::None
+			| (pApp && (pApp->CTSTrimTrailing() != 0) ? MakeOneLinerFlags::TrimTailing : MakeOneLinerFlags::None);
 
-		//PRAGMA_ERROR("Неправильно вставляется, если в первой строке нет trailing space");
+		oneLinerBuffer.Set(pszBuf, nBufLen);
+		oneLinerBuffer = MakeOneLinerString(oneLinerBuffer, flags);
 
-		wchar_t *pszDst = pszBuf, *pszSrc = pszBuf, *pszEOL;
-		while (pszSrc < pszEnd)
-		{
-			// Find LineFeed
-			pszRN = wcspbrk(pszSrc, L"\r\n");
-			if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
-			// Advance to next line
-			wchar_t* pszNext = pszRN;
-			if (*pszNext == L'\r') pszNext++;
-			if (*pszNext == L'\n') pszNext++;
-			// Find end of line, trim trailing spaces
-			pszEOL = pszRN;
-			if (bTrimTailing)
-			{
-				while ((pszEOL > pszSrc) && (*(pszEOL-1) == L' ')) pszEOL--;
-			}
-			// If line was not empty and there was already some changes
-			size_t cchLine = pszEOL - pszSrc;
-			if ((pszEOL > pszSrc) && (pszSrc != pszDst))
-			{
-				memmove(pszDst, pszSrc, cchLine * sizeof(*pszSrc));
-			}
-			// Move src pointer to next line
-			pszSrc = pszNext;
-			// Move Dest pointer and add one trailing space (line delimiter)
-			pszDst += cchLine;
-			// No need to check ptr, memory for space-termination was reserved
-			if (pszSrc < pszEnd)
-			{
-				// Delimit lines with space
-				*(pszDst++) = L' ';
-			}
-		}
-		// Z-terminate our string
-		*pszDst = 0;
-		// Done, it is ready to pasting
-		nBufLen = pszDst - pszBuf;
+		pszBuf = oneLinerBuffer.data();
+		nBufLen = oneLinerBuffer.GetLen();
+		
 		// Buffer must not contain any line-feeds now! Safe for paste in command line!
 		_ASSERTE(wcspbrk(pszBuf, L"\r\n") == nullptr);
 	}
@@ -12470,7 +12438,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	}
 
 	// Convert Windows style path from clipboard to cygwin style?
-	// If clipboard contains double-quoted-path -> IsFilePath returns false -> contents pasted intact
+	// If clipboard contains double-quoted-path -> IsFilePath returns false -> paste content unchanged
 	if (pszBuf && *pszBuf
 			// if POSIX was explicitly requested
 		&& ((posixMode == pxm_Convert)

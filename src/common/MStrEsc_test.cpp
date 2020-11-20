@@ -99,3 +99,31 @@ TEST(MStrEsc, UnescapeString)
 		EXPECT_STREQ(szBuffer, tests[i].pszDst);
 	}
 }
+
+TEST(MStrEsc, OneLiner)
+{
+	auto checkOneLiner = [](const wchar_t* source, const MakeOneLinerFlags flags, const wchar_t* expected)
+	{
+		const auto result = MakeOneLinerString(source, flags);
+		EXPECT_STREQ(result.c_str(), expected);
+	};
+
+	checkOneLiner(L"Single Line", MakeOneLinerFlags::None, L"Single Line");
+	checkOneLiner(L"Single Line   ", MakeOneLinerFlags::None, L"Single Line   ");
+	checkOneLiner(L"Single Line   ", MakeOneLinerFlags::TrimTailing, L"Single Line");
+	
+	checkOneLiner(L"LongLine1\r\nLine2\r\n", MakeOneLinerFlags::None, L"LongLine1 Line2");
+	checkOneLiner(L"LongLine1\r\nLine2\r\n", MakeOneLinerFlags::TrimTailing, L"LongLine1 Line2");
+	
+	checkOneLiner(L"LongLine1 \r\nLine2 \r\n", MakeOneLinerFlags::None, L"LongLine1  Line2 ");
+	checkOneLiner(L"LongLine1 \r\nLine2 \r\n", MakeOneLinerFlags::TrimTailing, L"LongLine1 Line2");
+	
+	checkOneLiner(L"LongLine1 \r\n Line2 \r\n", MakeOneLinerFlags::None, L"LongLine1   Line2 ");
+	checkOneLiner(L"LongLine1 \r\n Line2 \r\n", MakeOneLinerFlags::TrimTailing, L"LongLine1  Line2");
+	
+	checkOneLiner(L"LongLine1\r\n Line2 \r\n", MakeOneLinerFlags::None, L"LongLine1  Line2 ");
+	checkOneLiner(L"LongLine1\r\n Line2 \r\n", MakeOneLinerFlags::TrimTailing, L"LongLine1  Line2");
+
+	checkOneLiner(L"LongLine1  \r\nLine2 \r\n Line3", MakeOneLinerFlags::None, L"LongLine1   Line2   Line3");
+	checkOneLiner(L"LongLine1 \r\nLine2 \r\n Line3", MakeOneLinerFlags::TrimTailing, L"LongLine1 Line2  Line3");
+}
