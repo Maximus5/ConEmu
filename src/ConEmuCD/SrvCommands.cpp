@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE(x) DEBUGSTR(x)
 
 //#define SHOW_INJECT_MSGBOX
+//#define SHOW_FAR_PLUGIN_LOADED_MSGBOX
 
 #include "ConsoleMain.h"
 #include "ConEmuSrv.h"
@@ -493,7 +494,7 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-	#if 0
+	#ifdef SHOW_FAR_PLUGIN_LOADED_MSGBOX
 	wchar_t szDbg[512], szExe[MAX_PATH], szTitle[512];
 	GetModuleFileName(NULL, szExe, countof(szExe));
 	swprintf_c(szTitle, L"cmd_FarLoaded: %s", PointToName(szExe));
@@ -505,18 +506,16 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 	MessageBox(NULL, szDbg, szTitle, MB_SYSTEMMODAL);
 	#endif
 
-	// gpConsoleArgs->confirmExitParm_==1 получается, когда консоль запускалась через "-new_console"
-	// Если плагин фара загрузился - думаю можно отключить подтверждение закрытия консоли
-	if ((gState.autoDisableConfirmExit_ || (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfAlways))
-		&& gpWorker->RootProcessId() == in.dwData[0])
+	// If far.exe was started and "ConEmu plugin" was successfully loaded
+	// we can disable "Press Enter or Esc to exit" confirmation as Far "works properly"
+	if (gpWorker->RootProcessId() == in.dwData[0])
 	{
-		// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
 		gState.DisableAutoConfirmExit(true);
 	}
 
-	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
-	*out = ExecuteNewCmd(CECMD_FARLOADED,nOutSize);
-	if (*out != NULL)
+	const DWORD nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_FARLOADED, nOutSize);
+	if (*out != nullptr)
 	{
 		(*out)->dwData[0] = GetCurrentProcessId();
 		lbRc = TRUE;
