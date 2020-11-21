@@ -489,6 +489,9 @@
     <ClInclude Include="common\CEStr.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\CmdArg.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\CmdLine.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -1213,6 +1216,9 @@
     </ClCompile>
     <ClCompile Include="common\CEStr_test.cpp">
       <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="common\CmdArg.cpp">
+      <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\CmdLine.cpp">
       <Filter>common</Filter>

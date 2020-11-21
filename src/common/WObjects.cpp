@@ -49,41 +49,44 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef SHOW_COMSPEC_CHANGE
 #endif
 
-// pnSize заполняется только в том случае, если файл найден
-bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= nullptr*/)
+bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/)
 {
+	if (pnSize)
+		*pnSize = 0;
 	if (!asFilePath || !*asFilePath)
 		return false;
 
 	_ASSERTE(wcschr(asFilePath, L'\t')==nullptr);
 
-	WIN32_FIND_DATAW fnd = {0};
+	WIN32_FIND_DATAW fnd{};
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hFind = FindFirstFile(asFilePath, &fnd);
 
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
 		bool lbFileFound = false;
 
-		// FindFirstFile может обломаться из-за симлинков
-		DWORD nErrCode = GetLastError();
+		// FindFirstFile could fail on symlinks
+		const DWORD nErrCode = GetLastError();
 		if (nErrCode == ERROR_ACCESS_DENIED)
 		{
-			hFind = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+			// ReSharper disable once CppLocalVariableMayBeConst
+			HANDLE hFile = CreateFile(asFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 
-			if (hFind && hFind != INVALID_HANDLE_VALUE)
+			if (hFile && hFile != INVALID_HANDLE_VALUE)
 			{
-				BY_HANDLE_FILE_INFORMATION fi = {0};
+				BY_HANDLE_FILE_INFORMATION fi{};
 
-				if (GetFileInformationByHandle(hFind, &fi) && !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				if (GetFileInformationByHandle(hFile, &fi) && !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				{
 					lbFileFound = true;
 
 					if (pnSize)
-						*pnSize = fi.nFileSizeHigh ? 0xFFFFFFFF : fi.nFileSizeLow; //-V112
+						*pnSize = (static_cast<uint64_t>(fi.nFileSizeHigh) << 32) | static_cast<uint64_t>(fi.nFileSizeLow);
 				}
-			}
 
-			CloseHandle(hFind);
+				CloseHandle(hFile);
+			}
 		}
 
 		return lbFileFound;
@@ -98,7 +101,7 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= nullptr*/)
 			lbFound = true;
 
 			if (pnSize)
-				*pnSize = fnd.nFileSizeHigh ? 0xFFFFFFFF : fnd.nFileSizeLow; //-V112
+				*pnSize = (static_cast<uint64_t>(fnd.nFileSizeHigh) << 32) | static_cast<uint64_t>(fnd.nFileSizeLow);
 
 			break;
 		}

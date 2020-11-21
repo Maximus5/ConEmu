@@ -124,6 +124,7 @@ local tests_remove = {
 local common_kernel = {
   "src/common/CEHandle.*",
   "src/common/CEStr.*",
+  "src/common/CmdArg.*",
   "src/common/CmdLine.*",
   "src/common/Common.cpp",
   "src/common/Common.h",

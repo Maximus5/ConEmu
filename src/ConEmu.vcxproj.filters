@@ -489,6 +489,9 @@
     <ClInclude Include="common\CEStr.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="common\CmdArg.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\CmdLine.h">
       <Filter>Common</Filter>
     </ClInclude>

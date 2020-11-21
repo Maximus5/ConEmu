@@ -242,6 +242,7 @@
   <ItemGroup>
     <ClInclude Include="common\CEHandle.h" />
     <ClInclude Include="common\CEStr.h" />
+    <ClInclude Include="common\CmdArg.h" />
     <ClInclude Include="common\CmdLine.h" />
     <ClInclude Include="common\Common.h" />
     <ClInclude Include="common\ConEmuCheck.h" />
@@ -277,6 +278,7 @@
   <ItemGroup>
     <ClCompile Include="common\CEHandle.cpp" />
     <ClCompile Include="common\CEStr.cpp" />
+    <ClCompile Include="common\CmdArg.cpp" />
     <ClCompile Include="common\CmdLine.cpp" />
     <ClCompile Include="common\Common.cpp" />
     <ClCompile Include="common\ConEmuCheck.cpp" />

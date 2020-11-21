@@ -29,69 +29,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "CEStr.h"
+#include "CmdArg.h"
 
 #define CmdEscapeNeededChars  L"<>()&|^\""
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
-
-// CmdArg
-struct CmdArg : public CEStr
-{
-public:
-	/// Point to the end dblquot, if we need drop first and last quotation marks
-	LPCWSTR m_pszDequoted = nullptr;
-	/// true if it's a double-quoted argument from NextArg
-	bool m_bQuoted = false;
-	/// if 0 - this is must be first call (first token of command line)
-	/// so, we need to test for mpsz_Dequoted
-	int m_nTokenNo = 0;
-
-	enum class CmdCall { Undefined, CmdExeFound, CmdK, CmdC };
-	/// To be able correctly parse double quotes in commands like <br>
-	/// "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE"" <br>
-	/// "reg.exe add "HKEY_CLASSES_ROOT\Directory\Background\shell\Command Prompt\command" /ve /t REG_EXPAND_SZ /d "\"D:\Applications\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f"
-	CmdCall m_nCmdCall = CmdCall::Undefined;
-
-	#ifdef _DEBUG
-	// Debug to catch dirty calls
-	LPCWSTR m_sLastTokenEnd = nullptr;
-	wchar_t m_sLastTokenSave[32] = L"";
-	#endif
-
-private:
-	bool CompareSwitch(LPCWSTR asSwitch, bool caseSensitive = false) const;
-
-public:
-	void Empty();
-
-	/// Copy service info from other CmdArg
-	/// Used during NextArg evaluation to use different CmdArg objects
-	void LoadPosFrom(const CmdArg& arg);
-
-	/// If this may be supported switch like "-run", "/run", "/inside=...", "-regfont:...", etc.
-	bool IsPossibleSwitch() const;
-	/// For example, compare if ms_Val is "-run", "/run", "/inside=...", "-regfont:...", etc.
-	bool IsSwitch(LPCWSTR asSwitch, bool caseSensitive = false) const;
-	/// Stops checking on first nullptr
-	bool OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2 = nullptr, LPCWSTR asSwitch3 = nullptr, LPCWSTR asSwitch4 = nullptr, LPCWSTR asSwitch5 = nullptr, LPCWSTR asSwitch6 = nullptr, LPCWSTR asSwitch7 = nullptr, LPCWSTR asSwitch8 = nullptr, LPCWSTR asSwitch9 = nullptr, LPCWSTR asSwitch10 = nullptr) const;
-	/// <summary>
-	/// Returns tail of argument after ":" or "=". <br>
-	/// Examples: "0xABC" for switch "-inside:0xABC"
-	/// </summary>
-	/// <returns>non-null string</returns>
-	LPCWSTR GetExtra() const;
-
-	CmdArg(CmdArg&&) = delete;
-	CmdArg(const CmdArg&) = delete;
-
-	CmdArg& operator=(const wchar_t* str);
-	CmdArg& operator=(wchar_t*&& str) = delete;
-	CmdArg& operator=(CmdArg&& str) = delete;
-	CmdArg& operator=(const CmdArg&) = delete;
-
-	CmdArg();
-	CmdArg(const wchar_t* str);
-	~CmdArg();
-};
 
 
 const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=nullptr);

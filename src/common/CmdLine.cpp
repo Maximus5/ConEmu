@@ -35,161 +35,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 
 #ifndef CONEMU_MINIMAL
-// В ConEmuHk редиректор НЕ отключаем
+// DON'T disable redirector in ConEmuHk, we shall not change the console app behavior
 #include "MWow64Disable.h"
 #endif
 
-
-CmdArg::CmdArg()
+namespace
 {
+	// These chars could not exist in paths or file names
+	const wchar_t ILLEGAL_CHARACTERS[] = L"?*<>|";
+	// Cmd special characters - pipelines, redirections, escaping
+	const wchar_t SPECIAL_CMD_CHARACTERS[] = L"&|<>^";
+
+	// The commands, which we shall not try to expand/convert into "*.exe"
+	const wchar_t* const CMD_INTERNAL_COMMANDS =
+		L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE"
+		L"\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE"
+		L"\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY"
+		L"\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD"
+		L"\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS"
+		L"\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW"
+		L"\0Y\0\0";
 }
-
-CmdArg::CmdArg(const wchar_t* str)
-	: CEStr(str)
-{
-}
-
-CmdArg::~CmdArg()
-{
-	Empty();
-}
-
-CmdArg& CmdArg::operator=(const wchar_t* str)
-{
-	Set(str);
-	return *this;
-}
-
-void CmdArg::Empty()
-{
-	CEStr::Empty();
-
-	m_nTokenNo = 0;
-	m_nCmdCall = CmdCall::Undefined;
-	m_pszDequoted = nullptr;
-	m_bQuoted = false;
-
-	#ifdef _DEBUG
-	m_sLastTokenEnd = nullptr;
-	m_sLastTokenSave[0] = 0;
-	#endif
-}
-
-void CmdArg::LoadPosFrom(const CmdArg& arg)
-{
-	m_pszDequoted = arg.m_pszDequoted;
-	m_bQuoted = arg.m_bQuoted;
-	m_nTokenNo = arg.m_nTokenNo;
-	m_nCmdCall = arg.m_nCmdCall;
-	#ifdef _DEBUG
-	m_sLastTokenEnd = arg.m_sLastTokenEnd;
-	lstrcpyn(m_sLastTokenSave, arg.m_sLastTokenSave, countof(m_sLastTokenSave));
-	#endif
-}
-
-bool CmdArg::IsPossibleSwitch() const
-{
-	// Nothing to compare?
-	if (IsEmpty())
-		return false;
-	if ((ms_Val[0] != L'-') && (ms_Val[0] != L'/'))
-		return false;
-
-	// We do not care here about "-new_console:..." or "-cur_console:..."
-	// They are processed by RConStartArgsEx
-
-	// But ':' removed from checks, because otherwise ConEmu will not warn
-	// on invalid usage of "-new_console:a" for example
-
-	// Also, support smth like "-inside=\eCD /d %1"
-	LPCWSTR pszDelim = wcspbrk(ms_Val+1, L"=:");
-	LPCWSTR pszInvalids = wcspbrk(ms_Val+1, L"\\/|.&<>^");
-
-	if (pszInvalids && (!pszDelim || (pszInvalids < pszDelim)))
-		return false;
-
-	// Well, looks like a switch (`-run` for example)
-	return true;
-}
-
-bool CmdArg::CompareSwitch(LPCWSTR asSwitch, bool caseSensitive /*= false*/) const
-{
-	if ((asSwitch[0] == L'-') || (asSwitch[0] == L'/'))
-	{
-		asSwitch++;
-	}
-	else
-	{
-		_ASSERTE((asSwitch[0] == L'-') || (asSwitch[0] == L'/'));
-	}
-
-	int iCmp = caseSensitive
-		? lstrcmp(ms_Val + 1, asSwitch)
-		: lstrcmpi(ms_Val + 1, asSwitch);
-	if (iCmp == 0)
-		return true;
-
-	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
-	const int len = lstrlen(asSwitch);
-	if ((len > 1) && ((asSwitch[len-1] == L'=') || (asSwitch[len-1] == L':')))
-	{
-		iCmp = lstrcmpni(ms_Val+1, asSwitch, (len - 1));
-		if ((iCmp == 0) && ((ms_Val[len] == L'=') || (ms_Val[len] == L':')))
-			return true;
-	}
-
-	return false;
-}
-
-bool CmdArg::IsSwitch(LPCWSTR asSwitch, const bool caseSensitive /*= false*/) const
-{
-	// Not a switch?
-	if (!IsPossibleSwitch())
-	{
-		return false;
-	}
-
-	if (!asSwitch || !*asSwitch)
-	{
-		_ASSERTE(asSwitch && *asSwitch);
-		return false;
-	}
-
-	return CompareSwitch(asSwitch, caseSensitive);
-}
-
-// Stops on first nullptr
-bool CmdArg::OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2, LPCWSTR asSwitch3, LPCWSTR asSwitch4, LPCWSTR asSwitch5, LPCWSTR asSwitch6, LPCWSTR asSwitch7, LPCWSTR asSwitch8, LPCWSTR asSwitch9, LPCWSTR asSwitch10) const
-{
-	// Not a switch?
-	if (!IsPossibleSwitch())
-	{
-		return false;
-	}
-
-	LPCWSTR switches[] = {asSwitch1, asSwitch2, asSwitch3, asSwitch4, asSwitch5, asSwitch6, asSwitch7, asSwitch8, asSwitch9, asSwitch10};
-
-	for (const auto& name : switches)
-	{
-		if (!name)
-			break;
-		if (CompareSwitch(name))
-			return true;
-	}
-
-	return false;
-}
-
-LPCWSTR CmdArg::GetExtra() const
-{
-	if (!IsPossibleSwitch())
-		return L"";
-	const auto* delimiter = wcspbrk(ms_Val, L":=");
-	if (!delimiter)
-		return L"";
-	return (delimiter + 1);
-}
-
 
 // Returns true on changes
 // bDeQuote:  replace two "" with one "
@@ -201,8 +67,8 @@ bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*
 		return false; // Nothing to do
 	}
 
-	LPCWSTR pszDemangles = (bDeQuote && bDeEscape) ? L"^\"" : bDeQuote ? L"\"" : L"^";
-	LPCWSTR pchCap = wcspbrk(rsDemangle, pszDemangles);
+	const auto* pszDemangles = (bDeQuote && bDeEscape) ? L"^\"" : bDeQuote ? L"\"" : L"^";
+	const auto* pchCap = wcspbrk(rsDemangle, pszDemangles);
 	if (pchCap == nullptr)
 	{
 		return false; // Nothing to replace
@@ -261,7 +127,7 @@ bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*
 // Function checks, if we need drop first and last quotation marks
 // Example: ""7z.exe" /?"
 // Using cmd.exe rules
-bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=nullptr*/)
+bool IsNeedDequote(LPCWSTR asCmdLine, const bool abFromCmdCK, LPCWSTR* rsEndQuote/*=nullptr*/)
 {
 	if (rsEndQuote)
 		*rsEndQuote = nullptr;
@@ -683,9 +549,84 @@ wrap:
 	return szDir.IsEmpty() ? nullptr : szDir.c_str();
 }
 
-// Команды, которые не нужно пытаться развернуть в exe?
-// кроме того, если команда содержит "?" или "*" - тоже не пытаться.
-const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
+/// <summary>
+/// Try to extract valid file-path-name of starting executable from space-delimited string with lack of double quotes
+/// </summary>
+/// <param name="commandLine">Command line to parse, it could be not properly double quoted</param>
+/// <param name="szExe">[OUT] the path to found executable</param>
+/// <param name="rsArguments">[OUT] the rest of command line, arguments</param>
+/// <returns>true - if file-path is found and szExe is not empty, false - on error</returns>
+bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szExe, const wchar_t*& rsArguments)
+{
+	bool result = false;
+	const auto* command = commandLine;
+
+	szExe.Empty();
+
+	// 17.10.2010 - support executable file path without parameters, but with spaces in its path
+	// 22.11.2015 - or some weirdness, like `C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe"`
+	LPCWSTR pchEnd = wcschr(command, L' ');
+	if (!pchEnd)
+		pchEnd = command + lstrlenW(command);
+
+	CEStr szTemp;
+	uint64_t nTempSize;
+	const auto* firstIllegalChar = wcspbrk(command, ILLEGAL_CHARACTERS);
+	while (pchEnd)
+	{
+		szTemp.Set(command, (pchEnd - command));
+		_ASSERTE(szTemp[(pchEnd - command)] == 0);
+
+		// Argument was quoted?
+		if (!szTemp.IsEmpty())
+		{
+			const auto len = szTemp.GetLen();
+			if ((len > 2) && (szTemp[0] == L'"') && (szTemp[len - 1] == L'"'))
+			{
+				memmove(szTemp.ms_Val, szTemp.ms_Val + 1, (len - 2) * sizeof(*szTemp.ms_Val));
+				szTemp.ms_Val[len - 2] = 0;
+			}
+
+			if (wcschr(szTemp.c_str(), '"') != nullptr)
+				break;
+		}
+
+		// If this is a full path without environment variables
+		if (!szTemp.IsEmpty()
+			&& ((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
+				// or file/dir may be found via env.var. substitution or searching in %PATH%
+				|| FileExistsSearch(szTemp.c_str(), szTemp))
+			// Than check if it is a FILE (not a directory)
+			&& FileExists(szTemp, &nTempSize) && nTempSize)
+		{
+			// OK, it an our executable?
+			rsArguments = SkipNonPrintable(pchEnd);
+			szExe.Set(szTemp);
+			result = !szExe.IsEmpty();
+			break;
+		}
+
+		_ASSERTE(*pchEnd == 0 || *pchEnd == L' ');
+		if (!*pchEnd)
+			break;
+		// Find next space after non-space
+		while (*(pchEnd) == L' ') pchEnd++;
+		// If quoted string starts from here - it's supposed to be an argument
+		if (*pchEnd == L'"')
+		{
+			// And we must not get here, because the executable must be already processed above
+			// _ASSERTE(*pchEnd != L'"');
+			break;
+		}
+		pchEnd = wcschr(pchEnd, L' ');
+		if (!pchEnd)
+			pchEnd = command + lstrlenW(command);
+		if (firstIllegalChar && pchEnd >= firstIllegalChar)
+			break;
+	}
+
+	return result;
+}
 
 bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options /*= nullptr*/)
 {
@@ -704,10 +645,6 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	CmdArg szDbgFirst;
 	bool bIsBatch = false;
 	#endif
-	// These chars could not exist in paths or file names
-	const wchar_t illegalCharacters[] = L"?*<>|";
-	// Cmd special characters - pipelines, redirections, escaping
-	const wchar_t specialCmdCharacters[] = L"&|<>^";
 
 	if (!asCmdLine || !*asCmdLine)
 	{
@@ -826,68 +763,8 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			lbRc = true; goto wrap;
 		}
 
-		// 17.10.2010 - support executable file path without parameters, but with spaces in its path
-		// 22.11.2015 - or some weirdness, like `C:\Program Files\CB/cb_console_runner.exe "C:\sources\app.exe"`
-		LPCWSTR pchEnd = wcschr(pwszCopy, L' ');
-		if (!pchEnd)
-			pchEnd = pwszCopy + lstrlenW(pwszCopy);
-
-		CEStr szTemp;
-		DWORD nTempSize;
-		LPCWSTR firstIllegalChar = wcspbrk(pwszCopy, illegalCharacters);
-		while (pchEnd)
-		{
-			szTemp.Set(pwszCopy, (pchEnd - pwszCopy));
-			_ASSERTE(szTemp[(pchEnd - pwszCopy)] == 0);
-
-			// Argument was quoted?
-			if (!szTemp.IsEmpty())
-			{
-				INT_PTR len = szTemp.GetLen();
-				if ((len > 2) && (szTemp[0] == L'"') && (szTemp[len-1] == L'"'))
-				{
-					memmove(szTemp.ms_Val, szTemp.ms_Val + 1, (len - 2) * sizeof(*szTemp.ms_Val));
-					szTemp.ms_Val[len-2] = 0;
-				}
-
-				if (wcschr(szTemp.c_str(), '"') != nullptr)
-					break;
-			}
-
-			// If this is a full path without environment variables
-			if (!szTemp.IsEmpty()
-				&& ((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
-					// or file/dir may be found via env.var. substitution or searching in %PATH%
-					|| FileExistsSearch(szTemp.c_str(), szTemp))
-				// Than check if it is a FILE (not a directory)
-				&& FileExists(szTemp, &nTempSize) && nTempSize)
-			{
-				// OK, it an our executable?
-				rsArguments = SkipNonPrintable(pchEnd);
-				szExe.Set(szTemp);
-				break;
-			}
-
-			_ASSERTE(*pchEnd == 0 || *pchEnd == L' ');
-			if (!*pchEnd)
-				break;
-			// Find next space after non-space
-			while (*(pchEnd) == L' ') pchEnd++;
-			// If quoted string starts from here - it's supposed to be an argument
-			if (*pchEnd == L'"')
-			{
-				// And we must not get here, because the executable must be already processed above
-				// _ASSERTE(*pchEnd != L'"');
-				break;
-			}
-			pchEnd = wcschr(pchEnd, L' ');
-			if (!pchEnd)
-				pchEnd = pwszCopy + lstrlenW(pwszCopy);
-			if (firstIllegalChar && pchEnd >= firstIllegalChar)
-				break;
-		}
-
-		if (szExe.IsEmpty())
+		// will return true if we found a real existing file path
+		if (!GetFilePathFromSpaceDelimitedString(pwszCopy, szExe, rsArguments))
 		{
 			CmdArg arg;
 			if (!((pwszCopy = NextArg(pwszCopy, arg))))
@@ -918,7 +795,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	{
 		// Illegal characters in the executable we parse from the command line.
 		// We can't run the program as it's path is invalid, so let's try it to "cmd.exe /c ..."
-		if (wcspbrk(szExe, illegalCharacters))
+		if (wcspbrk(szExe, ILLEGAL_CHARACTERS))
 		{
 			rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
 			lbRc = true; goto wrap; // force add "cmd.exe"
@@ -932,7 +809,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			if (!bHasExt)
 			{
 				bool isCommand = false;
-				const wchar_t* internalCommand = gsInternalCommands;
+				const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
 				while (*internalCommand)
 				{
 					if (szExe.Compare(internalCommand, false) == 0)
@@ -1008,7 +885,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	{
 		// If we are in comspec mode (run child process from existing shell) and command line contains
 		// any of pipelining/redirection characters, than run via "cmd /c ..."
-		if (wcspbrk(asCmdLine, specialCmdCharacters) != nullptr)
+		if (wcspbrk(asCmdLine, SPECIAL_CMD_CHARACTERS) != nullptr)
 		{
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);

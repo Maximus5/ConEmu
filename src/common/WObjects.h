@@ -57,10 +57,21 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 /// <param name="rsPath">output CEStr</param>
 /// <returns></returns>
 int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr& rsPath);
+
 int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath);
-bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
+
+/// <summary>
+/// Check if file or directory exists
+/// </summary>
+/// <param name="asFilePath">Full or relative path to the file or directory</param>
+/// <param name="pnSize">pointer to uint64_t - for files it's filled with file size</param>
+/// <returns>true - if file or directory exists</returns>
+bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize = nullptr);
+
 bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound);
+
 bool IsVsNetHostExe(LPCWSTR asFilePatName);
+
 bool IsGDB(LPCWSTR asFilePatName);
 
 class CEnvRestorer;

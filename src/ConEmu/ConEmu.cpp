@@ -958,7 +958,7 @@ bool CConEmuMain::CheckRequiredFiles()
 	wcscpy_c(szPath, ms_ConEmuBaseDir);
 	wcscat_c(szPath, L"\\");
 	wchar_t* pszSlash = szPath + _tcslen(szPath);
-	DWORD nFileSize = 0;
+	uint64_t nFileSize = 0;
 	size_t missedRequired = 0;
 	// on 32bit os we check only ConEmuHk_32_DLL
 	const size_t countToDisableInjects = isWin64 ? 2 : 1;

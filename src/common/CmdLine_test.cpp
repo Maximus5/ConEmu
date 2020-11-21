@@ -294,3 +294,25 @@ TEST(CmdLine, DemangleArg)
 		EXPECT_EQ(*expected, 0);
 	}
 }
+
+TEST(CmdLine, IsFilePath)
+{
+	EXPECT_FALSE(IsFilePath(L"\"C:\\Program Files\\Far\\Far.exe\"", false));
+	EXPECT_FALSE(IsFilePath(L"\"C:\\Program Files\\Far\\Far.exe\"", true));
+	EXPECT_FALSE(IsFilePath(LR"(C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)", false));
+	EXPECT_FALSE(IsFilePath(LR"(Far\Far.exe)", true));
+	EXPECT_FALSE(IsFilePath(LR"(C::\Program Files\Far\Far.exe)", false));
+	EXPECT_FALSE(IsFilePath(LR"(C:\Program Files:\Far\Far.exe)", false));
+	EXPECT_FALSE(IsFilePath(LR"(chkdsk.exe < input > output)", false));
+	EXPECT_FALSE(IsFilePath(LR"(Far.exe)", true));
+
+	EXPECT_TRUE(IsFilePath(LR"(Far.exe)", false));
+	EXPECT_TRUE(IsFilePath(LR"(\\?\C:\Far\Far.exe)", false));
+	EXPECT_TRUE(IsFilePath(LR"(\\?\C:\Far\Far.exe)", true));
+	EXPECT_TRUE(IsFilePath(LR"(C:\Far\Far.exe)", false));
+	EXPECT_TRUE(IsFilePath(LR"(C:\Far\Far.exe)", true));
+	EXPECT_TRUE(IsFilePath(LR"(C:\Program Files\Far\Far.exe)", false));
+	EXPECT_TRUE(IsFilePath(LR"(C:\Program Files\Far\Far.exe)", true));
+	EXPECT_TRUE(IsFilePath(LR"(\\server\share\Far.exe)", false));
+	EXPECT_TRUE(IsFilePath(LR"(\\server\share\Far.exe)", true));
+}

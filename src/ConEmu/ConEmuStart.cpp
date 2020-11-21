@@ -294,7 +294,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 
 	// Хорошо бы более корректно определить версию фара, но это не всегда просто
 	// Например x64 файл сложно обработать в x86 ConEmu.
-	DWORD nFarSize = 0;
+	uint64_t nFarSize = 0;
 
 	if (lstrcmpi(GetDefaultCmd(), L"far") == 0)
 	{
