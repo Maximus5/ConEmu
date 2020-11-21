@@ -158,7 +158,7 @@ bool CmdArg::IsSwitch(LPCWSTR asSwitch, const bool caseSensitive /*= false*/) co
 	return CompareSwitch(asSwitch, caseSensitive);
 }
 
-// Stops on first NULL
+// Stops on first nullptr
 bool CmdArg::OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2, LPCWSTR asSwitch3, LPCWSTR asSwitch4, LPCWSTR asSwitch5, LPCWSTR asSwitch6, LPCWSTR asSwitch7, LPCWSTR asSwitch8, LPCWSTR asSwitch9, LPCWSTR asSwitch10) const
 {
 	// Not a switch?
@@ -203,7 +203,7 @@ bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*
 
 	LPCWSTR pszDemangles = (bDeQuote && bDeEscape) ? L"^\"" : bDeQuote ? L"\"" : L"^";
 	LPCWSTR pchCap = wcspbrk(rsDemangle, pszDemangles);
-	if (pchCap == NULL)
+	if (pchCap == nullptr)
 	{
 		return false; // Nothing to replace
 	}
@@ -261,10 +261,10 @@ bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*
 // Function checks, if we need drop first and last quotation marks
 // Example: ""7z.exe" /?"
 // Using cmd.exe rules
-bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NULL*/)
+bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=nullptr*/)
 {
 	if (rsEndQuote)
-		*rsEndQuote = NULL;
+		*rsEndQuote = nullptr;
 
 	if (!asCmdLine)
 		return false;
@@ -336,11 +336,11 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 
 // #CmdArg Eliminate QueryNext*** and make Next** return LPCWSTR
 
-// Returns PTR to next arg or NULL on error
-const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+// Returns PTR to next arg or nullptr on error
+const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=nullptr*/)
 {
 	if (!asCmdLine || !*asCmdLine)
-		return NULL;
+		return nullptr;
 
 	#ifdef _DEBUG
 	if ((rsArg.m_nTokenNo==0) // first token
@@ -355,9 +355,9 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 	}
 	#endif
 
-	LPCWSTR psCmdLine = SkipNonPrintable(asCmdLine), pch = NULL;
+	LPCWSTR psCmdLine = SkipNonPrintable(asCmdLine), pch = nullptr;
 	if (!*psCmdLine)
-		return NULL;
+		return nullptr;
 
 	// Remote surrounding quotes, in certain cases
 	// Example: ""7z.exe" /?"
@@ -417,7 +417,7 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 		}
 
 		if (!pch)
-			return NULL;
+			return nullptr;
 
 		while (pch[1] == L'"' && (!rsArg.m_pszDequoted || ((pch+1) < rsArg.m_pszDequoted)))
 		{
@@ -425,7 +425,7 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 			pch = wcschr(pch, L'"');
 
 			if (!pch)
-				return NULL;
+				return nullptr;
 		}
 
 		// Теперь в pch ссылка на последнюю "
@@ -452,7 +452,7 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 	// Warning: Don't demangle quotes/escapes here, or we'll fail to
 	// concatenate environment or smth, losing quotes and others
 	if (!rsArg.Set(psCmdLine, nArgLen))
-		return NULL;
+		return nullptr;
 	rsArg.m_bQuoted = lbQMode;
 	rsArg.m_nTokenNo++;
 
@@ -508,11 +508,11 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 	return psCmdLine;
 }
 
-// Returns PTR to next line or NULL on error
+// Returns PTR to next line or nullptr on error
 const wchar_t* NextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
 {
 	if (!asLines || !*asLines)
-		return NULL;
+		return nullptr;
 
 	const wchar_t* psz = asLines;
 	//const wchar_t szSpaces[] = L" \t";
@@ -528,7 +528,7 @@ const wchar_t* NextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Fla
 
 	if (!*psz)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	const wchar_t* pszEnd = wcspbrk(psz, L"\r\n");
@@ -622,7 +622,7 @@ bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask)
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax)
 {
 	if (!szDrive || cchDriveMax < 16)
-		return NULL;
+		return nullptr;
 
 	if (pszPath[0] != L'\\' && pszPath[1] == L':')
 	{
@@ -632,7 +632,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	{
 		// UNC format? "\\?\UNC\Server\Share"
 		LPCWSTR pszSlash = wcschr(pszPath+8, L'\\'); // point to end of server name
-		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : NULL; // point to end of share name
+		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : nullptr; // point to end of share name
 		lstrcpyn(szDrive, pszPath, pszSlash ? (int)std::min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
 	}
 	else if (lstrcmpni(pszPath, L"\\\\?\\", 4) == 0 && pszPath[4] && pszPath[5] == L':')
@@ -643,7 +643,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	{
 		// "\\Server\Share"
 		LPCWSTR pszSlash = wcschr(pszPath+2, L'\\'); // point to end of server name
-		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : NULL; // point to end of share name
+		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : nullptr; // point to end of share name
 		lstrcpyn(szDrive, pszPath, pszSlash ? (int)std::min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
 	}
 	else
@@ -680,7 +680,7 @@ LPCWSTR GetDirectory(CEStr& szDir)
 	}
 
 wrap:
-	return szDir.IsEmpty() ? NULL : szDir.c_str();
+	return szDir.IsEmpty() ? nullptr : szDir.c_str();
 }
 
 // Команды, которые не нужно пытаться развернуть в exe?
@@ -1085,7 +1085,7 @@ wrap:
 #pragma warning( push )
 #pragma warning(disable : 6400)
 #endif
-bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= NULL*/)
+bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= nullptr*/)
 {
 #ifndef __GNUC__
 #pragma warning( push )
@@ -1182,7 +1182,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 	{
 		LPCWSTR pszName2 = lsNames[i];
 
-		_ASSERTE(wcsrchr(pszName2, L'.') != NULL);
+		_ASSERTE(wcsrchr(pszName2, L'.') != nullptr);
 		#if 0
 		CEStr lsName2;
 		LPCWSTR pszExt2 = wcsrchr(pszName2, L'.');
@@ -1204,19 +1204,19 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 
 bool IsConsoleService(LPCWSTR pszProcessName)
 {
-	LPCWSTR lsNameExt[] = {L"csrss.exe", L"conhost.exe", NULL};
+	LPCWSTR lsNameExt[] = {L"csrss.exe", L"conhost.exe", nullptr};
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
 bool IsConEmuGui(LPCWSTR pszProcessName)
 {
-	LPCWSTR lsNameExt[] = {L"ConEmu.exe", L"ConEmu64.exe", NULL};
+	LPCWSTR lsNameExt[] = {L"ConEmu.exe", L"ConEmu64.exe", nullptr};
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
 bool IsConsoleServer(LPCWSTR pszProcessName)
 {
-	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", NULL};
+	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", nullptr};
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
@@ -1226,19 +1226,19 @@ bool IsTerminalServer(LPCWSTR pszProcessName)
 		L"conemu-cyg-32.exe", L"conemu-cyg-64.exe",
 		L"conemu-msys-32.exe",
 		L"conemu-msys2-32.exe", L"conemu-msys2-64.exe",
-		NULL};
+		nullptr};
 	return CheckProcessName(pszProcessName, lsNames);
 }
 
 bool IsGitBashHelper(LPCWSTR pszProcessName)
 {
-	LPCWSTR lsNameExt[] = { L"git-bash.exe", L"git-cmd.exe", NULL };
+	LPCWSTR lsNameExt[] = { L"git-bash.exe", L"git-cmd.exe", nullptr };
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
 bool IsSshAgentHelper(LPCWSTR pszProcessName)
 {
-	LPCWSTR lsNameExt[] = { L"ssh-agent.exe", NULL };
+	LPCWSTR lsNameExt[] = { L"ssh-agent.exe", nullptr };
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
@@ -1252,13 +1252,13 @@ bool IsConsoleHelper(LPCWSTR pszProcessName)
 
 bool IsFarExe(LPCWSTR asModuleName)
 {
-	LPCWSTR lsNameExt[] = {L"far.exe", L"far64.exe", NULL};
+	LPCWSTR lsNameExt[] = {L"far.exe", L"far64.exe", nullptr};
 	return CheckProcessName(asModuleName, lsNameExt);
 }
 
 bool IsCmdProcessor(LPCWSTR asModuleName)
 {
-	LPCWSTR lsNameExt[] = {L"cmd.exe", L"tcc.exe", NULL};
+	LPCWSTR lsNameExt[] = {L"cmd.exe", L"tcc.exe", nullptr};
 	return CheckProcessName(asModuleName, lsNameExt);
 }
 
@@ -1276,20 +1276,20 @@ wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 {
 	bool bNeedQuot = IsQuotationNeeded(asExe);
 	if (asParams && !*asParams)
-		asParams = NULL;
+		asParams = nullptr;
 
 	wchar_t* pszRet;
 	if (bNeedQuot)
 		pszRet = lstrmerge(L"\"", asExe, asParams ? L"\" " : L"\"", asParams);
 	else
-		pszRet = lstrmerge(asExe, asParams ? L" " : NULL, asParams);
+		pszRet = lstrmerge(asExe, asParams ? L" " : nullptr, asParams);
 
 	return pszRet;
 }
 
-wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
+wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= nullptr*/)
 {
-	LPCWSTR psz1 = asPath, psz2 = NULL, psz3 = asPart1, psz4 = NULL, psz5 = asPart2;
+	LPCWSTR psz1 = asPath, psz2 = nullptr, psz3 = asPart1, psz4 = nullptr, psz5 = asPart2;
 
 	// Добавить слеши если их нет на гранях
 	// удалить лишние, если они указаны в обеих частях
@@ -1322,19 +1322,19 @@ wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
 wchar_t* GetParentPath(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
-		return NULL;
+		return nullptr;
 	LPCWSTR pszName = PointToName(asPath);
 	if (!pszName)
-		return NULL;
+		return nullptr;
 	while ((pszName > asPath) && (*(pszName-1) == L'\\' || *(pszName-1) == L'/'))
 		--pszName;
 	if (pszName <= asPath)
-		return NULL;
+		return nullptr;
 
 	size_t cch = pszName - asPath;
 	wchar_t* parent = (wchar_t*)malloc((cch + 1) * sizeof(*parent));
 	if (!parent)
-		return NULL;
+		return nullptr;
 	wcsncpy_s(parent, cch+1, asPath, cch);
 	parent[cch] = 0;
 	return parent;
@@ -1391,8 +1391,8 @@ const wchar_t* PointToName(const wchar_t* asFileOrPath)
 {
 	if (!asFileOrPath)
 	{
-		_ASSERTE(asFileOrPath!=NULL);
-		return NULL;
+		_ASSERTE(asFileOrPath!=nullptr);
+		return nullptr;
 	}
 
 	// Utilize both type of slashes
@@ -1409,8 +1409,8 @@ const char* PointToName(const char* asFileOrPath)
 {
 	if (!asFileOrPath)
 	{
-		_ASSERTE(asFileOrPath!=NULL);
-		return NULL;
+		_ASSERTE(asFileOrPath!=nullptr);
+		return nullptr;
 	}
 
 	// Utilize both type of slashes
@@ -1425,12 +1425,12 @@ const char* PointToName(const char* asFileOrPath)
 	return asFileOrPath;
 }
 
-// Возвращает ".ext" или NULL в случае ошибки
+// Возвращает ".ext" или nullptr в случае ошибки
 const wchar_t* PointToExt(const wchar_t* asFullPath)
 {
 	const wchar_t* pszName = PointToName(asFullPath);
 	if (!pszName)
-		return NULL; // _ASSERTE уже был
+		return nullptr; // _ASSERTE уже был
 	const wchar_t* pszExt = wcsrchr(pszName, L'.');
 	return pszExt;
 }
@@ -1440,7 +1440,7 @@ const wchar_t* PointToExt(const wchar_t* asFullPath)
 const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote /*= false*/)
 {
 	if (!asParm)
-		return NULL;
+		return nullptr;
 	if (*asParm != L'"')
 		return asParm;
 	wchar_t* pszEndQ = abFirstQuote ? wcschr(asParm+1, L'"') : wcsrchr(asParm+1, L'"');
