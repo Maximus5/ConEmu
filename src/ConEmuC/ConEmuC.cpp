@@ -225,6 +225,13 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	strcpy(szCLVer, "<Unknown CL>");
 	#endif
 
+	{ HL(10); _printf("GetCommandLine():\n"); }
+	{ HL(2);  _printf("  *: "); }
+	{ HL(8); _printf("`"); }
+	{ HL(15); _wprintf(GetCommandLineW()); }
+	{ HL(8); _printf("`"); }
+	_printf("\n");
+
 	sprintf_c(szLine, "main arguments (count %i) {%s}\n", gn_argc, szCLVer);
 	{ HL(10); _printf(szLine); }
 	for (int j = 0; j < gn_argc; j++)
@@ -235,7 +242,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 			_printf("*** TOO MANY ARGUMENTS ***\n");
 			break;
 		}
-		sprintf_c(szLine, "  %u: ", j);
+		sprintf_c(szLine, "  %u: ", j + 1);
 		{ HL(2); _printf(szLine); }
 		if (!gp_argv)
 		{
@@ -283,7 +290,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	{ HL(10); _printf("Standard shell splitter\n"); }
 	for (int j = 0; j < iShellCount; j++)
 	{
-		sprintf_c(szLine, "  %u: ", j);
+		sprintf_c(szLine, "  %u: ", j + 1);
 		{ HL(2); _printf(szLine); }
 		{ HL(8); _printf("`"); }
 		{ HL(15); _wprintf(ppszShl[j]); }
