@@ -85,7 +85,7 @@ TEST(CmdLine, NextArg_Switches)
 	EXPECT_STREQ(ls.c_str(), L"C:\\long path\\args.tmp");
 	EXPECT_NE(nullptr, (pszCmd=NextArg(pszCmd,ls)));
 	EXPECT_STREQ(ls.c_str(), L"@C:\\tmp\\args.tmp");
-	
+
 	EXPECT_NE(nullptr, (pszCmd=NextArg(pszCmd,ls)));
 	EXPECT_STREQ(ls.c_str(), L"-bad|switch");
 	EXPECT_FALSE(ls.IsPossibleSwitch());
@@ -105,34 +105,27 @@ TEST(CmdLine, NextArg_NeedCmd)
 		// he must explicitly call "cmd /c ...". With only exception if first exe not found.
 		{L"notepad text & start explorer", FALSE},
 	};
-	LPCWSTR psArgs;
-	bool bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
 	CEStr szExe;
 	for (const auto& test : tests)
 	{
 		szExe.Empty();
 		RConStartArgsEx rcs; rcs.pszSpecialCmd = lstrdup(test.pszCmd);
 		rcs.ProcessNewConArg();
-		// ReSharper disable once CppJoinDeclarationAndAssignment
-		const bool result = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe, &psArgs, &bNeedCut, &bRootIsCmd, &bAlwaysConfirm, &bAutoDisable);
+		const bool result = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe);
 		EXPECT_EQ(result, test.expected) << L"cmd: " << test.pszCmd;
 	}
 }
 
 namespace
 {
-// ReSharper disable once CppParameterMayBeConst
-void TestIsNeedCmd(LPCWSTR testCommand, const bool expectedResult, const bool isServer,
-				   // ReSharper disable twice CppParameterMayBeConst
-				   LPCWSTR expectedExe, LPCWSTR expectedArgs, const bool expectedNeedCut, const bool expectedRootIsCmd,
-				   const bool expectedAlwaysConfirm, const bool expectedAutoDisableConfirm)
+void TestIsNeedCmd(
+	// ReSharper disable CppParameterMayBeConst
+	LPCWSTR testCommand, LPCWSTR expectedExe, LPCWSTR expectedArgs,
+	const bool expectedResult, const bool isServer, const bool expectedNeedCut, const bool expectedRootIsCmd, const bool expectedAlwaysConfirm)
 {
 	CEStr exe;
-	LPCWSTR arguments = nullptr;
-	bool needCutStartEndQuot = false, rootIsCmdExe = false;
-	bool alwaysConfirmExit = false, autoDisableConfirmExit = false;
-	const auto isNeedCmd = IsNeedCmd(isServer, testCommand, exe,
-		&arguments, &needCutStartEndQuot, &rootIsCmdExe, &alwaysConfirmExit, &autoDisableConfirmExit);
+	NeedCmdOptions opt{};
+	const auto isNeedCmd = IsNeedCmd(isServer, testCommand, exe, &opt);
 	EXPECT_EQ(isNeedCmd, expectedResult) << "cmd: " << testCommand << ", srv: " << isServer;
 	if (wcschr(expectedExe, L'\\') != nullptr)
 	{
@@ -142,111 +135,142 @@ void TestIsNeedCmd(LPCWSTR testCommand, const bool expectedResult, const bool is
 	{
 		EXPECT_STREQ(PointToName(exe.c_str(L"")), expectedExe) << "cmd: " << testCommand << ", srv: " << isServer;
 	}
-	EXPECT_STREQ(arguments ? arguments : L"", expectedArgs) << "cmd: " << testCommand << ", srv: " << isServer;
-	EXPECT_EQ(needCutStartEndQuot, expectedNeedCut) << "cmd: " << testCommand << ", srv: " << isServer;
-	EXPECT_EQ(rootIsCmdExe, expectedRootIsCmd) << "cmd: " << testCommand << ", srv: " << isServer;
-	EXPECT_EQ(alwaysConfirmExit, expectedAlwaysConfirm) << "cmd: " << testCommand << ", srv: " << isServer;
-	EXPECT_EQ(autoDisableConfirmExit, expectedAutoDisableConfirm) << "cmd: " << testCommand << ", srv: " << isServer;
+	EXPECT_STREQ(opt.arguments ? opt.arguments : L"", expectedArgs) << "cmd: " << testCommand << ", srv: " << isServer;
+	EXPECT_EQ(opt.needCutStartEndQuot, expectedNeedCut) << "cmd: " << testCommand << ", srv: " << isServer;
+	EXPECT_EQ(opt.rootIsCmdExe, expectedRootIsCmd) << "cmd: " << testCommand << ", srv: " << isServer;
+	EXPECT_EQ(opt.alwaysConfirmExit, expectedAlwaysConfirm) << "cmd: " << testCommand << ", srv: " << isServer;
 }
 }
 
 TEST(CmdLine, IsNeedCmd)
 {
-	TestIsNeedCmd(L"set var1=val1 & set var2=val2 & pwsh.exe -noprofile", true, false,
+	gbVerifyIgnoreAsserts = true; // bypass debug asserts for invalid parameters
+
+	TestIsNeedCmd(nullptr,
+		L"", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L" ",
+		L"", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L"\"\\\"", // NextArg failure expected
+		L"", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L"script.cmd arg1 arg2",
+		L"script.cmd", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L"set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
 		L"set", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"cmd.exe /c set var1=val1 & set var2=val2 & pwsh.exe -noprofile", false, false,
+		true, false, false, true, false);
+	TestIsNeedCmd(L"cmd.exe /c set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
 		L"cmd.exe", L"/c set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
-		false, true, true, false);
-	TestIsNeedCmd(L"start", true, false,
+		false, false, false, true, true);
+	TestIsNeedCmd(L"drive::path arg1 arg2",
+		L"drive::path", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L"start",
 		L"", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"start explorer", true, false,
+		true, false, false, true, false);
+	TestIsNeedCmd(L"start explorer",
 		L"", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"start \"\" \"C:\\user data\\test.exe\"", true, false,
+		true, false, false, true, false);
+	TestIsNeedCmd(L"\"\"start\" \"explorer\" C:\\\"",
+		L"start", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L"start \"\" \"C:\\user data\\test.exe\"",
 		L"", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"Call \"C:\\user scripts\\tool.cmd\" some args", true, false,
+		true, false, false, true, false);
+	TestIsNeedCmd(L"start \"\" C:\\Utils\\Hiew32\\hiew32.exe C:\\00\\Far.exe",
+		L"", L"",
+		true, false, false, true, false);
+	TestIsNeedCmd(L"Call \"C:\\user scripts\\tool.cmd\" some args",
 		L"Call", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"tool.exe < input > output", true, false,
+		true, false, false, true, false);
+	TestIsNeedCmd(L"tool.exe < input > output",
 		L"tool.exe", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"\"tool.exe\" < input > output", true, true,
+		true, false, false, true, false);
+	TestIsNeedCmd(L"\"tool.exe\" < input > output",
 		L"tool.exe", L"",
-		false, true, false, false);
-	TestIsNeedCmd(L"c:\\tool.exe < input > output", true, false,
+		true, true, false, true, false);
+	TestIsNeedCmd(L"c:\\tool.exe < input > output",
 		L"tool.exe", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedResult should be true
-	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output", false, true,
+	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output",
 		L"cacls.exe", L"< input > output",
-		false, false, false, false);
+		false, true, false, false, false);
 	// #FIX expectedResult should be true
-	TestIsNeedCmd(L"%comspec% < input > output", false, true,
+	TestIsNeedCmd(L"%comspec% < input > output",
 		L"cmd.exe", L"< input > output",
-		false, true, true, false);
-	TestIsNeedCmd(L"%comspec% /c < input > output", false, true,
+		false, true, false, true, true);
+	TestIsNeedCmd(L"%comspec% /c < input > output",
 		L"cmd.exe", L"/c < input > output",
-		false, true, true, false);
-	TestIsNeedCmd(L"%comspec% /K < input > output", false, true,
+		false, true, false, true, true);
+	TestIsNeedCmd(L"%comspec% /K < input > output",
 		L"cmd.exe", L"/K < input > output",
-		false, true, true, false);
+		false, true, false, true, true);
 	// #FIX expectedResult should be true
-	TestIsNeedCmd(L"chkdsk < input > output", false, true,
+	TestIsNeedCmd(L"chkdsk < input > output",
 		L"chkdsk.exe", L"< input > output",
-		false, false, false, false);
+		false, true, false, false, false);
+	TestIsNeedCmd(L"\"\"%windir%\\system32\\cacls.exe\" a test.7z ConEmu.exe \"",
+		L"cacls.exe", L"a test.7z ConEmu.exe \"",
+		false, false, true, false, false);
 	// #FIX expectedArgs should not end with \"
 	// #FIX expectedNeedCut should be true
-	TestIsNeedCmd(L"\"\"7z\" a test.7z ConEmu.exe \"", false, false,
+	TestIsNeedCmd(L"\"\"7z\" a test.7z ConEmu.exe \"",
 		L"7z.exe" /* via search */, L"a test.7z ConEmu.exe \"",
-		false, false, false, false);
+		false, false, false, false, false);
 	// #FIX expectedResult should be false
-	TestIsNeedCmd(L"\"c:\\program files\\arc\\7z.exe\" -?", true, false,
+	TestIsNeedCmd(L"\"c:\\program files\\arc\\7z.exe\" -?",
 		L"c:\\program files\\arc\\7z.exe", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedResult should be false
 	// #FIX expectedNeedCut should be true
-	TestIsNeedCmd(L"\"\"c:\\program files\\arc\\7z.exe\" -?\"", true, false,
+	TestIsNeedCmd(L"\"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		L"c:\\program files\\arc\\7z.exe", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedResult should be false
 	// #FIX expectedExe should not contain "-?"
-	TestIsNeedCmd(L"\"c:\\arc\\7z.exe -?\"", true, false,
+	TestIsNeedCmd(L"\"c:\\arc\\7z.exe -?\"",
 		L"c:\\arc\\7z.exe -?", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedResult should be false
 	// #FIX expectedExe should not contain "-?"
-	TestIsNeedCmd(L"\"c:\\far\\far.exe -new_console\"", true, false,
+	TestIsNeedCmd(L"\"c:\\far\\far.exe -new_console\"",
 		L"c:\\far\\far.exe -new_console", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedResult should be false
 	// #FIX expectedExe should not contain "-?"
-	TestIsNeedCmd(L"\"\"c:\\far\\far.exe -new_console\"\"", true, false,
+	TestIsNeedCmd(L"\"\"c:\\far\\far.exe -new_console\"\"",
 		L"c:\\far\\far.exe -new_console", L"",
-		false, true, false, false);
+		true, false, false, true, false);
+	// #TODO add test with "far" without ".exe", but we need to emulate apiSearchPath?
+	TestIsNeedCmd(L"far.exe -new_console /p:c:\\far /e:some.txt",
+		L"far.exe", L"",
+		false, false, false, false, false);
 	// #FIX expectedResult should be false
 	// #FIX expectedExe should not contain -f
-	TestIsNeedCmd(L"\"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"\"", true, false,
+	TestIsNeedCmd(L"\"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"\"",
 		L"C:\\msys\\bin\\make.EXE -f", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedResult should be false
-	TestIsNeedCmd(L"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"", true, false,
+	TestIsNeedCmd(L"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"",
 		L"C:\\msys\\bin\\make.EXE", L"",
-		false, true, false, false);
+		true, false, false, true, false);
 	// #FIX expectedAlwaysConfirm?
-	TestIsNeedCmd(L"\"\"cmd\"\"", false, false,
+	TestIsNeedCmd(L"\"\"cmd\"\"",
 		L"cmd.exe", L"",
-		false, true, true, false);
+		false, false, false, true, true);
 	// #FIX expectedAlwaysConfirm?
-	TestIsNeedCmd(L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"", false, false,
+	TestIsNeedCmd(L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		L"cmd.exe", L"/c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
-		false, true, true, false);
+		false, false, false, true, true);
 	// #FIX expectedAlwaysConfirm?
-	TestIsNeedCmd(L"cmd /c \"dir c:\\\"", false, false,
+	TestIsNeedCmd(L"cmd /c \"dir c:\\\"",
 		L"cmd.exe", L"/c \"dir c:\\\"",
-		false, true, true, false);
+		false, false, false, true, true);
+
+	gbVerifyIgnoreAsserts = false; // restore default
 }
 
 TEST(CmdLine, DemangleArg)

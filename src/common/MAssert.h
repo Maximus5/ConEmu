@@ -127,10 +127,11 @@ bool MyAssertSkip(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, boo
 
 	extern bool gbVerifyFailed;
 	extern bool gbVerifyStepFailed;
+	extern bool gbVerifyIgnoreAsserts;
 
 	#include <stdio.h>
 	extern const char* PointToName(const char* asFileOrPath);
-	#define _ASSERT(x) if (!(x)) { gbVerifyStepFailed=gbVerifyFailed=true; \
+	#define _ASSERT(x) if (!(x) && !gbVerifyIgnoreAsserts) { gbVerifyStepFailed=gbVerifyFailed=true; \
 		MyAssertSkip(_CRT_WIDE(__FILE__), __LINE__, L"Unit test assertion", true); \
 		printf(\
 		"    \033[91m" \

@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool gbVerifyFailed = false;
 bool gbVerifyStepFailed = false;
+bool gbVerifyIgnoreAsserts = false;
 bool gbVerifyVerbose = false;
 
 

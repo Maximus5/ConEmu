@@ -4285,14 +4285,14 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx& args, bool abAllowScript
 
 		if (lsTaskCommands.IsEmpty() && args.pszSpecialCmd && *args.pszSpecialCmd)
 		{
-			// Issue 1711: May be that is smth like?
+			// Issue 1711: May be that is something like?
 			// ""C:\Windows\...\powershell.exe" -noprofile -new_console:t:"PoSh":d:"C:\Users""
 			// Start/End quotes need to be removed
-			CEStr szExe; bool bNeedCutQuot = FALSE;
-			const bool bNeedCmd = IsNeedCmd(FALSE, args.pszSpecialCmd, szExe, nullptr, &bNeedCutQuot);
-			if (!bNeedCmd && bNeedCutQuot)
+			CEStr szExe; NeedCmdOptions opt{};
+			const bool bNeedCmd = IsNeedCmd(FALSE, args.pszSpecialCmd, szExe, &opt);
+			if (!bNeedCmd && opt.needCutStartEndQuot)
 			{
-				int nLen = lstrlen(args.pszSpecialCmd);
+				const int nLen = lstrlen(args.pszSpecialCmd);
 				_ASSERTE(nLen > 4);
 				// Cut first quote
 				_ASSERTE(args.pszSpecialCmd[0] == L'"' && args.pszSpecialCmd[1] == L'"');

@@ -121,21 +121,25 @@ bool IsConsoleHelper(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsSshAgentHelper(LPCWSTR pszProcessName);
+
+struct NeedCmdOptions
+{
+	bool isNeedCmd = false;
+	bool needCutStartEndQuot = false;
+	bool rootIsCmdExe = false;
+	bool alwaysConfirmExit = false;
+	LPCWSTR arguments = nullptr;
+};
+
 /// <summary>
 /// Determines if we need a cmd.exe to run the command line.
 /// </summary>
 /// <param name="bRootCmd"></param>
 /// <param name="asCmdLine"></param>
 /// <param name="szExe"></param>
-/// <param name="rsArguments"></param>
-/// <param name="rpbNeedCutStartEndQuot"></param>
-/// <param name="rpbRootIsCmdExe"></param>
-/// <param name="rpbAlwaysConfirmExit"></param>
-/// <param name="rpbAutoDisableConfirmExit"></param>
+/// <param name="options">optional pointer to <ref>NeedCmdOptions</ref> struct</param>
 /// <returns>true - if to execute a command we have to add "cmd.exe /c ...", false - asCmdLine could be executed intact</returns>
-bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
-			   LPCWSTR* rsArguments = nullptr, bool* rpbNeedCutStartEndQuot = nullptr,
-			   bool* rpbRootIsCmdExe = nullptr, bool* rpbAlwaysConfirmExit = nullptr, bool* rpbAutoDisableConfirmExit = nullptr);
+bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options = nullptr);
 
 bool IsQuotationNeeded(LPCWSTR pszPath);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);

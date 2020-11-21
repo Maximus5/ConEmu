@@ -885,13 +885,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 
 		if (lbNewCmdCheck)
 		{
-			bool lbRootIsCmdExe = FALSE;
-			bool lbAlwaysConfirmExit = FALSE;
-			bool lbAutoDisableConfirmExit = FALSE;
-			bool lbNeedCutStartEndQuot = FALSE;
+			NeedCmdOptions opt{};
 			//DWORD nFileAttrs = (DWORD)-1;
 			ms_ExeTmp.Empty();
-			IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, nullptr, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
+			IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, &opt);
 			// это может быть команда ком.процессора!
 			// поэтому, наверное, искать и проверять битность будем только для
 			// файлов с указанным расширением.
@@ -911,7 +908,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 					case csb_SameOS:
 						ImageBits = IsWindows64() ? 64 : 32;
 						break;
-					case csb_x32:
+					case csb_x32:  // NOLINT(bugprone-branch-clone)
 						ImageBits = 32;
 						break;
 					default:
@@ -1253,17 +1250,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 			if (!asFile || !*asFile)
 			{
 				// exe-шника в asFile указано НЕ было, значит он в asParam, нужно его вытащить, и сформировать команду DosBox
-				bool lbRootIsCmdExe = FALSE;
-				bool lbAlwaysConfirmExit = FALSE;
-				bool lbAutoDisableConfirmExit = FALSE;
-				bool lbNeedCutStartEndQuot = FALSE;
+				NeedCmdOptions opt{};
 				ms_ExeTmp.Empty();
-				IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, nullptr, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
+				IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, &opt);
 
 				if (ms_ExeTmp[0])
 				{
 					LPCWSTR pszQuot = SkipNonPrintable(asParam);
-					if (lbNeedCutStartEndQuot)
+					if (opt.needCutStartEndQuot)
 					{
 						while (*pszQuot == L'"') pszQuot++;
 						pszQuot += lstrlen(ms_ExeTmp);
@@ -2543,7 +2537,7 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsEx
 
 		// If path to executable contains specials (spaces, etc.) it may be quoted, or not...
 		// So, we can't just call NextArg, logic is more complicated.
-		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp, nullptr, nullptr, nullptr, nullptr, nullptr);
+		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp);
 	}
 
 	return (!rsExeTmp.IsEmpty());

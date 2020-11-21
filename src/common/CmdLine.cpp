@@ -687,19 +687,14 @@ wrap:
 // кроме того, если команда содержит "?" или "*" - тоже не пытаться.
 const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
 
-bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
-			   LPCWSTR* rsArguments /*= NULL*/, bool* rpbNeedCutStartEndQuot /*= NULL*/,
-			   bool* rpbRootIsCmdExe /*= NULL*/, bool* rpbAlwaysConfirmExit /*= NULL*/, bool* rpbAutoDisableConfirmExit /*= NULL*/)
+bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options /*= nullptr*/)
 {
 	bool rbNeedCutStartEndQuot = false;
 	bool rbRootIsCmdExe = true;
 	bool rbAlwaysConfirmExit = false;
-	bool rbAutoDisableConfirmExit = false;
+	LPCWSTR rsArguments = nullptr;
 
 	wchar_t *pwszEndSpace;
-
-	if (rsArguments)
-		*rsArguments = nullptr;
 
 	bool lbRc = false;
 	BOOL lbFirstWasGot = FALSE;
@@ -718,6 +713,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	{
 		_ASSERTE(asCmdLine && *asCmdLine);
 		szExe.Empty();
+		lbRc = true;
 		goto wrap;
 	}
 
@@ -774,9 +770,10 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
 			// cmd /c "dir c:\"
 
-			// Получим первую команду (исполняемый файл?)
+			// Get the first argument (the executable?)
 			CmdArg arg;
-			if (!NextArg(pwszCopy, arg))
+			const auto* nextArg = NextArg(pwszCopy, arg);
+			if (!nextArg)
 			{
 				//Parsing command line failed
 				#ifdef WARN_NEED_CMD
@@ -788,27 +785,25 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
-				// Команду start обрабатывает только процессор
+				// The "start" command could be executed only by command processor
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
 				lbRc = true; goto wrap;
 			}
 
-			LPCWSTR pwszQ = pwszCopy + 1 + lstrlen(szExe);
 			wchar_t* pszExpand = nullptr;
-
-			if (*pwszQ != L'"' && IsExecutable(szExe, &pszExpand))
+			if (arg.m_pszDequoted && IsExecutable(szExe, &pszExpand))
 			{
-				pwszCopy ++; // отбрасываем
-				lbFirstWasGot = TRUE;
+				_ASSERTE(*pwszCopy == L'"' && pwszCopy == asCmdLine); // should be still
+				++pwszCopy; // skip first double quote
+				lbFirstWasGot = true;
 
 				if (pszExpand)
 				{
 					szExe.Set(pszExpand);
 					SafeFree(pszExpand);
-					if (rsArguments)
-						*rsArguments = SkipNonPrintable(pwszQ);
+					rsArguments = SkipNonPrintable(nextArg);
 				}
 
 				rbNeedCutStartEndQuot = true;
@@ -816,7 +811,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 		}
 	}
 
-	// Получим первую команду (исполняемый файл?)
+	// Get the first argument (the executable?)
 	if (!lbFirstWasGot)
 	{
 		szExe.Empty();
@@ -854,6 +849,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 					memmove(szTemp.ms_Val, szTemp.ms_Val + 1, (len - 2) * sizeof(*szTemp.ms_Val));
 					szTemp.ms_Val[len-2] = 0;
 				}
+
+				if (wcschr(szTemp.c_str(), '"') != nullptr)
+					break;
 			}
 
 			// If this is a full path without environment variables
@@ -865,8 +863,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 				&& FileExists(szTemp, &nTempSize) && nTempSize)
 			{
 				// OK, it an our executable?
-				if (rsArguments)
-					*rsArguments = SkipNonPrintable(pchEnd);
+				rsArguments = SkipNonPrintable(pchEnd);
 				szExe.Set(szTemp);
 				break;
 			}
@@ -908,8 +905,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			// Expand environment variables and search in the %PATH%
 			if (FileExistsSearch(szExe.c_str(), szExe))
 			{
-				if (rsArguments)
-					*rsArguments = SkipNonPrintable(pwszCopy);
+				rsArguments = SkipNonPrintable(pwszCopy);
 			}
 		}
 	}
@@ -920,11 +916,8 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	}
 	else
 	{
-		// Если юзеру нужен редирект - то он должен явно указать ком.процессор
-		// Иначе нереально (или достаточно сложно) определить, является ли символ
-		// редиректом, или это просто один из аргументов команды...
-
-		// "Левые" символы в имени файла (а вот в "первом аргументе" все однозначно)
+		// Illegal characters in the executable we parse from the command line.
+		// We can't run the program as it's path is invalid, so let's try it to "cmd.exe /c ..."
 		if (wcspbrk(szExe, illegalCharacters))
 		{
 			rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
@@ -964,25 +957,26 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 				#ifndef CONEMU_MINIMAL
 				MWow64Disable wow; wow.Disable(); // Disable Wow64 file redirector
 				#endif
-				apiSearchPath(NULL, szExe, bHasExt ? NULL : L".exe", szExe);
+				// #TODO isn't apiSearchPath already called?
+				apiSearchPath(nullptr, szExe, bHasExt ? nullptr : L".exe", szExe);
 			}
-		} // end: if (wcschr(szExe, L'\\') == NULL)
+		} // end: if (wcschr(szExe, L'\\') == nullptr)
 	}
 
-	// Если szExe не содержит путь к файлу - запускаем через cmd
+	// If szExe does not contain the path to the file - try to run via cmd
 	// "start "" C:\Utils\Files\Hiew32\hiew32.exe C:\00\Far.exe"
 	if (!IsFilePath(szExe))
 	{
 		#ifdef WARN_NEED_CMD
 		_ASSERTE(FALSE);
 		#endif
-		rbRootIsCmdExe = TRUE; // запуск через "процессор"
-		lbRc = true; goto wrap; // добавить "cmd.exe"
+		rbRootIsCmdExe = true; // run the command via processor (e.g. "cmd.exe /c ...")
+		lbRc = true; goto wrap; // add leading "cmd.exe"
 	}
 
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
 	pwszCopy = PointToName(szExe);
-	//2009-08-27
+
 	pwszEndSpace = szExe.ms_Val + lstrlenW(szExe) - 1;
 
 	while ((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
@@ -998,22 +992,22 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0
 		|| lstrcmpiW(pwszCopy, L"tcc")==0 || lstrcmpiW(pwszCopy, L"tcc.exe")==0)
 	{
-		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
-		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
+		rbRootIsCmdExe = true; // it IS cmd.exe
+		rbAlwaysConfirmExit = true;
 		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
 		#endif
-		lbRc = false; goto wrap; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+		lbRc = false; goto wrap; // cmd.exe already exists in the command line, no need to add
 	}
 
 
-	// Issue 1211: Decide not to do weird heuristic.
-	//   If user REALLY needs redirection (root command, huh?)
-	//   - he must call "cmd /c ..." directly
-	// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
+	// GoogleIssue 1211: Decide not to do weird heuristic.
+	//   If user REALLY needs redirection for root command (huh?)
+	//   - they must call "cmd /c ..." directly
 	if (!bRootCmd)
 	{
-		// only for ComSpec mode here
+		// If we are in comspec mode (run child process from existing shell) and command line contains
+		// any of pipelining/redirection characters, than run via "cmd /c ..."
 		if (wcspbrk(asCmdLine, specialCmdCharacters) != nullptr)
 		{
 			#ifdef WARN_NEED_CMD
@@ -1023,15 +1017,14 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 		}
 	}
 
-	//if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
 	if (IsFarExe(pwszCopy))
 	{
-		bool bFound = (wcschr(pwszCopy, L'.') != NULL);
-		// Если указали при запуске просто "far" - это может быть батник, расположенный в %PATH%
+		bool bFound = (wcschr(pwszCopy, L'.') != nullptr);
+		// If just "far" was started, it could be a batch, located in the %PATH%
 		if (!bFound)
 		{
 			CEStr szSearch;
-			if (apiSearchPath(NULL, pwszCopy, L".exe", szSearch))
+			if (apiSearchPath(nullptr, pwszCopy, L".exe", szSearch))
 			{
 				if (lstrcmpi(PointToExt(szSearch), L".exe") == 0)
 					bFound = true;
@@ -1040,22 +1033,21 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 		if (bFound)
 		{
-			rbAutoDisableConfirmExit = TRUE;
-			rbRootIsCmdExe = FALSE; // FAR!
+			rbRootIsCmdExe = false; // FAR!
 			#ifdef _DEBUG // due to unittests
 			_ASSERTE(!bIsBatch);
 			#endif
-			lbRc = false; goto wrap; // уже указан исполняемый файл, cmd.exe в начало добавлять не нужно
+			lbRc = false; goto wrap; // already executable, no need to add leading cmd.exe
 		}
 	}
 
 	if (IsExecutable(szExe))
 	{
-		rbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
+		rbRootIsCmdExe = false;
 		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
 		#endif
-		lbRc = false; goto wrap; // Запускается конкретная консольная программа. cmd.exe не требуется
+		lbRc = false; goto wrap; // already executable, no need to add leading cmd.exe
 	}
 
 	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
@@ -1063,21 +1055,21 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	#ifdef WARN_NEED_CMD
 	_ASSERTE(FALSE);
 	#endif
-	rbRootIsCmdExe = TRUE;
+	rbRootIsCmdExe = true;
 #ifndef __GNUC__
 #pragma warning( pop )
 #endif
 
 	lbRc = true;
 wrap:
-	if (rpbNeedCutStartEndQuot)
-		*rpbNeedCutStartEndQuot = rbNeedCutStartEndQuot;
-	if (rpbRootIsCmdExe)
-		*rpbRootIsCmdExe = rbRootIsCmdExe;
-	if (rpbAlwaysConfirmExit)
-		*rpbAlwaysConfirmExit = rbAlwaysConfirmExit;
-	if (rpbAutoDisableConfirmExit)
-		*rpbAutoDisableConfirmExit = rbAutoDisableConfirmExit;
+	if (options)
+	{
+		options->isNeedCmd = lbRc;
+		options->needCutStartEndQuot = rbNeedCutStartEndQuot;
+		options->rootIsCmdExe = rbRootIsCmdExe;
+		options->alwaysConfirmExit = rbAlwaysConfirmExit;
+		options->arguments = rsArguments;
+	}
 	return lbRc;
 }
 

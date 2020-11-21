@@ -390,18 +390,20 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	}
 	else
 	{
-		bool bAlwaysConfirmExit = gState.alwaysConfirmExit_;
-		bool bAutoDisableConfirmExit = gState.autoDisableConfirmExit_;
+		NeedCmdOptions opt{};
+		opt.alwaysConfirmExit = gState.alwaysConfirmExit_;
 
 		pszCheck4NeedCmd_ = lsCmdLine;
 
-		gState.runViaCmdExe_ = IsNeedCmd((gState.runMode_ == RunMode::Server), lsCmdLine, szExeTest,
-			&pszArguments4EnvVar, &gState.needCutStartEndQuot_, &gState.rootIsCmdExe_, &bAlwaysConfirmExit, &bAutoDisableConfirmExit);
+		gState.runViaCmdExe_ = IsNeedCmd((gState.runMode_ == RunMode::Server), lsCmdLine, szExeTest, &opt);
+
+		pszArguments4EnvVar = opt.arguments;
+		gState.needCutStartEndQuot_ = opt.needCutStartEndQuot;
+		gState.rootIsCmdExe_ = opt.rootIsCmdExe;
 
 		if (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault)
 		{
-			gState.alwaysConfirmExit_ = bAlwaysConfirmExit;
-			gState.autoDisableConfirmExit_ = bAutoDisableConfirmExit;
+			gState.alwaysConfirmExit_ = opt.alwaysConfirmExit;
 		}
 	}
 
