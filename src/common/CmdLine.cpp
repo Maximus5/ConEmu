@@ -1091,41 +1091,41 @@ bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= nullptr*
 #pragma warning( push )
 #pragma warning(disable : 6400)
 #endif
-
-	wchar_t* pszExpand = NULL;
+	bool result = false;
+	CEStr expanded;
 
 	for (int i = 0; i <= 1; i++)
 	{
-		LPCWSTR pwszDot = PointToExt(aszFilePathName);
+		// ReSharper disable once CppLocalVariableMayBeConst
+		LPCWSTR extension = PointToExt(aszFilePathName);
 
-		if (pwszDot)  // Если указан .exe или .com файл
+		if (extension)  // if .exe or .com was specified
 		{
-			if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0)
+			if (lstrcmpiW(extension, L".exe")==0 || lstrcmpiW(extension, L".com")==0)
 			{
 				if (FileExists(aszFilePathName))
-					return true;
+				{
+					result = true;
+					break;
+				}
 			}
 		}
 
 		if (!i && wcschr(aszFilePathName, L'%'))
 		{
-			pszExpand = ExpandEnvStr(aszFilePathName);
-			if (!pszExpand)
+			expanded = ExpandEnvStr(aszFilePathName);
+			if (!expanded)
 				break;
-			aszFilePathName = pszExpand;
+			aszFilePathName = expanded.c_str();
 		}
 	}
 
 	if (rsExpandedVars)
 	{
-		*rsExpandedVars = pszExpand; pszExpand = NULL;
-	}
-	else
-	{
-		SafeFree(pszExpand);
+		*rsExpandedVars = expanded.Detach();
 	}
 
-	return false;
+	return result;
 }
 #ifndef __GNUC__
 #pragma warning( pop )
