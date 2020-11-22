@@ -4273,11 +4273,13 @@
     ,
     "vkEditMenu": {
       "en": "Show Edit context menu",
+      "ru": "Показать контекстное меню редактирования",
       "pl": "Pokaż edycje menu kontekstowego",
       "id": 3108 }
     ,
     "vkEditMenu2": {
       "en": "Show Edit context menu",
+      "ru": "Показать контекстное меню редактирования",
       "pl": "Pokaż edycje menu kontekstowego",
       "id": 3109 }
     ,
@@ -5476,11 +5478,13 @@
     ,
     "lng_AlternativeIsOffHint": {
       "en": "Alternative mode is off",
+      "ru": "Альтернативный режим выключен",
       "pl": "Tryb alternatywny jest wyłączony",
       "id": 199 }
     ,
     "lng_AlternativeIsOnHint": {
       "en": "Alternative mode is ON (console frozen)",
+      "ru": "Альтернативный режим включен (консоль заморожена)",
       "pl": "Tryb alternatywny jest włączony (konsola zawieszona)",
       "id": 198 }
     ,
@@ -5583,41 +5587,49 @@
     ,
     "lng_BufferHeightOffHint": {
       "en": "BufferHeight mode is off",
+      "ru": "Режим BufferHeight выключен",
       "pl": "Tryb BufferHeight jest wyłączony",
       "id": 197 }
     ,
     "lng_BufferHeightOnHint": {
       "en": "BufferHeight mode is ON (scrolling enabled)",
+      "ru": "Режим BufferHeight включен (прокрутка включена)",
       "pl": "Tryb BufferHeight jest włączony (przewijanie włączone)",
       "id": 196 }
     ,
     "lng_CloseAllConsolesHint": {
       "en": "Close ALL consoles",
+      "ru": "Закрыть ВСЕ консоли",
       "pl": "Zamknij WSZYSTKIE konsole",
       "id": 193 }
     ,
     "lng_ConfirmCloseActiveOnly": {
       "en": "Close active console only",
+      "ru": "Закрыть только активную консоль",
       "pl": "Zamknij tylko aktywną konsolę",
       "id": 178 }
     ,
     "lng_ConfirmCloseBtn": {
       "en": "Close",
+      "ru": "Закрыть",
       "pl": "Zamknij",
       "id": 202 }
     ,
     "lng_ConfirmCloseBtnAll": {
       "en": "Close all",
+      "ru": "Закрыть все",
       "pl": "Zamknij wszystko",
       "id": 203 }
     ,
     "lng_ConfirmCloseBtnConsole": {
       "en": "Close 1 console",
+      "ru": "Закрыть 1 консоль",
       "pl": "Zamknij 1 konsole",
       "id": 205 }
     ,
     "lng_ConfirmCloseBtnConsoles": {
       "en": "consoles",
+      "ru": "консоли",
       "pl": "konsole",
       "id": 204 }
     ,
@@ -5628,46 +5640,55 @@
     ,
     "lng_ConfirmCloseChildGuiQ": {
       "en": "Confirm closing active child window?",
+      "ru": "Подтвердить закрытие активного дочернего окна?",
       "pl": "Czy potwierdzić zamknięcie aktywnego okna podrzędnego?",
       "id": 181 }
     ,
     "lng_ConfirmCloseConsoleQ": {
       "en": "Confirm closing console?",
+      "ru": "Подтвердить закрытие консоли?",
       "pl": "Potwierdź zamknięcie konsoli?",
       "id": 182 }
     ,
     "lng_ConfirmCloseEditorQ": {
       "en": "Confirm closing Far editor?",
+      "ru": "Подтвердить закрытие редактора Far?",
       "pl": "Potwierdź zamknięcie edytora Far?",
       "id": 184 }
     ,
     "lng_ConfirmCloseGroupQ": {
       "en": "Confirm closing group?",
+      "ru": "Подтвердить закрытие группы?",
       "pl": "Potwierdzić zamykającą grupę?",
       "id": 187 }
     ,
     "lng_ConfirmCloseViewerQ": {
       "en": "Confirm closing Far viewer?",
+      "ru": "Подтвердить закрытие Far viewer?",
       "pl": "Potwierdzić zamknięcie przeglądarki Far?",
       "id": 185 }
     ,
     "lng_ConfirmClosingQ": {
       "en": "Confirm closing?",
+      "ru": "Подтвердить закрытие?",
       "pl": "Potwierdzasz zamknięcie?",
       "id": 188 }
     ,
     "lng_ConfirmDontCloseAnything": {
       "en": "Don't close anything",
+      "ru": "Ничего не закрывать",
       "pl": "Nie zamykaj niczego",
       "id": 189 }
     ,
     "lng_ConfirmIncompleteOperations": {
       "en": "Incomplete operations",
+      "ru": "Незавершенные операции",
       "pl": "Niekompletne operacje",
       "id": 179 }
     ,
     "lng_ConfirmKillButShellQ": {
       "en": "Terminate all but shell processes?",
+      "ru": "Завершить все процессы, кроме оболочки?",
       "pl": "Zakończyć wszystkie procesy oprócz procesów powłoki?",
       "id": 183 }
     ,
@@ -5678,11 +5699,13 @@
     ,
     "lng_ConfirmUnsavedEditors": {
       "en": "Unsaved editor windows",
+      "ru": "Несохраненные окна редактора",
       "pl": "Niezapisane okna edytora",
       "id": 180 }
     ,
     "lng_CreateNewConsoleHint": {
       "en": "Create new console",
+      "ru": "Создать новую консоль",
       "pl": "Utwórz nową konsolę",
       "id": 200 }
     ,
@@ -5918,31 +5941,37 @@
     ,
     "lng_MaximizeWindowHint": {
       "en": "Maximize window",
+      "ru": "Развернуть окно",
       "pl": "Maksymalizuj okno",
       "id": 194 }
     ,
     "lng_MenuAbout": {
       "en": "&About / Help",
+      "ru": "О программе / Помощь",
       "pl": "& Informacje / Pomoc",
       "id": 138 }
     ,
     "lng_MenuAllTaskTabs": {
       "en": "All task tabs",
+      "ru": "Все вкладки задач",
       "pl": "Wszystkie zakładki zadań",
       "id": 158 }
     ,
     "lng_MenuAlwaysOnTop": {
       "en": "Al&ways on top",
+      "ru": "Всегда сверху",
       "pl": "Za&wsze na górze",
       "id": 153 }
     ,
     "lng_MenuAttachTo": {
       "en": "Attach to...",
+      "ru": "Прикрепить к...",
       "pl": "Dołączyć do...",
       "id": 116 }
     ,
     "lng_MenuAutoScroll": {
       "en": "Auto scro&ll",
+      "ru": "Автопрокрутка",
       "pl": "Auto Scro&ll",
       "id": 154 }
     ,
@@ -5953,146 +5982,175 @@
     ,
     "lng_MenuChangeAffinity": {
       "en": "A&ffinity/priority...",
+      "ru": "Сходство / приоритет...",
       "pl": "A&ffinity/ priorytet ...",
       "id": 111 }
     ,
     "lng_MenuCheckUpdate": {
       "en": "&Check for updates",
+      "ru": "Проверить обновления",
       "pl": "&Sprawdź aktualizacje",
       "id": 129 }
     ,
     "lng_MenuChildSysMenu": {
       "en": "Child system menu...",
+      "ru": "Дочернее системное меню...",
       "pl": "Menu systemowe dla dzieci ...",
       "id": 114 }
     ,
     "lng_MenuClearHistory": {
       "en": "Clear history...",
+      "ru": "Очистить историю...",
       "pl": "Czysta historia...",
       "id": 139 }
     ,
     "lng_MenuCloseConsole": {
       "en": "&Close console",
+      "ru": "Закрыть консоль",
       "pl": "&Zamknij konsolę",
       "id": 107 }
     ,
     "lng_MenuCloseGroup": {
       "en": "&Close tab group",
+      "ru": "Закрыть группу вкладок",
       "pl": "&Zamknij grupę kart",
       "id": 108 }
     ,
     "lng_MenuCloseTab": {
       "en": "&Close tab",
+      "ru": "Закрыть вкладку",
       "pl": "&Zamknij karte",
       "id": 109 }
     ,
     "lng_MenuConCopy": {
       "en": "Cop&y",
+      "ru": "Копировать",
       "pl": "Kopiu&j",
       "id": 119 }
     ,
     "lng_MenuConCopyAll": {
       "en": "Copy &all",
+      "ru": "Копировать все",
       "pl": "Kopiuj &wszystko",
       "id": 120 }
     ,
     "lng_MenuConCopyFmt0": {
       "en": "Plain &text only",
+      "ru": "Только обычный текст",
       "pl": "Zwykły &tylko tekst",
       "id": 123 }
     ,
     "lng_MenuConCopyFmt1": {
       "en": "Copy &HTML format",
+      "ru": "Копировать в HTML-формате",
       "pl": "Kopiuj &Format HTML",
       "id": 124 }
     ,
     "lng_MenuConCopyFmt2": {
       "en": "Copy a&s HTML",
-      "pl": "Skopiuj plik& HTML",
+      "ru": "Копировать как HTML",
+      "pl": "Kopiuj plik& HTML",
       "id": 125 }
     ,
     "lng_MenuConCopyFmt3": {
       "en": "A&NSI sequences",
+      "ru": "Последовательности ANSI",
       "pl": "A&NSI sekwencje",
       "id": 126 }
     ,
     "lng_MenuConFind": {
       "en": "&Find text...",
+      "ru": "Найти текст...",
       "pl": "&Znajdź tekst...",
       "id": 127 }
     ,
     "lng_MenuConMarkBlock": {
       "en": "Mark &block",
+      "ru": "Отметить блок",
       "pl": "Zaznacz &zablokuj",
       "id": 117 }
     ,
     "lng_MenuConMarkText": {
       "en": "Mar&k text",
+      "ru": "Отметить текст",
       "pl": "Zaznacz tekst",
       "id": 118 }
     ,
     "lng_MenuConPaste": {
       "en": "&Paste",
+      "ru": "Вставить",
       "pl": "&Wklej",
       "id": 121 }
     ,
     "lng_MenuConProperties": {
       "en": "&Properties...",
+      "ru": "Свойства...",
       "pl": "&Posiadłość",
       "id": 160 }
     ,
     "lng_MenuConToggleVisible": {
       "en": "&Real console",
+      "ru": "Настоящая консоль",
       "pl": "&Prawdziwa konsola",
       "id": 159 }
     ,
     "lng_MenuDebugActive": {
       "en": "Debug &active process...",
+      "ru": "Отладка активного процесса...",
       "pl": "Debugowanie &aktywny proces.",
       "id": 170 }
     ,
     "lng_MenuDebugAssert": {
       "en": "Show assertion",
+      "ru": "Показать утверждение",
       "pl": "Pokaż potwierdzenie",
       "id": 168 }
     ,
     "lng_MenuDebugGui": {
       "en": "Debug &log (GUI)",
+      "ru": "Журнал отладки",
       "pl": "Debug &log (GUI)",
       "id": 164 }
     ,
     "lng_MenuDebugShowRects": {
       "en": "Show debug rec&ts",
+      "ru": "Показать записи отладки",
       "pl": "Pokaż debugowanie rect&s",
       "id": 165 }
     ,
     "lng_MenuDebugTrap": {
       "en": "Raise exception (Main thread)",
+      "ru": "Вызвать исключение (основной поток)",
       "pl": "Zgłoś wyjątek (Główny wątek)",
       "id": 166 }
     ,
     "lng_MenuDebugTrap2": {
       "en": "Raise exception (Monitor thread)",
+      "ru": "Вызвать исключение (поток монитора)",
       "pl": "Podnieś wyjątek (wątek monitora)",
       "id": 167 }
     ,
     "lng_MenuDetach": {
       "en": "Detach",
+      "ru": "Отсоединить",
       "pl": "Odłączyć",
       "id": 99 }
     ,
     "lng_MenuDonateLink": {
       "en": "&Donate ConEmu",
+      "ru": "Пожертвовать ConEmu",
       "pl": "&Dotacja ConEmu",
       "id": 131 }
     ,
     "lng_MenuDumpConsole": {
       "en": "&Dump screen...",
+      "ru": "Дамп экрана...",
       "pl": "&Zrzut ekranu...",
       "id": 162 }
     ,
     "lng_MenuDumpMemBlk": {
       "en": "Dump used memory blocks",
+      "ru": "Дамп используемых блоков памяти",
       "pl": "Zrzuć używane bloki pamięci",
       "id": 169 }
     ,
@@ -6103,31 +6161,37 @@
     ,
     "lng_MenuHelp": {
       "en": "&Help",
+      "ru": "Помощь",
       "pl": "&Wsparcie",
       "id": 135 }
     ,
     "lng_MenuHideToTray": {
       "en": "Hide to &TSA",
+      "ru": "Скрыть в TSA",
       "pl": "Ukryj się &TSA",
       "id": 149 }
     ,
     "lng_MenuHomePage": {
       "en": "&Visit home page",
+      "ru": "Посетить домашнюю страницу",
       "pl": "&Odwiedź stronę główną",
       "id": 130 }
     ,
     "lng_MenuHotkeys": {
       "en": "Hot&keys",
+      "ru": "Горячие клавиши",
       "pl": "Klawisze skrótu",
       "id": 136 }
     ,
     "lng_MenuLoadDumpConsole": {
       "en": "&Load screen dump...",
+      "ru": "Загрузить дамп экрана...",
       "pl": "&Wczytaj zrzut ekranu",
       "id": 163 }
     ,
     "lng_MenuMiniDump": {
       "en": "Active process &memory dump...",
+      "ru": "Дамп памяти активного процесса...",
       "pl": "Aktywny proces &zrzut pamięci...",
       "id": 171 }
     ,
@@ -6138,61 +6202,73 @@
     ,
     "lng_MenuMoreTasks": {
       "en": "&More tasks",
+      "ru": "Больше задач",
       "pl": "&Więcej zadań",
       "id": 141 }
     ,
     "lng_MenuNewConsole": {
       "en": "New console dialog...",
+      "ru": "Диалог новое окно консоли...",
       "pl": "Nowe okno konsoli...",
       "id": 115 }
     ,
     "lng_MenuOnlineHelp": {
       "en": "Online &Help",
+      "ru": "Онлайн помощь",
       "pl": "Pomoc &online",
       "id": 137 }
     ,
     "lng_MenuPopupActiveCon": {
       "en": "Acti&ve console",
+      "ru": "Активная консоль",
       "pl": "Aktywuj konsolę",
       "id": 152 }
     ,
     "lng_MenuPopupConList": {
       "en": "Console &list",
+      "ru": "Список консолей",
       "pl": "Konsola i lista",
       "id": 151 }
     ,
     "lng_MenuPopupDebug": {
       "en": "&Debug",
+      "ru": "Отладка",
       "pl": "Debuguj",
       "id": 144 }
     ,
     "lng_MenuPopupEdit": {
       "en": "Ed&it",
+      "ru": "Редактировать",
       "pl": "Edytuj",
       "id": 142 }
     ,
     "lng_MenuPopupHelp": {
       "en": "Hel&p",
+      "ru": "Помощь",
       "pl": "Wsparcie",
       "id": 146 }
     ,
     "lng_MenuPopupPalettes": {
       "en": "&View (palettes)",
+      "ru": "Просмотр (палитры)",
       "pl": "Widok (palety)",
       "id": 143 }
     ,
     "lng_MenuPopupRestart": {
       "en": "&Restart or duplicate",
+      "ru": "Перезагрузить или дублировать",
       "pl": "Uruchom ponownie lub zduplikuj",
       "id": 112 }
     ,
     "lng_MenuPopupSysDebug": {
       "en": "&Debug",
+      "ru": "Отладка",
       "pl": "Debugowanie",
       "id": 147 }
     ,
     "lng_MenuPopupSysEdit": {
       "en": "&Edit",
+      "ru": "Редактировать",
       "pl": "Edytuj",
       "id": 148 }
     ,
@@ -6203,76 +6279,91 @@
     ,
     "lng_MenuRenameTab": {
       "en": "Rena&me tab...",
+      "ru": "Переименовать вкладку...",
       "pl": "Zmień nazwę karty",
       "id": 110 }
     ,
     "lng_MenuReportBug": {
       "en": "&Report a bug...",
+      "ru": "Сообщить об ошибке...",
       "pl": "Zgłoś błąd...",
       "id": 134 }
     ,
     "lng_MenuResetTerminal": {
       "en": "&Reset terminal",
+      "ru": "Сбросить терминал",
       "pl": "Zresetuj terminal",
       "id": 122 }
     ,
     "lng_MenuRestart": {
       "en": "&Restart",
+      "ru": "Перезапуск",
       "pl": "Restart",
       "id": 105 }
     ,
     "lng_MenuRestartAs": {
       "en": "Restart as Admin",
+      "ru": "Перезагрузить как администратор",
       "pl": "Restart jako admin",
       "id": 106 }
     ,
     "lng_MenuRestartDlg": {
       "en": "&Restart...",
-      "pl": "Restartuj...",
+      "ru": "Перезапуск...",
+      "pl": "Opcje restartu",
       "id": 104 }
     ,
     "lng_MenuRestoreFromTray": {
       "en": "Restore from &TSA",
+      "ru": "Восстановить из TSA",
       "pl": "Przywróć z TSA",
       "id": 150 }
     ,
     "lng_MenuScreenshot": {
       "en": "Make &screenshot...",
+      "ru": "Сделать скриншот...",
       "pl": "Utwórz zrzut ekranu ...",
       "id": 161 }
     ,
     "lng_MenuSettings": {
       "en": "Sett&ings...",
+      "ru": "Настройки...",
       "pl": "Ustawienia",
       "id": 155 }
     ,
     "lng_MenuSetupTasks": {
       "en": "Setup tasks...",
+      "ru": "Настройки задач...",
       "pl": "Zadania konfiguracyjne...",
       "id": 140 }
     ,
     "lng_MenuSplit2Bottom": {
       "en": "Split to &bottom",
+      "ru": "Разделить вниз",
       "pl": "Podziel na dół",
       "id": 103 }
     ,
     "lng_MenuSplit2Right": {
       "en": "Split to ri&ght",
+      "ru": "Разделить вправо",
       "pl": "Podziel na prawy",
       "id": 102 }
     ,
     "lng_MenuStopUpdate": {
       "en": "&Stop updates checking",
+      "ru": "Остановить проверку обновлений",
       "pl": "Zatrzymaj sprawdzanie aktualizacji",
       "id": 128 }
     ,
     "lng_MenuSysAttachTo": {
       "en": "Attach t&o...",
+      "ru": "Прикрепить к...",
       "pl": "Dołączyć do",
       "id": 156 }
     ,
     "lng_MenuSysNewConsole": {
       "en": "New console dialog...",
+      "ru": "Диалог новое окно консоли...",
       "pl": "Nowe okno konsoli...",
       "id": 157 }
     ,
@@ -6283,6 +6374,7 @@
     ,
     "lng_MenuTerminateAllCon": {
       "en": "Close &all consoles",
+      "ru": "Закрыть все консоли",
       "pl": "Zamknij wszystkie konsole",
       "id": 95 }
     ,
@@ -6293,26 +6385,31 @@
     ,
     "lng_MenuTerminateCon": {
       "en": "Close active &console",
+      "ru": "Закрыть активную консоль",
       "pl": "Zamknij aktywne konsolę",
       "id": 90 }
     ,
     "lng_MenuTerminateConExpt": {
       "en": "Close e&xcept active",
+      "ru": "Закрыть кроме активной",
       "pl": "Zamknij, z wyjątkiem aktywnych",
       "id": 97 }
     ,
     "lng_MenuTerminateGroup": {
       "en": "Close active &group",
+      "ru": "Закрыть активную группу",
       "pl": "Zamknij aktywną grupę",
       "id": 93 }
     ,
     "lng_MenuTerminatePrc": {
       "en": "Kill &active process",
+      "ru": "Убить активный процесс",
       "pl": "Zabij i aktywuj proces",
       "id": 91 }
     ,
     "lng_MenuTerminatePrcGroup": {
       "en": "Kill active &processes",
+      "ru": "Убить активные процессы",
       "pl": "Zabij aktywne procesy",
       "id": 94 }
     ,
@@ -6323,32 +6420,38 @@
     ,
     "lng_MenuUnfasten": {
       "en": "Unfasten",
+      "ru": "Открепить",
       "pl": "Odpiąć",
       "id": 100 }
     ,
     "lng_MenuWhatsNewFile": {
       "en": "Whats &new (local)",
+      "ru": "Что нового",
       "pl": "Co nowego (lokalne)",
       "id": 132 }
     ,
     "lng_MenuWhatsNewWeb": {
       "en": "Whats new (&web)",
+      "ru": "Что нового (в Интернете)",
       "pl": "Co nowego (web)",
       "id": 133 }
     ,
     "lng_MinimizeWindowHint": {
       "en": "Minimize window",
+      "ru": "Свернуть окно",
       "pl": "Zminimalizuj okno",
       "id": 195 }
     ,
     "lng_NewConsoleSaveBtn": {
       "en": "&Save",
+      "ru": "Сохранить",
       "pl": "Zapisać",
       "id": 191 }
     ,
     "lng_NewConsoleStartBtn": {
       "en": "&Start",
-      "pl": "Początek",
+      "ru": "Начало",
+      "pl": "Uruchom",
       "id": 190 }
     ,
     "lng_PasteEnterConfirm": {
@@ -6462,16 +6565,19 @@
     ,
     "lng_ResetTerminalCancel": {
       "en": "Cancel operation",
+      "ru": "Отменить операцию",
       "pl": "Anuluj operację",
       "id": 177 }
     ,
     "lng_ResetTerminalConfirm": {
       "en": "Do you want to reset terminal contents?",
+      "ru": "Вы хотите сбросить содержимое терминала?",
       "pl": "Czy chcesz zresetować zawartość terminala?",
       "id": 174 }
     ,
     "lng_ResetTerminalOk": {
       "en": "Reset terminal contents and properties",
+      "ru": "Сбросить содержимое и свойства терминала",
       "pl": "Zresetuj zawartość i właściwości terminala",
       "id": 176 }
     ,
@@ -6546,6 +6652,7 @@
     ,
     "lng_ShowSystemMenuHint": {
       "en": "Show system menu (RClick for Settings)",
+      "ru": "Показать системное меню (Правый клик для настройки)",
       "pl": "Pokaż menu systemowe (P Kliknij, aby wyświetlić ustawienia)",
       "id": 192 }
     ,
@@ -7705,6 +7812,7 @@
     ,
     "cbConfirmResetTerminal": {
       "en": "Confirm terminal reset",
+      "ru": "Подтвердите сброс терминала",
       "pl": "Potwierdź resetowanie terminala",
       "id": 2690 }
     ,
@@ -10483,6 +10591,7 @@
     ,
     "IDABORT": {
       "en": "Abort",
+      "ru": "Прервать",
       "pl": "Poronienie",
       "id": 3 }
     ,
@@ -10532,7 +10641,7 @@
       "de": "&Neustart",
       "ja": "再起動(&s)",
       "es": "Re&iniciar",
-      "pl": "Ponownie&zacznij",
+      "pl": "Restart",
       "id": 1524 }
     ,
     "IDC_TERMINATE": {
@@ -10542,7 +10651,7 @@
       "de": "&Beenden",
       "ja": "終了する(&T)",
       "es": "&Finalizar",
-      "pl": "&Zakończyć",
+      "pl": "Zamknij",
       "id": 1525 }
     ,
     "IDC_WARNING": {
@@ -10552,7 +10661,7 @@
       "de": "Warnung, ungespeicherte Änderungen gehen verloren!",
       "ja": "警告,保存されていない作業が失われる可能性があります！",
       "es": "Aviso, ¡se pueden perder los datos no guardados!",
-      "pl": "Ostrzeżenie, niezapisana praca może zostać utracona!",
+      "pl": "Niezapisana praca zostanie utracona!",
       "id": 1530 }
     ,
     "IDCANCEL": {
@@ -10567,16 +10676,19 @@
     ,
     "IDCONTINUE": {
       "en": "Continue",
+      "ru": "Продолжить",
       "pl": "Kontyntynuj",
       "id": 11 }
     ,
     "IDIGNORE": {
       "en": "Ignore",
+      "ru": "Игнорировать",
       "pl": "Ignorować",
       "id": 5 }
     ,
     "IDNO": {
       "en": "No",
+      "ru": "Нет",
       "pl": "Nie",
       "id": 7 }
     ,
@@ -10592,16 +10704,19 @@
     ,
     "IDRETRY": {
       "en": "Retry",
+      "ru": "Повторить",
       "pl": "Spróbować ponownie",
       "id": 4 }
     ,
     "IDTRYAGAIN": {
       "en": "Try",
+      "ru": "Пытаться",
       "pl": "Próbuj",
       "id": 10 }
     ,
     "IDYES": {
       "en": "Yes",
+      "ru": "да",
       "pl": "Tak",
       "id": 6 }
     ,
@@ -11825,11 +11940,13 @@
     ,
     "stConsoleBufferChars": {
       "en": "Buffer (chars):",
+      "ru": "Буфер (символы):",
       "pl": "Bufor (znaki):",
       "id": 2954 }
     ,
     "stConsoleLeftTop": {
       "en": "Left x Top:",
+      "ru": "Слева x Сверху:",
       "pl": "Lewa x Góra:",
       "id": 2946 }
     ,
@@ -12659,6 +12776,7 @@
     ,
     "stStartupShellGeneral": {
       "en": "Choose your startup task:",
+      "ru": "Выбрать задачу запуска",
       "pl": "Wybierz zadanie startowe:",
       "id": 3110 }
     ,
