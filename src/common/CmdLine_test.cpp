@@ -150,10 +150,14 @@ TEST(CmdLine, IsNeedCmd)
 	test_mocks::FileSystemMock fileMock;
 	fileMock.MockFile(LR"(C:\Tools\Arch\7z.exe)");
 	fileMock.MockFile(LR"(c:\program files\arc\7z.exe)");
+	fileMock.MockFile(LR"(C:\arc\7z.exe)");
+	fileMock.MockFile(LR"(C:\far\far.exe)");
+	fileMock.MockFile(LR"(C:\msys\bin\make.EXE)");
 	fileMock.MockPathFile(L"7z.exe", LR"(C:\Tools\Arch\7z.exe)");
 	fileMock.MockPathFile(L"cmd.exe", LR"(C:\Windows\System32\cmd.exe)");
 	fileMock.MockPathFile(L"cacls.exe", LR"(C:\Windows\System32\cacls.exe)");
 	fileMock.MockPathFile(L"chkdsk.exe", LR"(C:\Windows\System32\chkdsk.exe)");
+	fileMock.MockPathFile(L"far.exe", LR"(c:\far\far.exe)");
 
 	TestIsNeedCmd(nullptr,
 		L"", L"",
@@ -211,71 +215,70 @@ TEST(CmdLine, IsNeedCmd)
 	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output",
 		L"cacls.exe", L"< input > output",
 		true, false, false, true, false);
-	// #FIX expectedResult should be true
+	// As it's a *server* mode (root command) we don't check for pipelining and redirection, even if there is no "/c"
 	TestIsNeedCmd(L"%comspec% < input > output",
 		L"cmd.exe", L"< input > output",
 		false, true, false, true, true);
 	TestIsNeedCmd(L"%comspec% /c < input > output",
 		L"cmd.exe", L"/c < input > output",
-		false, true, false, true, true);
+		false, false, false, true, true);
 	TestIsNeedCmd(L"%comspec% /K < input > output",
 		L"cmd.exe", L"/K < input > output",
 		false, true, false, true, true);
-	// #FIX expectedResult should be true
+	// #IsNeedCmd expectedResult should be true
 	TestIsNeedCmd(L"chkdsk < input > output",
 		L"chkdsk.exe", L"< input > output",
 		false, true, false, false, false);
 	TestIsNeedCmd(L"\"\"%windir%\\system32\\cacls.exe\" a test.7z ConEmu.exe \"",
 		L"cacls.exe", L"a test.7z ConEmu.exe \"",
 		false, false, true, false, false);
-	// #FIX expectedArgs should not end with \"
+	// #IsNeedCmd expectedArgs should not end with \"
 	TestIsNeedCmd(L"\"\"7z\" a test.7z ConEmu.exe \"",
 		L"7z.exe" /* via search */, L"a test.7z ConEmu.exe \"",
 		false, false, true, false, false);
 	TestIsNeedCmd(L"\"c:\\program files\\arc\\7z.exe\" -?",
 		L"c:\\program files\\arc\\7z.exe", L"-?",
 		false, false, false, false, false);
-	// #FIX expectedArgs should not end with \"
+	// #IsNeedCmd expectedArgs should not end with \"
 	TestIsNeedCmd(L"\"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		L"c:\\program files\\arc\\7z.exe", L"-?\"",
 		false, false, true, false, false);
-	// #FIX expectedResult should be false
-	// #FIX expectedExe should not contain "-?"
+	// #IsNeedCmd expectedArgs should not end with \"
 	TestIsNeedCmd(L"\"c:\\arc\\7z.exe -?\"",
-		L"c:\\arc\\7z.exe -?", L"",
-		true, false, false, true, false);
-	// #FIX expectedResult should be false
-	// #FIX expectedExe should not contain "-?"
+		L"c:\\arc\\7z.exe", L"-?\"",
+		false, false, true, false, false);
+	// #IsNeedCmd expectedArgs should not end with \"
 	TestIsNeedCmd(L"\"c:\\far\\far.exe -new_console\"",
-		L"c:\\far\\far.exe -new_console", L"",
-		true, false, false, true, false);
-	// #FIX expectedResult should be false
-	// #FIX expectedExe should not contain "-?"
+		L"c:\\far\\far.exe", L"-new_console\"",
+		false, false, true, false, false);
+	// #IsNeedCmd expectedArgs should not end with \"\"
+	// #IsNeedCmd expectedNeedCut should be true, but the command line is illegally quoted
 	TestIsNeedCmd(L"\"\"c:\\far\\far.exe -new_console\"\"",
-		L"c:\\far\\far.exe -new_console", L"",
-		true, false, false, true, false);
-	// #TODO add test with "far" without ".exe", but we need to emulate apiSearchPath?
-	TestIsNeedCmd(L"far.exe -new_console /p:c:\\far /e:some.txt",
-		L"far.exe", L"",
+		L"c:\\far\\far.exe", L"-new_console\"\"",
 		false, false, false, false, false);
-	// #FIX expectedResult should be false
-	// #FIX expectedExe should not contain -f
+	// #IsNeedCmd add test with "far" without ".exe", but we need to emulate apiSearchPath?
+	TestIsNeedCmd(L"far.exe -new_console /p:c:\\far /e:some.txt",
+		L"far.exe", L"-new_console /p:c:\\far /e:some.txt",
+		false, false, false, false, false);
+	TestIsNeedCmd(L"far -new_console /p:c:\\far /e:some.txt",
+		L"far.exe", L"-new_console /p:c:\\far /e:some.txt",
+		false, false, false, false, false);
+	// #IsNeedCmd should work properly even without mock of "make.EXE"
 	TestIsNeedCmd(L"\"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"\"",
-		L"C:\\msys\\bin\\make.EXE -f", L"",
-		true, false, false, true, false);
-	// #FIX expectedResult should be false
+		L"C:\\msys\\bin\\make.EXE", L"-f \"makefile\" COMMON=\"/../plugins\"\"",
+		false, false, true, false, false);
 	TestIsNeedCmd(L"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"",
-		L"C:\\msys\\bin\\make.EXE", L"",
-		true, false, false, true, false);
-	// #FIX expectedAlwaysConfirm?
+		L"C:\\msys\\bin\\make.EXE", L"-f \"makefile\" COMMON=\"/../plugins\"",
+		false, false, false, false, false);
+	// #IsNeedCmd expectedAlwaysConfirm?
 	TestIsNeedCmd(L"\"\"cmd\"\"",
 		L"cmd.exe", L"",
 		false, false, true, true, true);
-	// #FIX expectedAlwaysConfirm?
+	// #IsNeedCmd expectedAlwaysConfirm?
 	TestIsNeedCmd(L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		L"cmd.exe", L"/c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		false, false, false, true, true);
-	// #FIX expectedAlwaysConfirm?
+	// #IsNeedCmd expectedAlwaysConfirm?
 	TestIsNeedCmd(L"cmd /c \"dir c:\\\"",
 		L"cmd.exe", L"/c \"dir c:\\\"",
 		false, false, false, true, true);

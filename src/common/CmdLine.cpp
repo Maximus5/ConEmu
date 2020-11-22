@@ -556,7 +556,7 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 
 	// 17.10.2010 - support executable file path without parameters, but with spaces in its path
 	// 22.11.2015 - or some weirdness, like `C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe"`
-	
+
 	if (!commandLine)
 		return false;
 
@@ -692,6 +692,8 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 
 	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
 	{
+		// #IsNeedCmd try to cut the quotes and process the modified string
+
 		// Examples
 		// `""c:\program files\arc\7z.exe" -?"`
 		// `""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""`
@@ -735,7 +737,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			// or it's already a full specified file path
 			else if (IsFilePath(szExe, true))
 				exeToCheck = szExe.c_str();;
-			
+
 			// Than check if it is a FILE (not a directory)
 			if (exeToCheck && FileExists(exeToCheck, &nTempSize) && nTempSize)
 			{
@@ -950,6 +952,7 @@ wrap:
 		options->needCutStartEndQuot = rbNeedCutStartEndQuot;
 		options->rootIsCmdExe = rbRootIsCmdExe || isNeedCmd;
 		options->alwaysConfirmExit = rbAlwaysConfirmExit;
+		// #IsNeedCmd return arguments as CEStr, so we don't need needCutStartEndQuot processing
 		options->arguments = rsArguments;
 	}
 	return isNeedCmd;
