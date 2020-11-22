@@ -20,6 +20,21 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.11.22
+* gh-2188: Fix processing of ANSI sequence to change text cursor shape.
+  E.g. in cmd.exe prompt: `call SetEscChar.cmd && echo %ESC%[1 q`.
+* gh-2159: Fix ANSI scrolling issues (Git for Windows 2.28.0-rc2 less and others).
+* Speed up git paged scrolling up.
+* ANSI: Enable XTerm output mode with `ENABLE_VIRTUAL_TERMINAL_PROCESSING` flag.
+  More info: https://conemu.github.io/en/TerminalModes.html
+* Show ‘Terminal modes’ status bar column by default.
+* gh-2130: Let installer run again on Windows XP.
+* gh-2195: fix unexpected set of buffer height in alternative screen buffers.
+* Add full command line to output of `ConEmuC /args ...`.
+* gh-2199: Fix executor - extra quotation mark running commands (with trailing space) from Far Manager.
+* l10n: Polish and Russian translations were updated.
+
+
 2020.11.1
 * Fixes for compilation with mingw64 on Linux.
 * Add sample cmd script to `git push --set-upstream ...` using current local branch.
