@@ -27,7 +27,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "../common/Common.h"
+#include "../common/CEStr.h"
 #include "test_mock_file.h"
+#include "gtest.h"
 
 using test_mocks::FileSystemMock;
 
@@ -37,6 +39,14 @@ bool FileExistsMock(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/, b
 {
 	if (!gpFileSystemMock)
 		return false;
+
+	result = false;
+
+	if (!asFilePath || !*asFilePath)
+	{
+		EXPECT_TRUE(asFilePath != nullptr && *asFilePath != L'\0');
+		return true;
+	}
 
 	if (gpFileSystemMock->HasFilePath(asFilePath))
 	{
@@ -49,6 +59,54 @@ bool FileExistsMock(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/, b
 		if (pnSize)
 			*pnSize = 0;
 		result = true;
+	}
+
+	return true;
+}
+
+bool SearchPathMock(LPCWSTR path, LPCWSTR fileName, LPCWSTR extension, CEStr& resultPath, int& rc)
+{
+	if (!gpFileSystemMock)
+		return false;
+
+	rc = 0;
+
+	if (!fileName || !*fileName)
+	{
+		EXPECT_TRUE(fileName != nullptr && *fileName != L'\0');
+		return true;
+	}
+
+	if (path == nullptr || *path == L'\0')
+	{
+		const auto found = gpFileSystemMock->FindInPath(fileName, extension);
+		if (!found.empty())
+		{
+			resultPath = found.c_str();
+			rc = static_cast<int>(resultPath.GetLen());
+		}
+	}
+	else
+	{
+		std::wstring filePath(path);
+		if (filePath.back() != L'\\' && filePath.back() != L'/')
+			filePath += L'\\';
+		filePath.append(fileName);
+		if (gpFileSystemMock->HasFilePath(filePath))
+		{
+			resultPath = filePath.c_str();
+			rc = static_cast<int>(resultPath.GetLen());			
+		}
+		else if (extension && *extension == L'.')
+		{
+			EXPECT_TRUE(extension[0] == L'.' && extension[1] != '\0');
+			filePath.append(extension);
+			if (gpFileSystemMock->HasFilePath(filePath))
+			{
+				resultPath = filePath.c_str();
+				rc = static_cast<int>(resultPath.GetLen());
+			}
+		}
 	}
 
 	return true;
@@ -71,32 +129,55 @@ void FileSystemMock::Reset()
 	directories_.clear();
 }
 
-void FileSystemMock::MockFile(const wchar_t* filePath)
+void FileSystemMock::MockFile(const std::wstring& filePath)
 {
 	files_.insert(MakeCanonic(filePath));
 }
 
-void FileSystemMock::MockDirectory(const wchar_t* directoryPath)
+void FileSystemMock::MockDirectory(const std::wstring& directoryPath)
 {
 	directories_.insert(MakeCanonic(directoryPath));
 }
 
-bool FileSystemMock::HasFilePath(const wchar_t* filePath) const
+void FileSystemMock::MockPathFile(const std::wstring& fileName, const std::wstring& filePath)
+{
+	auto canonicPath = MakeCanonic(filePath);
+	fileToPath_.insert({ MakeCanonic(fileName), canonicPath });
+	files_.insert(std::move(canonicPath));
+}
+
+bool FileSystemMock::HasFilePath(const std::wstring& filePath) const
 {
 	return files_.count(MakeCanonic(filePath)) > 0;
 }
 
-bool FileSystemMock::HasDirectoryPath(const wchar_t* directoryPath) const
+bool FileSystemMock::HasDirectoryPath(const std::wstring& directoryPath) const
 {
 	return directories_.count(MakeCanonic(directoryPath)) > 0;
 }
 
-std::wstring FileSystemMock::MakeCanonic(const wchar_t* filePath)
+std::wstring FileSystemMock::FindInPath(const std::wstring& fileName, const wchar_t* fileExtension) const
+{
+	std::wstring canonic(MakeCanonic(fileName));
+	auto found = fileToPath_.find(canonic);
+	if (found == fileToPath_.end() && fileExtension && *fileExtension)
+	{
+		EXPECT_TRUE(fileExtension[0] == L'.' && fileExtension[1] != L'\0');
+		canonic += MakeCanonic(fileExtension);
+		found = fileToPath_.find(canonic);
+	}
+	return (found == fileToPath_.end()) ? std::wstring() : found->second;
+}
+
+std::wstring FileSystemMock::MakeCanonic(const std::wstring& filePath)
 {
 	std::wstring canonic(filePath);
-	for (auto slash = canonic.find(L'/'); slash != std::wstring::npos; slash = canonic.find(L'/', slash))
+	for (auto& c : canonic)
 	{
-		canonic[slash] = L'\\';
+		if (c == L'/')
+			c = L'\\';
+		else
+			c = tolower(c);
 	}
 	return canonic;
 }

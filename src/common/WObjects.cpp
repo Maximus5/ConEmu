@@ -125,6 +125,17 @@ bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/)
 
 int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr& rsPath)
 {
+	#if CE_UNIT_TEST==1
+	{
+		int result = 0;
+		extern bool SearchPathMock(LPCWSTR path, LPCWSTR fileName, LPCWSTR extension, CEStr& resultPath, int& rc);
+		if (SearchPathMock(lpPath, lpFileName, lpExtension, rsPath, result))
+		{
+			return result;
+		}
+	}
+	#endif
+	
 	bool bFound = false;
 	wchar_t *pszFilePart = nullptr, *pszBuffer = nullptr;
 	wchar_t szFind[MAX_PATH+1];
@@ -244,23 +255,12 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 		}
 	}
 
-	// Попытаемся найти "по путям" (%PATH%)
-	wchar_t *pszFilePart;
-	wchar_t szFind[MAX_PATH+1];
+	// ReSharper disable once CppLocalVariableMayBeConst
 	LPCWSTR pszExt = PointToExt(asFilePath);
 
-	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? nullptr : L".exe", countof(szFind), szFind, &pszFilePart);
-
-	SafeFree(pszSearchPath);
-
-	if (nLen && (nLen < countof(szFind)) && FileExists(szFind))
-	{
-		// asFilePath will be invalid after .Set
-		rsFound.Set(szFind);
-		return true;
-	}
-
-	return false;
+	// Try to find the executable file in %PATH%
+	const auto foundLen = apiSearchPath(pszSearchPath, pszSearchFile, pszExt ? nullptr : L".exe", rsFound);
+	return (foundLen > 0);
 }
 
 SearchAppPaths_t gfnSearchAppPaths = nullptr;

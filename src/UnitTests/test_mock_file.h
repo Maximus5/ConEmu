@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <unordered_map>
 #include <unordered_set>
 #include <string>
 
@@ -46,17 +47,21 @@ namespace test_mocks
 
 		void Reset();
 
-		void MockFile(const wchar_t* filePath);
-		void MockDirectory(const wchar_t* directoryPath);
+		void MockFile(const std::wstring& filePath);
+		void MockDirectory(const std::wstring& directoryPath);
 
-		bool HasFilePath(const wchar_t* filePath) const;
-		bool HasDirectoryPath(const wchar_t* directoryPath) const;
+		// Used to simulate files found by %PATH% search
+		void MockPathFile(const std::wstring& fileName, const std::wstring& filePath);
+
+		bool HasFilePath(const std::wstring& filePath) const;
+		bool HasDirectoryPath(const std::wstring& directoryPath) const;
+		std::wstring FindInPath(const std::wstring& fileName, const wchar_t* fileExtension) const;
 
 	protected:
-		static std::wstring MakeCanonic(const wchar_t* filePath);
+		static std::wstring MakeCanonic(const std::wstring& filePath);
 		
-		// case-sensitive
 		std::unordered_set<std::wstring> files_;
 		std::unordered_set<std::wstring> directories_;
+		std::unordered_map<std::wstring, std::wstring> fileToPath_;
 	};
 }

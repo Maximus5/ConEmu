@@ -147,6 +147,14 @@ TEST(CmdLine, IsNeedCmd)
 {
 	gbVerifyIgnoreAsserts = true; // bypass debug asserts for invalid parameters
 
+	test_mocks::FileSystemMock fileMock;
+	fileMock.MockFile(LR"(C:\Tools\Arch\7z.exe)");
+	fileMock.MockFile(LR"(c:\program files\arc\7z.exe)");
+	fileMock.MockPathFile(L"7z.exe", LR"(C:\Tools\Arch\7z.exe)");
+	fileMock.MockPathFile(L"cmd.exe", LR"(C:\Windows\System32\cmd.exe)");
+	fileMock.MockPathFile(L"cacls.exe", LR"(C:\Windows\System32\cacls.exe)");
+	fileMock.MockPathFile(L"chkdsk.exe", LR"(C:\Windows\System32\chkdsk.exe)");
+
 	TestIsNeedCmd(nullptr,
 		L"", L"",
 		true, false, false, true, false);
@@ -217,19 +225,16 @@ TEST(CmdLine, IsNeedCmd)
 		L"cacls.exe", L"a test.7z ConEmu.exe \"",
 		false, false, true, false, false);
 	// #FIX expectedArgs should not end with \"
-	// #FIX expectedNeedCut should be true
 	TestIsNeedCmd(L"\"\"7z\" a test.7z ConEmu.exe \"",
 		L"7z.exe" /* via search */, L"a test.7z ConEmu.exe \"",
-		false, false, false, false, false);
-	// #FIX expectedResult should be false
+		false, false, true, false, false);
 	TestIsNeedCmd(L"\"c:\\program files\\arc\\7z.exe\" -?",
-		L"c:\\program files\\arc\\7z.exe", L"",
-		true, false, false, true, false);
-	// #FIX expectedResult should be false
-	// #FIX expectedNeedCut should be true
+		L"c:\\program files\\arc\\7z.exe", L"-?",
+		false, false, false, false, false);
+	// #FIX expectedArgs should not end with \"
 	TestIsNeedCmd(L"\"\"c:\\program files\\arc\\7z.exe\" -?\"",
-		L"c:\\program files\\arc\\7z.exe", L"",
-		true, false, false, true, false);
+		L"c:\\program files\\arc\\7z.exe", L"-?\"",
+		false, false, true, false, false);
 	// #FIX expectedResult should be false
 	// #FIX expectedExe should not contain "-?"
 	TestIsNeedCmd(L"\"c:\\arc\\7z.exe -?\"",
@@ -261,7 +266,7 @@ TEST(CmdLine, IsNeedCmd)
 	// #FIX expectedAlwaysConfirm?
 	TestIsNeedCmd(L"\"\"cmd\"\"",
 		L"cmd.exe", L"",
-		false, false, false, true, true);
+		false, false, true, true, true);
 	// #FIX expectedAlwaysConfirm?
 	TestIsNeedCmd(L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		L"cmd.exe", L"/c \"\"c:\\program files\\arc\\7z.exe\" -?\"",

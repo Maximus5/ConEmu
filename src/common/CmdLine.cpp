@@ -692,68 +692,61 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 
 	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
 	{
-		//if (pwszCopy[1] == L'"' && pwszCopy[2])
-		//{
-		//	pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+		// Examples
+		// `""c:\program files\arc\7z.exe" -?"`
+		// `""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""`
+		// `"c:\arc\7z.exe -?"`
+		// `"C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""`
+		// `""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""`
+		// `""cmd""`
+		// `cmd /c ""c:\program files\arc\7z.exe" -?"` // could be also double-double-quoted inside
+		// `cmd /c "dir c:\"`
 
-		//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-		//}
-		//else
-			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
-			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
-			//	LPCWSTR pwszTemp = pwszCopy;
-			//	// Получим первую команду (исполняемый файл?)
-			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
-			//		//Parsing command line failed
-			//		lbRc = true; goto wrap;
-			//	}
-			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
-			//	lbFirstWasGot = TRUE;
-			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-			//} else
+		// Get the first argument (the executable?)
+		CmdArg arg;
+		const auto* nextArg = NextArg(pwszCopy, arg);
+		if (!nextArg)
 		{
-			// Will be dequoted in 'NextArg' function. Examples
-			// "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
-			// ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
-			// ""cmd""
-			// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
-			// cmd /c "dir c:\"
+			//Parsing command line failed
+			#ifdef WARN_NEED_CMD
+			_ASSERTE(FALSE);
+			#endif
+			lbRc = true; goto wrap;
+		}
+		szExe.Set(arg);
 
-			// Get the first argument (the executable?)
-			CmdArg arg;
-			const auto* nextArg = NextArg(pwszCopy, arg);
-			if (!nextArg)
-			{
-				//Parsing command line failed
-				#ifdef WARN_NEED_CMD
-				_ASSERTE(FALSE);
-				#endif
-				lbRc = true; goto wrap;
-			}
-			szExe.Set(arg);
+		if (lstrcmpiW(szExe, L"start") == 0)
+		{
+			// The "start" command could be executed only by command processor
+			#ifdef WARN_NEED_CMD
+			_ASSERTE(FALSE);
+			#endif
+			lbRc = true; goto wrap;
+		}
 
-			if (lstrcmpiW(szExe, L"start") == 0)
-			{
-				// The "start" command could be executed only by command processor
-				#ifdef WARN_NEED_CMD
-				_ASSERTE(FALSE);
-				#endif
-				lbRc = true; goto wrap;
-			}
-
-			wchar_t* pszExpand = nullptr;
-			if (arg.m_pszDequoted && IsExecutable(szExe, &pszExpand))
+		if (arg.m_pszDequoted)
+		{
+			uint64_t nTempSize = 0;
+			CEStr expanded;
+			const wchar_t* exeToCheck = nullptr;
+			// file/dir may be found via env.var. substitution or searching in %PATH%
+			if (FileExistsSearch(szExe.c_str(), expanded))
+				exeToCheck = expanded.IsEmpty() ? szExe.c_str() : expanded.c_str();
+			// or it's already a full specified file path
+			else if (IsFilePath(szExe, true))
+				exeToCheck = szExe.c_str();;
+			
+			// Than check if it is a FILE (not a directory)
+			if (exeToCheck && FileExists(exeToCheck, &nTempSize) && nTempSize)
 			{
 				_ASSERTE(*pwszCopy == L'"' && pwszCopy == asCmdLine); // should be still
 				++pwszCopy; // skip first double quote
 				lbFirstWasGot = true;
 
-				if (pszExpand)
-				{
-					szExe.Set(pszExpand);
-					SafeFree(pszExpand);
-					rsArguments = SkipNonPrintable(nextArg);
-				}
+				if (!expanded.IsEmpty())
+					szExe = std::move(expanded);
+				// #TODO remove ending quote
+				rsArguments = SkipNonPrintable(nextArg);
 
 				rbNeedCutStartEndQuot = true;
 			}
@@ -998,11 +991,14 @@ bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= nullptr*
 			if (!expanded)
 				break;
 			aszFilePathName = expanded.c_str();
+			continue;
 		}
+		break;
 	}
 
 	if (rsExpandedVars)
 	{
+		SafeFree(*rsExpandedVars)
 		*rsExpandedVars = expanded.Detach();
 	}
 
