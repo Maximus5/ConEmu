@@ -147,7 +147,7 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 	DWORD cbSize = 0;
 	LONG lrc;
 
-	rszData.Empty();
+	rszData.Clear();
 
 	if (pszSubKey && *pszSubKey)
 	{
@@ -185,7 +185,7 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 			}
 			else
 			{
-				rszData.Empty();
+				rszData.Clear();
 			}
 		}
 	}

@@ -87,7 +87,7 @@ CMatch::~CMatch()
 int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, CRConDataGuard& data, int nFromLine)
 {
 	m_Type = etr_None;
-	ms_Match.Empty();
+	ms_Match.Clear();
 	mn_Row = mn_Col = -1;
 	ms_Protocol[0] = 0;
 	mn_MatchLeft = mn_MatchRight = -1;

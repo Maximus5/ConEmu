@@ -160,7 +160,7 @@ struct SwitchParser
 		if (((psz = NextArg(psz, szNext))) && !szNext.IsPossibleSwitch())
 			rpsz = psz;
 		else
-			szNext.Clear();
+			szNext.Release();
 
 		auto* ps = new Switch(szArg.Detach(), szNext.Detach());
 		return ps;

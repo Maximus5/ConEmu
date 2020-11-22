@@ -123,7 +123,7 @@ int TabName::Length() const
 {
 	return nLen;
 }
-bool TabName::Empty() const
+bool TabName::IsEmpty() const
 {
 	return (sz[0] == 0);
 }

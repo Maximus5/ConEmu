@@ -150,7 +150,7 @@ void FindStartupTask(SettingsLoadedFlags slfFlags)
 
 LPCWSTR GetStartupCommand(CEStr& command)
 {
-	command.Clear();
+	command.Release();
 
 	// Show startup task or shell command line
 	switch (gpSet->nStartType)

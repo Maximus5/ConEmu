@@ -713,8 +713,8 @@ void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
 
 size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 {
-	rsArgs.Empty();
-	rsNewCon.Empty();
+	rsArgs.Clear();
+	rsNewCon.Clear();
 
 	if (!this)
 		return 0;

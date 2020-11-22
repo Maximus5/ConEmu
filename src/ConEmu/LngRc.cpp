@@ -140,8 +140,8 @@ void CLngRc::Reload(bool bForce /*= false*/)
 		if (!bExists
 			|| !LoadResources(lsNewLng, lsNewFile))
 		{
-			ms_Lng.Empty();
-			ms_l10n.Empty();
+			ms_Lng.Clear();
+			ms_l10n.Clear();
 
 			Clear(m_Languages);
 			Clean(m_CmnHints);

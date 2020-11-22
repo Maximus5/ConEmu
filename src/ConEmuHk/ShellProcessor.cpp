@@ -887,7 +887,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 		{
 			NeedCmdOptions opt{};
 			//DWORD nFileAttrs = (DWORD)-1;
-			ms_ExeTmp.Empty();
+			ms_ExeTmp.Clear();
 			IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, &opt);
 			// это может быть команда ком.процессора!
 			// поэтому, наверное, искать и проверять битность будем только для
@@ -945,7 +945,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 		{
 			LPCWSTR pszCmdLine = asParam;
 
-			ms_ExeTmp.Empty();
+			ms_ExeTmp.Clear();
 			if ((pszCmdLine = NextArg(pszCmdLine, ms_ExeTmp)))
 			{
 				LPCWSTR pszExt = PointToExt(ms_ExeTmp);
@@ -1251,7 +1251,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 			{
 				// exe-шника в asFile указано НЕ было, значит он в asParam, нужно его вытащить, и сформировать команду DosBox
 				NeedCmdOptions opt{};
-				ms_ExeTmp.Empty();
+				ms_ExeTmp.Clear();
 				IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, &opt);
 
 				if (ms_ExeTmp[0])
@@ -1448,7 +1448,7 @@ bool CShellProc::IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam)
 		#ifdef _DEBUG
 		bool bAnsiConFound = false;
 		LPCWSTR pszDbg = psz;
-		ms_ExeTmp.Empty();
+		ms_ExeTmp.Clear();
 		if ((pszDbg = NextArg(pszDbg, ms_ExeTmp)))
 		{
 			CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
@@ -1465,7 +1465,7 @@ bool CShellProc::IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam)
 		}
 		#endif
 
-		ms_ExeTmp.Empty();
+		ms_ExeTmp.Clear();
 		if (!NextArg(psz, ms_ExeTmp))
 		{
 			// AnsiCon exists in command line?
@@ -1821,7 +1821,7 @@ int CShellProc::PrepareExecuteParms(
 		return -1;
 	}
 
-	ms_ExeTmp.Empty();
+	ms_ExeTmp.Clear();
 
 	BOOL bGoChangeParm = FALSE;
 	bool bConsoleMode = false;
@@ -1979,7 +1979,7 @@ int CShellProc::PrepareExecuteParms(
 	// In some cases we need to pre-replace command line,
 	// for example, in cmd prompt: start -new_console:z
 	CEStr lsReplaceFile, lsReplaceParm;
-	ms_ExeTmp.Empty();
+	ms_ExeTmp.Clear();
 	bForceCutNewConsole |= PrepareNewConsoleInFile(aCmd, asFile, asParam, lsReplaceFile, lsReplaceParm, ms_ExeTmp);
 
 	if (ms_ExeTmp.IsEmpty())
@@ -2496,7 +2496,7 @@ wrap:
 
 bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp)
 {
-	rsExeTmp.Empty();
+	rsExeTmp.Clear();
 
 	if (asFile && *asFile)
 	{

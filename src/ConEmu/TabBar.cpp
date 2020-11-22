@@ -1406,10 +1406,10 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	LPCWSTR pszTabName = pRCon ? pRCon->GetTabTitle(pTab) : L"";
 
 	// That will be Far Manager panels or simple consoles (cmd, posh, bash, etc.)
-	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
+	if (pTab->Name.IsEmpty() || (pTab->Type() == fwt_Panels))
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		sFormat.Clear();
+		sFormat.Release();
 		sFormat.Append(
 			(bIsFar) ? gpSet->szTabPanels : gpSet->szTabConsole,
 			// Modified console contents - tab suffix

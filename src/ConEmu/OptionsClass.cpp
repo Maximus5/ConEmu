@@ -1635,8 +1635,8 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 {
 	if (ms_BalloonErrTip)
 	{
-		ms_BalloonErrTip.Clear();
-		SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
+		ms_BalloonErrTip.Release();
+		SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, reinterpret_cast<LPARAM>(&tiBalloon));
 		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
 	}
 
@@ -3254,7 +3254,7 @@ void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 {
 	if (!ghOpWnd)
 	{
-		ms_BalloonErrTip.Clear();
+		ms_BalloonErrTip.Release();
 		return;
 	}
 
@@ -3745,7 +3745,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				else if (TB == bConFontAdd2HKLM)
 				{
 					// Добавить шрифт в HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
-					gpSetCls->ms_ConFontError.Clear();
+					gpSetCls->ms_ConFontError.Release();
 					gpSetCls->ShowConFontErrorTip();
 					EnableWindow(GetDlgItem(hWnd2, tConsoleFontHklmNote), TRUE);
 					wchar_t szFaceName[32] = {0};
@@ -3969,7 +3969,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 			if (LOWORD(wParam) == WA_INACTIVE)
 			{
-				gpSetCls->ms_ConFontError.Clear();
+				gpSetCls->ms_ConFontError.Release();
 				gpSetCls->ShowConFontErrorTip();
 			}
 			else if (gpSetCls->bShowConFontError)
@@ -4237,7 +4237,7 @@ CSetPgBase* CSettings::GetActivePageObj()
 
 LPCWSTR CSettings::GetActivePageWiki(CEStr& lsWiki)
 {
-	lsWiki.Clear();
+	lsWiki.Release();
 	const ConEmuSetupPages* p = (m_LastActivePageId != thi_Last) ? GetPageData(m_LastActivePageId) : nullptr;
 	if (!p)
 		return nullptr;

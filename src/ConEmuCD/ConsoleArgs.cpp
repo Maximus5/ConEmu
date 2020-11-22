@@ -412,7 +412,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 	_ASSERTE(command_.IsEmpty());
 
 	// Let parse the reset
-	szArg.Empty();
+	szArg.Clear();
 
 	// Processing loop begin
 	while ((cmdLineRest = NextArg(cmdLineRest, szArg, &pszArgStart)))
@@ -980,7 +980,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		}
 
 		// Avoid assertions in NextArg
-		szArg.Empty();
+		szArg.Clear();
 	} // while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
 	// Processing loop end
 

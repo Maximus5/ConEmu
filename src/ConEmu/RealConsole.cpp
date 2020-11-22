@@ -15134,7 +15134,7 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 // также, функция может выполнить автопоиск в 1-м уровне подпапок "текущей" директории
 LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 {
-	szFull.Empty();
+	szFull.Clear();
 
 	AssertThisRet(nullptr);
 	if (!asSrc || !*asSrc)

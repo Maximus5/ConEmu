@@ -56,9 +56,11 @@ public:
 
 private:
 	bool CompareSwitch(const wchar_t* asSwitch, bool caseSensitive = false) const;
+	void ReleaseInternal();
 
 public:
-	void Empty();
+	void Clear();
+	void Release();
 
 	/// Copy service info from other CmdArg
 	/// Used during NextArg evaluation to use different CmdArg objects

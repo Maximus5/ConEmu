@@ -1358,7 +1358,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 					if (!pszIcon)
 					{
-						szTmp.Empty();
+						szTmp.Clear();
 						if ((pszTemp = NextArg(pszTemp, szTmp)))
 							pszIcon = szTmp;
 					}
@@ -1366,7 +1366,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 				}
 			}
 
-			szIcon.Empty();
+			szIcon.Clear();
 			if (pszIcon && *pszIcon)
 			{
 				CEStr lsTempIcon;
@@ -1381,7 +1381,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 					&& !apiSearchPath(nullptr, pszSearch, nullptr, szIcon)
 					&& !apiSearchPath(nullptr, pszSearch, L".exe", szIcon))
 				{
-					szIcon.Empty();
+					szIcon.Clear();
 					iIcon = 0;
 				}
 			}
@@ -2657,7 +2657,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				DEBUGSTRSTARTUP(L"Update package was dropped on ConEmu, updating");
 
 				// Чтобы при запуске НОВОЙ версии опять не пошло обновление - грохнуть ком-строку
-				gpConEmu->opt.cmdRunCommand.Empty();
+				gpConEmu->opt.cmdRunCommand.Clear();
 
 				// Создание скрипта обновления, запуск будет выполнен в деструкторе gpUpd
 				CConEmuUpdate::LocalUpdate(szPath);

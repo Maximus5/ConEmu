@@ -532,7 +532,7 @@ LPCWSTR GetDirectory(CEStr& szDir)
 	nMax = GetCurrentDirectoryW(MAX_PATH, szDir.GetBuffer(MAX_PATH));
 	if (!nMax)
 	{
-		szDir.Empty();
+		szDir.Clear();
 		goto wrap;
 	}
 	else if (nMax > MAX_PATH)
@@ -540,7 +540,7 @@ LPCWSTR GetDirectory(CEStr& szDir)
 		nLen = GetCurrentDirectoryW(nMax, szDir.GetBuffer(nMax));
 		if (!nLen || (nLen > nMax))
 		{
-			szDir.Empty();
+			szDir.Clear();
 			goto wrap;
 		}
 	}
@@ -561,7 +561,7 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 	bool result = false;
 	const auto* command = commandLine;
 
-	szExe.Empty();
+	szExe.Clear();
 
 	// 17.10.2010 - support executable file path without parameters, but with spaces in its path
 	// 22.11.2015 - or some weirdness, like `C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe"`
@@ -649,7 +649,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	if (!asCmdLine || !*asCmdLine)
 	{
 		_ASSERTE(asCmdLine && *asCmdLine);
-		szExe.Empty();
+		szExe.Clear();
 		lbRc = true;
 		goto wrap;
 	}
@@ -670,7 +670,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		lbRc = true;
 		goto wrap;
 	}
-	szExe.Empty();
+	szExe.Clear();
 
 
 	pwszCopy = asCmdLine;
@@ -751,7 +751,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	// Get the first argument (the executable?)
 	if (!lbFirstWasGot)
 	{
-		szExe.Empty();
+		szExe.Clear();
 
 		// `start` command must be processed by processor itself
 		if ((lstrcmpni(pwszCopy, L"start", 5) == 0)

@@ -189,7 +189,7 @@ SettingsRegistry::SettingsRegistry()
 }
 SettingsRegistry::~SettingsRegistry()
 {
-	CloseKey();
+	SettingsRegistry::CloseKey();
 }
 
 
@@ -611,17 +611,17 @@ LPCWSTR SettingsXML::utf2wcs(const char* utf8, CEStr& wc)
 	if (!utf8)
 	{
 		_ASSERTE(utf8 != nullptr);
-		wc.Clear();
+		wc.Release();
 		return nullptr;
 	}
 
-	wc.Empty();
+	wc.Clear();
 	int wcLen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
 	if (wcLen > 0)
 	{
 		wcLen = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wc.GetBuffer(wcLen), wcLen);
 		if (wcLen <= 0)
-			wc.Empty();
+			wc.Clear();
 	}
 	return wc.c_str();
 }
@@ -629,7 +629,7 @@ LPCWSTR SettingsXML::utf2wcs(const char* utf8, CEStr& wc)
 // Just a wrapper for WideCharToMultiByte
 const char* SettingsXML::wcs2utf(const wchar_t* wc, CEStrA& str) const
 {
-	str.Clear();
+	str.Release();
 	int ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, nullptr, 0, nullptr, nullptr);
 	str = (char*)malloc(ucLen);
 	if (!str.ms_Val)
@@ -641,7 +641,7 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc, CEStrA& str) const
 	if (ucLen <= 0)
 	{
 		_ASSERTE(ucLen > 0);
-		str.Clear();
+		str.Release();
 		return nullptr;
 	}
 	return str.ms_Val;

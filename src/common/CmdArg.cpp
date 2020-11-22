@@ -43,7 +43,7 @@ CmdArg::CmdArg(const wchar_t* str)
 
 CmdArg::~CmdArg()
 {
-	Empty();
+	Release();
 }
 
 CmdArg& CmdArg::operator=(const wchar_t* str)
@@ -52,10 +52,8 @@ CmdArg& CmdArg::operator=(const wchar_t* str)
 	return *this;
 }
 
-void CmdArg::Empty()
+void CmdArg::ReleaseInternal()
 {
-	CEStr::Empty();
-
 	m_nTokenNo = 0;
 	m_nCmdCall = CmdCall::Undefined;
 	m_pszDequoted = nullptr;
@@ -65,6 +63,18 @@ void CmdArg::Empty()
 	m_sLastTokenEnd = nullptr;
 	m_sLastTokenSave[0] = 0;
 	#endif
+}
+
+void CmdArg::Release()
+{
+	CEStr::Release();
+	ReleaseInternal();
+}
+
+void CmdArg::Clear()
+{
+	CEStr::Clear();
+	ReleaseInternal();
 }
 
 void CmdArg::LoadPosFrom(const CmdArg& arg)

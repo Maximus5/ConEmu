@@ -141,8 +141,8 @@ CEnvRestorer::~CEnvRestorer()
 void CEnvRestorer::Clear()
 {
 	mb_RestoreEnvVar = false;
-	ms_VarName.Clear();
-	ms_OldValue.Clear();
+	ms_VarName.Release();
+	ms_OldValue.Release();
 }
 
 void CEnvRestorer::SavePathVar(const wchar_t* asCurPath)

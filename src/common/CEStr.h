@@ -31,12 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "MArray.h"
 
-enum class StrClearFlags
-{
-	Release = 0,
-	Retain = 1,
-};
-
 // CEStr
 struct CEStr
 {
@@ -44,15 +38,21 @@ struct CEStr
 public:
 	wchar_t *ms_Val = nullptr;
 private:
-	ssize_t mn_MaxCount = 0; // Including termination \0
+	ssize_t maxCount_ = 0; // Including termination \0
 
 private:
 	const wchar_t* AttachInt(wchar_t*& asPtr);
 
 public:
+	bool IsEmpty() const;
+	bool IsNull() const;
+
 	operator const wchar_t*() const;
 	operator bool() const;
+	// ReSharper disable once CppInconsistentNaming
 	const wchar_t* c_str(const wchar_t* asNullSubstitute = nullptr) const;
+	// ReSharper disable once CppInconsistentNaming
+	wchar_t* data() const;
 	const wchar_t* Right(ssize_t cchMaxCount) const;
 	const wchar_t* Mid(ssize_t cchOffset) const;
 
@@ -80,9 +80,8 @@ public:
 	const wchar_t*  Append(const wchar_t* asStr1, const wchar_t* asStr2 = nullptr, const wchar_t* asStr3 = nullptr,
 		const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr,
 		const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr);
-	void Clear(StrClearFlags flags = StrClearFlags::Release);
-	void Empty();
-	bool IsEmpty() const;
+	void Clear();
+	void Release();
 	const wchar_t* Set(const wchar_t* asNewValue, ssize_t anChars = -1);
 	wchar_t SetAt(const ssize_t nIdx, const wchar_t wc);
 
@@ -122,7 +121,8 @@ public:
 	// ReSharper disable once CppInconsistentNaming
 	const char* c_str(const char* asNullSubstitute = nullptr) const;
 	ssize_t GetLen() const;
-	void Clear(StrClearFlags flags = StrClearFlags::Release);
+	void Clear();
+	void Release();
 
 	// Reset the buffer to new empty data of required size
 	char* GetBuffer(ssize_t cchMaxLen);

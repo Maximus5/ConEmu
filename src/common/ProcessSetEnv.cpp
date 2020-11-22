@@ -181,7 +181,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= nullptr
 					}
 				}
 				// OK, return it
-				lsSet.Empty(); // to avoid debug asserts
+				lsSet.Clear(); // to avoid debug asserts
 				lsSet.Set(lsCmdLine, pszValEnd - lsCmdLine);
 				lsCmdLine = SkipNonPrintable(pszAmp); // Leave possible '&' at pointer
 				bProcessed = true;
@@ -294,7 +294,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= nullptr
 		}
 		else
 		{
-			lsCmd.Empty();
+			lsCmd.Clear();
 		}
 
 		// Well, known command was detected. What is next?

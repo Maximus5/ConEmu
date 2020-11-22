@@ -120,7 +120,7 @@ public:
 	void Release();
 	LPCWSTR Ptr() const;
 	int Length() const;
-	bool Empty() const;
+	bool IsEmpty() const;
 };
 
 /* Internal information for Tab drawing */

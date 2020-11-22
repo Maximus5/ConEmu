@@ -87,7 +87,7 @@ int CFindPanel::GetMinWidth()
 
 void CFindPanel::ResetSearch()
 {
-	ms_PrevSearch->Empty();
+	ms_PrevSearch->Clear();
 	mn_KeyDown = 0;
 }
 
@@ -364,7 +364,7 @@ void CFindPanel::StopSearch()
 {
 	if (mh_Edit)
 		SetWindowText(mh_Edit, L"");
-	ms_PrevSearch->Empty();
+	ms_PrevSearch->Clear();
 	gpSet->SaveFindOptions();
 	gpConEmu->setFocus();
 	gpConEmu->DoEndFindText();

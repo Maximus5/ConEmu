@@ -196,7 +196,7 @@ bool FindFileName(LPCWSTR asPath, CEStr& rsName)
 	LPCWSTR pszName = wcsrchr(asPath, L'\\');
 	if (!pszName || pszName[1] == 0)
 	{
-		rsName.Empty();
+		rsName.Clear();
 		return false;
 	}
 	else

@@ -192,7 +192,7 @@ void WorkerServer::ServerInitFont()
 		DeleteDC(hdc);
 		// if ttfFontExists is true, consoleFontName_ could be updated
 		if (!ttfFontExists)
-			consoleFontName_.Empty(); // fill it with "Lucida Console" below
+			consoleFontName_.Clear(); // fill it with "Lucida Console" below
 	}
 
 	if (consoleFontName_.IsEmpty())

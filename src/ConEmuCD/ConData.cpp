@@ -727,7 +727,7 @@ void Row::Reset(const Attribute& attr)
 	ResetCRLF();
 	m_Text.clear();
 	m_Colors.clear();
-	m_CWD.Clear();
+	m_CWD.Release();
 
 	m_Colors.push_back(RowColor{0, attr});
 }
@@ -735,7 +735,7 @@ void Row::Reset(const Attribute& attr)
 void Row::SetWorkingDirectory(const wchar_t* cwd)
 {
 	if (!cwd || !*cwd)
-		m_CWD.Clear();
+		m_CWD.Release();
 	else
 		m_CWD.Set(cwd);
 }

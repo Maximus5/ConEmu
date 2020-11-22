@@ -1008,8 +1008,8 @@ void CRecreateDlg::FreeVars()
 	SafeFree(mpsz_CurCmd);
 	SafeFree(mpsz_SysCmd);
 	SafeFree(mpsz_DefDir);
-	ms_RConStartDir.Empty();
-	ms_RConCurDir.Empty();
+	ms_RConStartDir.Clear();
+	ms_RConCurDir.Clear();
 }
 
 void CRecreateDlg::AddCommandList(LPCWSTR asCommand, INT_PTR iAfter /*= -1*/)

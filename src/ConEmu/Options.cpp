@@ -5207,7 +5207,7 @@ LPCWSTR Settings::SaveAllMacroDefault(FarMacroVersion fmv)
 
 bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
 {
-	lsTitle.Empty();
+	lsTitle.Clear();
 
 	// User defined default shell task? (Win+X)
 	int nGroup = 0;

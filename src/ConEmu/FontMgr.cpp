@@ -1795,7 +1795,7 @@ bool CFontMgr::CreateFontGroup(CLogFont inFont)
 	//ResetFontWidth(); -- перенесено вниз, после того, как убедимся в валидности шрифта
 	//lfOutPrecision = OUT_RASTER_PRECIS,
 
-	ms_FontError.Clear();
+	ms_FontError.Release();
 
 	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 
@@ -1912,7 +1912,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 	bool bSucceeded = false;
 
 	if (rpFont.Ptr())
-		rpFont->ms_FontError.Clear();
+		rpFont->ms_FontError.Release();
 
 	WARNING("TODO: Use font cache");
 

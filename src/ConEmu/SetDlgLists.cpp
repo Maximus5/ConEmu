@@ -362,7 +362,7 @@ INT_PTR CSetDlgLists::GetSelectedString(HWND hParent, WORD nListCtrlId, CEStr& s
 
 	if (nLen <= 0)
 	{
-		szStr.Clear();
+		szStr.Release();
 	}
 wrap:
 	return nLen;

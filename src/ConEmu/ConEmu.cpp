@@ -899,7 +899,7 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*
 		+ (pszAddArgs ? (_tcslen(pszAddArgs) + 1) : 0);
 	if (!cchMax)
 	{
-		rsArgs.Empty();
+		rsArgs.Clear();
 		return nullptr;
 	}
 
@@ -1195,7 +1195,7 @@ LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= nullptr*/)
 
 LPCWSTR CConEmuMain::FindConEmuXml(CEStr& szXmlFile)
 {
-	szXmlFile.Empty();
+	szXmlFile.Clear();
 
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
 	// Search for portable xml file settings. Return first found due to defined priority.
@@ -2254,7 +2254,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 				if (szExpand.IsEmpty())
 				{
 					_ASSERTE(FALSE && "ExpandEnvStr(ComSpec)");
-					szExpand.Empty();
+					szExpand.Clear();
 				}
 			}
 			else
@@ -2269,16 +2269,16 @@ void CConEmuMain::UpdateGuiInfoMapping()
 				if (!apiGetFullPathName(szExpand, szFull))
 				{
 					_ASSERTE(FALSE && "apiGetFullPathName(ComSpec)");
-					szFull.Empty();
+					szFull.Clear();
 				}
 				else if (!FileExists(szFull))
 				{
-					szFull.Empty();
+					szFull.Clear();
 				}
 			}
 			else
 			{
-				szFull.Empty();
+				szFull.Clear();
 			}
 			// Validate and save in mapping
 			if (!szFull.IsEmpty())
@@ -3779,7 +3779,7 @@ void CConEmuMain::LoadIcons()
 		{
 			if (!apiSearchPath(nullptr, mps_IconPath, nullptr, szIconPath))
 			{
-				szIconPath.Empty();
+				szIconPath.Clear();
 				lsLog.Attach(lstrmerge(L"Icon specified with '/icon' switch `", mps_IconPath, L"` was not found"));
 			}
 			else
@@ -3793,7 +3793,7 @@ void CConEmuMain::LoadIcons()
 		szIconPath = JoinPath(ms_ConEmuExeDir, L"ConEmu.ico");
 		if (!FileExists(szIconPath))
 		{
-			szIconPath.Empty();
+			szIconPath.Clear();
 		}
 		else
 		{
@@ -3827,7 +3827,7 @@ void CConEmuMain::LoadIcons()
 	}
 	else
 	{
-		szIconPath.Empty();
+		szIconPath.Clear();
 
 		hClassIcon = (HICON)LoadImage(GetModuleHandle(0),
 		                              MAKEINTRESOURCE(gpSet->nIconID), IMAGE_ICON,
@@ -6836,7 +6836,7 @@ void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)
 		if (gpFontMgr->ms_FontError && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
 		{
 			MBoxA(gpFontMgr->ms_FontError);
-			gpFontMgr->ms_FontError.Clear();
+			gpFontMgr->ms_FontError.Release();
 		}
 
 		if (!gpSetCls->CheckConsoleFontFast())

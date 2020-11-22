@@ -69,7 +69,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst)
 		else
 		{
 			LastDeadCharVK = k.wVirtualKeyCode;
-			lsSubst.Clear();
+			lsSubst.Release();
 		}
 		return true;
 	}
@@ -378,7 +378,7 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 
 	if (!MouseMode)
 	{
-		lsSubst.Clear();
+		lsSubst.Release();
 		return false;
 	}
 
@@ -557,7 +557,7 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 	{
 		// If XTerm emulation for mouse was requested - don't try to send
 		// unprocessed mouse events in Windows way
-		lsSubst.Clear();
+		lsSubst.Release();
 	}
 
 	return true;

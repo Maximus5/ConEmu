@@ -97,7 +97,7 @@ const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPr
 	if (!asWinPath || !*asWinPath)
 	{
 		_ASSERTE(asWinPath && *asWinPath);
-		path.Clear();
+		path.Release();
 		return nullptr;
 	}
 
@@ -213,7 +213,7 @@ LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
 	if (iLen < 1)
 	{
 		_ASSERTE(lstrlen(pszSrc) > 0);
-		szWinPath.Clear();
+		szWinPath.Release();
 		return nullptr;
 	}
 
@@ -241,7 +241,7 @@ LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
 	if (!pszRc)
 	{
 		_ASSERTE(pszRc && "malloc failed");
-		szWinPath.Clear();
+		szWinPath.Release();
 		return nullptr;
 	}
 	// Make path

@@ -58,7 +58,7 @@ TEST(RConStartArgsEx, ArgTests)
 	s.Set(L"qwerty");
 	nDbg = lstrcmp(s, L"qwerty");
 	EXPECT_EQ(nDbg, 0);
-	s.Empty();
+	s.Clear();
 	//s.Set(L""); // !! Set("") must trigger ASSERT !!
 	nDbg = s.ms_Val ? lstrcmp(s, L"") : -2;
 	EXPECT_EQ(nDbg, 0);
@@ -94,7 +94,7 @@ TEST(RConStartArgsEx, ArgTests)
 	};
 	for (int i = 0; lsArgTest[i].pszWhole; i++)
 	{
-		s.Empty();
+		s.Clear();
 		LPCWSTR pszTestCmd = lsArgTest[i].pszWhole;
 		int j = -1;
 		while (lsArgTest[i].pszCmp[++j])
