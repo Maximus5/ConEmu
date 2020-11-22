@@ -250,7 +250,7 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArg
 	IPersistFile* pFile = NULL;
 	IShellLinkW*  pShellLink = NULL;
 	HRESULT hr;
-	DWORD nLnkSize;
+	uint64_t nLnkSize;
 	static bool bCoInitialized = false;
 
 	if (!FileExists(asLnkFile, &nLnkSize))
