@@ -28,16 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/MSetter.h"
-#include "../common/MStrEsc.h"
 #include "../common/WUser.h"
 
-#include "AboutDlg.h"
-#include "Options.h"
 #include "helper.h"
 #include "LngRc.h"
 #include "ConEmu.h"
-#include "MyClipboard.h"
-#include "version.h"
 
 BOOL gbInDisplayLastError = FALSE;
 
@@ -286,7 +281,7 @@ wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath)
 
 bool FixDirEndSlash(wchar_t* rsPath)
 {
-	int nLen = rsPath ? lstrlen(rsPath) : 0;
+	const int nLen = rsPath ? lstrlen(rsPath) : 0;
 	// Do not cut slash from "C:\"
 	if ((nLen > 3) && (rsPath[nLen-1] == L'\\'))
 	{
@@ -304,7 +299,7 @@ bool FixDirEndSlash(wchar_t* rsPath)
 
 bool isKey(DWORD wp,DWORD vk)
 {
-	bool bEq = ((wp==vk)
+	const bool bEq = ((wp==vk)
 		|| ((vk==VK_LSHIFT||vk==VK_RSHIFT)&&wp==VK_SHIFT)
 		|| ((vk==VK_LCONTROL||vk==VK_RCONTROL)&&wp==VK_CONTROL)
 		|| ((vk==VK_LMENU||vk==VK_RMENU)&&wp==VK_MENU));
@@ -321,14 +316,14 @@ void StripWords(wchar_t* pszText, const wchar_t* pszWords)
 		LPCWSTR pszNext = wcschr(pszWord, L'|');
 		if (!pszNext) pszNext = pszWord + _tcslen(pszWord);
 
-		int nLen = (int)(pszNext - pszWord);
+		const int nLen = static_cast<int>(pszNext - pszWord);
 		if (nLen > 0)
 		{
-			lstrcpyn(dummy, pszWord, std::min((int)countof(dummy),(nLen+1)));
+			lstrcpyn(dummy, pszWord, std::min(static_cast<int>(countof(dummy)),(nLen+1)));
 			wchar_t* pszFound;
 			while ((pszFound = StrStrI(pszText, dummy)) != nullptr)
 			{
-				size_t nLeft = _tcslen(pszFound);
+				const size_t nLeft = _tcslen(pszFound);
 				size_t nCurLen = nLen;
 				// Strip spaces after replaced token
 				while (pszFound[nCurLen] == L' ')
@@ -359,7 +354,7 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
 	wchar_t* pszSrc = pszText;
 	wchar_t* pszDst = pszText;
 	INT_PTR iLeft = wcslen(pszText) + 1;
-	INT_PTR iCmp = wcslen(pszCommentMark);
+	const INT_PTR iCmp = wcslen(pszCommentMark);
 
 	while (iLeft > 1)
 	{
@@ -371,7 +366,7 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
 		else
 			pszEOL ++;
 
-		INT_PTR iLine = pszEOL - pszSrc;
+		const INT_PTR iLine = pszEOL - pszSrc;
 
 		if (wcsncmp(pszSrc, pszCommentMark, iCmp) == 0)
 		{
