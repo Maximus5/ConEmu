@@ -1,4 +1,6 @@
-﻿#include <windows.h>
+﻿#pragma once
+
+#include <windows.h>
 #include <stdio.h>
 #include "../common/Common.h"
 #include "../common/CEStr.h"

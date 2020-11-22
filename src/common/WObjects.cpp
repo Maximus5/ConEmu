@@ -51,6 +51,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/)
 {
+	#if CE_UNIT_TEST==1
+	{
+		bool result = false;
+		extern bool FileExistsMock(const wchar_t* asFilePath, uint64_t * pnSize, bool& result);
+		if (FileExistsMock(asFilePath, pnSize, result))
+		{
+			return result;
+		}
+	}
+	#endif
+
 	if (pnSize)
 		*pnSize = 0;
 	if (!asFilePath || !*asFilePath)

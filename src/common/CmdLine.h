@@ -63,6 +63,18 @@ bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsSshAgentHelper(LPCWSTR pszProcessName);
 
+/// <summary>
+/// Try to extract valid file-path-name of starting executable from space-delimited string with lack of double quotes
+/// </summary>
+/// <param name="commandLine">Command line to parse, it could be not properly double quoted</param>
+/// <param name="szExe">[OUT] the path to found executable</param>
+/// <param name="rsArguments">[OUT] the rest of command line, arguments</param>
+/// <returns>true - if file-path is found and szExe is not empty, false - on error</returns>
+bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szExe, const wchar_t*& rsArguments);
+
+/// <summary>
+/// Output arguments for IsNeedCmd function
+/// </summary>
 struct NeedCmdOptions
 {
 	bool isNeedCmd = false;
@@ -90,10 +102,18 @@ wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
 wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = nullptr);
 wchar_t* GetParentPath(LPCWSTR asPath);
 
+/// <summary>
+/// Simple check if the asFilePath could be valid path.
+/// We don't check if file really exists in filesystem here.
+/// </summary>
+/// <param name="asFilePath">File path</param>
+/// <param name="abFullRequired">if true we don't allow relative paths or bare file names</param>
+/// <returns>true - if path is valid</returns>
 bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);
 
-const wchar_t* PointToName(const wchar_t* asFullPath);
+const wchar_t* PointToName(const wchar_t* asFileOrPath);
 const char* PointToName(const char* asFileOrPath);
+
 const wchar_t* PointToExt(const wchar_t* asFullPath);
 const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote = false);
 

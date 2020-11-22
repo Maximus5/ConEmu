@@ -83,7 +83,6 @@ CEStr::CEStr(wchar_t*&& asPtr) noexcept
 	AttachInt(asPtr);
 }
 
-
 CEStr::operator const wchar_t*() const
 {
 	CESTRLOG0("CEStr::const wchar_t*()");

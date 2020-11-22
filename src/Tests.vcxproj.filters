@@ -13,6 +13,9 @@
     <Filter Include="common">
       <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mocks">
+      <UniqueIdentifier>{8200F20F-EE14-1AC1-B796-BD20236A16F2}</UniqueIdentifier>
+    </Filter>
     <Filter Include="modules">
       <UniqueIdentifier>{FEAC8BD4-6A8C-0A70-73A4-9546DF0271D1}</UniqueIdentifier>
     </Filter>
@@ -482,6 +485,9 @@
     </ClInclude>
     <ClInclude Include="ConEmu\version_stage.h">
       <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitTests\test_mock_file.h">
+      <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="common\CEHandle.h">
       <Filter>common</Filter>
@@ -1205,8 +1211,11 @@
     <ClCompile Include="UnitTests\main_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="UnitTests\test_mock_file.cpp">
+      <Filter>mocks</Filter>
+    </ClCompile>
     <ClCompile Include="UnitTests\test_stubs.cpp">
-      <Filter>tests</Filter>
+      <Filter>mocks</Filter>
     </ClCompile>
     <ClCompile Include="common\CEHandle.cpp">
       <Filter>common</Filter>

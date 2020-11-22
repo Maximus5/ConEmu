@@ -549,33 +549,40 @@ wrap:
 	return szDir.IsEmpty() ? nullptr : szDir.c_str();
 }
 
-/// <summary>
-/// Try to extract valid file-path-name of starting executable from space-delimited string with lack of double quotes
-/// </summary>
-/// <param name="commandLine">Command line to parse, it could be not properly double quoted</param>
-/// <param name="szExe">[OUT] the path to found executable</param>
-/// <param name="rsArguments">[OUT] the rest of command line, arguments</param>
-/// <returns>true - if file-path is found and szExe is not empty, false - on error</returns>
 bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szExe, const wchar_t*& rsArguments)
 {
-	bool result = false;
-	const auto* command = commandLine;
-
 	szExe.Clear();
+	rsArguments = nullptr;
 
 	// 17.10.2010 - support executable file path without parameters, but with spaces in its path
 	// 22.11.2015 - or some weirdness, like `C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe"`
-	LPCWSTR pchEnd = wcschr(command, L' ');
-	if (!pchEnd)
-		pchEnd = command + lstrlenW(command);
+	
+	if (!commandLine)
+		return false;
+
+	bool result = false;
+	const auto* command = commandLine;
+	// Skip quotation marks for now, we process here commands like
+	// `"C:\Program Files\Far\far.exe /p:path /some-switch"`
+	// `"C:\arc\7z.exe a test.7z *.*"`
+	size_t wasQuoted = 0;
+	while (*command == L'"')
+	{
+		++command; ++wasQuoted;
+	}
+
+	const wchar_t breakChars[] = L" \"\t\r\n";
+	LPCWSTR nextBreak = wcspbrk(command, breakChars);
+	if (!nextBreak)
+		nextBreak = command + lstrlenW(command);
 
 	CEStr szTemp;
 	uint64_t nTempSize;
 	const auto* firstIllegalChar = wcspbrk(command, ILLEGAL_CHARACTERS);
-	while (pchEnd)
+	while (nextBreak)
 	{
-		szTemp.Set(command, (pchEnd - command));
-		_ASSERTE(szTemp[(pchEnd - command)] == 0);
+		szTemp.Set(command, (nextBreak - command));
+		_ASSERTE(szTemp[(nextBreak - command)] == 0);
 
 		// Argument was quoted?
 		if (!szTemp.IsEmpty())
@@ -599,29 +606,34 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 			// Than check if it is a FILE (not a directory)
 			&& FileExists(szTemp, &nTempSize) && nTempSize)
 		{
-			// OK, it an our executable?
-			rsArguments = SkipNonPrintable(pchEnd);
+			// OK, it an our executable
+			for (size_t i = 0; i < wasQuoted && *nextBreak == L'"'; ++i)
+			{
+				++nextBreak;
+			}
+			rsArguments = SkipNonPrintable(nextBreak);
 			szExe.Set(szTemp);
 			result = !szExe.IsEmpty();
 			break;
 		}
 
-		_ASSERTE(*pchEnd == 0 || *pchEnd == L' ');
-		if (!*pchEnd)
+		_ASSERTE(*nextBreak == 0 || wcschr(breakChars, *nextBreak));
+		if (!*nextBreak)
 			break;
-		// Find next space after non-space
-		while (*(pchEnd) == L' ') pchEnd++;
+		// Find next non-space
+		while (*nextBreak && wcschr(breakChars, *nextBreak))
+			nextBreak++;
 		// If quoted string starts from here - it's supposed to be an argument
-		if (*pchEnd == L'"')
+		if (*nextBreak == L'"')
 		{
 			// And we must not get here, because the executable must be already processed above
 			// _ASSERTE(*pchEnd != L'"');
 			break;
 		}
-		pchEnd = wcschr(pchEnd, L' ');
-		if (!pchEnd)
-			pchEnd = command + lstrlenW(command);
-		if (firstIllegalChar && pchEnd >= firstIllegalChar)
+		nextBreak = wcspbrk(nextBreak, breakChars);
+		if (!nextBreak)
+			nextBreak = command + lstrlenW(command);
+		if (firstIllegalChar && nextBreak >= firstIllegalChar)
 			break;
 	}
 
@@ -804,7 +816,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		// If there is no "path"
 		if (wcschr(szExe, L'\\') == nullptr)
 		{
-			bool bHasExt = (wcschr(szExe, L'.') != nullptr);
+			const bool bHasExt = (wcschr(szExe, L'.') != nullptr);
 			// Let's check if it's a processor command, e.g. "DIR"
 			if (!bHasExt)
 			{
@@ -1209,45 +1221,65 @@ wchar_t* GetParentPath(LPCWSTR asPath)
 	return parent;
 }
 
-// Первичная проверка, может ли asFilePath быть путем
-bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
+bool IsFilePath(LPCWSTR asFilePath, const bool abFullRequired /*= false*/)
 {
 	if (!asFilePath || !*asFilePath)
 		return false;
 
 	// Если в пути встречаются недопустимые символы
+	// If contains some illegal characters
 	if (wcschr(asFilePath, L'"') ||
-	        wcschr(asFilePath, L'>') ||
-	        wcschr(asFilePath, L'<') ||
-	        wcschr(asFilePath, L'|')
-			// '/' не проверяем для совместимости с cygwin?
-	  )
+		wcschr(asFilePath, L'>') ||
+		wcschr(asFilePath, L'<') ||
+		wcschr(asFilePath, L'|')
+		// '/' don't restrict - it's allowed both in Windows and in cygwin
+		)
+	{
 		return false;
+	}
 
-	// Пропуск UNC "\\?\"
+	// skip UNC prefix "\\?\" in paths like "\\?\C:\Tools" or "\\?\UNC\Server\Share"
+	bool isUncPath = false;
 	if (asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] == L'?' && asFilePath[3] == L'\\')
+	{
 		asFilePath += 4; //-V112
+		isUncPath = true;
+	}
 
-	// Если asFilePath содержит два (и более) ":\"
-	LPCWSTR pszColon = wcschr(asFilePath, L':');
-
+	// Don't allow two (and more) ":\"
+	const auto* pszColon = wcschr(asFilePath, L':');
 	if (pszColon)
 	{
-		// Если есть ":", то это должен быть путь вида "X:\xxx", т.е. ":" - второй символ
-		if (pszColon != (asFilePath+1))
+		// If the ":" exists, that it should be the path like "X:\xxx", i.e. ":" should be second character
+		if (pszColon != (asFilePath + 1))
 			return false;
 
 		if (!isDriveLetter(asFilePath[0]))
 			return false;
 
-		if (wcschr(pszColon+1, L':'))
+		if (wcschr(pszColon + 1, L':'))
 			return false;
 	}
 
 	if (abFullRequired)
 	{
-		if ((asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] && wcschr(asFilePath+3,L'\\'))
-				|| (isDriveLetter(asFilePath[0]) && asFilePath[1] == L':' && asFilePath[2]))
+		if (isUncPath)
+		{
+			// For UNC network paths here should be "UNC\server\..."
+			const auto* unc = asFilePath;
+			if (unc[0] == L'U' && unc[1] == L'N' && unc[2] == L'C'
+				&& unc[3] == L'\\' && unc[4] && unc[4] != L'\\' && wcschr(unc + 5, L'\\'))
+				return true;
+		}
+		else
+		{
+			const auto* srv = asFilePath;
+			if (srv[0] == L'\\' && srv[1] == L'\\' && srv[2] && srv[2] != L'\\' && wcschr(srv + 3, L'\\'))
+				return true;
+		}
+
+		// And old good driver letter paths
+		if (isDriveLetter(asFilePath[0]) && asFilePath[1] == L':' && asFilePath[2])
 			return true;
 		return false;
 	}

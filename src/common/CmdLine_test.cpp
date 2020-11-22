@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "../UnitTests/gtest.h"
+#include "../UnitTests/test_mock_file.h"
 
 #include "CmdLine.h"
 #include "MStrDup.h"
@@ -295,24 +296,110 @@ TEST(CmdLine, DemangleArg)
 	}
 }
 
+TEST(CmdLine, FromSpaceDelimitedString)
+{
+	auto testWithMock = [](const wchar_t* commandLine, const bool expectedResult, const wchar_t* expectedExe, const wchar_t* expectedArgs)
+	{
+		CEStr exe;
+		const wchar_t* args = nullptr;
+		const auto result = GetFilePathFromSpaceDelimitedString(commandLine, exe, args);
+		EXPECT_EQ(result, expectedResult) << L"command(mock): " << commandLine;
+		if (expectedResult)
+		{
+			EXPECT_STREQ(exe.c_str(), expectedExe);
+			EXPECT_STREQ(args, expectedArgs);
+		}
+		else
+		{
+			EXPECT_TRUE(exe.IsEmpty());
+			EXPECT_EQ(args, nullptr);
+		}
+	};
+
+	auto testNoMock = [](const wchar_t* commandLine)
+	{
+		CEStr exe;
+		const wchar_t* args = nullptr;
+		const auto result = GetFilePathFromSpaceDelimitedString(commandLine, exe, args);
+		EXPECT_EQ(result, false) << L"command(no-mock): " << commandLine;
+	};
+		
+	
+	test_mocks::FileSystemMock fileMock;
+	fileMock.MockFile(LR"(C:\Far\Far.exe)");
+	fileMock.MockFile(LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe)");
+	fileMock.MockFile(LR"(C:\Program Files\Internet Explorer\iexplore.exe)");
+	fileMock.MockDirectory(LR"(C:\Program)");
+
+	testWithMock(LR"(C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)", true,
+		LR"(C:\Far\Far.exe)", LR"(/w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)");
+	testWithMock(LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe")", true,
+			LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe)", LR"("C:\sources\app.exe")");
+	testWithMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe" "C:\sources\app.exe")", true,
+			LR"(C:\Program Files\CodeBlocks\cb_console_runner.exe)", LR"("C:\sources\app.exe")");
+	testWithMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe C:\sources\app.exe")", true,
+			LR"(C:\Program Files\CodeBlocks\cb_console_runner.exe)", LR"(C:\sources\app.exe")");
+	testWithMock(LR"(C:\Program Files\Internet Explorer\iexplore.exe http://google.com)", true,
+		LR"(C:\Program Files\Internet Explorer\iexplore.exe)", LR"(http://google.com)");
+
+
+	fileMock.Reset();
+
+	testNoMock(LR"(C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)");
+	testNoMock(LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe")");
+	testNoMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe" "C:\sources\app.exe")");
+	testNoMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe C:\sources\app.exe")");
+	testNoMock(LR"(C:\Program Files\Internet Explorer\iexplore.exe http://google.com)");
+}
+
 TEST(CmdLine, IsFilePath)
 {
-	EXPECT_FALSE(IsFilePath(L"\"C:\\Program Files\\Far\\Far.exe\"", false));
-	EXPECT_FALSE(IsFilePath(L"\"C:\\Program Files\\Far\\Far.exe\"", true));
-	EXPECT_FALSE(IsFilePath(LR"(C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)", false));
-	EXPECT_FALSE(IsFilePath(LR"(Far\Far.exe)", true));
-	EXPECT_FALSE(IsFilePath(LR"(C::\Program Files\Far\Far.exe)", false));
-	EXPECT_FALSE(IsFilePath(LR"(C:\Program Files:\Far\Far.exe)", false));
-	EXPECT_FALSE(IsFilePath(LR"(chkdsk.exe < input > output)", false));
-	EXPECT_FALSE(IsFilePath(LR"(Far.exe)", true));
+	// IsFilePath does not strip anything from the string, so the full string is checked
+	// if it *could* be a real file path. The function does not check if the file exists.
 
-	EXPECT_TRUE(IsFilePath(LR"(Far.exe)", false));
-	EXPECT_TRUE(IsFilePath(LR"(\\?\C:\Far\Far.exe)", false));
-	EXPECT_TRUE(IsFilePath(LR"(\\?\C:\Far\Far.exe)", true));
-	EXPECT_TRUE(IsFilePath(LR"(C:\Far\Far.exe)", false));
-	EXPECT_TRUE(IsFilePath(LR"(C:\Far\Far.exe)", true));
-	EXPECT_TRUE(IsFilePath(LR"(C:\Program Files\Far\Far.exe)", false));
-	EXPECT_TRUE(IsFilePath(LR"(C:\Program Files\Far\Far.exe)", true));
-	EXPECT_TRUE(IsFilePath(LR"(\\server\share\Far.exe)", false));
-	EXPECT_TRUE(IsFilePath(LR"(\\server\share\Far.exe)", true));
+	struct Test
+	{
+		const wchar_t* path;
+		bool fullPathRequired;
+		bool expectedResult;
+	}
+	tests[] = {
+		// invalid characters in path
+		{LR"("C:\Program Files\Far\Far.exe")", false, false},
+		{LR"("C:\Program Files\Far\Far.exe")", true, false},
+		{LR"(C:\Program"Files\Far\Far.exe)", true, false},
+		{LR"(C:\Program|Files\Far\Far.exe)", true, false},
+		{LR"(chkdsk.exe < input > output)", false, false},
+		// double colon
+		{LR"(C::\Program Files\Far\Far.exe)", false, false},
+		{LR"(C:\Program Files:\Far\Far.exe)", false, false},
+		{LR"(C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)", false, false},
+		// full path required - e.g. started with "C:" or "\\server\...". optionally with "\\?\" prefix
+		{LR"(C\Far\Far.exe)", true, false},
+		{LR"(Far\Far.exe)", true, false},
+		{LR"(Far.exe)", true, false},
+
+		// file name only is ok, if no illegal characters are there
+		{LR"(Far.exe)", false, true},
+		// UNC prefix
+		{LR"(\\?\C:\Far\Far.exe)", false, true},
+		{LR"(\\?\C:\Far\Far.exe)", true, true},
+		{LR"(\\?\UNC\server\share\Far.exe)", false, true},
+		{LR"(\\?\UNC\server\share\Far.exe)", true, true},
+		// old good
+		{LR"(C:\Far\Far.exe)", false, true},
+		{LR"(C:\Far\Far.exe)", true, true},
+		// space included
+		{LR"(C:\Program Files\Far\Far.exe)", false, true},
+		{LR"(C:\Program Files\Far\Far.exe)", true, true},
+		// network path
+		{LR"(\\server\share\Far.exe)", false, true},
+		{LR"(\\server\share\Far.exe)", true, true},
+	};
+
+	for (const auto& test : tests)
+	{
+		const auto result = IsFilePath(test.path, test.fullPathRequired);
+		EXPECT_EQ(result, test.expectedResult) << L"path: " << test.path;
+	}
 }

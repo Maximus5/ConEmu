@@ -877,6 +877,7 @@ project "Tests"
     -- tests
     "src/UnitTests/*_test.cpp",
     "src/UnitTests/test_stubs.cpp",
+    "src/UnitTests/test_mock*.*",
     "src/**/*_test.cpp",
     -- common files
     "src/common/*.cpp",
@@ -899,7 +900,8 @@ project "Tests"
   }
 
   vpaths {
-    { ["tests"] = {"**/*_test.*", "**/test_stubs.cpp"} },
+    { ["mocks"] = {"**/test_stubs.cpp", "**/test_mock*.*"} },
+    { ["tests"] = {"**/*_test.*"} },
     { ["Resources"] = {"**/*.rc", "**/*.rc2", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"} },
   }
 
