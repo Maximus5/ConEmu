@@ -61,6 +61,8 @@ jobs:
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
     - run: |
        msbuild src\CE.sln /p:platform="x64" /p:configuration="Release"
