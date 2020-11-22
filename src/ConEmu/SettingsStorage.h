@@ -233,8 +233,8 @@ struct SettingsXML : public SettingsBase
 		void TouchKey(node* apKey) noexcept;
 
 		static LPCWSTR utf2wcs(const char* utf8, CEStr& wc);
-		const char* wcs2utf(const wchar_t* wc, CEStrA& str) const;
-		const char* wcs2utf(const wchar_t* wc);
+		static const char* wcs2utf(const wchar_t* wc, CEStrA& str);
+		const char* wcs2utf(const wchar_t* wc) const;
 
 		node* FindItem(node* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
 		void DeleteImpl(const wchar_t *regName, const wchar_t *asType) noexcept;
@@ -242,7 +242,7 @@ struct SettingsXML : public SettingsBase
 		bool SetMultiLine(node* apNode, const wchar_t* asValue, long nAllLen);
 		void ClearChildrenTail(node* apNode, node* apFirstClear, const char* nodeType);
 
-		const char* GetAttr(node* apNode, const char* asName);
+		static const char* GetAttr(node* apNode, const char* asName);
 		bool SetAttr(node* apNode, const char* asName, const wchar_t* asValue);
 		bool SetAttr(node* apNode, const char* asName, const char* asValue);
 

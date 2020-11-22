@@ -57,7 +57,7 @@ struct Switch
 	// Format examples: `-single` or `-dir "..."`
 	Switch(wchar_t*&& asSwitch, wchar_t*&& asOpt)
 	{
-		switch_.Attach(std::move(asSwitch));
+		switch_.Attach(std::move(asSwitch));  // NOLINT(performance-move-const-arg)
 		opt_.Attach(std::move(asOpt));
 	}
 
