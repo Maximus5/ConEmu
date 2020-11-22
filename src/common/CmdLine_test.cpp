@@ -203,10 +203,14 @@ TEST(CmdLine, IsNeedCmd)
 	TestIsNeedCmd(L"c:\\tool.exe < input > output",
 		L"tool.exe", L"",
 		true, false, false, true, false);
-	// #FIX expectedResult should be true
+	// As it's a *server* mode (root command) we don't check for pipelining and redirection
 	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output",
 		L"cacls.exe", L"< input > output",
 		false, true, false, false, false);
+	// But for ComSpec mode - the "cmd /c ..." is required
+	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output",
+		L"cacls.exe", L"< input > output",
+		true, false, false, true, false);
 	// #FIX expectedResult should be true
 	TestIsNeedCmd(L"%comspec% < input > output",
 		L"cmd.exe", L"< input > output",

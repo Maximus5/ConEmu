@@ -642,14 +642,14 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 
 bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options /*= nullptr*/)
 {
+	bool isNeedCmd = false;
 	bool rbNeedCutStartEndQuot = false;
-	bool rbRootIsCmdExe = true;
+	bool rbRootIsCmdExe = false;
 	bool rbAlwaysConfirmExit = false;
 	LPCWSTR rsArguments = nullptr;
 
 	wchar_t *pwszEndSpace;
 
-	bool lbRc = false;
 	BOOL lbFirstWasGot = FALSE;
 	LPCWSTR pwszCopy;
 	int nLastChar;
@@ -662,7 +662,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	{
 		_ASSERTE(asCmdLine && *asCmdLine);
 		szExe.Clear();
-		lbRc = true;
+		isNeedCmd = true;
 		goto wrap;
 	}
 
@@ -679,7 +679,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	if (!szExe.GetBuffer(MAX_PATH))
 	{
 		_ASSERTE(FALSE && "Failed to allocate MAX_PATH");
-		lbRc = true;
+		isNeedCmd = true;
 		goto wrap;
 	}
 	szExe.Clear();
@@ -711,7 +711,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			lbRc = true; goto wrap;
+			isNeedCmd = true; goto wrap;
 		}
 		szExe.Set(arg);
 
@@ -721,7 +721,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			lbRc = true; goto wrap;
+			isNeedCmd = true; goto wrap;
 		}
 
 		if (arg.m_pszDequoted)
@@ -765,7 +765,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			lbRc = true; goto wrap;
+			isNeedCmd = true; goto wrap;
 		}
 
 		// will return true if we found a real existing file path
@@ -778,7 +778,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				lbRc = true; goto wrap;
+				isNeedCmd = true; goto wrap;
 			}
 			szExe.Set(arg);
 
@@ -803,7 +803,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		if (wcspbrk(szExe, ILLEGAL_CHARACTERS))
 		{
 			rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
-			lbRc = true; goto wrap; // force add "cmd.exe"
+			isNeedCmd = true; goto wrap; // force add "cmd.exe"
 		}
 
 		// If there is no "path"
@@ -830,7 +830,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 					_ASSERTE(FALSE);
 					#endif
 					rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
-					lbRc = true; goto wrap; // force add "cmd.exe"
+					isNeedCmd = true; goto wrap; // force add "cmd.exe"
 				}
 			}
 
@@ -853,7 +853,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		_ASSERTE(FALSE);
 		#endif
 		rbRootIsCmdExe = true; // run the command via processor (e.g. "cmd.exe /c ...")
-		lbRc = true; goto wrap; // add leading "cmd.exe"
+		isNeedCmd = true; goto wrap; // add leading "cmd.exe"
 	}
 
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
@@ -879,7 +879,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
 		#endif
-		lbRc = false; goto wrap; // cmd.exe already exists in the command line, no need to add
+		isNeedCmd = false; goto wrap; // cmd.exe already exists in the command line, no need to add
 	}
 
 
@@ -895,7 +895,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			lbRc = true; goto wrap;  // add cmd.exe
+			isNeedCmd = true; goto wrap;  // add cmd.exe
 		}
 	}
 
@@ -919,7 +919,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef _DEBUG // due to unittests
 			_ASSERTE(!bIsBatch);
 			#endif
-			lbRc = false; goto wrap; // already executable, no need to add leading cmd.exe
+			isNeedCmd = false; goto wrap; // already executable, no need to add leading cmd.exe
 		}
 	}
 
@@ -929,7 +929,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
 		#endif
-		lbRc = false; goto wrap; // already executable, no need to add leading cmd.exe
+		isNeedCmd = false; goto wrap; // already executable, no need to add leading cmd.exe
 	}
 
 	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
@@ -942,17 +942,17 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 #pragma warning( pop )
 #endif
 
-	lbRc = true;
+	isNeedCmd = true;
 wrap:
 	if (options)
 	{
-		options->isNeedCmd = lbRc;
+		options->isNeedCmd = isNeedCmd;
 		options->needCutStartEndQuot = rbNeedCutStartEndQuot;
-		options->rootIsCmdExe = rbRootIsCmdExe;
+		options->rootIsCmdExe = rbRootIsCmdExe || isNeedCmd;
 		options->alwaysConfirmExit = rbAlwaysConfirmExit;
 		options->arguments = rsArguments;
 	}
-	return lbRc;
+	return isNeedCmd;
 }
 
 #ifndef __GNUC__
