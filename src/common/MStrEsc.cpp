@@ -271,14 +271,29 @@ CEStr MakeOneLinerString(const CEStr& source, const MakeOneLinerFlags flags)
 	const wchar_t* const pszEnd = result.c_str() + result.GetLen();
 	const bool bTrimTailing = (flags & MakeOneLinerFlags::TrimTailing) == MakeOneLinerFlags::TrimTailing;
 
-	wchar_t* pszBuf = result.data();;
+	wchar_t* pszBuf = result.data();
+	if (!pszBuf)
+	{
+		_ASSERTE(FALSE && "failed to allocated buffer");
+		return CEStr();
+	}
+
 	wchar_t* pszDst = pszBuf;
 	wchar_t* pszSrc = pszBuf;
-	while (pszSrc < pszEnd)
+	while (pszSrc && pszSrc < pszEnd)
 	{
 		// Find LineFeed
-		wchar_t* pszRN = wcspbrk(pszSrc, L"\r\n");
-		if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
+		wchar_t* pszRN = wcspbrk(pszSrc, L"\r\n\t");
+		if (pszRN && *pszRN == L'\t')
+		{
+			*pszRN = L' ';
+			continue;
+		}
+		if (!pszRN)
+		{
+			pszRN = pszSrc + wcslen(pszSrc);
+		}
+
 		// Advance to next line
 		wchar_t* pszNext = pszRN;
 		if (*pszNext == L'\r') pszNext++;
