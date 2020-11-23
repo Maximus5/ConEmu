@@ -20,6 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.11.23
+* gh-2206: Fix distorted output (no automatic CR after LF).
+* gh-2205: Fix installer (didn't run because of incorrect side-by-side configuration).
+* gh-2194: Convert tabs to spaces when pasting in single-line mode.
+  https://conemu.github.io/en/SettingsPaste.html#id2166
+
+
 2020.11.22
 * gh-2188: Fix processing of ANSI sequence to change text cursor shape.
   E.g. in cmd.exe prompt: `call SetEscChar.cmd && echo %ESC%[1 q`.
