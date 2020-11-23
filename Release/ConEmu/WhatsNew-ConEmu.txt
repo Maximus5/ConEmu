@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.11.23a
+* Fix crash on paste (2020.11.23 regression).
+
+
 2020.11.23
 * gh-2206: Fix distorted output (no automatic CR after LF).
 * gh-2205: Fix installer (didn't run because of incorrect side-by-side configuration).
