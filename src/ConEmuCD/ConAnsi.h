@@ -160,14 +160,15 @@ protected:
 
 	DisplayCursorPos gDisplayCursor = {};
 
+	// #condata replace or forward with m_Table calls, e.g. SetAutoCRLF instead of AutoLfNl
 	struct DisplayOpt
 	{
-		BOOL  WrapWasSet;
-		SHORT WrapAt; // Rightmost X coord (1-based)
+		BOOL  WrapWasSet = FALSE;
+		SHORT WrapAt = 0; // Rightmost X coord (1-based)
 		//
-		BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
+		BOOL  AutoLfNl = TRUE; // LF/NL (default on): Automatically follow echo of LF, VT or FF with CR.
 		//
-		BOOL  ShowRawAnsi; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
+		BOOL  ShowRawAnsi = FALSE; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
 	}; // gDisplayOpt;
 
 	DisplayOpt gDisplayOpt = {};

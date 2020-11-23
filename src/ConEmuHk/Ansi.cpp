@@ -640,7 +640,7 @@ CEAnsi::DisplayCursorPos CEAnsi::gDisplayCursor = {};
 //	BOOL  WrapWasSet;
 //	SHORT WrapAt; // Rightmost X coord (1-based)
 //	//
-//	BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
+//	BOOL  AutoLfNl; // LF/NL (default on): Automatically follow echo of LF, VT or FF with CR.
 //	//
 //	BOOL  ScrollRegion;
 //	SHORT ScrollStart, ScrollEnd; // 0-based absolute line indexes
@@ -1135,7 +1135,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	if (gDisplayOpt.ScrollRegion)
 	{
 		write.Flags |= ewtf_Region;
-		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		_ASSERTEX(gDisplayOpt.ScrollStart >= 0 && gDisplayOpt.ScrollEnd >= gDisplayOpt.ScrollStart);
 		write.Region.top = gDisplayOpt.ScrollStart;
 		write.Region.bottom = gDisplayOpt.ScrollEnd;
 		write.Region.left = write.Region.right = -1; // not used yet
@@ -1462,7 +1462,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 		pObj = CEAnsi::Object();
 		if (pObj)
 		{
-			if (pObj->gnPrevAnsiPart || pObj->gDisplayOpt.WrapWasSet)
+			if (pObj->gnPrevAnsiPart || gDisplayOpt.WrapWasSet)
 			{
 				// Если остался "хвост" от предущей записи - сразу, без проверок
 				lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, (const wchar_t*)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
