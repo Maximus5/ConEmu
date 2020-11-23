@@ -12343,13 +12343,13 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	if (isSelectionPresent())
 		mp_ABuf->DoSelectionFinalize(false);
 
-	wchar_t* pszBuf = nullptr;
+	CEStr buffer;
 
 	if (asText != nullptr)
 	{
 		if (!*asText)
 			return;
-		pszBuf = lstrdup(asText, 1); // Reserve memory for space-termination
+		buffer = lstrdup(asText, 1); // Reserve memory for space-termination
 	}
 	else
 	{
@@ -12357,14 +12357,13 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		LPCWSTR lptstr = nullptr;
 		wchar_t szErr[256] = {}; DWORD nErrCode = 0;
 
-		// из буфера обмена
 		if (MyOpenClipboard(L"GetClipboard"))
 		{
-			pszBuf = GetCliboardText(nErrCode, szErr, countof(szErr));
+			buffer = GetCliboardText(nErrCode, szErr, countof(szErr));
 			MyCloseClipboard();
 		}
 
-		if (!pszBuf)
+		if (buffer.IsEmpty())
 		{
 			if (*szErr)
 				DisplayLastError(szErr, nErrCode);
@@ -12372,25 +12371,22 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 	}
 
-	if (!pszBuf)
+	if (buffer.IsNull())
 	{
 		gpConEmu->LogString(L"pszBuf is nullptr, nothing to paste");
 		return;
 	}
-	else if (!*pszBuf)
+	else if (buffer.IsEmpty())
 	{
-		// Если текст "пустой" то и делать ничего не надо
-		SafeFree(pszBuf);
 		gpConEmu->LogString(L"pszBuf is empty, nothing to paste");
 		return;
 	}
 
-	// Теперь сформируем пакет
 	wchar_t szMsg[256];
-	size_t nBufLen = _tcslen(pszBuf);
+	auto nBufLen = buffer.GetLen();
 
 	// Смотрим первую строку / наличие второй
-	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
+	wchar_t* pszRN = wcspbrk(buffer.data(), L"\r\n");
 
 	// If user has enabled AutoTrimSingleLine, check if we are pasting a single line string.
 	// If so, set PasteMode to pm_OneLine to remove trailing newlines.
@@ -12404,28 +12400,33 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 	}
 
-	CEStr oneLinerBuffer;
 	if (PasteMode == pm_OneLine)
 	{
 		const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
 		const auto flags = MakeOneLinerFlags::None
 			| (pApp && (pApp->CTSTrimTrailing() != 0) ? MakeOneLinerFlags::TrimTailing : MakeOneLinerFlags::None);
 
-		oneLinerBuffer.Set(pszBuf, nBufLen);
-		oneLinerBuffer = MakeOneLinerString(oneLinerBuffer, flags);
+		CEStr oneLinerBuffer = MakeOneLinerString(buffer, flags);
+		if (oneLinerBuffer.IsEmpty())
+		{
+			gpConEmu->LogString(L"oneLinerBuffer is empty, nothing to paste");
+			return;
+		}
 
-		pszBuf = oneLinerBuffer.data();
-		nBufLen = oneLinerBuffer.GetLen();
+		buffer = std::move(oneLinerBuffer);
+		nBufLen = buffer.GetLen();
 		
 		// Buffer must not contain any line-feeds now! Safe for paste in command line!
-		_ASSERTE(wcspbrk(pszBuf, L"\r\n") == nullptr);
+		_ASSERTE(wcspbrk(buffer.c_str(), L"\r\n\t") == nullptr);
+		pszRN = nullptr;
 	}
 	else if (pszRN)
 	{
 		if (PasteMode == pm_FirstLine)
 		{
-			*pszRN = 0; // this is our own memory block
-			nBufLen = pszRN - pszBuf;
+			_ASSERTE(buffer.c_str() <= pszRN && pszRN < (buffer.c_str() + buffer.GetLen()));
+			*pszRN = L'\0'; // this is our own memory block
+			nBufLen = pszRN - buffer.c_str();
 		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
@@ -12440,26 +12441,25 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	// Convert Windows style path from clipboard to cygwin style?
 	// If clipboard contains double-quoted-path -> IsFilePath returns false -> paste content unchanged
-	if (pszBuf && *pszBuf
+	if (!buffer.IsEmpty()
 			// if POSIX was explicitly requested
 		&& ((posixMode == pxm_Convert)
-			// or was NOT prohibited and autoconversion is allowed
+			// or was NOT prohibited and auto conversion is allowed
 			|| ((posixMode != pxm_Intact) && isPosixConvertAllowed() && isUnixFS()
-				&& ((PasteMode == pm_FirstLine) || (PasteMode == pm_OneLine) || !(wcschr(pszBuf, L'\n') || wcschr(pszBuf, L'\r')))
+				&& ((PasteMode == pm_FirstLine) || (PasteMode == pm_OneLine) || !(wcschr(buffer.c_str(), L'\n') || wcschr(buffer.c_str(), L'\r')))
 			))
 			// check the path validity at last
-		&& IsFilePath(pszBuf, true))
+		&& IsFilePath(buffer.c_str(), true))
 	{
 		CEStr szPosix;
-		if (DupCygwinPath(pszBuf, true, GetMntPrefix(), szPosix))
+		if (DupCygwinPath(buffer.c_str(), true, GetMntPrefix(), szPosix))
 		{
-			SafeFree(pszBuf);
-			pszBuf = szPosix.Detach();
-			nBufLen = wcslen(pszBuf);
+			buffer = std::move(szPosix);
+			nBufLen = buffer.GetLen();
 		}
 	}
 
-	if (gpSet->nPasteConfirmLonger && !abNoConfirm && (nBufLen > (size_t)gpSet->nPasteConfirmLonger))
+	if (gpSet->nPasteConfirmLonger && !abNoConfirm && (nBufLen > (ssize_t)gpSet->nPasteConfirmLonger))
 	{
 		swprintf_c(szMsg,
 			CLngRc::getRsrc(lng_PasteLongConfirm/*"Pasting text length is %u chars!\nContinue?"*/),
@@ -12473,24 +12473,23 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	if (nBufLen && m_Term.bBracketedPaste)
 	{
-		wchar_t* pszTemp = lstrmerge(L"\x1B[200~", pszBuf, L"\x1B[201~");
-		if (!pszTemp)
+		CEStr bracketedText = lstrmerge(L"\x1B[200~", buffer.c_str(), L"\x1B[201~");
+		if (bracketedText.IsEmpty())
 		{
-			_ASSERTE(pszTemp!=nullptr);
+			_ASSERTE(bracketedText.IsEmpty());
 		}
 		else
 		{
-			ExchangePtr(pszTemp, pszBuf);
-			free(pszTemp);
-			_ASSERTE(_tcslen(pszBuf) == (nBufLen+12));
+			buffer = std::move(bracketedText);
+			_ASSERTE(buffer.GetLen() == (nBufLen+12));
 			nBufLen += 12;
 		}
 	}
 
-	// Отправить в консоль все символы из: pszBuf
+	// Send to the console all symbols from buffer
 	if (nBufLen)
 	{
-		PostString(pszBuf, nBufLen, true);
+		PostString(buffer.data(), nBufLen, true);
 	}
 	else
 	{
@@ -12499,7 +12498,6 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	}
 
 wrap:
-	SafeFree(pszBuf);
 	gpConEmu->LogString(L"Paste done");
 #endif
 }
