@@ -12,7 +12,19 @@ if exist Executor.pdb del Executor.pdb
 if exist obj del /q obj
 if exist %DEST_FILE% del %DEST_FILE%
 
-rem
+find "<UACExecutionLevel>RequireAdministrator</UACExecutionLevel>" Executor.vcxproj 1> nul
+if errorlevel 1 (
+  echo RequireAdministrator should be set in project, patching...
+  powershell -noprofile .\patch_project.ps1
+)
+
+find "<UACExecutionLevel>RequireAdministrator</UACExecutionLevel>" Executor.vcxproj 1> nul
+if errorlevel 1 (
+  echo Error: Executor.vcxproj should contain the key
+  echo ^<UACExecutionLevel^>RequireAdministrator^</UACExecutionLevel^>
+  echo Failed to build executor.exe
+  exit /b 1
+)
 
 echo Preparing Executor binary
 msbuild Executor.vcxproj /p:Configuration=Release,Platform=Win32,XPDeprecationWarning=false
