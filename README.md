@@ -67,7 +67,8 @@ are applied. You may easily use several named configurations (for different PCs 
 
 
 ## Requirements
-  * Windows 2000 or later.
+  * Windows XP or later for 32-bit.
+  * Windows Vista or later for 64-bit.
 
 
 ## Installation
