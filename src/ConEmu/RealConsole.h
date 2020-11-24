@@ -573,7 +573,7 @@ class CRealConsole
 		/// Set progress state for the console
 		/// </summary>
 		/// <param name="state">AnsiProgressStatus</param>
-		/// <param name="value">0..100 for nState = (Running, Puased, Error)</param>
+		/// <param name="value">0..100 for nState = (Running, Paused, Error)</param>
 		/// <param name="pszName">Reserved for future use - exe name of the running process</param>
 		/// <returns>true on success</returns>
 		bool SetProgress(AnsiProgressStatus state, short value, LPCWSTR pszName = nullptr);
@@ -585,7 +585,7 @@ class CRealConsole
 		bool isAdministrator();
 		bool isMouseButtonDown();
 		void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
-		void ChangeBufferHeightMode(bool abBufferHeight); // Вызывается из TabBar->ConEmu
+		void ChangeBufferHeightMode(bool abBufferHeight); // called from TabBar->ConEmu
 		bool isAlive();
 		bool GetMaxConSize(COORD* pcrMaxConSize);
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
