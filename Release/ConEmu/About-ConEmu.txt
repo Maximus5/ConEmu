@@ -13,7 +13,7 @@ About ConEmu
 
     Today, ConEmu can be used with any other console application or simple
     GUI tools (like PuTTY for example).
-    
+
     ConEmu is an active project, open to suggestions.
     https://conemu.github.io/en/Issues.html
 
@@ -58,7 +58,8 @@ Description
 
 Requirements
 
-    Windows 2000 or later.
+    * Windows XP or later for 32-bit.
+    * Windows Vista or later for 64-bit.
 
 
 Installation
