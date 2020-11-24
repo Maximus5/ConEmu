@@ -5606,6 +5606,7 @@
     "lng_ConfirmCloseActiveOnly": {
       "en": "Close active console only",
       "ru": "Закрыть только активную консоль",
+      "de": "Nur aktive Konsole schließen",
       "pl": "Zamknij tylko aktywną konsolę",
       "id": 178 }
     ,
@@ -5641,6 +5642,7 @@
     "lng_ConfirmCloseChildGuiQ": {
       "en": "Confirm closing active child window?",
       "ru": "Подтвердить закрытие активного дочернего окна?",
+      "de": "Das Schließen des aktiven Unterfensters bestätigen?",
       "pl": "Czy potwierdzić zamknięcie aktywnego okna podrzędnego?",
       "id": 181 }
     ,
@@ -5706,6 +5708,7 @@
     "lng_CreateNewConsoleHint": {
       "en": "Create new console",
       "ru": "Создать новую консоль",
+      "de": "Neue Konsole erstellen",
       "pl": "Utwórz nową konsolę",
       "id": 200 }
     ,
@@ -5989,6 +5992,7 @@
     "lng_MenuCheckUpdate": {
       "en": "&Check for updates",
       "ru": "Проверить обновления",
+      "de": "Auf neue &Version prüfen",
       "pl": "&Sprawdź aktualizacje",
       "id": 129 }
     ,
@@ -6001,24 +6005,28 @@
     "lng_MenuClearHistory": {
       "en": "Clear history...",
       "ru": "Очистить историю...",
+      "de": "Verlauf leeren...",
       "pl": "Czysta historia...",
       "id": 139 }
     ,
     "lng_MenuCloseConsole": {
       "en": "&Close console",
       "ru": "Закрыть консоль",
+      "de": "Konsole s&chließen",
       "pl": "&Zamknij konsolę",
       "id": 107 }
     ,
     "lng_MenuCloseGroup": {
       "en": "&Close tab group",
       "ru": "Закрыть группу вкладок",
+      "de": "Tab-Gruppe s&chließen",
       "pl": "&Zamknij grupę kart",
       "id": 108 }
     ,
     "lng_MenuCloseTab": {
       "en": "&Close tab",
       "ru": "Закрыть вкладку",
+      "de": "Tab s&chließen",
       "pl": "&Zamknij karte",
       "id": 109 }
     ,
@@ -6097,6 +6105,7 @@
     "lng_MenuDebugActive": {
       "en": "Debug &active process...",
       "ru": "Отладка активного процесса...",
+      "de": "&Aktiven Prozess untersuchen...",
       "pl": "Debugowanie &aktywny proces.",
       "id": 170 }
     ,
@@ -6109,12 +6118,14 @@
     "lng_MenuDebugGui": {
       "en": "Debug &log (GUI)",
       "ru": "Журнал отладки",
+      "de": "Protokoll für Feh&lersuche (GUI)",
       "pl": "Debug &log (GUI)",
       "id": 164 }
     ,
     "lng_MenuDebugShowRects": {
       "en": "Show debug rec&ts",
       "ru": "Показать записи отладки",
+      "de": "Rech&tecke für Fehlersuche anzeigen",
       "pl": "Pokaż debugowanie rect&s",
       "id": 165 }
     ,
@@ -6168,6 +6179,7 @@
     "lng_MenuHideToTray": {
       "en": "Hide to &TSA",
       "ru": "Скрыть в TSA",
+      "de": "In den &Infobereich minimieren",
       "pl": "Ukryj się &TSA",
       "id": 149 }
     ,
@@ -6192,11 +6204,13 @@
     "lng_MenuMiniDump": {
       "en": "Active process &memory dump...",
       "ru": "Дамп памяти активного процесса...",
+      "de": "Speicherabbild des aktiven &Prozesses",
       "pl": "Aktywny proces &zrzut pamięci...",
       "id": 171 }
     ,
     "lng_MenuMiniDumpTree": {
       "en": "Active &tree memory dump...",
+      "de": "Speicherabbild des aktiven Prozess&baums",
       "pl": "Aktywny &zrzut pamięci drzewa...",
       "id": 172 }
     ,
@@ -6209,6 +6223,7 @@
     "lng_MenuNewConsole": {
       "en": "New console dialog...",
       "ru": "Диалог новое окно консоли...",
+      "de": "Neue Konsole...",
       "pl": "Nowe okno konsoli...",
       "id": 115 }
     ,
@@ -6227,12 +6242,14 @@
     "lng_MenuPopupConList": {
       "en": "Console &list",
       "ru": "Список консолей",
+      "de": "Konsolen&liste",
       "pl": "Konsola i lista",
       "id": 151 }
     ,
     "lng_MenuPopupDebug": {
       "en": "&Debug",
       "ru": "Отладка",
+      "de": "&Untersuchen",
       "pl": "Debuguj",
       "id": 144 }
     ,
@@ -6263,12 +6280,14 @@
     "lng_MenuPopupSysDebug": {
       "en": "&Debug",
       "ru": "Отладка",
+      "de": "&Untersuchen",
       "pl": "Debugowanie",
       "id": 147 }
     ,
     "lng_MenuPopupSysEdit": {
       "en": "&Edit",
       "ru": "Редактировать",
+      "de": "B&earbeiten",
       "pl": "Edytuj",
       "id": 148 }
     ,
@@ -6316,6 +6335,7 @@
     "lng_MenuRestoreFromTray": {
       "en": "Restore from &TSA",
       "ru": "Восстановить из TSA",
+      "de": "Aus dem &Infobereich wiederherstellen",
       "pl": "Przywróć z TSA",
       "id": 150 }
     ,
@@ -6328,6 +6348,7 @@
     "lng_MenuSettings": {
       "en": "Sett&ings...",
       "ru": "Настройки...",
+      "de": "E&instellungen...",
       "pl": "Ustawienia",
       "id": 155 }
     ,
@@ -6364,6 +6385,7 @@
     "lng_MenuSysNewConsole": {
       "en": "New console dialog...",
       "ru": "Диалог новое окно консоли...",
+      "de": "Neue Konsole...",
       "pl": "Nowe okno konsoli...",
       "id": 157 }
     ,
@@ -6386,30 +6408,35 @@
     "lng_MenuTerminateCon": {
       "en": "Close active &console",
       "ru": "Закрыть активную консоль",
+      "de": "Aktive Konsole s&chließen",
       "pl": "Zamknij aktywne konsolę",
       "id": 90 }
     ,
     "lng_MenuTerminateConExpt": {
       "en": "Close e&xcept active",
       "ru": "Закрыть кроме активной",
+      "de": "Alle außer &Aktiver schließen",
       "pl": "Zamknij, z wyjątkiem aktywnych",
       "id": 97 }
     ,
     "lng_MenuTerminateGroup": {
       "en": "Close active &group",
       "ru": "Закрыть активную группу",
+      "de": "Aktive &Gruppe schließen",
       "pl": "Zamknij aktywną grupę",
       "id": 93 }
     ,
     "lng_MenuTerminatePrc": {
       "en": "Kill &active process",
       "ru": "Убить активный процесс",
+      "de": "&Aktiven Prozess beenden",
       "pl": "Zabij i aktywuj proces",
       "id": 91 }
     ,
     "lng_MenuTerminatePrcGroup": {
       "en": "Kill active &processes",
       "ru": "Убить активные процессы",
+      "de": "&Aktive Prozesse beenden",
       "pl": "Zabij aktywne procesy",
       "id": 94 }
     ,
@@ -7322,7 +7349,7 @@
       "en": "Always on top",
       "ru": "Поверх всех окон",
       "zh": "始终在顶层",
-      "de": "Immer oben",
+      "de": "Immer im Vordergrund",
       "ja": "常に手前",
       "es": "Siempre encima",
       "pl": "Zawsze na górze",
@@ -7332,7 +7359,7 @@
       "en": "Always show TSA icon",
       "ru": "Всегда показывать иконку в TSA",
       "zh": "始终显示TSA图标",
-      "de": "Zeige immer Infobereichssymbol",
+      "de": "Symbol im Infobereich immer anzeigen",
       "ja": "常にTSAアイコンを表示する",
       "es": "Mostrar siempre icono de barra de tareas",
       "pl": "Zawsze wyświetlaj ikonę TSA",
@@ -7585,7 +7612,7 @@
       "en": "Default task for new console",
       "ru": "По умолчанию для новой консоли",
       "zh": "新窗口默认任务",
-      "de": "Standardaufgabe für neue Konsole",
+      "de": "Standardaufgabe für neue Konsolen",
       "ja": "新しいコンソールのデフォルトタスク",
       "es": "Tarea por defecto para nuevo terminal",
       "pl": "Domyślne zadanie dla nowej konsoli",
@@ -7595,7 +7622,7 @@
       "en": "Taskbar jump lists",
       "ru": "Список переходов",
       "zh": "任务栏跳转列表",
-      "de": "Taskleisten-Sprungbefehle",
+      "de": "Sprungliste in der Taskbar",
       "ja": "タスクバーのジャンプリスト",
       "es": "Lista de tareas de la barra de tareas",
       "pl": "Listy przeskoków paska zadań",
@@ -7645,7 +7672,7 @@
       "en": "Active tabs",
       "ru": "Активные вкладки",
       "zh": "激活标签",
-      "de": "Aktive Reiter",
+      "de": "Aktive Tabs",
       "ja": "アクティブなタブ",
       "es": "Pestañas activas",
       "pl": "Active zakładki",
@@ -7820,7 +7847,7 @@
       "en": "Exception handler (debug)",
       "ru": "Обработчик исключений (отладка)",
       "zh": "移除处理程序（调试）",
-      "de": "Exception-Handler (Fehlersuche)",
+      "de": "Behandlung von Ausnahmen (Fehlersuche)",
       "ja": "例外ハンドラ(デバッグ)",
       "es": "Manejador de excepciones (depuración)",
       "pl": "Moduł obsługi wyjątków (debug)",
@@ -8050,7 +8077,7 @@
       "en": "Debug steps in caption",
       "ru": "Шаги отладки в заголовке",
       "zh": "标题里显示调试步骤",
-      "de": "Schritte zur Fehlersuche im Titel",
+      "de": "Untersuchungsschritte in Titelleiste",
       "ja": "キャプション内のデバッグステップ",
       "es": "Depurar pasos en título",
       "pl": "Kroki debugowania w podpisie",
@@ -8070,7 +8097,7 @@
       "en": "Enable logging of hooked processes (debug purposes)",
       "ru": "Включить ведение журнала подключенных процессов (в целях отладки)",
       "zh": "启用hooked进程的日志（调试目的）",
-      "de": "Aktiviere Protokollierung von angezapften Prozessen (zu Fehlersuchzwecken)",
+      "de": "Protokollierung von DLL-Integration in Prozesse (zur Fehlersuche)",
       "ja": "フックされたプロセスのロギングを有効にする(デバッグの目的)",
       "es": "Activar traza de procesos enganchados (depuración)",
       "pl": "Włącz rejestrowanie zahaczonych procesów (w celach debugowania)",
@@ -8100,7 +8127,7 @@
       "en": "Leave in TSA",
       "ru": "Оставить в TSA",
       "zh": "留在任务栏状态区域（TSA）",
-      "de": "Im Infobereich lassen",
+      "de": "In Infobereich belassen",
       "ja": "TSAに残す",
       "es": "Dejar en zona de notificaciones",
       "pl": "Pozostaw w TSA",
@@ -8340,7 +8367,7 @@
       "en": "Fade when inactive",
       "ru": "Исчезать, когда неактивны",
       "zh": "不活动时褪色",
-      "de": "Verblassen, wenn inaktiv",
+      "de": "Verblassen bei Inaktivität",
       "ja": "非アクティブ時にフェードする",
       "es": "Difuminar cuando inactiva",
       "pl": "Zanikaj, gdy nieaktywny",
@@ -8550,7 +8577,7 @@
       "en": "Hide caption always",
       "ru": "Всегда скрывать",
       "zh": "总是隐藏标题",
-      "de": "Titel immer ausblenden",
+      "de": "Titelleiste immer verstecken",
       "ja": "キャプションを常に隠す",
       "es": "Ocultar título siempre",
       "pl": "Zawsze ukryj podpis",
@@ -8580,7 +8607,7 @@
       "en": "Hide to the TSA",
       "ru": "Скрыть в TSA",
       "zh": "隐藏至任务栏状态区域（TSA）",
-      "de": "In den Infobereich verschieben",
+      "de": "In Infobereich verstecken",
       "ja": "TSAに隠す",
       "es": "Ocultar en zona de notificaciones",
       "pl": "Ukryj w TSA",
@@ -8620,7 +8647,7 @@
       "en": "Inactive console Text Cursor",
       "ru": "Неактивная консоль Курсор",
       "zh": "不活动的控制台文本光标",
-      "de": "Schreibmarke inaktiver Konsole",
+      "de": "Cursor in inaktiven Konsolen",
       "ja": "非アクティブなコンソールのテキストカーソル",
       "es": "Cursor para terminales inactivos",
       "pl": "Nieaktywna konsola Kursor tekstu",
@@ -8659,7 +8686,7 @@
     "cbInactiveCursorSubstHidden": {
       "en": "Treat hidden cursor as inactive",
       "ru": "Считать скрытый курсор неактивным",
-      "de": "Betrachte ausgeblendete Schreibmarke als inaktiv",
+      "de": "Versteckten Cursor wie inaktiv behandeln",
       "ja": "非表示カーソルを非アクティブとして扱う",
       "es": "Tratar cursor oculto como inactivo",
       "pl": "Traktuj ukryty kursor jako nieaktywny",
@@ -8787,7 +8814,7 @@
       "en": "Auto minimize to TSA",
       "ru": "Автоматически сворачивать в TSA",
       "zh": "自动最小化到任务栏状态区域（TSA）",
-      "de": "Automatisch in den Infobereich minimieren",
+      "de": "Automatisch in Infobereich minimieren",
       "ja": "TSAに自動的に最小化",
       "es": "Auto minimizar a zona de notificaciones",
       "pl": "Automatyczna minimalizacja do TSA",
@@ -8876,7 +8903,7 @@
       "en": "Always show numbers [n/m]",
       "ru": "Всегда показывать [Active/Total]",
       "zh": "总是显示数字 [n/m]",
-      "de": "Zeige immer Anzahl [n/m]",
+      "de": "Nummern immer anzeigen [n/m]",
       "ja": "常に数字を表示する[n/m]",
       "es": "Mostrar siempre números [n/m]",
       "pl": "Zawsze pokazuj liczby [n / m]",
@@ -8994,7 +9021,7 @@
       "en": "Restore to active monitor",
       "ru": "Восстановить на активный монитор",
       "zh": "恢复至活动的显示屏",
-      "de": "Auf aktivem Monitor wiederherstellen",
+      "de": "Aus aktiven Monitor wiederherstellen",
       "ja": "アクティブなモニターに復元する",
       "es": "Restaurar al monitor activo",
       "pl": "Przywróć do aktywnego monitora",
@@ -9003,7 +9030,7 @@
     "cbRestoreInactive": {
       "en": "Restore inactive window by hotkey",
       "ru": "Восстановить неактивное окно горячей клавишей",
-      "de": "Inaktives Fenster durch Tastenkürzel wiederherstellen",
+      "de": "Inaktives Fenster mit Tastenkombination wiederherstellen",
       "ja": "ホットキーで非アクティブウィンドウを復元する",
       "es": "Restaurar ventana inactiva por teclado",
       "pl": "Przywróć nieaktywne okno za pomocą skrótu",
@@ -9181,7 +9208,7 @@
       "en": "Show ‘... was hidden’ warning in TSA",
       "ru": "Показывать предупреждение ‘... было скрыто’ в TSA",
       "zh": "在任务栏状态区域显示“... 被隐藏”警告",
-      "de": "Zeige '... wurde versteckt'-Warnung im Infobereich",
+      "de": "'... wurde versteckt'-Meldung im Infobereich anzeigen",
       "ja": "'...隠された' TSAの警告を表示",
       "es": "Mostrar aviso '... estaba oculto' en zona notificación",
       "pl": "Pokaż ostrzeżenie \"... było ukryte\" w TSA",
@@ -9461,7 +9488,7 @@
       "en": "Active window transparency",
       "ru": "Прозрачность активного окна",
       "zh": "活动窗口透明度",
-      "de": "Transparenz aktiver Fenster",
+      "de": "Transparenz des aktiven Fensters",
       "ja": "アクティブウィンドウの透明度",
       "es": "Activar transparencia de ventanas",
       "pl": "Aktywna przezroczystość okna",
@@ -9471,7 +9498,7 @@
       "en": "Use separate transparency value for inactive window",
       "ru": "Использовать отдельное значение прозрачности для неактивного окна",
       "zh": "为不活动窗口使用单独的透明度",
-      "de": "Verwende separaten Transparenzwert für inaktive Fenster",
+      "de": "Eigenen Transparenzwert für inaktive Fenster verwenden",
       "ja": "非アクティブウィンドウに別の透明度値を使用する",
       "es": "Usar otro valor de transparencia para ventana inactiva",
       "pl": "Użyj osobnej wartości przezroczystości dla nieaktywnego okna",
@@ -9541,7 +9568,7 @@
       "en": "TSA notification only",
       "ru": "Только уведомления TSA",
       "zh": "仅在任务栏状态区域通知",
-      "de": "Nur Infobereichsbenachrichtigung",
+      "de": "Nur im Infobereich benachrichtigen",
       "ja": "TSA通知のみ",
       "es": "Sólo zona notificación",
       "pl": "Tylko powiadomienie TSA",
@@ -9776,7 +9803,7 @@
       "en": "Windows 7 taskbar (Jump list)",
       "ru": "Панель задач Windows 7 (списки переходов)",
       "zh": "Windows 7任务栏（跳转列表）",
-      "de": "Windows 7-Taskleiste (Sprungbefehle)",
+      "de": "Windows-7-Taskbar (Sprungliste)",
       "ja": "Windows 7のタスクバー(ジャンプリスト)",
       "es": "Barra de tareas de Windows 7",
       "pl": "Pasek zadań Windows 7 (lista przeskoków)",
@@ -9936,7 +9963,7 @@
       "en": "Active console Text Cursor",
       "ru": "Активная консоль Курсор",
       "zh": "活动控制台的文本光标",
-      "de": "Schreibmarke der aktiven Konsole",
+      "de": "Cursor der aktiven Konsole",
       "ja": "アクティブなコンソールのテキストカーソル",
       "es": "Cursor del terminal activo",
       "pl": "Aktywny kursor tekstowy konsoli",
@@ -10076,7 +10103,7 @@
       "en": "Debugging options",
       "ru": "Опции отладки",
       "zh": "调试设置",
-      "de": "Fehlersuchoptionen",
+      "de": "Einstellungen zur Fehlersuche",
       "ja": "デバッグオプション",
       "es": "Opciones de depuración",
       "pl": "Opcje debugowania",
@@ -10493,7 +10520,7 @@
       "en": "Taskbar status area (TSA)",
       "ru": "Область состояния панели задач (TSA)",
       "zh": "任务栏状态区域（TSA）",
-      "de": "Taskleisten-Infobereich",
+      "de": "Infobereich in der Taskleiste",
       "ja": "タスクバーステータスエリア(TSA)",
       "es": "Zona notificaciones de barra de tareas",
       "pl": "Obszar statusu paska zadań (TSA)",
@@ -10920,7 +10947,7 @@
       "en": "x32 always",
       "ru": "x32 всегда",
       "zh": "总是x32",
-      "de": "Immer x32",
+      "de": "Immer x86",
       "ja": "常にx32",
       "es": "Siempre x32",
       "pl": "X32 zawsze",
@@ -11200,7 +11227,7 @@
       "en": "Always show",
       "ru": "Всегда показывать",
       "zh": "总是显示",
-      "de": "Immer zeigen",
+      "de": "Immer anzeigen",
       "ja": "常に表示",
       "es": "Mostrar siempre",
       "pl": "Zawsze pokazuj",
