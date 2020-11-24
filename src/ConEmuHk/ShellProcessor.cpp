@@ -2078,7 +2078,7 @@ int CShellProc::PrepareExecuteParms(
 			}
 			else
 			{
-				// А вот "-cur_console" нужно обрабатывать _здесь_
+				// The "-cur_console" we have to process _here_
 				bCurConsoleArg = true;
 
 				if ((m_Args.ForceDosBox == crb_On) && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
@@ -2251,16 +2251,16 @@ int CShellProc::PrepareExecuteParms(
 
 	#ifdef _DEBUG
 	// Для принудительной вставки ConEmuC.exe - поставить true. Только для отладки!
-	bool lbAlwaysAddConEmuC; lbAlwaysAddConEmuC = false;
+	// Force run through ConEmuC.exe. Only for debugging!
+	bool lbAlwaysAddConEmuC = false;
+	#define isDebugAddConEmuC lbAlwaysAddConEmuC
+	#else
+	#define isDebugAddConEmuC false
 	#endif
 
-	if ((mn_ImageBits == 0) && (mn_ImageSubsystem == 0)
-		#ifdef _DEBUG
-		&& !lbAlwaysAddConEmuC
-		#endif
-		)
+	if ((mn_ImageBits == 0) && (mn_ImageSubsystem == 0) && !isDebugAddConEmuC)
 	{
-		// Это может быть запускаемый документ, например .doc, или .sln файл
+		// This could be the document (ShellExecute), e.g. .doc or .sln file
 		goto wrap;
 	}
 
@@ -2275,32 +2275,57 @@ int CShellProc::PrepareExecuteParms(
 	}
 	else
 	{
-		// хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
-		if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
-			bGoChangeParm = true;
-		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
-		else if ((mn_ImageBits != 16) && (m_SrvMapping.useInjects == ConEmuUseInjects::Use)
-				&& (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
-					|| (bLongConsoleOutput &&
-						(((aCmd == eShellExecute)
-							&& (gFarMode.FarVer.dwVerMajor >= 3)
-							&& (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
-						|| ((aCmd == eCreateProcess)
-							// gh-1307: when user runs "script.py" it's executed by Far3 via ShellExecuteEx->CreateProcess(py.exe),
-							// we don't know it's a console process at the moment of ShellExecuteEx
-							&& ((gFarMode.FarVer.dwVerMajor <= 2) || ((gFarMode.FarVer.dwVerMajor >= 3) && (gnInShellExecuteEx)))
-							&& (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE))))
-						)
-					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
-					#ifdef _DEBUG
-					|| lbAlwaysAddConEmuC
-					#endif
-					))
-			bGoChangeParm = true;
-		// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
-		else if ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
+		for (bool once = true; once; once = false)
+		{
+			// it's an attach of ChildGui into new ConEmu tab OR new console from GUI
+			if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
+			{
+				bGoChangeParm = true; break;
+			}
+
+			// Native console applications
+			if ((mn_ImageBits != 16) && (m_SrvMapping.useInjects == ConEmuUseInjects::Use))
+			{
+				if (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
+					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On)) // "-cur_console", except "-cur_console:o"
+					|| isDebugAddConEmuC // debugging only
+					)
+				{
+					bGoChangeParm = true; break;
+				}
+				if (bLongConsoleOutput) // Far Manager, support "View console output" from Far Plugin
+				{
+					const auto& ver = gFarMode.FarVer;
+					// Certain builds of Far Manager 3.x use ShellExecute
+					if ((aCmd == eShellExecute)
+						&& (ver.dwVerMajor >= 3)
+						&& (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
+					{
+						bGoChangeParm = true; break;
+					}
+					// Others Far versions - CreateProcess for console applications
+					const bool createDefaultErrorMode = (aCmd == eCreateProcess) && (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE));
+					if (createDefaultErrorMode
+						// gh-1307: when user runs "script.py" it's executed by Far3 via ShellExecuteEx->CreateProcess(py.exe),
+						// we don't know it's a console process at the moment of ShellExecuteEx
+						&& ((ver.dwVerMajor <= 2)
+							|| ((gnInShellExecuteEx > 0) && (ver.dwVerMajor >= 3))
+							// gh-2201: Far 3 build 5709 executor changes
+							|| ((gnInShellExecuteEx == 0) && ((ver.dwVerMajor == 3 && ver.dwBuild >= 5709) || (ver.dwVerMajor >= 3)))
+							))
+					{
+						bGoChangeParm = true; break;
+					}
+				}
+			}
+
+			// If this is old DOS application and the DosBox is enabled also insert ConEmuC.exe /DOSBOX
+			if ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
-			bGoChangeParm = true;
+			{
+				bGoChangeParm = true; break;
+			}
+		}
 	}
 
 	if (bGoChangeParm)
