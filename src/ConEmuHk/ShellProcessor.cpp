@@ -247,10 +247,12 @@ bool CShellProc::InitOle32()
 bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArgs, CEStr& rsWorkDir)
 {
 	bool bRc = false;
-	IPersistFile* pFile = NULL;
-	IShellLinkW*  pShellLink = NULL;
+	IPersistFile* pFile = nullptr;
+	IShellLinkW*  pShellLink = nullptr;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
 	HRESULT hr;
 	uint64_t nLnkSize;
+	int cchMaxArgSize = 0;
 	static bool bCoInitialized = false;
 
 	if (!FileExists(asLnkFile, &nLnkSize))
@@ -259,18 +261,18 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArg
 	if (!InitOle32())
 		goto wrap;
 
-	hr = CoCreateInstance_f(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+	hr = CoCreateInstance_f(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkW, reinterpret_cast<void**>(&pShellLink));
 	if (FAILED(hr) && !bCoInitialized)
 	{
 		bCoInitialized = true;
-		hr = CoInitializeEx_f(NULL, COINIT_MULTITHREADED);
+		hr = CoInitializeEx_f(nullptr, COINIT_MULTITHREADED);
 		if (SUCCEEDED(hr))
-			hr = CoCreateInstance_f(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+			hr = CoCreateInstance_f(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkW, reinterpret_cast<void**>(&pShellLink));
 	}
 	if (FAILED(hr) || !pShellLink)
 		goto wrap;
 
-	hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pFile);
+	hr = pShellLink->QueryInterface(IID_IPersistFile, reinterpret_cast<void**>(&pFile));
 	if (FAILED(hr) || !pFile)
 		goto wrap;
 
@@ -278,15 +280,16 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArg
 	if (FAILED(hr))
 		goto wrap;
 
-	hr = pShellLink->GetPath(rsExe.GetBuffer(MAX_PATH), MAX_PATH, NULL, 0);
+	hr = pShellLink->GetPath(rsExe.GetBuffer(MAX_PATH), MAX_PATH, nullptr, 0);
 	if (FAILED(hr) || rsExe.IsEmpty())
 		goto wrap;
 
-	hr = pShellLink->GetWorkingDirectory(rsWorkDir.GetBuffer(MAX_PATH+1), MAX_PATH+1);
+	hr = pShellLink->GetWorkingDirectory(rsWorkDir.GetBuffer(MAX_PATH + 1), MAX_PATH + 1);
 	if (FAILED(hr))
 		goto wrap;
 
-	hr = pShellLink->GetArguments(rsArgs.GetBuffer(nLnkSize), nLnkSize);
+	cchMaxArgSize = static_cast<int>(std::min<uint64_t>(nLnkSize, std::numeric_limits<int>::max()));
+	hr = pShellLink->GetArguments(rsArgs.GetBuffer(cchMaxArgSize), cchMaxArgSize);
 	if (FAILED(hr))
 		goto wrap;
 
