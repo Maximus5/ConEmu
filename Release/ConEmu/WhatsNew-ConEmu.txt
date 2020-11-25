@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.11.24
+* gh-2201: Support new executor in Far 3 build 5709.
+* l10n: German translations were updated
+* Minimum required Windows version was updated in Readme.
+
+
 2020.11.23a
 * Fix crash on paste (2020.11.23 regression).
 
