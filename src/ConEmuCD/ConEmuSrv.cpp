@@ -3350,15 +3350,13 @@ int WorkerServer::CreateMapHeader()
 		}
 	}
 
-	//TODO("Добавить к nConDataSize размер необходимый для хранения crMax ячеек");
-	int nTotalSize = 0;
-	DWORD nMaxCells = (crMax.X * crMax.Y);
-	//DWORD nHdrSize = ((LPBYTE)gpSrv->pConsoleDataCopy->Buf) - ((LPBYTE)gpSrv->pConsoleDataCopy);
-	//_ASSERTE(sizeof(CESERVER_REQ_CONINFO_DATA) == (sizeof(COORD)+sizeof(CHAR_INFO)));
-	int nMaxDataSize = nMaxCells * sizeof(CHAR_INFO); // + nHdrSize;
+	const uint32_t nMaxCells = (crMax.X * crMax.Y);
+	const uint32_t nMaxDataSize = nMaxCells * sizeof(CHAR_INFO); // + nHdrSize;
+	const uint32_t nTotalSize = sizeof(CESERVER_REQ_CONINFO_FULL) + (nMaxCells * sizeof(CHAR_INFO));
+
 	bool lbCreated, lbUseExisting = false;
 
-	gpSrv->pConsoleDataCopy = (CHAR_INFO*)calloc(nMaxDataSize,1);
+	gpSrv->pConsoleDataCopy = static_cast<CHAR_INFO*>(calloc(nMaxDataSize, 1));
 
 	if (!gpSrv->pConsoleDataCopy)
 	{
@@ -3367,8 +3365,8 @@ int WorkerServer::CreateMapHeader()
 	}
 
 	//gpSrv->pConsoleDataCopy->crMaxSize = crMax;
-	nTotalSize = sizeof(CESERVER_REQ_CONINFO_FULL) + (nMaxCells * sizeof(CHAR_INFO));
-	gpSrv->pConsole = (CESERVER_REQ_CONINFO_FULL*)calloc(nTotalSize,1);
+
+	gpSrv->pConsole = static_cast<CESERVER_REQ_CONINFO_FULL*>(calloc(nTotalSize, 1));
 
 	if (!gpSrv->pConsole)
 	{
