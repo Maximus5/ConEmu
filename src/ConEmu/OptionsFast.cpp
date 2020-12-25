@@ -726,7 +726,7 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	}
 
 	return FALSE;
-}	
+}
 
 static INT_PTR OnLanguageChanged(HWND hDlg)
 {
@@ -2126,6 +2126,11 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsamd64_x86.bat
 	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsx86_amd64.bat
 
+	// "19.0" Professional = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\"
+	// --> ...\2019\Professional\VC\Auxiliary\Build\vcvarsall.bat
+	// "19.0" Build Tools = "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\"
+	// --> ...\2019\BuildTools\Common7\Tools\VsDevCmd.bat
+
 
 	CEStr pszVcVarsBat;
 	for (int i = 0;; ++i)
@@ -2137,6 +2142,9 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 			break;
 		case 1:
 			pszVcVarsBat.Attach(JoinPath(pszDir, L"VC\\Auxiliary\\Build\\vcvarsall.bat"));
+			break;
+		case 2:
+			pszVcVarsBat.Attach(JoinPath(pszDir, L"Common7\\Tools\\VsDevCmd.bat"));
 			break;
 		default:
 			return;
