@@ -3378,6 +3378,11 @@ int WorkerServer::CreateMapHeader()
 
 	if (!gpSrv->pGuiInfoMap)
 		gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
+	if (!gpSrv->pGuiInfoMap)
+	{
+		_printf("ConEmuC: calloc(MFileMapping<ConEmuGuiMapping>) failed, pGuiInfoMap is null", 0); //-V576
+		goto wrap;
+	}
 
 	if (!gpSrv->pConsoleMap)
 		gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
@@ -3412,13 +3417,24 @@ int WorkerServer::CreateMapHeader()
 	if (!lbCreated)
 	{
 		_ASSERTE(FALSE && "Failed to create/open mapping!");
-		_wprintf(gpSrv->pConsoleMap->GetErrorText());
+		if (!gpSrv->pConsoleMap->IsValid())
+		{
+			_wprintf(gpSrv->pConsoleMap->GetErrorText());
+		}
+		else if (!gpSrv->pAppMap->IsValid())
+		{
+			_wprintf(gpSrv->pAppMap->GetErrorText());
+		}
+
 		SafeDelete(gpSrv->pConsoleMap);
+		SafeDelete(gpSrv->pAppMap);
+
 		iRc = CERR_CREATEMAPPINGERR; goto wrap;
 	}
-	else if (gState.runMode_ == RunMode::AltServer)
+
+	if (gState.runMode_ == RunMode::AltServer)
 	{
-		// На всякий случай, перекинем параметры
+		// Just in case, reload parameters
 		if (gpSrv->pConsoleMap->GetTo(&gpSrv->pConsole->hdr))
 		{
 			lbUseExisting = true;
@@ -3436,7 +3452,7 @@ int WorkerServer::CreateMapHeader()
 		gpSrv->pAppMap->SetFrom(&init);
 	}
 
-	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings/CopySrvMapFromGuiMap !!!
+	// !!! Warning !!! On any change here, do the same in ReloadGuiSettings/CopySrvMapFromGuiMap !!!
 	gpSrv->pConsole->cbMaxSize = nTotalSize;
 	gpSrv->pConsole->hdr.cbSize = sizeof(gpSrv->pConsole->hdr);
 	if (!lbUseExisting)

@@ -32,191 +32,298 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 
 template <class T>
-class MFileMapping
+class MFileMapping final
 {
 protected:
-	HANDLE mh_Mapping;
-	T* mp_Data; //WARNING!!! Доступ может быть только на чтение!
-	BOOL mb_WriteAllowed;
-	DWORD mn_Size;
-	wchar_t ms_MapName[128];
-	DWORD mn_LastError;
-	wchar_t ms_Error[MAX_PATH*2];
+	HANDLE mapHandle_ = nullptr;
+	T* dataPtr_ = nullptr; // WARNING!!! the access could be "read-only"
+	bool isWriteAllowed_ = false;
+	bool isNewlyCreated_ = false;
+	const uint32_t typeSize_;
+	uint32_t mappedSize_ = 0;
+	wchar_t mapName_[128] = L"";
+	MEMORY_BASIC_INFORMATION mapInfo_{};
+	uint32_t lastError_ = 0;
+	uint32_t exceptionCode_ = 0;
+	wchar_t lastErrorText_[MAX_PATH * 2] = L"";
+
+public:
+	MFileMapping() : typeSize_(sizeof(T))
+	{
+	}
+
+	~MFileMapping()
+	{
+		if (mapHandle_)
+			CloseMap();
+	}
+
+	MFileMapping(const MFileMapping&) = delete;
+	MFileMapping(MFileMapping&&) = delete;
+	MFileMapping& operator=(const MFileMapping&) = delete;
+	MFileMapping& operator=(MFileMapping&&) = delete;
+
 public:
 	T* Ptr()
 	{
-		return mp_Data;
-	};
-	operator T*()
+		return dataPtr_;
+	}
+
+	// ReSharper disable once CppNonExplicitConversionOperator
+	operator T* ()
 	{
-		return mp_Data;
-	};
+		return dataPtr_;
+	}
+
 	bool IsValid()
 	{
-		return (mp_Data!=NULL);
-	};
-	LPCWSTR GetErrorText()
+		return (dataPtr_ != nullptr);
+	}
+
+	LPCWSTR GetErrorText() const
 	{
-		return ms_Error;
-	};
-	#ifndef CONEMU_MINIMAL
-	bool SetFrom(const T* pSrc, int nSize=-1)
+		return lastErrorText_;
+	}
+
+	uint32_t GetLastErrorCode() const
 	{
+		return lastError_;
+	}
+
+	uint32_t GetLastExceptionCode() const
+	{
+		return exceptionCode_;
+	}
+
+	MEMORY_BASIC_INFORMATION GetMapInfo() const
+	{
+		return mapInfo_;
+	}
+
+	uint32_t GetMaxSize() const
+	{
+		return mappedSize_;
+	}
+
+#ifndef CONEMU_MINIMAL
+	bool SetFrom(const T* pSrc, const int nSize = -1)
+	{
+		lastError_ = 0;
+		exceptionCode_ = 0;
+
+		if (!IsValid())
+		{
+			wcscpy_c(lastErrorText_, L"Internal error. SetFrom failed: mapping is not valid.");
+			return false;
+		}
+		if (!pSrc || !nSize)
+		{
+			wcscpy_c(lastErrorText_, L"Internal error. SetFrom failed: invalid arguments.");
+			return false;
+		}
+
+		const uint32_t sizeToCopy = (nSize < 0) ? typeSize_ : nSize;
+		if (sizeToCopy > mappedSize_)
+		{
+			msprintf(lastErrorText_, countof(lastErrorText_), L"Internal error. SetFrom failed: size %u is too large.", sizeToCopy);
+			return false;
+		}
+
+		__try  // NOLINT(clang-diagnostic-language-extension-token)
+		{
+			if (memcmp(dataPtr_, pSrc, sizeToCopy) == 0) //-V106
+			{
+				return false; // nothing was changed
+			}
+			memmove_s(dataPtr_, mappedSize_, pSrc, sizeToCopy); //-V106
+			return true;
+		}
+		__except((GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR || GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+			? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+		{
+			lastError_ = GetLastError();
+			exceptionCode_ = GetExceptionCode();
+			msprintf(lastErrorText_, countof(lastErrorText_), L"Internal error. SetFrom failed: exception 0x%08X.", exceptionCode_);
+			return false;
+		}
+	}
+
+	bool GetTo(typename std::remove_const<T>::type* pDst, const int nSize = -1)
+	{
+		lastError_ = 0;
+		exceptionCode_ = 0;
+
 		if (!IsValid() || !nSize)
 			return false;
 
-		if (nSize == -1)
-			nSize = sizeof(T);
-		if (nSize < 0)
+		const uint32_t dstSize = (nSize < 0) ? typeSize_ : nSize;
+		const uint32_t sizeToCopy = (std::min<uint32_t>)(dstSize, mappedSize_);
+
+		__try  // NOLINT(clang-diagnostic-language-extension-token)
+		{
+			memmove_s(pDst, dstSize, dataPtr_, sizeToCopy); //-V106
+			return true;
+		}
+		__except((GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR || GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+			? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+		{
+			lastError_ = GetLastError();
+			exceptionCode_ = GetExceptionCode();
+			msprintf(lastErrorText_, countof(lastErrorText_), L"Internal error. GetTo failed: exception 0x%08X.", exceptionCode_);
 			return false;
-
-		bool lbChanged = (memcmp(mp_Data, pSrc, nSize)!=0); //-V106
-		memmove(mp_Data, pSrc, nSize); //-V106
-		return lbChanged;
+		}
 	}
-	bool GetTo(T* pDst, int nSize=-1)
-	{
-		if (!IsValid() || !nSize) return false;
-
-		if (nSize<0) nSize = sizeof(T);
-
-		//потому, что T может быть описан как const - (void*)
-		memmove((void*)pDst, mp_Data, nSize); //-V106
-		return true;
-	}
-	#endif
+#endif
 public:
-	LPCWSTR InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0)
+	LPCWSTR InitName(const wchar_t* aszTemplate, DWORD Parm1 = 0, DWORD Parm2 = 0)
 	{
-		if (mh_Mapping) CloseMap();
+		if (mapHandle_)
+			CloseMap();
 
-		//#ifdef CONEMU_MINIMAL
-		//			_ASSERTE(Parm2==0);
-		msprintf(ms_MapName, countof(ms_MapName), aszTemplate, Parm1, Parm2);
-		//#else
-		//			msprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
-		//#endif
-		return ms_MapName;
-	};
+		msprintf(mapName_, countof(mapName_), aszTemplate, Parm1, Parm2);
+		return mapName_;
+	}
+
 	void ClosePtr()
 	{
-		if (mp_Data)
+		if (dataPtr_)
 		{
-			UnmapViewOfFile((void*)mp_Data);
-			mp_Data = NULL;
+			UnmapViewOfFile(static_cast<const void*>(dataPtr_));
+			dataPtr_ = nullptr;
 		}
-	};
+	}
+
 	void CloseMap()
 	{
-		if (mp_Data) ClosePtr();
+		if (dataPtr_)
+			ClosePtr();
 
-		if (mh_Mapping)
+		if (mapHandle_)
 		{
-			CloseHandle(mh_Mapping);
-			mh_Mapping = NULL;
+			CloseHandle(mapHandle_);
+			mapHandle_ = nullptr;
 		}
 
-		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL;
-		mn_Size = -1; mn_LastError = 0;
-	};
+		mapHandle_ = nullptr;
+		isWriteAllowed_ = false;
+		dataPtr_ = nullptr;
+		mappedSize_ = 0;
+		lastError_ = 0;
+		mapInfo_ = {};
+	}
+
 protected:
-	// mn_Size и nSize используется фактически только при CreateFileMapping или операциях копирования
-	T* InternalOpenCreate(BOOL abCreate,BOOL abReadWrite,int nSize)
+	// mappedSize_ and nSize are used only during creation or copy operations
+	T* InternalOpenCreate(const bool abCreate, const bool abReadWrite, const int nSize)
 	{
-		if (mh_Mapping) CloseMap();
+		if (mapHandle_)
+			CloseMap();
 
-		mn_LastError = 0;
-		ms_Error[0] = 0;
-		_ASSERTE(mh_Mapping==NULL && mp_Data==NULL);
-		_ASSERTE(nSize==-1 || nSize>=(INT_PTR)sizeof(T));
+		lastError_ = 0;
+		lastErrorText_[0] = 0;
+		_ASSERTE(mapHandle_ == nullptr && dataPtr_ == nullptr);
+		_ASSERTE(nSize == -1 || nSize >= static_cast<INT_PTR>(sizeof(T)));
 
-		if (ms_MapName[0] == 0)
+		if (mapName_[0] == 0)
 		{
-			_ASSERTE(ms_MapName[0]!=0);  // -V547
-			wcscpy_c(ms_Error, L"Internal error. Mapping file name was not specified.");
-			return NULL;
+			_ASSERTE(mapName_[0] != 0);  // -V547
+			wcscpy_c(lastErrorText_, L"Internal error. Mapping file name was not specified.");
+			return nullptr;
+		}
+
+		mappedSize_ = (nSize <= 0) ? typeSize_ : nSize; //-V105 //-V103
+		isWriteAllowed_ = abCreate || abReadWrite;
+
+		const DWORD nFlags = isWriteAllowed_ ? (FILE_MAP_READ | FILE_MAP_WRITE) : FILE_MAP_READ;
+
+		if (abCreate)
+		{
+			mapHandle_ = CreateFileMapping(INVALID_HANDLE_VALUE,
+				LocalSecurity(), PAGE_READWRITE, 0, mappedSize_, mapName_);
 		}
 		else
 		{
-			mn_Size = (nSize<=0) ? sizeof(T) : nSize; //-V105 //-V103
-			mb_WriteAllowed = abCreate || abReadWrite;
+			mapHandle_ = OpenFileMapping(nFlags, false, mapName_);
+		}
+		lastError_ = GetLastError();
 
-			DWORD nFlags = mb_WriteAllowed ? (FILE_MAP_READ|FILE_MAP_WRITE) : FILE_MAP_READ;
-
-			if (abCreate)
-			{
-				mh_Mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-				                               LocalSecurity(), PAGE_READWRITE, 0, mn_Size, ms_MapName);
-			}
-			else
-			{
-				mh_Mapping = OpenFileMapping(nFlags, FALSE, ms_MapName);
-			}
-
-			if (!mh_Mapping)
-			{
-				mn_LastError = GetLastError();
-				msprintf(ms_Error, countof(ms_Error), L"Can't %s console data file mapping. ErrCode=0x%08X\n%s",
-				          abCreate ? L"create" : L"open", mn_LastError, ms_MapName);
-			}
-			else
-			{
-				mp_Data = (T*)MapViewOfFile(mh_Mapping, nFlags,0,0,0);
-
-				if (!mp_Data)
-				{
-					mn_LastError = GetLastError();
-					msprintf(ms_Error, countof(ms_Error), L"Can't map console info (%s). ErrCode=0x%08X\n%s",
-					          mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
-				}
-			}
+		if (!mapHandle_ || mapHandle_ == INVALID_HANDLE_VALUE)
+		{
+			isNewlyCreated_ = false;
+			msprintf(lastErrorText_, countof(lastErrorText_), L"Can't %s console data file mapping. ErrCode=0x%08X\n%s",
+				abCreate ? L"create" : L"open", lastError_, mapName_);
+			mapHandle_ = nullptr;
+			return nullptr;
 		}
 
-		return mp_Data;
-	};
+		isNewlyCreated_ = abCreate && lastError_ != ERROR_ALREADY_EXISTS;
+
+		dataPtr_ = static_cast<T*>(MapViewOfFile(mapHandle_, nFlags, 0, 0, 0));
+
+		if (!dataPtr_)
+		{
+			lastError_ = GetLastError();
+			msprintf(lastErrorText_, countof(lastErrorText_), L"Can't map console info (%s). ErrCode=0x%08X\n%s",
+				isWriteAllowed_ ? L"ReadWrite" : L"Read", lastError_, mapName_);
+			return nullptr;
+		}
+
+		if (!VirtualQuery(dataPtr_, &mapInfo_, sizeof(mapInfo_)))
+		{
+			lastError_ = GetLastError();
+			msprintf(lastErrorText_, countof(lastErrorText_),
+				L"Can't map console info (%s). VirtualQuery failed, ErrCode=0x%08X\n%s",
+				isWriteAllowed_ ? L"ReadWrite" : L"Read", lastError_, mapName_);
+			CloseMap();
+			return nullptr;
+		}
+
+		if (mapInfo_.RegionSize < mappedSize_)
+		{
+			msprintf(lastErrorText_, countof(lastErrorText_),
+				L"Can't map console info (%s). Allocated size %u is smaller than expected %u\n%s",
+				isWriteAllowed_ ? L"ReadWrite" : L"Read", static_cast<uint32_t>(mapInfo_.RegionSize), mappedSize_, mapName_);
+			CloseMap();
+			return nullptr;
+		}
+
+		return dataPtr_;
+	}
+
 public:
-	#ifndef CONEMU_MINIMAL
-	T* Create(int nSize=-1)
+#ifndef CONEMU_MINIMAL
+	T* Create(const int nSize = -1)
 	{
-		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
-		return InternalOpenCreate(TRUE/*abCreate*/,TRUE/*abReadWrite*/,nSize);
-	};
-	#endif
-	T* Open(BOOL abReadWrite=FALSE/*FALSE - только Read*/,int nSize=-1)
+		_ASSERTE(nSize == -1 || nSize >= sizeof(T));
+		return InternalOpenCreate(true/*abCreate*/, true/*abReadWrite*/, nSize);
+	}
+#endif
+
+	T* Open(const bool abReadWrite = false/*false - only Read*/, const int nSize = -1)
 	{
-		_ASSERTE(nSize==-1 || nSize>=(INT_PTR)sizeof(T));
-		return InternalOpenCreate(FALSE/*abCreate*/,abReadWrite,nSize);
-	};
+		_ASSERTE(nSize == -1 || nSize >= static_cast<INT_PTR>(sizeof(T)));
+		return InternalOpenCreate(false/*abCreate*/, abReadWrite, nSize);
+	}
+
 	const T* ReopenForRead()
 	{
-		if (mh_Mapping)
+		if (mapHandle_)
 		{
-			if (mp_Data) ClosePtr();
+			if (dataPtr_)
+				ClosePtr();
 
-			mb_WriteAllowed = FALSE;
+			isWriteAllowed_ = false;
 
-			DWORD nFlags = FILE_MAP_READ;
-			mp_Data = (T*)MapViewOfFile(mh_Mapping, nFlags,0,0,0);
+			const DWORD nFlags = FILE_MAP_READ;
+			dataPtr_ = static_cast<T*>(MapViewOfFile(mapHandle_, nFlags, 0, 0, 0));
 
-			if (!mp_Data)
+			if (!dataPtr_)
 			{
-				mn_LastError = GetLastError();
-				msprintf(ms_Error, countof(ms_Error), L"Can't map console info (%s). ErrCode=0x%08X\n%s",
-					mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
+				lastError_ = GetLastError();
+				msprintf(lastErrorText_, countof(lastErrorText_), L"Can't map console info (%s). ErrCode=0x%08X\n%s",
+					isWriteAllowed_ ? L"ReadWrite" : L"Read", lastError_, mapName_);
 			}
 		}
-		return mp_Data;
-	};
-public:
-	MFileMapping()
-	{
-		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL;
-		mn_Size = -1; ms_MapName[0] = 0;
-		ms_Error[0] = 0;
-		mn_LastError = 0;
-	};
-	~MFileMapping()
-	{
-		if (mh_Mapping) CloseMap();
-	};
+		return dataPtr_;
+	}
 };

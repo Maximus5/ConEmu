@@ -725,6 +725,7 @@
     <ClCompile Include="common\MEvent.cpp" />
     <ClCompile Include="common\MFileLog.cpp" />
     <ClCompile Include="common\MFileLogEx.cpp" />
+    <ClCompile Include="common\MFileMapping_test.cpp" />
     <ClCompile Include="common\MGlobal.cpp" />
     <ClCompile Include="common\MGuiMacro.cpp" />
     <ClCompile Include="common\MJsonReader.cpp" />
@@ -778,4 +779,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-</Project> 
+</Project>
