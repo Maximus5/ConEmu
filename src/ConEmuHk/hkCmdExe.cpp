@@ -55,19 +55,14 @@ static bool InitializeCmd()
 	//	return false;
 
 	CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
-	if (!pConMap /*|| !(pConMap->Flags & CECF_UseClink_Any)*/)
+	if (!pConMap /*|| !(pConMap->Flags & ConEmu::ConsoleFlags::UseClink_Any)*/)
 	{
 		//gnAllowClinkUsage = 0;
 		gnCmdInitialized = -1;
 		return false;
 	}
 
-	// Запомнить режим
-	//gnAllowClinkUsage =
-	//	(pConMap->Flags & CECF_UseClink_2) ? 2 :
-	//	(pConMap->Flags & CECF_UseClink_1) ? 1 :
-	//	CECF_Empty;
-	gbAllowClinkUsage = ((pConMap->Flags & CECF_UseClink_Any) != 0);
+	gbAllowClinkUsage = (pConMap->Flags & ConEmu::ConsoleFlags::UseClink_Any);
 	gbAllowUncPaths = (pConMap->ComSpec.isAllowUncPaths != FALSE);
 
 	if (gbAllowClinkUsage)

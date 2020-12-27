@@ -495,7 +495,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 	}
 
 wrap:
-	bAnsi = ((gpConInfo != NULL) && ((gpConInfo->Flags & CECF_ProcessAnsi) != 0));
+	bAnsi = ((gpConInfo != NULL) && (gpConInfo->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
 		// Это может случиться при запуске нового "чистого" cmd - "start cmd" из ConEmu\cmd

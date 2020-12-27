@@ -61,7 +61,7 @@ static const EXTREADWRITEFLAGS
 
 	ewtf_Commit  = 0x0000000000000100ULL, // Only for Write functions
 
-	ewtf_NoBells = 0x0000000000000200ULL, // CECF_SuppressBells
+	ewtf_NoBells = 0x0000000000000200ULL, // ConEmu::ConsoleFlags::SuppressBells
 
 	ewtf_NoLfNl  = 0x0000000000000400ULL, // Don't do automatic CR after LF
 

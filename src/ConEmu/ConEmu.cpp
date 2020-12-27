@@ -2174,6 +2174,8 @@ void CConEmuMain::GetGuiInfo(ConEmuGuiMapping& GuiInfo)
 
 void CConEmuMain::UpdateGuiInfoMapping()
 {
+	using ConEmu::ConsoleFlags;
+
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
 
 	static DWORD ChangeNum = 0; ChangeNum++; if (!ChangeNum) ChangeNum = 1;
@@ -2184,35 +2186,36 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 	m_GuiInfo.nLoggingType = CSetPgDebug::GetActivityLoggingType();
 	m_GuiInfo.useInjects = (gpSet->isUseInjects ? ConEmuUseInjects::Use : ConEmuUseInjects::DontUse);
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_AnsiExecAny|CECF_AnsiExecCmd,((gpSet->isAnsiExec==ansi_Allowed) ? CECF_AnsiExecAny : (gpSet->isAnsiExec==ansi_CmdOnly) ? CECF_AnsiExecCmd : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_SuppressBells,(gpSet->isSuppressBells ? CECF_SuppressBells : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_ConExcHandler,(gpSet->isConsoleExceptionHandler ? CECF_ConExcHandler : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessNewCon,(gpSet->isProcessNewConArg ? CECF_ProcessNewCon : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessCmdStart,(gpSet->isProcessCmdStart ? CECF_ProcessCmdStart : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessCtrlZ,(gpSet->isProcessCtrlZ ? CECF_ProcessCtrlZ : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_RealConVisible,(gpSet->isConVisible ? CECF_RealConVisible : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::UseTrueColor,(gpSet->isTrueColorer ? ConsoleFlags::UseTrueColor : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::ProcessAnsi,(gpSet->isProcessAnsi ? ConsoleFlags::ProcessAnsi : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags, ConsoleFlags::AnsiExecAny | ConsoleFlags::AnsiExecCmd,
+		((gpSet->isAnsiExec == ansi_Allowed) ? ConsoleFlags::AnsiExecAny : (gpSet->isAnsiExec == ansi_CmdOnly) ? ConsoleFlags::AnsiExecCmd : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::SuppressBells,(gpSet->isSuppressBells ? ConsoleFlags::SuppressBells : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::ConExcHandler,(gpSet->isConsoleExceptionHandler ? ConsoleFlags::ConExcHandler : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::ProcessNewCon,(gpSet->isProcessNewConArg ? ConsoleFlags::ProcessNewCon : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::ProcessCmdStart,(gpSet->isProcessCmdStart ? ConsoleFlags::ProcessCmdStart : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::ProcessCtrlZ,(gpSet->isProcessCtrlZ ? ConsoleFlags::ProcessCtrlZ : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::RealConVisible,(gpSet->isConVisible ? ConsoleFlags::RealConVisible : ConsoleFlags::Empty));
 	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	switch (gpSet->isUseClink())
 	{
 	case 1:
-		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_1);
+		SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::UseClink_Any,ConsoleFlags::UseClink_1);
 		break;
 	case 2:
-		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_UseClink_2);
+		SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::UseClink_Any,ConsoleFlags::UseClink_2);
 		break;
 	default:
 		_ASSERTE(gpSet->isUseClink()==0);
-		SetConEmuFlags(m_GuiInfo.Flags,CECF_UseClink_Any,CECF_Empty);
+		SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::UseClink_Any,ConsoleFlags::Empty);
 	}
 
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(m_DbgInfo.bBlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::BlockChildDbg,(m_DbgInfo.bBlockChildrenDebuggers ? ConsoleFlags::BlockChildDbg : ConsoleFlags::Empty));
 
-	// m_GuiInfo.Flags[CECF_SleepInBackg], m_GuiInfo.hActiveCons, m_GuiInfo.dwActiveTick, m_GuiInfo.bGuiActive
+	// m_GuiInfo.Flags[ConsoleFlags::SleepInBackground], m_GuiInfo.hActiveCons, m_GuiInfo.dwActiveTick, m_GuiInfo.bGuiActive
 	UpdateGuiInfoMappingActive(isMeForeground(true, true), false);
 
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_DosBox,(CheckDosBoxExists() ? CECF_DosBox : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::DosBox,(CheckDosBoxExists() ? ConsoleFlags::DosBox : ConsoleFlags::Empty));
 
 	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
 	//-- переехали в m_GuiInfo.ComSpec
@@ -2357,8 +2360,10 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= true*/)
 {
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_RetardNAPanes,(gpSet->isRetardInactivePanes ? CECF_RetardNAPanes : 0));
+	using ConEmu::ConsoleFlags;
+
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::SleepInBackground,(gpSet->isSleepInBackground ? ConsoleFlags::SleepInBackground : ConsoleFlags::Empty));
+	SetConEmuFlags(m_GuiInfo.Flags,ConsoleFlags::RetardInactivePanes,(gpSet->isRetardInactivePanes ? ConsoleFlags::RetardInactivePanes : ConsoleFlags::Empty));
 
 	m_GuiInfo.bGuiActive = bActive;
 

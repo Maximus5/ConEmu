@@ -162,7 +162,7 @@ void SetupCreateDumpOnException()
 	else if (gState.runMode_ == RunMode::AltServer)
 	{
 		// By default, handler is not installed in AltServer
-		// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
+		// gpSet->isConsoleExceptionHandler --> ConEmu::ConsoleFlags::ConExcHandler
 		const bool allowHandler = WorkerServer::IsCrashHandlerAllowed();
 		if (!allowHandler)
 			return; // disabled in ConEmu settings

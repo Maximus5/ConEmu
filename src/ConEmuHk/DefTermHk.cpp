@@ -407,7 +407,7 @@ void CDefTermHk::PostCreateThreadFinished()
 	while ((dwWait = WaitForSingleObject(mh_StopEvent, FOREGROUND_CHECK_DELAY)) == WAIT_TIMEOUT)
 	{
 		// If non-aggressive - don't do anything here...
-		if (!isDefaultTerminalAllowed(true) || !m_Opt.bAgressive)
+		if (!isDefaultTerminalAllowed(true) || !m_Opt.bAggressive)
 			continue;
 
 		// Aggressive mode

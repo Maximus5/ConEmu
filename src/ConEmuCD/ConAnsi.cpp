@@ -478,8 +478,8 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 			//else
 			//	bAnsiAllowed = true;
 
-			bAnsiAllowed = ((pMap != nullptr) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
-			bSuppressBells = ((pMap != nullptr) && ((pMap->Flags & CECF_SuppressBells) != 0));
+			bAnsiAllowed = ((pMap != nullptr) && ((pMap->Flags & ConEmu::ConsoleFlags::ProcessAnsi) != 0));
+			bSuppressBells = ((pMap != nullptr) && ((pMap->Flags & ConEmu::ConsoleFlags::SuppressBells) != 0));
 
 			//free(pMap);
 		}

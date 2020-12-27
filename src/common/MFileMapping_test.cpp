@@ -45,7 +45,7 @@ TEST(MFileMapping, Simple)
 	EXPECT_LT(sizeof(CESERVER_CONSOLE_MAPPING_HDR), 0x2048U);
 	CESERVER_CONSOLE_MAPPING_HDR data{};
 	data.cbSize = sizeof(data);
-	data.Flags = 1;
+	data.Flags = static_cast<ConEmu::ConsoleFlags>(1);
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> test;
 	EXPECT_FALSE(test.IsValid());
 	test.InitName(TEST_FILE_MAP_NAME L".Simple", GetCurrentProcessId());
@@ -66,7 +66,7 @@ TEST(MFileMapping, Underflow)
 	EXPECT_LT(sizeof(CESERVER_CONSOLE_MAPPING_HDR), 0x2048U);
 	CESERVER_CONSOLE_MAPPING_HDR data{};
 	data.cbSize = sizeof(data);
-	data.Flags = 2;
+	data.Flags = static_cast<ConEmu::ConsoleFlags>(2);
 
 	// Create a map smaller than size of structure
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> test1;
@@ -101,7 +101,7 @@ TEST(MFileMapping, CreateRead)
 {
 	CESERVER_CONSOLE_MAPPING_HDR data{};
 	data.cbSize = sizeof(data);
-	data.Flags = 3;
+	data.Flags = static_cast<ConEmu::ConsoleFlags>(3);
 	for (size_t i = 0; i + 1 < std::size(data.ComSpec.ConEmuExeDir); ++i)
 	{
 		data.ComSpec.ConEmuExeDir[i] = 33 + (i % 64);

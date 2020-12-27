@@ -1085,7 +1085,7 @@ struct Settings
 		wchar_t* psAnsiAllowed; // commands: multiline, "\r\n" separated
 
 		//reg->Load(L"AnsiLog", isAnsiLog);
-		bool isAnsiLog; // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+		bool isAnsiLog; // Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 		//reg->Load(L"AnsiLogCodes", isAnsiLogCodes);
 		bool isAnsiLogCodes; // Write to logfile ANSI sequences (from app and our internals)
 		//reg->Load(L"AnsiLogPath", &pszAnsiLog);

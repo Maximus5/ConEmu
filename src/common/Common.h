@@ -1252,43 +1252,78 @@ enum class ConEmuUseInjects : DWORD
 	Use = 1,
 };
 
+namespace ConEmu {
 
-typedef DWORD ConEmuConsoleFlags;
-const ConEmuConsoleFlags
-	CECF_DosBox          = 0x00000001, // DosBox установлен, можно пользоваться
-	CECF_UseTrueColor    = 0x00000002, // включен флажок "TrueMod support"
-	CECF_ProcessAnsi     = 0x00000004, // ANSI X3.64 & XTerm-256-colors Support
+enum class ConsoleFlags : uint32_t
+{
+	Empty = 0,
 
-	CECF_UseClink_1      = 0x00000008, // использовать расширение командной строки (ReadConsole). 1 - старая версия (0.1.1)
-	CECF_UseClink_2      = 0x00000010, // использовать расширение командной строки (ReadConsole) - 2 - новая версия
-	CECF_UseClink_Any    = CECF_UseClink_1|CECF_UseClink_2,
+	// DosBox is installed, ready to use
+	DosBox = 0x00000001,
 
-	CECF_SleepInBackg    = 0x00000020,
+	// enabled "TrueMod support"
+	UseTrueColor = 0x00000002,
+	// enabled ANSI sequences processing
+	ProcessAnsi = 0x00000004,
 
-	CECF_BlockChildDbg   = 0x00000040, // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
+	// use clink command line extension (ReadConsole). 1 - old version (0.1.1)
+	UseClink_1 = 0x00000008,
+	// use clink command line extension (ReadConsole) - 2 - new version
+	UseClink_2 = 0x00000010,
+	UseClink_Any = UseClink_1 | UseClink_2,
 
-	CECF_SuppressBells   = 0x00000080, // Suppress output of char(7) to console (which produces annoying bell sound)
+	// Consume lesser resources when ConEmu or the console is not focused/active (see also RetardInactivePanes)
+	SleepInBackground = 0x00000020,
 
-	CECF_ConExcHandler   = 0x00000100, // Set up "SetUnhandledExceptionFilter(CreateDumpOnException)" in alternative servers too
+	// When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating sub children
+	BlockChildDbg = 0x00000040,
 
-	CECF_ProcessNewCon   = 0x00000200, // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
-	CECF_ProcessCmdStart = 0x00000400, // Use "start xxx.exe" to start new tab
+	// Suppress output of char(7) to console (which produces annoying bell sound)
+	SuppressBells = 0x00000080,
 
-	CECF_RealConVisible  = 0x00000800, // Show real console
+	// Set up "SetUnhandledExceptionFilter(CreateDumpOnException)" in alternative servers too
+	ConExcHandler = 0x00000100,
 
-	CECF_ProcessCtrlZ    = 0x00001000, // Return 0 bytes from ReadConsole if Ctrl-Z was only entered on the line
+	// Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
+	ProcessNewCon = 0x00000200,
+	// Use "start xxx.exe" to start new tab
+	ProcessCmdStart = 0x00000400,
 
-	CECF_RetardNAPanes   = 0x00002000, // Retard inactive panes
+	// Show real console
+	RealConVisible = 0x00000800,
 
-	CECF_AnsiExecAny     = 0x00004000, // AnsiExecutionPerm::ansi_Allowed
-	CECF_AnsiExecCmd     = 0x00008000, // AnsiExecutionPerm::ansi_CmdOnly
+	// Return 0 bytes from ReadConsole if Ctrl-Z was only entered on the line
+	ProcessCtrlZ = 0x00001000,
 
-	CECF_Empty = 0
-	;
-#define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)
+	// Retard inactive panes (see also SleepInBackground)
+	RetardInactivePanes = 0x00002000,
 
-typedef DWORD ConEmuConsoleFlags;
-const ConEmuConsoleFlags
+	// AnsiExecutionPerm::ansi_Allowed
+	AnsiExecAny = 0x00004000,
+	// AnsiExecutionPerm::ansi_CmdOnly
+	AnsiExecCmd = 0x00008000,
+};
+
+inline ConsoleFlags operator|(const ConsoleFlags e1, const ConsoleFlags e2)
+{
+	return static_cast<ConsoleFlags>(static_cast<uint32_t>(e1) | static_cast<uint32_t>(e2));
+}
+
+inline bool operator&(const ConsoleFlags e1, const ConsoleFlags e2)
+{
+	return (static_cast<uint32_t>(e1) & static_cast<uint32_t>(e2)) != static_cast<uint32_t>(ConsoleFlags::Empty);
+}
+
+}
+
+template <typename T>
+void SetConEmuFlags(T& v, const T mask, const T flag)
+{
+	v = static_cast<T>((static_cast<uint64_t>(v) & ~static_cast<uint64_t>(mask)) | static_cast<uint64_t>(flag));
+}
+
+typedef DWORD ConEmuConsoleStateFlags;
+const ConEmuConsoleStateFlags
 	ccf_Active   = 1,
 	ccf_Visible  = 2,
 	ccf_ChildGui = 4,
@@ -1296,7 +1331,7 @@ const ConEmuConsoleFlags
 
 struct ConEmuConsoleInfo
 {
-	ConEmuConsoleFlags Flags;
+	ConEmuConsoleStateFlags Flags;
 	HWND2 Console;
 	HWND2 DCWindow;
 	HWND2 ChildGui;
@@ -1322,7 +1357,7 @@ struct ConEmuGuiMapping
 
 	ConEmuUseInjects   useInjects;
 
-	ConEmuConsoleFlags Flags;
+	ConEmu::ConsoleFlags Flags;
 	//BOOL     bUseTrueColor; // включен флажок "TrueMod support"
 	//BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
 	//DWORD    bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
@@ -1581,7 +1616,7 @@ struct CEFAR_INFO_MAPPING
 };
 
 
-// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 // Initialized during CECMD_SRVSTARTSTOP
 struct ConEmuAnsiLog
 {
@@ -1630,13 +1665,13 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	DWORD nLoggingType;  // enum GuiLoggingType
 	ConEmuUseInjects useInjects;
 
-	ConEmuConsoleFlags Flags;
+	ConEmu::ConsoleFlags Flags;
 	//BOOL  bDosBox;       // DosBox установлен, можно пользоваться
 	//BOOL  bUseTrueColor; // включен флажок "TrueMod support"
 	//BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
 	//DWORD bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
 
 	// Разрешенный размер видимой области
@@ -2023,7 +2058,7 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	CESERVER_REQ_STARTSTOPRET Info;
 	// Используется при CECMD_ATTACH2GUI
 	CESERVER_REQ_SETFONT Font;
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
 	// Avoid spare calls, let do all in one place
 	ConEmuGuiMapping GuiMapping;

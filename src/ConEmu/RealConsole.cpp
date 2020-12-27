@@ -1372,7 +1372,7 @@ void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	pRet.Font.inSizeX = gpSet->ConsoleFont.lfWidth;
 	lstrcpy(pRet.Font.sFontName, gpSet->ConsoleFont.lfFaceName);
 
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 	pRet.AnsiLog = GetAnsiLogInfo();
 
 	// Return GUI info, let it be in one place
@@ -8018,7 +8018,7 @@ ConEmuAnsiLog CRealConsole::GetAnsiLogInfo()
 		_ASSERTE(nSrvPID != 0); // ServerPID should be actualized already!
 	}
 
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 	ConEmuAnsiLog AnsiLog = {};
 
 	wchar_t dir[MAX_PATH] = L"", name[40] = L"";

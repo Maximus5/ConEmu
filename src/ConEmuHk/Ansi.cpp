@@ -497,8 +497,8 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 			//else
 			//	bAnsiAllowed = true;
 
-			bAnsiAllowed = ((pMap != nullptr) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
-			bSuppressBells = ((pMap != nullptr) && ((pMap->Flags & CECF_SuppressBells) != 0));
+			bAnsiAllowed = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
+			bSuppressBells = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::SuppressBells));
 
 			//free(pMap);
 		}
@@ -2281,11 +2281,11 @@ bool CEAnsi::IsAnsiExecAllowed(LPCWSTR asCmd) const
 	if (!pMap)
 		return false;
 
-	if ((pMap->Flags & CECF_AnsiExecAny) != 0)
+	if ((pMap->Flags & ConEmu::ConsoleFlags::AnsiExecAny))
 	{
 		// Allowed in any process
 	}
-	else if ((pMap->Flags & CECF_AnsiExecCmd) != 0)
+	else if ((pMap->Flags & ConEmu::ConsoleFlags::AnsiExecCmd))
 	{
 		// Allowed in Cmd.exe only
 		if (!gbIsCmdProcess)

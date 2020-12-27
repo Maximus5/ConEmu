@@ -197,7 +197,7 @@ void CDefaultTerminal::ReloadSettings()
 {
 	m_Opt.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
 
-	m_Opt.bAgressive = gpSet->isRegisterAgressive;
+	m_Opt.bAggressive = gpSet->isRegisterAgressive;
 	m_Opt.bNoInjects = gpSet->isDefaultTerminalNoInjects;
 	m_Opt.bNewWindow = gpSet->isDefaultTerminalNewWindow;
 	m_Opt.bDebugLog  = gpSet->isDefaultTerminalDebugLog;

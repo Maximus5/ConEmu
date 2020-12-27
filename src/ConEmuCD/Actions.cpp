@@ -153,7 +153,7 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 						bOn = true;
 						break;
 					case ConEmuStateCheck::IsAnsi:
-						bOn = ((pInfo->Flags & CECF_ProcessAnsi) != 0);
+						bOn = ((pInfo->Flags & ConEmu::ConsoleFlags::ProcessAnsi) != 0);
 						break;
 					default:
 						;

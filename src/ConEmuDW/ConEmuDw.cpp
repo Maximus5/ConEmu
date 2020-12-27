@@ -1993,7 +1993,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 			{
 				Parm.hGUI = pHdr->hConEmuWndDc; // DC
 				Parm.hGUIRoot = pHdr->hConEmuRoot; // Main window
-				if (!(pHdr->Flags & CECF_UseTrueColor))
+				if (!(pHdr->Flags & ConEmu::ConsoleFlags::UseTrueColor))
 				{
 					MessageBoxA(NULL, MSG_TRUEMOD_DISABLED, MSG_TITLE, MB_ICONSTOP|MB_SYSTEMMODAL);
 				}

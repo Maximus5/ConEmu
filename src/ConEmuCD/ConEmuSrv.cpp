@@ -1039,11 +1039,11 @@ void WorkerServer::ServerInitEnvVars()
 		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, gState.conemuWndDC_, gState.conemuWndBack_);
 
 		#ifdef _DEBUG
-		bool bNewConArg = ((gpSrv->guiSettings.Flags & CECF_ProcessNewCon) != 0);
+		bool bNewConArg = ((gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::ProcessNewCon) != 0);
 		//SetEnvironmentVariable(ENV_CONEMU_HOOKS, bNewConArg ? ENV_CONEMU_HOOKS_ENABLED : ENV_CONEMU_HOOKS_NOARGS);
 		#endif
 
-		bool bAnsi = ((gpSrv->guiSettings.Flags & CECF_ProcessAnsi) != 0);
+		bool bAnsi = ((gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::ProcessAnsi) != 0);
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
 
 		if (bAnsi)
@@ -1981,8 +1981,8 @@ bool WorkerServer::IsCrashHandlerAllowed()
 	if (gState.runMode_ == RunMode::AltServer)
 	{
 		// By default, handler is not installed in AltServer
-		// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
-		const bool allowHandler = gpSrv && gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler);
+		// gpSet->isConsoleExceptionHandler --> ConEmu::ConsoleFlags::ConExcHandler
+		const bool allowHandler = gpSrv && gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & ConEmu::ConsoleFlags::ConExcHandler);
 		if (!allowHandler)
 			return false; // disabled in ConEmu settings
 	}
@@ -2776,7 +2776,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	// Refresh settings
 	ReloadGuiSettings(&pStartStopRet->GuiMapping);
 
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 	InitAnsiLog(pStartStopRet->AnsiLog);
 
 	if (!gState.attachMode_) // Часть с "обычным" запуском сервера
@@ -2811,7 +2811,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 
 			if (gpConsoleArgs->IsForceHideConWnd())
 			{
-				if (!(gpSrv->guiSettings.Flags & CECF_RealConVisible))
+				if (!(gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::RealConVisible))
 					apiShowWindow(gState.realConWnd_, SW_HIDE);
 			}
 
@@ -3590,7 +3590,7 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= nullptr*/)
 
 		if (gState.runMode_ == RunMode::Server)
 		{
-			// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+			// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 			gpSrv->pConsole->hdr.AnsiLog = gpSrv->AnsiLog;
 		}
 
@@ -3797,7 +3797,7 @@ void WorkerServer::CloseMapHeader()
 }
 
 
-// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 {
 	LogFunction(L"InitAnsiLog");
@@ -3881,11 +3881,11 @@ int WorkerServer::ReadConsoleInfo()
 
 	if (!apiGetConsoleSelectionInfo(&lsel))
 	{
-		SetConEmuFlags(gpSrv->pConsole->ConState.Flags,CECI_Paused,(CECI_None));
+		SetConEmuFlags(gpSrv->pConsole->ConState.Flags, CECI_Paused, (CECI_None));
 	}
 	else
 	{
-		SetConEmuFlags(gpSrv->pConsole->ConState.Flags,CECI_Paused,((lsel.dwFlags & CONSOLE_SELECTION_IN_PROGRESS) ? CECI_Paused : CECI_None));
+		SetConEmuFlags(gpSrv->pConsole->ConState.Flags, CECI_Paused, ((lsel.dwFlags & CONSOLE_SELECTION_IN_PROGRESS) ? CECI_Paused : CECI_None));
 	}
 
 	if (!GetConsoleCursorInfo(hOut, &lci))
@@ -5345,8 +5345,8 @@ DWORD WorkerServer::RefreshThread(LPVOID /*lpvParam*/)
 	BOOL bConsoleActive = (BOOL)-1;
 	BOOL bDCWndVisible = (BOOL)-1;
 	BOOL bNewActive = (BOOL)-1, bNewFellInSleep = FALSE;
-	BOOL ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
-	BOOL RetardNAPanes = (gpSrv->guiSettings.Flags & CECF_RetardNAPanes);
+	BOOL ActiveSleepInBg = (gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::SleepInBackground);
+	BOOL RetardInactivePanes = (gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::RetardInactivePanes);
 	BOOL bOurConActive = (BOOL)-1, bOneConActive = (BOOL)-1;
 	bool bLowSpeed = false;
 	BOOL bOnlyCursorChanged;
@@ -5741,11 +5741,11 @@ DWORD WorkerServer::RefreshThread(LPVOID /*lpvParam*/)
 			LogString(lbOneConActive ? L"bOneConActive changed to true" : L"bOneConActive changed to false");
 		bOneConActive = lbOneConActive;
 
-		ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
-		RetardNAPanes = (gpSrv->guiSettings.Flags & CECF_RetardNAPanes);
+		ActiveSleepInBg = (gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::SleepInBackground);
+		RetardInactivePanes = (gpSrv->guiSettings.Flags & ConEmu::ConsoleFlags::RetardInactivePanes);
 
 		BOOL lbNewActive;
-		if (bOurConActive || (bDCWndVisible && !RetardNAPanes))
+		if (bOurConActive || (bDCWndVisible && !RetardInactivePanes))
 		{
 			// Mismatch may appears during console closing
 			//if (gpLogSize && gbInShutdown && (bDCWndVisible != bOurConActive))

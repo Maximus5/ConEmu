@@ -784,11 +784,11 @@ bool SrvAnsiImpl::IsAnsiExecAllowed(LPCWSTR asCmd)
 	if (!pMap)
 		return false;
 
-	if ((pMap->Flags & CECF_AnsiExecAny) != 0)
+	if ((pMap->Flags & ConEmu::ConsoleFlags::AnsiExecAny) != 0)
 	{
 		// Allowed in any process
 	}
-	else if ((pMap->Flags & CECF_AnsiExecCmd) != 0)
+	else if ((pMap->Flags & ConEmu::ConsoleFlags::AnsiExecCmd) != 0)
 	{
 		// #condata Allowed in Cmd.exe only
 		// if (!gbIsCmdProcess)

@@ -61,7 +61,7 @@ public:
 	BOOL     bNewWindow; // " /GHWND=NEW"
 	BOOL     bDebugLog;
 	BOOL     nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never | " /CONFIRM" | " /NOCONFIRM"
-	ConEmuConsoleFlags nConsoleFlags; // Used for populating m_SrvMapping in ShellProcessor
+	ConEmu::ConsoleFlags nConsoleFlags = {}; // Used for populating m_SrvMapping in ShellProcessor
 	wchar_t* pszConEmuExe; // Полный путь к ConEmu.exe
 	wchar_t* pszConEmuBaseDir; // %ConEmuBaseDir%
 	wchar_t* pszCfgFile; // " /LoadCfgFile "...""

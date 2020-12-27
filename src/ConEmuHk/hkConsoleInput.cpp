@@ -393,7 +393,7 @@ bool isProcessCtrlZ()
 	CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
 	if (!pMap)
 		return false;
-	if (!pMap->cbSize || !(pMap->Flags & CECF_ProcessCtrlZ))
+	if (!pMap->cbSize || !(pMap->Flags & ConEmu::ConsoleFlags::ProcessCtrlZ))
 		return false;
 	return true;
 }

@@ -617,19 +617,19 @@ void CShellProc::CheckHooksDisabled()
 		bHooksTempDisabled = (wcsstr(szVar, ENV_CONEMU_HOOKS_DISABLED) != NULL);
 
 		bHooksSkipNewConsole = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOARGS) != NULL)
-			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & ConEmu::ConsoleFlags::ProcessNewCon));
 
 		bHooksSkipCmdStart = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOSTART) != NULL)
-			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessCmdStart));
+			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & ConEmu::ConsoleFlags::ProcessCmdStart));
 	}
 	else
 	{
 		// When application is DefTerm host, it must be able to process "-new_console" switches.
 		// Especially the "-new_console:z" switch. But the m_SrvMapping is not filled in most cases.
 		bHooksSkipNewConsole = !gbPrepareDefaultTerminal
-			&& (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+			&& (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & ConEmu::ConsoleFlags::ProcessNewCon));
 		// "start /?" is a "cmd.exe" feature mainly. User may want to disable "start" processing
-		bHooksSkipCmdStart = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessCmdStart));
+		bHooksSkipCmdStart = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & ConEmu::ConsoleFlags::ProcessCmdStart));
 	}
 
 	mb_Opt_DontInject = bHooksTempDisabled;
@@ -988,7 +988,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 	}
 	else if (ImageBits == 16)
 	{
-		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
+		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & ConEmu::ConsoleFlags::DosBox))
 		{
 			szDosBoxExe.Attach(JoinPath(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\DosBox\\DosBox.exe"));
 			szDosBoxCfg.Attach(JoinPath(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\DosBox\\DosBox.conf"));
@@ -1666,7 +1666,7 @@ bool CShellProc::CheckForDefaultTerminal(
 	{
 		#if 0
 		// Для поиска трапов в дереве запускаемых процессов
-		if (m_SrvMapping.Flags & CECF_BlockChildDbg)
+		if (m_SrvMapping.Flags & ConEmu::ConsoleFlags::BlockChildDbg)
 		{
 			(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
 		}
@@ -2081,7 +2081,7 @@ int CShellProc::PrepareExecuteParms(
 				// The "-cur_console" we have to process _here_
 				bCurConsoleArg = true;
 
-				if ((m_Args.ForceDosBox == crb_On) && m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
+				if ((m_Args.ForceDosBox == crb_On) && m_SrvMapping.cbSize && (m_SrvMapping.Flags & ConEmu::ConsoleFlags::DosBox))
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageBits = 16;
@@ -2321,7 +2321,7 @@ int CShellProc::PrepareExecuteParms(
 
 			// If this is old DOS application and the DosBox is enabled also insert ConEmuC.exe /DOSBOX
 			if ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
-				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
+				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & ConEmu::ConsoleFlags::DosBox))
 			{
 				bGoChangeParm = true; break;
 			}

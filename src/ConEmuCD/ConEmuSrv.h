@@ -200,7 +200,7 @@ struct SrvInfo
 	//
 	LONG nLastPacketID; // ИД пакета для отправки в GUI
 
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	// Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
 
 	// Когда была последняя пользовательская активность

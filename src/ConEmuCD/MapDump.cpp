@@ -169,38 +169,38 @@ static void DumpFlags(const DWORD Flags, FlagList* flags, size_t flagsCount, LPC
 	_wprintf(lsLine);
 }
 
-static void DumpConsoleFlags(const ConEmuConsoleFlags& Flags, LPCWSTR szName, LPCWSTR szIndent)
+static void DumpConsoleFlags(const ConEmu::ConsoleFlags flags, LPCWSTR szName, LPCWSTR szIndent)
 {
-	FlagList flags[] = {
-		{ CECF_DosBox,          L"DosBox" },
-		{ CECF_UseTrueColor,    L"UseTrueColor" },
-		{ CECF_ProcessAnsi,     L"ProcessAnsi" },
-		{ CECF_UseClink_1,      L"UseClink_1" },
-		{ CECF_UseClink_2,      L"UseClink_2" },
-		{ CECF_SleepInBackg,    L"SleepInBackg" },
-		{ CECF_BlockChildDbg,   L"BlockChildDbg" },
-		{ CECF_SuppressBells,   L"SuppressBells" },
-		{ CECF_ConExcHandler,   L"ConExcHandler" },
-		{ CECF_ProcessNewCon,   L"ProcessNewCon" },
-		{ CECF_ProcessCmdStart, L"ProcessCmdStart" },
-		{ CECF_RealConVisible,  L"RealConVisible" },
-		{ CECF_ProcessCtrlZ,    L"ProcessCtrlZ" },
-		{ CECF_RetardNAPanes,   L"RetardNAPanes" },
+	FlagList flagsList[] = {
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::DosBox),             L"DosBox" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::UseTrueColor),       L"UseTrueColor" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::ProcessAnsi),        L"ProcessAnsi" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::UseClink_1),         L"UseClink_1" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::UseClink_2),         L"UseClink_2" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::SleepInBackground),  L"SleepInBackground" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::BlockChildDbg),      L"BlockChildDbg" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::SuppressBells),      L"SuppressBells" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::ConExcHandler),      L"ConExcHandler" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::ProcessNewCon),      L"ProcessNewCon" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::ProcessCmdStart),    L"ProcessCmdStart" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::RealConVisible),     L"RealConVisible" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::ProcessCtrlZ),       L"ProcessCtrlZ" },
+		{ static_cast<uint32_t>(ConEmu::ConsoleFlags::RetardInactivePanes),L"RetardInactivePanes" },
 	};
 
-	DumpFlags(Flags, flags, countof(flags), szName, szIndent);
+	DumpFlags(static_cast<uint32_t>(flags), flagsList, countof(flagsList), szName, szIndent);
 }
 
-static void DumpAppFlags(const CEActiveAppFlags& Flags, LPCWSTR szName, LPCWSTR szIndent)
+static void DumpAppFlags(const CEActiveAppFlags flags, LPCWSTR szName, LPCWSTR szIndent)
 {
-	FlagList flags[] = {
+	FlagList flagsList[] = {
 		{ caf_Cygwin1,          L"Cygwin1" },
 		{ caf_Msys1,            L"MSys1" },
 		{ caf_Msys2,            L"MSys2" },
 		{ caf_Clink,            L"Clink" },
 	};
 
-	DumpFlags(Flags, flags, countof(flags), szName, szIndent);
+	DumpFlags(flags, flagsList, countof(flagsList), szName, szIndent);
 }
 
 
