@@ -120,6 +120,8 @@ public:
 	operator bool() const;
 	// ReSharper disable once CppInconsistentNaming
 	const char* c_str(const char* asNullSubstitute = nullptr) const;
+	// ReSharper disable once CppInconsistentNaming
+	char* data() const;
 	ssize_t GetLen() const;
 	void Clear();
 	void Release();

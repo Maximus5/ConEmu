@@ -33,13 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DUMP_UNKNOWN_ESCAPES
 #endif
 
-extern DWORD AnsiTlsIndex;
-//#include "../common/MMap.h"
-
-#include "../common/ConsoleMixAttr.h"
-
 #include "ExtConsole.h"
 #include "hkConsoleOutput.h"
+#include "../common/WCodePage.h"
 
 #define CEAnsi_MaxPrevPart 512
 #define CEAnsi_MaxPrevAnsiPart 256
@@ -100,8 +96,7 @@ public:
 	/* ************************************* */
 	/* Init and release thread local storage */
 	/* ************************************* */
-	static CEAnsi* Object(bool bForceCreate = false);
-	static void Release();
+	static CEAnsi* Object();
 
 public:
 	/* ************************************* */
@@ -185,12 +180,12 @@ public:
 	// Unicode method
 	BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 protected:
-	CpCvt* mp_Cvt;
+	CpCvt m_Cvt{};
 	wchar_t m_LastWrittenChar = L' ';
 protected:
 	void WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	void WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
-	void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+static void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
 	void ReportTerminalPixelSize();
@@ -213,27 +208,27 @@ protected:
 	//static HANDLE XTermBufferWin10(const int mode, const bool bSetAltBuffer);
 public:
 
-	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
+static void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
 
 	static int DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
 
 	BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE, EXTREADWRITEFLAGS AddFlags = ewtf_None);
-	BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);
-	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir);
+static BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);
+	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir) const;
 	//BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi);
-	BOOL FullReset(HANDLE hConsoleOutput);
+	BOOL FullReset(HANDLE hConsoleOutput) const;
 	BOOL ForwardLF(HANDLE hConsoleOutput, BOOL& bApply);
-	BOOL ReverseLF(HANDLE hConsoleOutput, BOOL& bApply);
-	BOOL LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount);
-	BOOL LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount);
+	BOOL ReverseLF(HANDLE hConsoleOutput, BOOL& bApply) const;
+	BOOL LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const;
+static BOOL LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount);
 	void DoSleep(LPCWSTR asMS);
-	void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen);
-	void DoMessage(LPCWSTR asMsg, INT_PTR cchLen);
-	void DoProcess(LPCWSTR asCmd, INT_PTR cchLen);
-	void DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen);
+	void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen) const;
+	void DoMessage(LPCWSTR asMsg, INT_PTR cchLen) const;
+	void DoProcess(LPCWSTR asCmd, INT_PTR cchLen) const;
+	void DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen) const;
 	void DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen);
-	void DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen);
-	bool IsAnsiExecAllowed(LPCWSTR asCmd);
+	void DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen) const;
+	bool IsAnsiExecAllowed(LPCWSTR asCmd) const;
 
 	int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, BOOL ReEntrance = FALSE);
 
@@ -241,8 +236,8 @@ protected:
 	/* ************************************* */
 	/*        Instance variables             */
 	/* ************************************* */
-	OnWriteConsoleW_t pfnWriteConsoleW;
-	HANDLE mh_WriteOutput;
+	OnWriteConsoleW_t pfnWriteConsoleW = nullptr;
+	HANDLE mh_WriteOutput = nullptr;
 
 	enum VTCharSet
 	{
@@ -308,16 +303,18 @@ protected:
 	// Bad thing again...
 	static DisplayOpt gDisplayOpt;
 	// Store absolute coords by relative ANSI values
-	void SetScrollRegion(bool bRegion, bool bRelative = true, int nStart = 0, int nEnd = 0, HANDLE hConsoleOutput = NULL);
+	void SetScrollRegion(bool bRegion, bool bRelative = true, int nStart = 0, int nEnd = 0, HANDLE hConsoleOutput = NULL) const;
 	// Return absolute coordinates of our working area
-	SMALL_RECT GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort);
+	SMALL_RECT GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort) const;
 
-	wchar_t gsPrevAnsiPart[CEAnsi_MaxPrevPart]; // = {};
-	INT_PTR gnPrevAnsiPart; // = 0;
-	wchar_t gsPrevAnsiPart2[CEAnsi_MaxPrevPart]; // = {};
-	INT_PTR gnPrevAnsiPart2; // = 0;
+	wchar_t gsPrevAnsiPart[CEAnsi_MaxPrevPart] = L"";
+	INT_PTR gnPrevAnsiPart = 0;
+	wchar_t gsPrevAnsiPart2[CEAnsi_MaxPrevPart] = L"";
+	INT_PTR gnPrevAnsiPart2 = 0;
 
-	bool mb_SuppressBells;
+	bool mb_SuppressBells = false;
+
+	bool initialized_ = false;
 
 	// In "ReadLine" we can't control scrolling
 	// thats why we need to mark some rows for identification
@@ -328,5 +325,5 @@ protected:
 		SHORT SaveRow[2];
 		WORD  RowId[2];
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
-	} m_RowMarks;
+	} m_RowMarks{};
 };

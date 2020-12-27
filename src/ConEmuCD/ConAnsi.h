@@ -68,11 +68,12 @@ protected:
 	condata::Table* GetTable(GetTableEnum _table);
 	CESERVER_CONSOLE_MAPPING_HDR* GetConMap() const;
 	bool IsCmdProcess() const;
-	static void BellBallback(void* param);
+	static void BellCallback(void* param);
 
 private:
-	static SrvAnsi* object;
-	static std::mutex object_mutex;
+	// Singleton
+	static SrvAnsi* object_;
+	static std::mutex& GetObjectMutex();
 
 	/// Console processors
 	std::mutex m_UseMutex;

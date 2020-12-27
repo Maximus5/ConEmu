@@ -34,16 +34,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tchar.h>
 #include <limits>
 #include <chrono>
+#include <tuple>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/ConsoleMixAttr.h"
 #include "../common/CmdLine.h"
-#include "../common/ConsoleAnnotation.h"
 #include "../common/HandleKeeper.h"
 #include "../common/MConHandle.h"
 #include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
 #include "../common/UnicodeChars.h"
-#include "../common/WCodePage.h"
 #include "../common/WConsole.h"
 #include "../common/WErrGuard.h"
 #include "../ConEmu/version.h"
@@ -59,7 +59,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ///* ***************** */
 #include "Ansi.h"
-DWORD AnsiTlsIndex = 0;
 ///* ***************** */
 
 #ifdef _DEBUG
@@ -69,7 +68,7 @@ DWORD AnsiTlsIndex = 0;
 #undef isPressed
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-#define ANSI_MAP_CHECK_TIMEOUT 1000
+#define ANSI_MAP_CHECK_TIMEOUT std::chrono::seconds(1)
 
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
@@ -84,10 +83,12 @@ extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хук
 #include "MainThread.h"
 
 /* ************ Globals for SetHook ************ */
-extern HWND    ghConWnd;      // RealConsole
-extern HWND    ghConEmuWnd;   // Root! ConEmu window
-extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern DWORD   gnGuiPID;
+extern HWND    ghConWnd;      // RealConsole  // NOLINT(readability-redundant-declaration)
+extern HWND    ghConEmuWnd;   // Root! ConEmu window  // NOLINT(readability-redundant-declaration)
+// ReSharper disable once CppInconsistentNaming
+extern HWND    ghConEmuWndDC; // ConEmu DC window  // NOLINT(readability-redundant-declaration)
+// ReSharper disable once CppInconsistentNaming
+extern DWORD   gnGuiPID;  // NOLINT(readability-redundant-declaration)
 extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
@@ -111,32 +112,32 @@ static struct XTermAltBufferData
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
 // These handles must be registered and released in OnCloseHandle.
-HANDLE CEAnsi::ghAnsiLogFile = NULL;
+HANDLE CEAnsi::ghAnsiLogFile = nullptr;
 bool CEAnsi::gbAnsiLogCodes = false;
 LONG CEAnsi::gnEnterPressed = 0;
 bool CEAnsi::gbAnsiLogNewLine = false;
 bool CEAnsi::gbAnsiWasNewLine = false;
-MSectionSimple* CEAnsi::gcsAnsiLogFile = NULL;
+MSectionSimple* CEAnsi::gcsAnsiLogFile = nullptr;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
 bool CEAnsi::gbWasXTermOutput = false;
 // Let RefreshXTermModes() know what to restore
 CEAnsi::TermModeSet CEAnsi::gWasXTermModeSet[tmc_Last] = {};
 
-static MConHandle ghConOut(L"CONOUT$"), ghStdOut(L""), ghStdErr(L"");
+static MConHandle ghConOut(L"CONOUT$"), ghStdOut(L""), ghStdErr(L"");  // NOLINT(clang-diagnostic-exit-time-destructors)
 
 /* ************ Export ANSI printings ************ */
 LONG gnWriteProcessed = 0;
-FARPROC CallWriteConsoleW = NULL;
+FARPROC CallWriteConsoleW = nullptr;
 BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, HANDLE hConsoleOutput)
 {
 	InterlockedIncrement(&gnWriteProcessed);
 	DWORD nNumberOfCharsWritten = 0;
-	if ((nNumberOfCharsToWrite == (DWORD)-1) && lpBuffer)
+	if ((nNumberOfCharsToWrite == static_cast<DWORD>(-1)) && lpBuffer)
 	{
 		nNumberOfCharsToWrite = lstrlen(lpBuffer);
 	}
-	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nNumberOfCharsWritten, NULL);
+	const BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nNumberOfCharsWritten, nullptr);
 	if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsWritten;
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
@@ -145,7 +146,7 @@ BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 HANDLE GetStreamHandle(WriteProcessedStream Stream)
 {
 	HANDLE hConsoleOutput;
-	switch (Stream)
+	switch (Stream)  // NOLINT(clang-diagnostic-switch-enum)
 	{
 	case wps_Output:
 		hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE); break;
@@ -153,12 +154,13 @@ HANDLE GetStreamHandle(WriteProcessedStream Stream)
 		hConsoleOutput = GetStdHandle(STD_ERROR_HANDLE); break;
 	default:
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return NULL;
+		return nullptr;
 	}
 	return hConsoleOutput;
 }
 BOOL WINAPI WriteProcessed2(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream)
 {
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hConsoleOutput = GetStreamHandle(Stream);
 	if (!hConsoleOutput || (hConsoleOutput == INVALID_HANDLE_VALUE))
 		return FALSE;
@@ -171,17 +173,17 @@ BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 BOOL WINAPI WriteProcessedA(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream)
 {
 	BOOL lbRc = FALSE;
-	CEAnsi* pObj = NULL;
+	CEAnsi* pObj = nullptr;
 
 	ORIGINAL_KRNL(WriteConsoleA);
 
-	if ((nNumberOfCharsToWrite == (DWORD)-1) && lpBuffer)
+	if ((nNumberOfCharsToWrite == static_cast<DWORD>(-1)) && lpBuffer)
 	{
 		nNumberOfCharsToWrite = lstrlenA(lpBuffer);
 	}
 
 	// Nothing to write? Or flush buffer?
-	if (!lpBuffer || !nNumberOfCharsToWrite || !(int)Stream)
+	if (!lpBuffer || !nNumberOfCharsToWrite || Stream == wps_None)
 	{
 		if (lpNumberOfCharsWritten)
 			*lpNumberOfCharsWritten = 0;
@@ -194,7 +196,7 @@ BOOL WINAPI WriteProcessedA(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 	if (pObj)
 		lbRc = pObj->OurWriteConsoleA(GetStreamHandle(Stream), lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 	else
-		lbRc = F(WriteConsoleA)(GetStreamHandle(Stream), lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+		lbRc = F(WriteConsoleA)(GetStreamHandle(Stream), lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, nullptr);
 
 fin:
 	return lbRc;
@@ -214,21 +216,20 @@ void DebugStringUtf8(LPCWSTR asMessage)
 		DebugString(asMessage);
 		return;
 	}
-	int iLen = lstrlen(asMessage);
+	const int iLen = lstrlen(asMessage);
 	char szUtf8[200];
-	char* pszUtf8 = ((iLen*3+5) < countof(szUtf8)) ? szUtf8 : (char*)malloc(iLen*3+5);
+	CEStrA buffer;
+	char* pszUtf8 = ((iLen * 3 + 5) < static_cast<int>(countof(szUtf8))) ? szUtf8 : buffer.GetBuffer(iLen * 3 + 5);
 	if (!pszUtf8)
 		return;
-	pszUtf8[0] = (BYTE)0xEF; pszUtf8[1] = (BYTE)0xBB; pszUtf8[2] = (BYTE)0xBF;
-	int iCvt = WideCharToMultiByte(CP_UTF8, 0, asMessage, iLen, pszUtf8+3, iLen*3+1, NULL, NULL);
+	pszUtf8[0] = '\xEF'; pszUtf8[1] = '\xBB'; pszUtf8[2] = '\xBF';
+	const int iCvt = WideCharToMultiByte(CP_UTF8, 0, asMessage, iLen, pszUtf8+3, iLen*3+1, nullptr, nullptr);
 	if (iCvt > 0)
 	{
 		_ASSERTE(iCvt < (iLen*3+2));
 		pszUtf8[iCvt+3] = 0;
 		DebugStringA(pszUtf8);
 	}
-	if (pszUtf8 != szUtf8)
-		free(pszUtf8);
 	#endif
 }
 
@@ -243,7 +244,8 @@ void CEAnsi::InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes)
 	ScopedObject(CLastErrorGuard);
 
 	gcsAnsiLogFile = new MSectionSimple(true);
-	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hLog && (hLog != INVALID_HANDLE_VALUE))
 	{
 		// Succeeded
@@ -271,8 +273,9 @@ void CEAnsi::DoneAnsiLog(bool bFinal)
 	}
 	else
 	{
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HANDLE h = ghAnsiLogFile;
-		ghAnsiLogFile = NULL;
+		ghAnsiLogFile = nullptr;
 		CloseHandle(h);
 		SafeDelete(gcsAnsiLogFile);
 	}
@@ -280,7 +283,7 @@ void CEAnsi::DoneAnsiLog(bool bFinal)
 
 UINT CEAnsi::GetCodePage()
 {
-	UINT cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
+	const UINT cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
 	return cp;
 }
 
@@ -304,7 +307,7 @@ void CEAnsi::WriteAnsiLogFormat(const char* format, ...)
 
 		char log_string[300] = "";
 		msprintf(log_string, countof(log_string), "\x1B]9;11;\"%s: %s\"\x7", s_ExeName, func_buffer);
-		WriteAnsiLogUtf8(log_string, (DWORD)strlen(log_string));
+		WriteAnsiLogUtf8(log_string, static_cast<DWORD>(strlen(log_string)));
 	}
 	va_end(argList);
 }
@@ -336,13 +339,13 @@ BOOL CEAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 {
 	if (!ghAnsiLogFile || !lpBuffer || !nChars)
 		return FALSE;
-	BOOL bWrite; DWORD nWritten;
 	// Handle multi-thread writers
 	// But multi-process writers can't be handled correctly
 	MSectionLockSimple lock; lock.Lock(gcsAnsiLogFile, 500);
-	SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
+	SetFilePointer(ghAnsiLogFile, 0, nullptr, FILE_END);
 	ORIGINAL_KRNL(WriteFile);
-	bWrite = F(WriteFile)(ghAnsiLogFile, lpBuffer, nChars, &nWritten, NULL);
+	DWORD nWritten = 0;
+	const BOOL bWrite = F(WriteFile)(ghAnsiLogFile, lpBuffer, nChars, &nWritten, nullptr);
 	UNREFERENCED_PARAMETER(nWritten);
 	gnEnterPressed = 0; gbAnsiLogNewLine = false;
 	gbAnsiWasNewLine = (lpBuffer[nChars-1] == '\n');
@@ -357,49 +360,44 @@ void CEAnsi::WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars)
 
 	ScopedObject(CLastErrorGuard);
 
-	UINT cp = GetCodePage();
+	const UINT cp = GetCodePage();
 	if (cp == CP_UTF8)
 	{
-		char* pszBuf = NULL;
-		int iEnterShift = 0;
+		bool writeLineFeed = false;
 		if (gbAnsiLogNewLine)
 		{
 			if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[1] == '\n')))
-				gbAnsiLogNewLine = false;
-			else if ((pszBuf = (char*)malloc(nChars+1)) != NULL)
 			{
-				pszBuf[0] = '\n';
-				memmove(pszBuf+1, lpBuffer, nChars);
-				lpBuffer = pszBuf;
+				gbAnsiLogNewLine = false;
+			}
+			else
+			{
+				writeLineFeed = true;
 			}
 		}
 
 		WriteAnsiLogTime();
-
+		if (writeLineFeed)
+			WriteAnsiLogUtf8("\n", 1);
 		WriteAnsiLogUtf8(lpBuffer, nChars);
-
-		SafeFree(pszBuf);
 	}
 	else
 	{
 		// We don't check here for gbAnsiLogNewLine, because some codepages may even has different codes for CR+LF
-		wchar_t sBuf[80*3];
-		BOOL bWrite = FALSE;
-		DWORD nWritten = 0;
-		int nNeed = MultiByteToWideChar(cp, 0, lpBuffer, nChars, NULL, 0);
+		wchar_t sBuf[80 * 3];
+		CEStr buffer;
+		const int nNeed = MultiByteToWideChar(cp, 0, lpBuffer, nChars, nullptr, 0);
 		if (nNeed < 1)
 			return;
-		wchar_t* pszBuf = (nNeed <= countof(sBuf)) ? sBuf : (wchar_t*)malloc(nNeed*sizeof(*pszBuf));
+		wchar_t* pszBuf = (nNeed <= static_cast<int>(countof(sBuf))) ? sBuf : buffer.GetBuffer(nNeed);
 		if (!pszBuf)
 			return;
-		int nLen = MultiByteToWideChar(cp, 0, lpBuffer, nChars, pszBuf, nNeed);
+		const int nLen = MultiByteToWideChar(cp, 0, lpBuffer, nChars, pszBuf, nNeed);
 		// Must be OK, but check it
 		if (nLen > 0 && nLen <= nNeed)
 		{
 			WriteAnsiLogW(pszBuf, nLen);
 		}
-		if (pszBuf != sBuf)
-			free(pszBuf);
 	}
 }
 
@@ -423,55 +421,55 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 			iEnterShift = 1;
 	}
 
-	char sBuf[80*3]; // Will be enough for most cases
+	char sBuf[80 * 3]; // Will be enough for most cases
+	CEStrA buffer;
 	BOOL bWrite = FALSE;
-	DWORD nWritten = 0;
-	int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, NULL, 0, NULL, NULL);
+	const int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, nullptr, 0, nullptr, nullptr);
 	if (nNeed < 1)
 		return;
-	char* pszBuf = ((nNeed + iEnterShift + 1) <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed+iEnterShift+1);
+	char* pszBuf = ((nNeed + iEnterShift + 1) <= static_cast<int>(countof(sBuf))) ? sBuf : buffer.GetBuffer(nNeed + iEnterShift + 1);
 	if (!pszBuf)
 		return;
 	if (iEnterShift)
 		pszBuf[0] = '\n';
-	int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf+iEnterShift, nNeed, NULL, NULL);
+	const int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf+iEnterShift, nNeed, nullptr, nullptr);
 	// Must be OK, but check it
 	if (nLen > 0 && nLen <= nNeed)
 	{
 		pszBuf[iEnterShift+nNeed] = 0;
 		bWrite = WriteAnsiLogUtf8(pszBuf, nLen+iEnterShift);
 	}
-	if (pszBuf != sBuf)
-		free(pszBuf);
-	UNREFERENCED_PARAMETER(bWrite);
+	std::ignore = bWrite;
 }
 
 void CEAnsi::WriteAnsiLogFarPrompt()
 {
-	_ASSERTE(ghAnsiLogFile!=NULL && "Caller must check this");
+	_ASSERTE(ghAnsiLogFile!=nullptr && "Caller must check this");
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfo(hCon, &csbi))
 		return;
-	wchar_t* pszBuf = (wchar_t*)calloc(csbi.dwSize.X+2,sizeof(*pszBuf));
+	CEStr buffer;
 	DWORD nChars = csbi.dwSize.X;
+	if (!buffer.GetBuffer(csbi.dwSize.X + 2))
+		return;
 	// We expect Far has already put "black user screen" and do CR/LF
 	// if Far's keybar is hidden, we are on (csbi.dwSize.Y-1), otherwise - (csbi.dwSize.Y-2)
 	_ASSERTE(csbi.dwCursorPosition.Y >= (csbi.dwSize.Y-2) && csbi.dwCursorPosition.Y <= (csbi.dwSize.Y-1));
-	COORD crFrom = {0, csbi.dwCursorPosition.Y-1};
-	if (pszBuf
-		&& ReadConsoleOutputCharacterW(hCon, pszBuf, nChars, crFrom, &nChars)
+	const COORD crFrom = {0, static_cast<SHORT>(csbi.dwCursorPosition.Y - 1)};
+	if (ReadConsoleOutputCharacterW(hCon, buffer.data(), nChars, crFrom, &nChars)
 		&& nChars)
 	{
+		wchar_t* pszBuf = buffer.data();
 		// Do RTrim first
-		while (nChars && (pszBuf[nChars-1] == L' '))
+		while (nChars && (pszBuf[nChars - 1] == L' '))
 			nChars--;
 		// Add CR+LF
 		pszBuf[nChars++] = L'\r'; pszBuf[nChars++] = L'\n';
 		// And do the logging
 		WriteAnsiLogW(pszBuf, nChars);
 	}
-	free(pszBuf);
 }
 
 void CEAnsi::AnsiLogEnterPressed()
@@ -484,11 +482,11 @@ void CEAnsi::AnsiLogEnterPressed()
 
 void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 {
-	static DWORD nLastCheck = 0;
+	static std::chrono::steady_clock::time_point nLastCheck{};
 	static bool bAnsiAllowed = true;
 	static bool bSuppressBells = true;
 
-	if (nLastCheck || ((GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT))
+	if ((std::chrono::steady_clock::now() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT)
 	{
 		CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
 		//	(CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
@@ -499,12 +497,12 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 			//else
 			//	bAnsiAllowed = true;
 
-			bAnsiAllowed = ((pMap != NULL) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
-			bSuppressBells = ((pMap != NULL) && ((pMap->Flags & CECF_SuppressBells) != 0));
+			bAnsiAllowed = ((pMap != nullptr) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
+			bSuppressBells = ((pMap != nullptr) && ((pMap->Flags & CECF_SuppressBells) != 0));
 
 			//free(pMap);
 		}
-		nLastCheck = GetTickCount();
+		nLastCheck = std::chrono::steady_clock::now();
 	}
 
 	if (pbAnsiAllowed)
@@ -541,7 +539,7 @@ void CEAnsi::DisplayParm::Reset(const bool full)
 	if (full)
 		*this = DisplayParm{};
 
-	WORD nDefColors = CEAnsi::GetDefaultTextAttr();
+	const WORD nDefColors = CEAnsi::GetDefaultTextAttr();
 	_TextColor = CONFORECOLOR(nDefColors);
 	_BackColor = CONBACKCOLOR(nDefColors);
 	_WasSet = TRUE;
@@ -672,6 +670,7 @@ static const wchar_t szAnalogues[32] =
 	if (clrDefault)
 		return clrDefault;
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hIn = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfo(hIn, &csbi))
@@ -679,7 +678,7 @@ static const wchar_t szAnalogues[32] =
 
 	static SHORT Con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
 	clrDefault = Con2Ansi[CONFORECOLOR(csbi.wAttributes)]
-		| (Con2Ansi[CONBACKCOLOR(csbi.wAttributes)] << 4);
+		| static_cast<SHORT>(Con2Ansi[CONBACKCOLOR(csbi.wAttributes)] << 4);
 
 	return clrDefault;
 }
@@ -690,7 +689,7 @@ const CEAnsi::DisplayParm& CEAnsi::getDisplayParm()
 	return gDisplayParm;
 }
 
-
+// static
 void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 {
 	WARNING("Эту функу нужно дергать при смене буферов, закрытии дескрипторов, и т.п.");
@@ -702,8 +701,10 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 
 	if (bApply)
 	{
-		// на дисплей
-		ExtAttributesParm attr = {sizeof(attr), hConsoleOutput};
+		// to display
+		ExtAttributesParm attr{};
+		attr.StructSize = sizeof(attr);
+		attr.ConsoleOutput = hConsoleOutput;
 		//DWORD wAttrs = 0;
 
 		// Ansi colors
@@ -813,8 +814,8 @@ int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 #if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
 	if (!buf || !cchLen)
 	{
-		// В общем, много кто грешит попытками записи "пустых строк"
-		// Например, clink, perl, ...
+		// There are programs which try to write empty strings
+		// e.g. clink, perl, ...
 		//_ASSERTEX((buf && cchLen) || (gszClinkCmdLine && buf));
 	}
 
@@ -822,7 +823,7 @@ int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 	size_t nLen = cchLen;
 	static std::atomic_int32_t nWriteCallNo{ 0 };
 
-	switch (iUnknown)
+	switch (iUnknown)  // NOLINT(clang-diagnostic-switch-enum)
 	{
 	case de_Unknown/*1*/:
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Unknown Esc Sequence: ", GetCurrentThreadId());
@@ -943,9 +944,9 @@ int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 #define DumpKnownEscape(buf, cchLen, eType) (0)
 #endif
 
-static LONG nLastReadId = 0;
+static std::atomic_uint32_t gnLastReadId{ 0 };
 
-// When user type smth in the prompt, screen buffer may be scrolled
+// When user type something in the prompt, screen buffer may be scrolled
 // It would be nice to do the same in "ConEmuC -StoreCWD"
 void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
@@ -953,14 +954,14 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	if (!pObj)
 		return;
 
-	if (!nLastReadId)
-		nLastReadId = GetCurrentProcessId();
+	if (!gnLastReadId.load())
+		gnLastReadId.exchange(GetCurrentProcessId());
 
-	WORD NewRowId;
+	WORD newRowId = 0;
 	CEConsoleMark Test = {};
 
-	COORD crPos[] = {{4,csbi.dwCursorPosition.Y-1},csbi.dwCursorPosition};
-	_ASSERTEX(countof(crPos)==countof(pObj->m_RowMarks.SaveRow) && countof(crPos)==countof(pObj->m_RowMarks.RowId));
+	COORD crPos[] = { {4,static_cast<SHORT>(csbi.dwCursorPosition.Y - 1)}, csbi.dwCursorPosition };
+	_ASSERTEX(countof(crPos) == countof(pObj->m_RowMarks.SaveRow) && countof(crPos) == countof(pObj->m_RowMarks.RowId));
 
 	pObj->m_RowMarks.csbi = csbi;
 
@@ -979,13 +980,15 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 		}
 		else
 		{
-			NewRowId = LOWORD(InterlockedIncrement(&nLastReadId));
-			if (!NewRowId) NewRowId = LOWORD(InterlockedIncrement(&nLastReadId));
+			// ReSharper disable once CppJoinDeclarationAndAssignment
+			newRowId = LOWORD(gnLastReadId.fetch_add(1) + 1);
+			if (!newRowId)
+				newRowId = LOWORD(gnLastReadId.fetch_add(1) + 1);
 
-			if (WriteConsoleRowId(hConOut, crPos[i].Y, NewRowId))
+			if (WriteConsoleRowId(hConOut, crPos[i].Y, newRowId))
 			{
 				pObj->m_RowMarks.SaveRow[i] = crPos[i].Y;
-				pObj->m_RowMarks.RowId[i] = NewRowId;
+				pObj->m_RowMarks.RowId[i] = newRowId;
 			}
 		}
 	}
@@ -994,7 +997,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	_ASSERTEX(((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1])) || (!csbi.dwCursorPosition.X && !csbi.dwCursorPosition.Y));
 
 	// Store info in MAPPING
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : nullptr;
 	if (pAppMap)
 	{
 		pAppMap->csbiPreRead = csbi;
@@ -1012,6 +1015,7 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
 		return;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	SHORT nMarkedRow = -1;
 	CEConsoleMark Test = {};
@@ -1036,7 +1040,7 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
 			}
 			// Well, we get scroll distance
 			_ASSERTEX(nMarkedRow < pObj->m_RowMarks.SaveRow[i]); // Upside scroll expected
-			ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConOut, nMarkedRow - pObj->m_RowMarks.SaveRow[i]};
+			ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConOut, nMarkedRow - pObj->m_RowMarks.SaveRow[i], {}, 0, {}};
 			ExtScrollScreen(&scrl);
 			goto wrap;
 		}
@@ -1066,11 +1070,16 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	if (lpBuffer && nNumberOfCharsToWrite)
 		m_LastWrittenChar = lpBuffer[nNumberOfCharsToWrite-1];
 
-	ExtWriteTextParm write = {sizeof(write), ewtf_Current|AddFlags, hConsoleOutput};
-	write.Private = (void*)(FARPROC)_WriteConsoleW;
+	ExtWriteTextParm write{};
+	write.StructSize = sizeof(write);
+	write.Flags = ewtf_Current | AddFlags;
+	write.ConsoleOutput = hConsoleOutput;
+	write.Private = reinterpret_cast<void*>(_WriteConsoleW);
 
 	LPCWSTR pszSrcBuffer = lpBuffer;
-	wchar_t cvtBuf[80], *pcvtBuf = NULL;
+	wchar_t cvtBuf[80];
+	wchar_t* pCvtBuf = nullptr;
+	CEStr buffer;
 	if (mCharSet && lpBuffer && nNumberOfCharsToWrite)
 	{
 		static wchar_t G0_DRAWING[31] = {
@@ -1079,8 +1088,9 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 			0x207B /*⁻*/, 0x2500 /*─*/, 0x208B /*₋*/, 0x005F /*_*/, 0x251C /*├*/, 0x2524 /*┤*/, 0x2534 /*┴*/, 0x252C /*┬*/,
 			0x2502 /*│*/, 0x2264 /*≤*/, 0x2265 /*≥*/, 0x03C0 /*π*/, 0x2260 /*≠*/, 0x00A3 /*£*/, 0x00B7 /*·*/
 		};
-		LPCWSTR pszMap = NULL;
-		switch (mCharSet)
+		LPCWSTR pszMap = nullptr;
+		// ReSharper disable once CppIncompleteSwitchStatement
+		switch (mCharSet)  // NOLINT(clang-diagnostic-switch)
 		{
 		case VTCS_DRAWING:
 			pszMap = G0_DRAWING;
@@ -1088,25 +1098,24 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		}
 		if (pszMap)
 		{
-			wchar_t* dst = NULL;
+			wchar_t* dst = nullptr;
 			for (DWORD i = 0; i < nNumberOfCharsToWrite; ++i)
 			{
 				if (pszSrcBuffer[i] >= 0x60 && pszSrcBuffer[i] < 0x7F)
 				{
-					if (!pcvtBuf)
+					if (!pCvtBuf)
 					{
 						if (nNumberOfCharsToWrite <= countof(cvtBuf))
 						{
-							pcvtBuf = cvtBuf;
+							pCvtBuf = cvtBuf;
 						}
 						else
 						{
-							pcvtBuf = (wchar_t*)malloc(sizeof(*pcvtBuf) * nNumberOfCharsToWrite);
-							if (!pcvtBuf)
+							if (!((pCvtBuf = buffer.GetBuffer(nNumberOfCharsToWrite))))
 								break;
 						}
-						lpBuffer = pcvtBuf;
-						dst = pcvtBuf;
+						lpBuffer = pCvtBuf;
+						dst = pCvtBuf;
 						if (i)
 							memmove(dst, pszSrcBuffer, i * sizeof(*dst));
 					}
@@ -1120,7 +1129,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		}
 	}
 
-	GetFeatures(NULL, &mb_SuppressBells);
+	GetFeatures(nullptr, &mb_SuppressBells);
 	if (mb_SuppressBells)
 	{
 		write.Flags |= ewtf_NoBells;
@@ -1220,7 +1229,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		}
 		_ASSERTE(nWriteTo<=nNumberOfCharsToWrite);
 
-		//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
+		//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, nullptr);
 		write.Buffer = lpBuffer + nWriteFrom;
 		write.NumberOfCharsToWrite = nWriteTo - nWriteFrom;
 
@@ -1251,9 +1260,14 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		if (lbRc)
 		{
 			if (write.NumberOfCharsWritten)
+			{
 				nTotalWritten += write.NumberOfCharsWritten;
+			}
 			if (write.ScrolledRowsUp > 0)
-				gDisplayCursor.StoredCursorPos.Y = std::max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+			{
+				const int right = static_cast<int>(gDisplayCursor.StoredCursorPos.Y) - static_cast<int>(write.ScrolledRowsUp);
+				gDisplayCursor.StoredCursorPos.Y = static_cast<SHORT>(std::max(0, right));
+			}
 		}
 
 		nWriteFrom = nWriteTo; nWriteTo = nNumberOfCharsToWrite;
@@ -1262,25 +1276,28 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	if (lpNumberOfCharsWritten)
 		*lpNumberOfCharsWritten = nTotalWritten;
 
-	if (pcvtBuf && pcvtBuf != cvtBuf)
-		free(pcvtBuf);
-
 	return lbRc;
 }
 
 // NON-static, because we need to ‘cache’ parts of non-translated MBCS chars (one UTF-8 symbol may be transmitted by up to *three* parts)
 BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
-	_ASSERTE(this!=NULL);
+	_ASSERTE(this != nullptr);
 	BOOL lbRc = FALSE;
-	wchar_t* buf = NULL;
+	wchar_t* buf = nullptr;
 	wchar_t szTemp[280]; // would be enough in most cases
+	CEStr ptrTemp;
 	INT_PTR bufMax;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
 	DWORD cp;
-	CpCvtResult cvt;
-	const char *pSrc, *pTokenStart;
-	wchar_t *pDst, *pDstEnd;
-	DWORD nWritten = 0, nTotalWritten = 0;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	CpCvtResult cvt{};
+	const char* pSrc = nullptr;
+	const char* pTokenStart = nullptr;
+	wchar_t* pDst = nullptr;
+	wchar_t* pDstEnd = nullptr;
+	DWORD nWritten = 0;
+	DWORD nTotalWritten = 0;
 
 	ORIGINAL_KRNL(WriteConsoleA);
 
@@ -1293,17 +1310,10 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 		goto fin;
 	}
 
-	if (!mp_Cvt
-		&& !(mp_Cvt = (CpCvt*)calloc(sizeof(*mp_Cvt),1)))
-	{
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		goto fin;
-	}
-
 	if ((nNumberOfCharsToWrite + 3) >= countof(szTemp))
 	{
 		bufMax = nNumberOfCharsToWrite + 3;
-		buf = (wchar_t*)malloc(bufMax*sizeof(wchar_t));
+		buf = ptrTemp.GetBuffer(bufMax);
 	}
 	else
 	{
@@ -1317,7 +1327,7 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	}
 
 	cp = GetCodePage();
-	mp_Cvt->SetCP(cp);
+	m_Cvt.SetCP(cp);
 
 	lbRc = TRUE;
 	pSrc = pTokenStart = lpBuffer;
@@ -1328,12 +1338,12 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 		{
 			_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
 			buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
-			lbRc = OurWriteConsoleW(hConsoleOutput, buf, DWORD(pDst - buf), &nWritten, NULL);
+			lbRc = OurWriteConsoleW(hConsoleOutput, buf, static_cast<DWORD>(pDst - buf), &nWritten, nullptr);
 			if (lbRc) nTotalWritten += nWritten;
 			pDst = buf;
 		}
-		cvt = mp_Cvt->Convert(*pSrc, *pDst);
-		switch (cvt)
+		cvt = m_Cvt.Convert(*pSrc, *pDst);
+		switch (cvt)  // NOLINT(clang-diagnostic-switch-enum)
 		{
 		case ccr_OK:
 		case ccr_BadUnicode:
@@ -1342,8 +1352,10 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 		case ccr_Surrogate:
 		case ccr_BadTail:
 		case ccr_DoubleBad:
-			mp_Cvt->GetTail(*(++pDst));
+			m_Cvt.GetTail(*(++pDst));
 			pDst++;
+			break;
+		default:
 			break;
 		}
 	}
@@ -1352,8 +1364,9 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	{
 		_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
 		buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
-		lbRc = OurWriteConsoleW(hConsoleOutput, buf, DWORD(pDst - buf), &nWritten, NULL);
-		if (lbRc) nTotalWritten += nWritten;
+		lbRc = OurWriteConsoleW(hConsoleOutput, buf, static_cast<DWORD>(pDst - buf), &nWritten, nullptr);
+		if (lbRc)
+			nTotalWritten += nWritten;
 	}
 
 	// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
@@ -1363,8 +1376,8 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	}
 
 fin:
-	if (buf != szTemp)
-		SafeFree(buf);
+	std::ignore = pTokenStart;
+	std::ignore = nTotalWritten;
 	return lbRc;
 }
 
@@ -1414,7 +1427,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 #endif
 
 	CEAnsi* pObj = nullptr;
-	CEStr CpCvt;
+	CEStr cpCvtBuffer;
 
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput)
 	{
@@ -1422,7 +1435,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 
 		if (ghAnsiLogFile && bIsConOut)
 		{
-			CEAnsi::WriteAnsiLogW((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+			CEAnsi::WriteAnsiLogW(static_cast<LPCWSTR>(lpBuffer), nNumberOfCharsToWrite);
 		}
 	}
 
@@ -1432,21 +1445,21 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 		if (!bInternal && gCpConv.nFromCP && gCpConv.nToCP)
 		{
 			// Convert from unicode to MBCS
-			char* pszTemp = NULL;
-			int iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, NULL, 0, NULL, NULL);
-			if ((iMBCSLen > 0) && ((pszTemp = (char*)malloc(iMBCSLen)) != NULL))
+			CEStrA pszTemp;
+			int iMbcsLen = WideCharToMultiByte(gCpConv.nFromCP, 0, static_cast<LPCWSTR>(lpBuffer), nNumberOfCharsToWrite, nullptr, 0, nullptr, nullptr);
+			if ((iMbcsLen > 0) && ((pszTemp.GetBuffer(iMbcsLen)) != nullptr))
 			{
 				BOOL bFailed = FALSE; // Do not do conversion if some chars can't be mapped
-				iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, &bFailed);
-				if ((iMBCSLen > 0) && !bFailed)
+				iMbcsLen = WideCharToMultiByte(gCpConv.nFromCP, 0, static_cast<LPCWSTR>(lpBuffer), nNumberOfCharsToWrite, pszTemp.data(), iMbcsLen, nullptr, &bFailed);
+				if ((iMbcsLen > 0) && !bFailed)
 				{
-					int iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, NULL, 0);
+					int iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMbcsLen, nullptr, 0);
 					if (iWideLen > 0)
 					{
-						wchar_t* ptrBuf = CpCvt.GetBuffer(iWideLen);
+						wchar_t* ptrBuf = cpCvtBuffer.GetBuffer(iWideLen);
 						if (ptrBuf)
 						{
-							iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, ptrBuf, iWideLen);
+							iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMbcsLen, ptrBuf, iWideLen);
 							if (iWideLen > 0)
 							{
 								lpBuffer = ptrBuf;
@@ -1456,7 +1469,6 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 					}
 				}
 			}
-			SafeFree(pszTemp);
 		}
 
 		pObj = CEAnsi::Object();
@@ -1465,20 +1477,20 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 			if (pObj->gnPrevAnsiPart || gDisplayOpt.WrapWasSet)
 			{
 				// Если остался "хвост" от предущей записи - сразу, без проверок
-				lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, (const wchar_t*)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
+				lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, static_cast<const wchar_t*>(lpBuffer), nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 				goto ansidone;
 			}
 			else
 			{
 				_ASSERTEX(ESC==27 && BEL==7 && DSC==0x90);
-				const wchar_t* pch = (const wchar_t*)lpBuffer;
+				const wchar_t* pch = static_cast<const wchar_t*>(lpBuffer);
 				for (size_t i = nNumberOfCharsToWrite; i--; pch++)
 				{
 					// Если в выводимой строке встречается "Ansi ESC Code" - выводим сами
 					TODO("Non-CSI codes, like as BEL, BS, CR, LF, FF, TAB, VT, SO, SI");
 					if (*pch == ESC /*|| *pch == BEL*/ /*|| *pch == ENQ*/)
 					{
-						lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, (const wchar_t*)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
+						lbRc = pObj->WriteAnsiCodes(F(WriteConsoleW), hConsoleOutput, static_cast<const wchar_t*>(lpBuffer), nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 						goto ansidone;
 					}
 				}
@@ -1486,13 +1498,13 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 		}
 	}
 
-	if (!bIsAnsi || ((pObj = CEAnsi::Object()) == NULL))
+	if (!bIsAnsi || ((pObj = CEAnsi::Object()) == nullptr))
 	{
 		lbRc = F(WriteConsoleW)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 	}
 	else
 	{
-		lbRc = pObj->WriteText(F(WriteConsoleW), hConsoleOutput, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, TRUE);
+		lbRc = pObj->WriteText(F(WriteConsoleW), hConsoleOutput, static_cast<LPCWSTR>(lpBuffer), nNumberOfCharsToWrite, lpNumberOfCharsWritten, TRUE);
 		//wrt.Flags = ewtf_Current|ewtf_Commit;
 		//wrt.Buffer = (const wchar_t*)lpBuffer;
 		//wrt.NumberOfCharsToWrite = nNumberOfCharsToWrite;
@@ -1556,16 +1568,16 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 		if (*gsPrevAnsiPart == 27)
 		{
 			_ASSERTEX(gnPrevAnsiPart < 79);
-			INT_PTR nCurPrevLen = gnPrevAnsiPart;
-			INT_PTR nAdd = std::min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen-1);
+			const INT_PTR nCurPrevLen = gnPrevAnsiPart;
+			const INT_PTR nAdd = std::min((lpEnd-lpBuffer),static_cast<INT_PTR>(countof(gsPrevAnsiPart))-nCurPrevLen-1);
 			// Need to check buffer overflow!!!
-			_ASSERTEX((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+nAdd));
+			_ASSERTEX(static_cast<INT_PTR>(countof(gsPrevAnsiPart)) > (nCurPrevLen + nAdd));
 			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
 			gsPrevAnsiPart[nCurPrevLen+nAdd] = 0;
 
 			WARNING("Проверить!!!");
 			LPCWSTR lpReStart, lpReNext;
-			int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart+nAdd+gnPrevAnsiPart, szPreDump, cchPrevPart, lpReStart, lpReNext, Code, TRUE);
+			const int iCall = NextEscCode(gsPrevAnsiPart, gsPrevAnsiPart + nAdd + gnPrevAnsiPart, szPreDump, cchPrevPart, lpReStart, lpReNext, Code, TRUE);
 			if (iCall == 1)
 			{
 				if ((lpReNext - gsPrevAnsiPart) >= gnPrevAnsiPart)
@@ -1573,14 +1585,14 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					// Bypass unrecognized ESC sequences to screen?
 					if (lpReStart > gsPrevAnsiPart)
 					{
-						INT_PTR nSkipLen = (lpReStart - gsPrevAnsiPart); //DWORD nWritten;
-						_ASSERTEX(nSkipLen>0 && nSkipLen<=countof(gsPrevAnsiPart) && nSkipLen<=gnPrevAnsiPart);
+						const INT_PTR nSkipLen = (lpReStart - gsPrevAnsiPart); //DWORD nWritten;
+						_ASSERTEX(nSkipLen > 0 && nSkipLen <= static_cast<INT_PTR>(countof(gsPrevAnsiPart)) && nSkipLen <= gnPrevAnsiPart);
 						DumpUnknownEscape(gsPrevAnsiPart, nSkipLen);
 
 						//WriteText(_WriteConsoleW, hConsoleOutput, gsPrevAnsiPart, nSkipLen, &nWritten);
-						_ASSERTEX(nSkipLen <= ((int)CEAnsi_MaxPrevPart - (int)cchPrevPart));
+						_ASSERTEX(nSkipLen <= (static_cast<int>(CEAnsi_MaxPrevPart) - static_cast<int>(cchPrevPart)));
 						memmove(szPreDump, gsPrevAnsiPart, nSkipLen);
-						cchPrevPart += int(nSkipLen);
+						cchPrevPart += static_cast<int>(nSkipLen);
 
 						if (nSkipLen < gnPrevAnsiPart)
 						{
@@ -1635,6 +1647,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 		case 27:
 			{
 				INT_PTR nLeft;
+				// ReSharper disable once CppLocalVariableMayBeConst
 				LPCWSTR lpEscStart = lpBuffer;
 
 				#ifdef _DEBUG
@@ -1691,7 +1704,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					{
 						// Don't assert on rawdump of KeyEvents.exe Esc key presses
 						// 10:00:00 KEY_EVENT_RECORD: Dn, 1, Vk="VK_ESCAPE" [27/0x001B], Scan=0x0001 uChar=[U='\x1b' (0x001B): A='\x1b' (0x1B)]
-						bool bStandaloneEscChar = (lpStart < lpSaveStart) && ((*(lpSaveStart-1) == L'\'' && Code.Second == L'\'') || (*(lpSaveStart-1) == L' ' && Code.Second == L' '));
+						const bool bStandaloneEscChar = (lpStart < lpSaveStart) && ((*(lpSaveStart - 1) == L'\'' && Code.Second == L'\'') || (*(lpSaveStart - 1) == L' ' && Code.Second == L' '));
 						//_ASSERTEX(bStandaloneEscChar && "Unsupported control sequence?");
 						if (!bStandaloneEscChar)
 						{
@@ -1700,28 +1713,28 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						continue; // invalid code
 					}
 
-					// Теперь идут параметры.
-					++lpBuffer; // переместим указатель на первый символ ЗА CSI (после '[')
+					// Now parameters go
+					++lpBuffer; // move pointer to the first char beyond CSI (after '[')
 
-					auto parseNumArgs = [&Code, lpSaveStart](const wchar_t* &lpBuffer, const wchar_t* lpSeqEnd, bool saveAction) -> bool
+					auto parseNumArgs = [&Code](const wchar_t* &lpBufferParam, const wchar_t* lpSeqEnd, bool saveAction) -> bool
 					{
-						wchar_t wc;
+						wchar_t wcSave;
 						int nValue = 0, nDigits = 0;
 						Code.ArgC = 0;
 
-						while (lpBuffer < lpSeqEnd)
+						while (lpBufferParam < lpSeqEnd)
 						{
-							switch (*lpBuffer)
+							switch (*lpBufferParam)
 							{
 							case L'0': case L'1': case L'2': case L'3': case L'4':
 							case L'5': case L'6': case L'7': case L'8': case L'9':
-								nValue = (nValue * 10) + (((int)*lpBuffer) - L'0');
+								nValue = (nValue * 10) + (static_cast<int>(*lpBufferParam) - L'0');
 								++nDigits;
 								break;
 
 							case L';':
-								// Даже если цифр не было - default "0"
-								if (Code.ArgC < (int)countof(Code.ArgV))
+								// Even if there were no digits - default is "0"
+								if (Code.ArgC < static_cast<int>(countof(Code.ArgV)))
 									Code.ArgV[Code.ArgC++] = nValue; // save argument
 								nDigits = nValue = 0;
 								break;
@@ -1730,32 +1743,29 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 								if (Code.Second == L']')
 								{
 									// OSC specific, stop on first non-digit/non-semicolon
-									if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
+									if (nDigits && (Code.ArgC < static_cast<int>(countof(Code.ArgV))))
 										Code.ArgV[Code.ArgC++] = nValue;
 									return (Code.ArgC > 0);
 								}
-								else if (((wc = *lpBuffer) >= 64) && (wc <= 126))
+								if (((wcSave = *lpBufferParam) >= 64) && (wcSave <= 126))
 								{
 									// Fin
 									if (saveAction)
-										Code.Action = wc;
-									if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
+										Code.Action = wcSave;
+									if (nDigits && (Code.ArgC < static_cast<int>(countof(Code.ArgV))))
 										Code.ArgV[Code.ArgC++] = nValue;
 									return true;
 								}
-								else
+								if ((static_cast<size_t>(Code.PvtLen) + 2) < countof(Code.Pvt))
 								{
-									if ((size_t(Code.PvtLen) + 2) < countof(Code.Pvt))
-									{
-										Code.Pvt[Code.PvtLen++] = wc; // Skip private symbols
-										Code.Pvt[Code.PvtLen] = 0;
-									}
+									Code.Pvt[Code.PvtLen++] = wcSave; // Skip private symbols
+									Code.Pvt[Code.PvtLen] = 0;
 								}
 							}
-							++lpBuffer;
+							++lpBufferParam;
 						}
 
-						if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
+						if (nDigits && (Code.ArgC < static_cast<int>(countof(Code.ArgV))))
 							Code.ArgV[Code.ArgC++] = nValue;
 						return (Code.Second == L']');
 					};
@@ -1775,7 +1785,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						lpStart = lpSaveStart;
 						Code.Action = *(lpBuffer++);
 						Code.Skip = 0;
-						Code.ArgSZ = NULL;
+						Code.ArgSZ = nullptr;
 						Code.cchArgSZ = 0;
 						lpEnd = lpBuffer;
 						iRc = 1;
@@ -1785,10 +1795,11 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					case L'[':
 						// Standard
 						Code.Skip = 0;
-						Code.ArgSZ = NULL;
+						Code.ArgSZ = nullptr;
 						Code.cchArgSZ = 0;
 						{
 							#ifdef _DEBUG
+							// ReSharper disable once CppDeclaratorNeverUsed
 							LPCWSTR pszSaveStart = lpBuffer;
 							#endif
 
@@ -1930,7 +1941,6 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				iRc = 2;
 				goto wrap;
 			} // end of "case 27:"
-			break;
 		} // end of "switch (*lpBuffer)"
 
 		++lpBuffer;
@@ -1956,7 +1966,7 @@ BOOL CEAnsi::ScrollLine(HANDLE hConsoleOutput, int nDir)
 	return lbRc;
 }
 
-BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
+BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir) const
 {
 	const auto srView = GetWorkingRegion(hConsoleOutput, true);
 	ExtScrollScreenParm scroll = {
@@ -1974,7 +1984,7 @@ BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 	return lbRc;
 }
 
-BOOL CEAnsi::FullReset(HANDLE hConsoleOutput)
+BOOL CEAnsi::FullReset(HANDLE hConsoleOutput) const
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -1986,8 +1996,7 @@ BOOL CEAnsi::FullReset(HANDLE hConsoleOutput)
 	ScrollScreen(hConsoleOutput, -csbi.dwSize.Y);
 
 	// Reset cursor
-	COORD cr0 = {};
-	SetConsoleCursorPosition(hConsoleOutput, cr0);
+	SetConsoleCursorPosition(hConsoleOutput, {});
 
 	//TODO? Saved cursor position?
 
@@ -2008,12 +2017,12 @@ BOOL CEAnsi::ForwardLF(HANDLE hConsoleOutput, BOOL& bApply)
 
 	if (csbi.dwCursorPosition.Y == (csbi.dwSize.Y - 1))
 	{
-		WriteText(pfnWriteConsoleW, hConsoleOutput, L"\n", 1, NULL);
+		WriteText(pfnWriteConsoleW, hConsoleOutput, L"\n", 1, nullptr);
 		SetConsoleCursorPosition(hConsoleOutput, csbi.dwCursorPosition);
 	}
 	else if (csbi.dwCursorPosition.Y < (csbi.dwSize.Y - 1))
 	{
-		COORD cr = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y + 1};
+		const COORD cr = {csbi.dwCursorPosition.X, static_cast<SHORT>(csbi.dwCursorPosition.Y + 1)};
 		SetConsoleCursorPosition(hConsoleOutput, cr);
 		if (cr.Y > csbi.srWindow.Bottom)
 		{
@@ -2032,7 +2041,7 @@ BOOL CEAnsi::ForwardLF(HANDLE hConsoleOutput, BOOL& bApply)
 	return TRUE;
 }
 
-BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply)
+BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply) const
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -2051,7 +2060,7 @@ BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply)
 	}
 	else if (csbi.dwCursorPosition.Y > 0)
 	{
-		COORD cr = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y - 1};
+		const COORD cr = {csbi.dwCursorPosition.X, static_cast<SHORT>(csbi.dwCursorPosition.Y - 1)};
 		SetConsoleCursorPosition(hConsoleOutput, cr);
 	}
 	else
@@ -2062,7 +2071,7 @@ BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply)
 	return TRUE;
 }
 
-BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
+BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -2145,15 +2154,18 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
 		// ScrollStart & ScrollEnd are 0-based absolute line indexes
 		// relative to VISIBLE area, these are not absolute buffer coords
-		if (((csbi.dwCursorPosition.Y + (int)LinesCount) <= gDisplayOpt.ScrollStart)
+		if (((csbi.dwCursorPosition.Y + static_cast<int>(LinesCount)) <= gDisplayOpt.ScrollStart)
 			|| (csbi.dwCursorPosition.Y > gDisplayOpt.ScrollEnd))
+		{
 			return TRUE; // Nothing to scroll
+		}
 		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = gDisplayOpt.ScrollEnd;
 
+		const int negateLinesCount = -static_cast<int>(LinesCount);
 		ExtScrollScreenParm scrl = {
-			sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-			-int(LinesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+			sizeof(scrl), essf_Current | essf_Commit | essf_Region, hConsoleOutput,
+			negateLinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X - 1, BottomLine} };
 		if (scrl.Region.top < gDisplayOpt.ScrollStart)
 		{
 			scrl.Region.top = gDisplayOpt.ScrollStart;
@@ -2178,9 +2190,10 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 			return FALSE;
 		}
 
+		const int negateLinesCount = -static_cast<int>(LinesCount);
 		ExtScrollScreenParm scrl = {
-			sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-			-int(LinesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+			sizeof(scrl), essf_Current | essf_Commit | essf_Region, hConsoleOutput,
+			negateLinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X - 1, BottomLine} };
 		lbRc |= ExtScrollScreen(&scrl);
 	}
 
@@ -2192,11 +2205,12 @@ int CEAnsi::NextNumber(LPCWSTR& asMS)
 	wchar_t wc;
 	int ms = 0;
 	while (((wc = *(asMS++)) >= L'0') && (wc <= L'9'))
-		ms = (ms * 10) + (int)(wc - L'0');
+		ms = (ms * 10) + static_cast<int>(wc - L'0');
 	return ms;
 }
 
 // ESC ] 9 ; 1 ; ms ST           Sleep. ms - milliseconds
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void CEAnsi::DoSleep(LPCWSTR asMS)
 {
 	int ms = NextNumber(asMS);
@@ -2208,11 +2222,11 @@ void CEAnsi::DoSleep(LPCWSTR asMS)
 	Sleep(ms);
 }
 
-void CEAnsi::EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen)
+void CEAnsi::EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen) const
 {
 	if (!pszDst)
 	{
-		_ASSERTEX(pszDst!=NULL);
+		_ASSERTEX(pszDst!=nullptr);
 		return;
 	}
 
@@ -2236,29 +2250,27 @@ void CEAnsi::EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen
 }
 
 // ESC ] 9 ; 2 ; "txt" ST          Show GUI MessageBox ( txt ) for dubug purposes
-void CEAnsi::DoMessage(LPCWSTR asMsg, INT_PTR cchLen)
+void CEAnsi::DoMessage(LPCWSTR asMsg, INT_PTR cchLen) const
 {
-	wchar_t* pszText = (wchar_t*)malloc((cchLen+1)*sizeof(*pszText));
+	CEStr pszText;
 
-	if (pszText)
+	if (pszText.GetBuffer(cchLen))
 	{
-		EscCopyCtrlString(pszText, asMsg, cchLen);
+		EscCopyCtrlString(pszText.data(), asMsg, cchLen);
 		//if (cchLen > 0)
 		//	wmemmove(pszText, asMsg, cchLen);
 		//pszText[cchLen] = 0;
 
 		wchar_t szExe[MAX_PATH] = {};
-		GetModuleFileName(NULL, szExe, countof(szExe));
+		GetModuleFileName(nullptr, szExe, countof(szExe));
 		wchar_t szTitle[MAX_PATH+64];
 		msprintf(szTitle, countof(szTitle), L"PID=%u, %s", GetCurrentProcessId(), PointToName(szExe));
 
 		GuiMessageBox(ghConEmuWnd, pszText, szTitle, MB_ICONINFORMATION|MB_SYSTEMMODAL);
-
-		free(pszText);
 	}
 }
 
-bool CEAnsi::IsAnsiExecAllowed(LPCWSTR asCmd)
+bool CEAnsi::IsAnsiExecAllowed(LPCWSTR asCmd) const
 {
 	// Invalid command or macro?
 	if (!asCmd || !*asCmd)
@@ -2287,8 +2299,8 @@ bool CEAnsi::IsAnsiExecAllowed(LPCWSTR asCmd)
 
 	// Now we need to ask GUI, if the command (asCmd) is allowed
 	bool bAllowed = false;
-	INT_PTR cchLen = wcslen(asCmd) + 1;
-	CESERVER_REQ* pOut = NULL;
+	const INT_PTR cchLen = wcslen(asCmd) + 1;
+	CESERVER_REQ* pOut = nullptr;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ALLOWANSIEXEC, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchLen);
 
 	if (pIn)
@@ -2310,9 +2322,9 @@ bool CEAnsi::IsAnsiExecAllowed(LPCWSTR asCmd)
 }
 
 // ESC ] 9 ; 6 ; "macro" ST        Execute some GuiMacro
-void CEAnsi::DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen)
+void CEAnsi::DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen) const
 {
-	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pOut = nullptr;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(cchLen + 1));
 
 	if (pIn)
@@ -2326,37 +2338,44 @@ void CEAnsi::DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen)
 	}
 
 	// EnvVar "ConEmuMacroResult"
-	SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+	SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : nullptr);
 
 	ExecuteFreeResult(pOut);
 	ExecuteFreeResult(pIn);
 }
 
 // ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
-void CEAnsi::DoProcess(LPCWSTR asCmd, INT_PTR cchLen)
+void CEAnsi::DoProcess(LPCWSTR asCmd, INT_PTR cchLen) const
 {
 	// We need zero-terminated string
-	wchar_t* pszCmdLine = (wchar_t*)malloc((cchLen + 1)*sizeof(*asCmd));
+	CEStr pszCmdLine;
 
-	if (pszCmdLine)
+	if (pszCmdLine.GetBuffer(cchLen))
 	{
-		EscCopyCtrlString(pszCmdLine, asCmd, cchLen);
+		EscCopyCtrlString(pszCmdLine.data(), asCmd, cchLen);
 
 		if (IsAnsiExecAllowed(pszCmdLine))
 		{
-			STARTUPINFO si = {sizeof(si)};
-			PROCESS_INFORMATION pi = {};
+			STARTUPINFO si{};
+			si.cb = sizeof(si);
+			PROCESS_INFORMATION pi{};
 
-			BOOL bCreated = OnCreateProcessW(NULL, pszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+			const BOOL bCreated = OnCreateProcessW(
+				nullptr, pszCmdLine.data(), nullptr, nullptr,
+				FALSE, 0, nullptr, nullptr, &si, &pi);
 			if (bCreated)
 			{
-				WaitForSingleObject(pi.hProcess, INFINITE);
-				CloseHandle(pi.hProcess);
-				CloseHandle(pi.hThread);
+				if (pi.hProcess)
+				{
+					WaitForSingleObject(pi.hProcess, INFINITE);
+					CloseHandle(pi.hProcess);
+				}
+				if (pi.hThread)
+				{
+					CloseHandle(pi.hThread);
+				}
 			}
 		}
-
-		free(pszCmdLine);
 	}
 }
 
@@ -2367,14 +2386,15 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 		return;
 
 	// We need zero-terminated string
-	wchar_t* pszVarName = (wchar_t*)malloc((cchLen + 1)*sizeof(*asCmd));
+	CEStr pszVarName;
 
-	if (pszVarName)
+	if (pszVarName.GetBuffer(cchLen))
 	{
-		EscCopyCtrlString(pszVarName, asCmd, cchLen);
+		EscCopyCtrlString(pszVarName.data(), asCmd, cchLen);
 
 		wchar_t szValue[MAX_PATH];
 		wchar_t* pszValue = szValue;
+		CEStr valueBuffer;
 		DWORD cchMax = countof(szValue);
 		DWORD nMax = GetEnvironmentVariable(pszVarName, pszValue, cchMax);
 
@@ -2402,7 +2422,7 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 		if (nMax >= cchMax)
 		{
 			cchMax = nMax+1;
-			pszValue = (wchar_t*)malloc(cchMax*sizeof(*pszValue));
+			pszValue = valueBuffer.GetBuffer(cchMax);
 			nMax = pszValue ? GetEnvironmentVariable(pszVarName, szValue, countof(szValue)) : 0;
 		}
 
@@ -2411,44 +2431,39 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 			TODO("Process here ANSI colors TOO! But now it will be 'reentrance'?");
 			WriteText(pfnWriteConsoleW, mh_WriteOutput, pszValue, nMax, &cchMax);
 		}
-
-		if (pszValue && pszValue != szValue)
-			free(pszValue);
-		free(pszVarName);
 	}
 }
 
 // ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
-void CEAnsi::DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen)
+void CEAnsi::DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen) const
 {
 	// We need zero-terminated string
-	wchar_t* pszCWD = (wchar_t*)malloc((cchLen + 1)*sizeof(*asCmd));
+	CEStr pszCWD;
 
-	if (pszCWD)
+	if (pszCWD.GetBuffer(cchLen))
 	{
-		EscCopyCtrlString(pszCWD, asCmd, cchLen);
+		EscCopyCtrlString(pszCWD.data(), asCmd, cchLen);
 
 		// Sends CECMD_STORECURDIR into RConServer
 		SendCurrentDirectory(ghConWnd, pszCWD);
-
-		free(pszCWD);
 	}
 }
 
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 BOOL CEAnsi::ReportString(LPCWSTR asRet)
 {
 	if (!asRet || !*asRet)
 		return FALSE;
 	INPUT_RECORD ir[16] = {};
-	int nLen = lstrlen(asRet);
-	INPUT_RECORD* pir = (nLen <= (int)countof(ir)) ? ir : (INPUT_RECORD*)calloc(nLen,sizeof(INPUT_RECORD));
+	const size_t nLen = wcslen(asRet);
+	INPUT_RECORD* pir = (nLen <= static_cast<int>(countof(ir))) ? ir : static_cast<INPUT_RECORD*>(calloc(nLen, sizeof(INPUT_RECORD)));
 	if (!pir)
 		return FALSE;
 
 	INPUT_RECORD* p = pir;
 	LPCWSTR pc = asRet;
-	for (int i = 0; i < nLen; i++, p++, pc++)
+	for (size_t i = 0; i < nLen; i++, p++, pc++)
 	{
 		p->EventType = KEY_EVENT;
 		p->Event.KeyEvent.bKeyDown = TRUE;
@@ -2459,8 +2474,9 @@ BOOL CEAnsi::ReportString(LPCWSTR asRet)
 	DumpKnownEscape(asRet, nLen, de_Report);
 
 	DWORD nWritten = 0;
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	BOOL bSuccess = WriteConsoleInput(hIn, pir, nLen, &nWritten) && (nWritten == nLen);
+	const BOOL bSuccess = WriteConsoleInput(hIn, pir, nLen, &nWritten) && (nWritten == nLen);
 
 	if (pir != ir)
 		free(pir);
@@ -2473,11 +2489,11 @@ void CEAnsi::ReportConsoleTitle()
 	wchar_t* p = sTitle+3;
 	_ASSERTEX(lstrlen(sTitle)==3);
 
-	DWORD nTitle = GetConsoleTitle(sTitle+3, MAX_PATH*2);
+	const DWORD nTitle = GetConsoleTitle(sTitle+3, MAX_PATH*2);
 	p = sTitle + 3 + std::min<DWORD>(nTitle, MAX_PATH*2);
 	*(p++) = L'\x1B';
 	*(p++) = L'\\';
-	*(p++) = 0;
+	*(p) = 0;
 
 	ReportString(sTitle);
 }
@@ -2516,7 +2532,7 @@ void CEAnsi::ReportTerminalPixelSize()
 
 	if (width > 0 && height > 0)
 	{
-		swprintf_c(szReport, L"\x1B[4;%u;%ut", (uint32_t)height, (uint32_t)width);
+		swprintf_c(szReport, L"\x1B[4;%u;%ut", static_cast<uint32_t>(height), static_cast<uint32_t>(width));
 		ReportString(szReport);
 	}
 }
@@ -2551,12 +2567,14 @@ void CEAnsi::ReportCursorPosition(HANDLE hConsoleOutput)
 BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
 	BOOL lbRc = TRUE, lbApply = FALSE;
+	// ReSharper disable once CppLocalVariableMayBeConst
 	LPCWSTR lpEnd = (lpBuffer + nNumberOfCharsToWrite);
 	AnsiEscCode Code = {};
 	wchar_t szPreDump[CEAnsi_MaxPrevPart];
+	// ReSharper disable once CppJoinDeclarationAndAssignment
 	DWORD cchPrevPart;
 
-	GetFeatures(NULL, &mb_SuppressBells);
+	GetFeatures(nullptr, &mb_SuppressBells);
 
 	// Store this pointer
 	pfnWriteConsoleW = _WriteConsoleW;
@@ -2568,14 +2586,14 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 
 	while (lpBuffer < lpEnd)
 	{
-		LPCWSTR lpStart = NULL, lpNext = NULL; // Required to be NULL-initialized
+		LPCWSTR lpStart = nullptr, lpNext = nullptr; // Required to be nullptr-initialized
 
 		// '^' is ESC
 		// ^[0;31;47m   $E[31;47m   ^[0m ^[0;1;31;47m  $E[1;31;47m  ^[0m
 
 		cchPrevPart = 0;
 
-		int iEsc = NextEscCode(lpBuffer, lpEnd, szPreDump, cchPrevPart, lpStart, lpNext, Code);
+		const int iEsc = NextEscCode(lpBuffer, lpEnd, szPreDump, cchPrevPart, lpStart, lpNext, Code);
 
 		if (cchPrevPart)
 		{
@@ -2594,7 +2612,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 		{
 			if (lpStart > lpBuffer)
 			{
-				_ASSERTEX((lpStart-lpBuffer) < (INT_PTR)nNumberOfCharsToWrite);
+				_ASSERTEX((lpStart-lpBuffer) < static_cast<INT_PTR>(nNumberOfCharsToWrite));
 
 				if (lbApply)
 				{
@@ -2602,7 +2620,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					lbApply = FALSE;
 				}
 
-				DWORD nWrite = (DWORD)(lpStart - lpBuffer);
+				const DWORD nWrite = static_cast<DWORD>(lpStart - lpBuffer);
 				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
 				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten, FALSE);
 				if (!lbRc)
@@ -2678,7 +2696,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						ReverseLF(hConsoleOutput, lbApply);
 						break;
 					case L'E':
-						WriteText(_WriteConsoleW, hConsoleOutput, L"\r\n", 2, NULL);
+						WriteText(_WriteConsoleW, hConsoleOutput, L"\r\n", 2, nullptr);
 						break;
 					case L'D':
 						ForwardLF(hConsoleOutput, lbApply);
@@ -2724,7 +2742,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					lbApply = FALSE;
 				}
 
-				DWORD nWrite = (DWORD)(lpNext - lpBuffer);
+				const DWORD nWrite = static_cast<DWORD>(lpNext - lpBuffer);
 				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
 				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
 				if (!lbRc)
@@ -2750,7 +2768,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 		}
 		else
 		{
-			_ASSERTEX(lpNext > lpBuffer || lpNext == NULL);
+			_ASSERTEX(lpNext > lpBuffer || lpNext == nullptr);
 			++lpBuffer;
 		}
 	}
@@ -2818,7 +2836,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			auto get_scroll_region = [&csbi]()
 			{
 				const auto& srw = csbi.srWindow;
-				SMALL_RECT clipRgn = {0, 0, srw.Right - srw.Left, srw.Bottom - srw.Top};
+				SMALL_RECT clipRgn = MakeSmallRect(0, 0, srw.Right - srw.Left, srw.Bottom - srw.Top);
 				if (gDisplayOpt.ScrollRegion)
 				{
 					clipRgn.Top = std::max<SHORT>(0, std::min<SHORT>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
@@ -2829,7 +2847,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			auto get_cursor = [&csbi]()
 			{
 				const auto& srw = csbi.srWindow;
-				int visible_rows = srw.Bottom - srw.Top;
+				const int visible_rows = srw.Bottom - srw.Top;
 				return PointXY{
 					csbi.dwCursorPosition.X,
 					std::max(0, std::min(visible_rows, csbi.dwCursorPosition.Y - srw.Top))
@@ -2858,7 +2876,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				else
 					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, cur.Y + value));
 			};
-			auto set_x = [&crNewPos, &workRgn, &clipRgn, &cur](Direction direction, int value)
+			auto set_x = [&crNewPos, &workRgn, &cur](Direction direction, int value)
 			{
 				if (direction == Direction::kAbsolute || direction == Direction::kCompatible)
 					crNewPos.X = std::max(workRgn.left, std::min(workRgn.right, value));
@@ -2923,8 +2941,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			{
 			const auto& srw = csbi.srWindow;
 			COORD crNewPosAPI = {
-				(SHORT)crNewPos.X,
-				(SHORT)std::min<int>(csbi.dwSize.Y - 1, srw.Top + crNewPos.Y)
+				static_cast<SHORT>(crNewPos.X),
+				static_cast<SHORT>(std::min<int>(csbi.dwSize.Y - 1, srw.Top + crNewPos.Y))
 			};
 			_ASSERTE(crNewPosAPI.X == crNewPos.X);
 			F(SetConsoleCursorPosition)(hConsoleOutput, crNewPosAPI);
@@ -2977,7 +2995,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				{
 					nScroll = -csbi.srWindow.Top;
 					cr0.X = csbi.dwCursorPosition.X;
-					cr0.Y = std::max(0, (csbi.dwCursorPosition.Y - csbi.srWindow.Top));
+					cr0.Y = static_cast<SHORT>(std::max(0, (csbi.dwCursorPosition.Y - csbi.srWindow.Top)));
 					resetCursor = true;
 				}
 				break;
@@ -3061,8 +3079,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 			if (nChars > 0)
 			{
-				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars };
+				ExtFillOutputParm fill = { sizeof(fill), efof_Current | efof_Attribute | efof_Character,
+					hConsoleOutput, {}, L' ', cr0, static_cast<DWORD>(nChars) };
 				ExtFillOutput(&fill);
 			}
 		} // case L'K':
@@ -3214,7 +3232,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				//    Our extension. _col_ - wrap at column (1-based), default = 80
 				if ((gDisplayOpt.WrapWasSet = (Code.Action == L'h')))
 				{
-					gDisplayOpt.WrapAt = ((Code.ArgC > 1) && (Code.ArgV[1] > 0)) ? Code.ArgV[1] : 80;
+					gDisplayOpt.WrapAt = ((Code.ArgC > 1) && (Code.ArgV[1] > 0)) ? static_cast<SHORT>(Code.ArgV[1]) : 80;
 				}
 				break;
 			case 20:
@@ -3260,7 +3278,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				break;
 			case 4:
 				if (Code.PvtLen == 0)
-				{
+				{  // NOLINT(bugprone-branch-clone)
 					/* h=Insert Mode (IRM), l=Replace Mode (IRM) */
 					// Nano posts the `ESC [ 4 l` on start, but do not post `ESC [ 4 h` on exit, that is strange...
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
@@ -3271,7 +3289,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
 				}
 				else
+				{
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				}
 				break;
 			case 9:    /* X10_MOUSE */
 			case 1000: /* VT200_MOUSE */
@@ -3302,15 +3322,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;
-			case 7786: /* 'V': Mousewheel reporting */
-			case 7787: /* 'W': Application mousewheel mode */
-				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
-					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
-				else
-					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
-				break;
-			case 1034:
-				// Interpret "meta" key, sets eighth bit. (enables/disables the eightBitInput resource).
+			case 7786: /* 'V': Mouse wheel reporting */
+			case 7787: /* 'W': Application mouse wheel mode */
+			case 1034: // Interpret "meta" key, sets eighth bit. (enables/disables the eightBitInput resource).
 				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 				else
@@ -3565,7 +3579,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.setBack256(clr4b);
 					gDisplayParm.setBrightBack(TRUE);
 					break;
-				case 10:
+				case 10:  // NOLINT(bugprone-branch-clone)
 					// Something strange and unknown... (received from ssh)
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 					break;
@@ -3643,6 +3657,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 						if (i < Code.ArgC)
 							width = Code.ArgV[++i];
 						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+						std::ignore = height;
+						std::ignore = width;
 					}
 					break;
 				case 14:
@@ -3746,8 +3762,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 			if (nChars > 0)
 			{
-				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars };
+				ExtFillOutputParm fill = { sizeof(fill), efof_Current | efof_Attribute | efof_Character,
+					hConsoleOutput, {}, L' ', cr0, static_cast<DWORD>(nChars) };
 				ExtFillOutput(&fill);
 			}
 		} // case L'X':
@@ -3784,12 +3800,11 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 	case L'2':
 		if (Code.ArgSZ[1] == L';' && Code.ArgSZ[2])
 		{
-			wchar_t* pszNewTitle = (wchar_t*)malloc(sizeof(wchar_t)*(Code.cchArgSZ));
-			if (pszNewTitle)
+			CEStr pszNewTitle;
+			if (pszNewTitle.GetBuffer(Code.cchArgSZ))
 			{
-				EscCopyCtrlString(pszNewTitle, Code.ArgSZ+2, Code.cchArgSZ-2);
-				SetConsoleTitle(*pszNewTitle ? pszNewTitle : gsInitConTitle);
-				free(pszNewTitle);
+				EscCopyCtrlString(pszNewTitle.data(), Code.ArgSZ + 2, Code.cchArgSZ - 2);
+				SetConsoleTitle(pszNewTitle.c_str(gsInitConTitle));
 			}
 		}
 		break;
@@ -3861,7 +3876,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTABTITLE, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*(Code.cchArgSZ));
 				if (pIn)
 				{
-					EscCopyCtrlString((wchar_t*)pIn->wData, Code.ArgSZ+4, Code.cchArgSZ-4);
+					EscCopyCtrlString(reinterpret_cast<wchar_t*>(pIn->wData), Code.ArgSZ+4, Code.cchArgSZ-4);
 					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 					ExecuteFreeResult(pIn);
 					ExecuteFreeResult(pOut);
@@ -3904,7 +3919,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 						pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : nullptr;
 					}
 				}
-				GuiSetProgress(st,pr,pszName);
+				GuiSetProgress(st, pr, pszName);
 			}
 			else if (Code.ArgSZ[2] == L'5')
 			{
@@ -3914,9 +3929,10 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				BOOL bSucceeded = FALSE;
 				DWORD nRead = 0;
 				INPUT_RECORD r = {};
+				// ReSharper disable once CppLocalVariableMayBeConst
 				HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 				//DWORD nStartTick = GetTickCount();
-				while ((bSucceeded = ReadConsoleInput(hIn, &r, 1, &nRead)) && nRead)
+				while (((bSucceeded = ReadConsoleInput(hIn, &r, 1, &nRead))) && nRead)
 				{
 					if ((r.EventType == KEY_EVENT) && r.Event.KeyEvent.bKeyDown)
 					{
@@ -4021,13 +4037,14 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 }
 
 /// Returns coordinates of either working area (viewPort) or full backscroll buffer
-/// @param hConsoleOutput   if NULL we process STD_OUTPUT_HANDLE
+/// @param hConsoleOutput   if nullptr we process STD_OUTPUT_HANDLE
 /// @param viewPort         if true - returns srWindow, false - full backscroll buffer
 /// @result valid SMALL_RECT
-SMALL_RECT CEAnsi::GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort)
+SMALL_RECT CEAnsi::GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort) const
 {
 	const short kFallback = 9999;
 	SMALL_RECT region = {0, 0, kFallback, kFallback};
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	// If function fails, we return {kFallback, kFallback}
@@ -4036,21 +4053,21 @@ SMALL_RECT CEAnsi::GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort)
 		if (viewPort)
 		{
 			// Trick to avoid overflow of SHORT
-			region = {
-				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Left), std::numeric_limits<SHORT>::max()),
-				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Top), std::numeric_limits<SHORT>::max()),
-				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Right), std::numeric_limits<SHORT>::max()),
-				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Bottom), std::numeric_limits<SHORT>::max())
-			};
+			region = MakeSmallRect(
+				std::min<WORD>(static_cast<WORD>(csbi.srWindow.Left), std::numeric_limits<SHORT>::max()),
+				std::min<WORD>(static_cast<WORD>(csbi.srWindow.Top), std::numeric_limits<SHORT>::max()),
+				std::min<WORD>(static_cast<WORD>(csbi.srWindow.Right), std::numeric_limits<SHORT>::max()),
+				std::min<WORD>(static_cast<WORD>(csbi.srWindow.Bottom), std::numeric_limits<SHORT>::max())
+			);
 		}
 		else
 		{
-			region = {
+			region = MakeSmallRect(
 				0,
 				0,
-				(SHORT)std::min<WORD>(WORD(csbi.dwSize.X - 1), std::numeric_limits<SHORT>::max()),
-				(SHORT)std::min<WORD>(WORD(csbi.dwSize.Y - 1), std::numeric_limits<SHORT>::max())
-			};
+				std::min<WORD>(static_cast<WORD>(csbi.dwSize.X - 1), std::numeric_limits<SHORT>::max()),
+				std::min<WORD>(static_cast<WORD>(csbi.dwSize.Y - 1), std::numeric_limits<SHORT>::max())
+			);
 		}
 		// Last checks
 		if (region.Right < region.Left)
@@ -4061,13 +4078,13 @@ SMALL_RECT CEAnsi::GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort)
 	return region;
 }
 
-void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd, HANDLE hConsoleOutput)
+void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd, HANDLE hConsoleOutput) const
 {
 	if (bRegion && (nStart >= 0) && (nStart <= nEnd))
 	{
 		// note: the '\e[0;35r' shall be treated as '\e[1;35r'
 		_ASSERTE(nStart >= 0 && nEnd >= nStart);
-		SMALL_RECT working = GetWorkingRegion(hConsoleOutput, bRelative);
+		const SMALL_RECT working = GetWorkingRegion(hConsoleOutput, bRelative);
 		_ASSERTE(working.Top>=0 && working.Left>=0 && working.Bottom>=working.Top && working.Right>=working.Left);
 		if (bRelative)
 		{
@@ -4075,10 +4092,10 @@ void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd,
 			nEnd += working.Top;
 		}
 		// We need 0-based absolute values
-		gDisplayOpt.ScrollStart = std::max<int>(working.Top, std::min<int>(nStart - 1, working.Bottom));
-		gDisplayOpt.ScrollEnd = std::max<int>(working.Top, std::min<int>(nEnd - 1, working.Bottom));
+		gDisplayOpt.ScrollStart = static_cast<SHORT>(std::max<int>(working.Top, std::min<int>(nStart - 1, working.Bottom)));
+		gDisplayOpt.ScrollEnd = static_cast<SHORT>(std::max<int>(working.Top, std::min<int>(nEnd - 1, working.Bottom)));
 		// Validate
-		if (!(gDisplayOpt.ScrollRegion = (gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart)))
+		if (!((gDisplayOpt.ScrollRegion = (gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart))))
 		{
 			_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
 		}
@@ -4091,9 +4108,10 @@ void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd,
 	}
 }
 
-void CEAnsi::XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput /*= NULL*/)
+void CEAnsi::XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput /*= nullptr*/)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
 
 	if (bSaveCursor)
@@ -4116,6 +4134,7 @@ HANDLE CEAnsi::XTermBufferConEmuAlternative()
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi1 = {}, csbi2 = {};
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
 	ghStdOut.SetHandle(hOut, MConHandle::StdMode::Output);
 	ghStdErr.SetHandle(hErr, MConHandle::StdMode::Output);
@@ -4124,7 +4143,7 @@ HANDLE CEAnsi::XTermBufferConEmuAlternative()
 		// -- Turn on "alternative" buffer even if not scrolling exist now
 		//if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
 		{
-			CESERVER_REQ *pIn = NULL, *pOut = NULL;
+			CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
 			pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
 			if (pIn)
 			{
@@ -4132,8 +4151,8 @@ HANDLE CEAnsi::XTermBufferConEmuAlternative()
 				if (isConnectorStarted())
 					pIn->AltBuf.AbFlags |= abf_Connector;
 				// support "virtual" dynamic console buffer height
-				if (CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL)
-					pIn->AltBuf.BufferHeight = std::max((SHORT)pAppMap->nLastConsoleRow, csbi1.srWindow.Bottom);
+				if (CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : nullptr)
+					pIn->AltBuf.BufferHeight = std::max(static_cast<SHORT>(pAppMap->nLastConsoleRow), csbi1.srWindow.Bottom);
 				else
 					pIn->AltBuf.BufferHeight = csbi1.srWindow.Bottom;
 				pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
@@ -4142,6 +4161,7 @@ HANDLE CEAnsi::XTermBufferConEmuAlternative()
 					if (!IsWin7Eql())
 					{
 						ghConOut.Close();
+						// ReSharper disable once CppLocalVariableMayBeConst
 						HANDLE hNewOut = ghConOut.GetHandle();
 						if (hNewOut && hNewOut != INVALID_HANDLE_VALUE)
 						{
@@ -4155,10 +4175,9 @@ HANDLE CEAnsi::XTermBufferConEmuAlternative()
 					GetConsoleScreenBufferInfoCached(hOut, &csbi2, TRUE);
 
 					// Clear current screen contents, don't move cursor position
-					COORD cr0 = {};
-					DWORD nChars = csbi2.dwSize.X * csbi2.dwSize.Y;
+					const DWORD nChars = csbi2.dwSize.X * csbi2.dwSize.Y;
 					ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-						hOut, {}, L' ', cr0, (DWORD)nChars};
+						hOut, {}, L' ', {}, static_cast<DWORD>(nChars) };
 					ExtFillOutput(&fill);
 
 					TODO("BufferWidth");
@@ -4198,11 +4217,11 @@ HANDLE CEAnsi::XTermBufferConEmuPrimary()
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
 	{
-		WORD nDefAttr = GetDefaultTextAttr();
+		const WORD nDefAttr = GetDefaultTextAttr();
 		// Сброс только расширенных атрибутов
 		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
 			{CECF_NONE, CONFORECOLOR(nDefAttr), CONBACKCOLOR(nDefAttr)},
-			L' ', {0,0}, (DWORD)(csbi.dwSize.X * csbi.dwSize.Y)};
+			L' ', {0,0}, static_cast<DWORD>(csbi.dwSize.X * csbi.dwSize.Y)};
 		ExtFillOutput(&fill);
 		CEAnsi* pObj = CEAnsi::Object();
 		if (pObj)
@@ -4219,8 +4238,8 @@ HANDLE CEAnsi::XTermBufferConEmuPrimary()
 		ghConOut.Close();
 	}
 
-	// Восстановление прокрутки и данных
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	// restore backscroll size and data
+	CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
 	pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
 	if (pIn)
 	{
@@ -4230,7 +4249,7 @@ HANDLE CEAnsi::XTermBufferConEmuPrimary()
 			pIn->AltBuf.AbFlags |= abf_BufferOff;
 		if (isConnectorStarted())
 			pIn->AltBuf.AbFlags |= abf_Connector;
-		pIn->AltBuf.BufferHeight = gXTermAltBuffer.BufferSize;
+		pIn->AltBuf.BufferHeight = static_cast<USHORT>(gXTermAltBuffer.BufferSize);
 		// Async - is not allowed. Otherwise current application (cmd.exe for example)
 		// may start printing before server finishes buffer restoration
 		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
@@ -4324,7 +4343,7 @@ HANDLE CEAnsi::StartVimTerm(bool bFromDllStart)
 	// Has no sense for cygwin/msys, but they are skipped above
 	CmdArg lsArg;
 	LPCWSTR pszCmdLine = GetCommandLineW();
-	LPCWSTR pszCompare[] = {L"--help", L"-h", L"--version", NULL};
+	LPCWSTR pszCompare[] = {L"--help", L"-h", L"--version", nullptr};
 	while ((pszCmdLine = NextArg(pszCmdLine, lsArg)))
 	{
 		for (INT_PTR i = 0; pszCompare[i]; i++)
@@ -4349,12 +4368,12 @@ HANDLE CEAnsi::StopVimTerm()
 
 void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*/)
 {
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD));
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR) + 3 * sizeof(DWORD));
 	if (pIn)
 	{
 		pIn->dwData[0] = mode;
-		pIn->dwData[1] = value;
-		pIn->dwData[2] = nPID ? nPID : GetCurrentProcessId();
+		pIn->dwData[1] = value;  // NOLINT(clang-diagnostic-array-bounds)
+		pIn->dwData[2] = nPID ? nPID : GetCurrentProcessId();  // NOLINT(clang-diagnostic-array-bounds)
 		CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
@@ -4385,12 +4404,12 @@ void CEAnsi::RefreshXTermModes()
 {
 	if (!gbWasXTermOutput)
 		return;
-	for (int i = 0; i < (int)countof(gWasXTermModeSet); ++i)
+	for (int i = 0; i < static_cast<int>(countof(gWasXTermModeSet)); ++i)
 	{
 		if (!gWasXTermModeSet[i].pid)
 			continue;
 		_ASSERTE(i != tmc_ConInMode);
-		ChangeTermMode((TermModeCommand)i, gWasXTermModeSet[i].value, gWasXTermModeSet[i].pid);
+		ChangeTermMode(static_cast<TermModeCommand>(i), gWasXTermModeSet[i].value, gWasXTermModeSet[i].pid);
 	}
 }
 
@@ -4399,6 +4418,7 @@ void CEAnsi::RefreshXTermModes()
 void CEAnsi::StorePromptBegin()
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (GetConsoleScreenBufferInfo(hConOut, &csbi))
 	{
@@ -4408,7 +4428,7 @@ void CEAnsi::StorePromptBegin()
 
 void CEAnsi::StorePromptReset()
 {
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : nullptr;
 	if (pAppMap)
 	{
 		pAppMap->csbiPreRead.dwCursorPosition = COORD{0, 0};
@@ -4416,55 +4436,18 @@ void CEAnsi::StorePromptReset()
 }
 
 
-//static
-CEAnsi* CEAnsi::Object(bool bForceCreate /*= false*/)
+//static, thread local singleton
+CEAnsi* CEAnsi::Object()
 {
 	CLastErrorGuard errGuard;
 
-	if (!AnsiTlsIndex)
+	thread_local CEAnsi object{};
+
+	if (!object.initialized_)
 	{
-		AnsiTlsIndex = TlsAlloc();
+		object.GetDefaultTextAttr(); // Initialize "default attributes";
+		object.initialized_ = true;
 	}
 
-	if ((!AnsiTlsIndex) || (AnsiTlsIndex == TLS_OUT_OF_INDEXES))
-	{
-		_ASSERTEX(AnsiTlsIndex && AnsiTlsIndex!=TLS_OUT_OF_INDEXES);
-		return NULL;
-	}
-
-	//if (!AnsiTls.Initialized())
-	//{
-	//	AnsiTls.Init(
-	//}
-
-	CEAnsi* p = NULL;
-
-	if (!bForceCreate)
-	{
-		p = (CEAnsi*)TlsGetValue(AnsiTlsIndex);
-	}
-
-	if (!p)
-	{
-		p = (CEAnsi*)calloc(1,sizeof(*p));
-		if (p) p->GetDefaultTextAttr(); // Initialize "default attributes"
-		TlsSetValue(AnsiTlsIndex, p);
-	}
-
-	return p;
-}
-
-//static
-void CEAnsi::Release()
-{
-	if (AnsiTlsIndex && (AnsiTlsIndex != TLS_OUT_OF_INDEXES))
-	{
-		CEAnsi* p = (CEAnsi*)TlsGetValue(AnsiTlsIndex);
-		if (p)
-		{
-			SafeFree(p->mp_Cvt);
-			free(p);
-		}
-		TlsSetValue(AnsiTlsIndex, NULL);
-	}
+	return &object;
 }

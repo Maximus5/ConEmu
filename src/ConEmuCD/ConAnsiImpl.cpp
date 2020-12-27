@@ -48,8 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#define ANSI_MAP_CHECK_TIMEOUT 1000
-
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
 #define DebugStringA(x) OutputDebugStringA(x)
@@ -73,7 +71,7 @@ SrvAnsiImpl::SrvAnsiImpl(SrvAnsi* _owner, condata::Table* _table)
 	, m_Owner(_owner)
 	, m_Table(_table)
 {
-	m_Owner->GetFeatures(NULL, &m_Owner->mb_SuppressBells);
+	m_Owner->GetFeatures(nullptr, &m_Owner->mb_SuppressBells);
 }
 
 SrvAnsiImpl::~SrvAnsiImpl()
@@ -104,17 +102,17 @@ bool SrvAnsiImpl::OurWriteConsole(const wchar_t* lpBuffer, DWORD nNumberOfCharsT
 		if (m_Owner->gCpConv.nFromCP && m_Owner->gCpConv.nToCP)
 		{
 			// Convert from Unicode to MBCS
-			int iMBCSLen = WideCharToMultiByte(m_Owner->gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, NULL, 0, NULL, NULL);
+			int iMBCSLen = WideCharToMultiByte(m_Owner->gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, nullptr, 0, nullptr, nullptr);
 			if (iMBCSLen > 0)
 			{
 				CEStrA szTemp;
 				if (char* pszTemp = szTemp.GetBuffer(iMBCSLen))
 				{
 					BOOL bFailed = FALSE; // Do not do conversion if some chars can't be mapped
-					iMBCSLen = WideCharToMultiByte(m_Owner->gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, &bFailed);
+					iMBCSLen = WideCharToMultiByte(m_Owner->gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, nullptr, &bFailed);
 					if ((iMBCSLen > 0) && !bFailed)
 					{
-						int iWideLen = MultiByteToWideChar(m_Owner->gCpConv.nToCP, 0, pszTemp, iMBCSLen, NULL, 0);
+						int iWideLen = MultiByteToWideChar(m_Owner->gCpConv.nToCP, 0, pszTemp, iMBCSLen, nullptr, 0);
 						if (iWideLen > 0)
 						{
 							if (wchar_t* ptrBuf = CpCvt.GetBuffer(iWideLen))
@@ -170,7 +168,7 @@ bool SrvAnsiImpl::WriteText(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 		m_Owner->m_LastWrittenChar = lpBuffer[nNumberOfCharsToWrite-1];
 
 	LPCWSTR pszSrcBuffer = lpBuffer;
-	wchar_t cvtBuf[400], *pcvtBuf = NULL; CEStr szTemp;
+	wchar_t cvtBuf[400], *pcvtBuf = nullptr; CEStr szTemp;
 	if (m_Owner->mCharSet && lpBuffer && nNumberOfCharsToWrite)
 	{
 		static wchar_t G0_DRAWING[31] = {
@@ -179,7 +177,8 @@ bool SrvAnsiImpl::WriteText(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 			0x207B /*⁻*/, 0x2500 /*─*/, 0x208B /*₋*/, 0x005F /*_*/, 0x251C /*├*/, 0x2524 /*┤*/, 0x2534 /*┴*/, 0x252C /*┬*/,
 			0x2502 /*│*/, 0x2264 /*≤*/, 0x2265 /*≥*/, 0x03C0 /*π*/, 0x2260 /*≠*/, 0x00A3 /*£*/, 0x00B7 /*·*/
 		};
-		LPCWSTR pszMap = NULL;
+		LPCWSTR pszMap = nullptr;
+		// ReSharper disable once CppIncompleteSwitchStatement
 		switch (m_Owner->mCharSet)
 		{
 		case SrvAnsi::VTCS_DRAWING:
@@ -188,7 +187,7 @@ bool SrvAnsiImpl::WriteText(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 		}
 		if (pszMap)
 		{
-			wchar_t* dst = NULL;
+			wchar_t* dst = nullptr;
 			for (DWORD i = 0; i < nNumberOfCharsToWrite; ++i)
 			{
 				if (pszSrcBuffer[i] >= 0x60 && pszSrcBuffer[i] < 0x7F)
@@ -201,7 +200,7 @@ bool SrvAnsiImpl::WriteText(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 						}
 						else
 						{
-							if (!(pcvtBuf = szTemp.GetBuffer(nNumberOfCharsToWrite)))
+							if (!((pcvtBuf = szTemp.GetBuffer(nNumberOfCharsToWrite))))
 								break;
 						}
 						lpBuffer = pcvtBuf;
@@ -490,7 +489,7 @@ int SrvAnsiImpl::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDum
 						lpStart = lpSaveStart;
 						Code.Action = *(lpBuffer++);
 						Code.Skip = 0;
-						Code.ArgSZ = NULL;
+						Code.ArgSZ = nullptr;
 						Code.cchArgSZ = 0;
 						lpEnd = lpBuffer;
 						iRc = 1;
@@ -500,7 +499,7 @@ int SrvAnsiImpl::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDum
 					case L'[':
 						// Standard
 						Code.Skip = 0;
-						Code.ArgSZ = NULL;
+						Code.ArgSZ = nullptr;
 						Code.cchArgSZ = 0;
 						{
 							#ifdef _DEBUG
@@ -728,7 +727,7 @@ void SrvAnsiImpl::EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, ssize_t cchM
 {
 	if (!pszDst)
 	{
-		_ASSERTEX(pszDst!=NULL);
+		_ASSERTEX(pszDst!=nullptr);
 		return;
 	}
 
@@ -764,7 +763,7 @@ void SrvAnsiImpl::DoMessage(LPCWSTR asMsg, ssize_t cchLen)
 		//pszText[cchLen] = 0;
 
 		wchar_t szExe[MAX_PATH] = {};
-		GetModuleFileName(NULL, szExe, countof(szExe));
+		GetModuleFileName(nullptr, szExe, countof(szExe));
 		wchar_t szTitle[MAX_PATH+64];
 		msprintf(szTitle, countof(szTitle), L"PID=%u, %s", GetCurrentProcessId(), PointToName(szExe));
 
@@ -804,7 +803,7 @@ bool SrvAnsiImpl::IsAnsiExecAllowed(LPCWSTR asCmd)
 	// Now we need to ask GUI, if the command (asCmd) is allowed
 	bool bAllowed = false;
 	ssize_t cchLen = wcslen(asCmd) + 1;
-	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pOut = nullptr;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ALLOWANSIEXEC, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchLen);
 
 	if (pIn)
@@ -828,7 +827,7 @@ bool SrvAnsiImpl::IsAnsiExecAllowed(LPCWSTR asCmd)
 // ESC ] 9 ; 6 ; "macro" ST        Execute some GuiMacro
 void SrvAnsiImpl::DoGuiMacro(LPCWSTR asCmd, ssize_t cchLen)
 {
-	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pOut = nullptr;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(cchLen + 1));
 
 	if (pIn)
@@ -842,7 +841,7 @@ void SrvAnsiImpl::DoGuiMacro(LPCWSTR asCmd, ssize_t cchLen)
 	}
 
 	// EnvVar "ConEmuMacroResult"
-	SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+	SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : nullptr);
 
 	ExecuteFreeResult(pOut);
 	ExecuteFreeResult(pIn);
@@ -863,7 +862,7 @@ void SrvAnsiImpl::DoProcess(LPCWSTR asCmd, ssize_t cchLen)
 			STARTUPINFO si = {sizeof(si)};
 			PROCESS_INFORMATION pi = {};
 
-			bool bCreated = CreateProcessW(NULL, pszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+			bool bCreated = CreateProcessW(nullptr, pszCmdLine, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
 			if (bCreated)
 			{
 				WaitForSingleObject(pi.hProcess, INFINITE);
@@ -951,7 +950,7 @@ void SrvAnsiImpl::DoSendCWD(LPCWSTR asCmd, ssize_t cchLen)
 // When _st_ is 0: remove progress.
 // When _st_ is 1: set progress value to _pr_ (number, 0-100).
 // When _st_ is 2: set error state in progress on Windows 7 taskbar
-void SrvAnsiImpl::DoSetProgress(const AnsiProgressStatus st, const WORD pr, LPCWSTR pszName /*= NULL*/)
+void SrvAnsiImpl::DoSetProgress(const AnsiProgressStatus st, const WORD pr, LPCWSTR pszName /*= nullptr*/)
 {
 	int nLen = pszName ? (lstrlen(pszName) + 1) : 1;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR) + sizeof(WORD) * (2 + nLen));
@@ -1094,7 +1093,7 @@ bool SrvAnsiImpl::WriteAnsiCodes(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, 
 
 	while (lpBuffer < lpEnd)
 	{
-		LPCWSTR lpStart = NULL, lpNext = NULL; // Required to be NULL-initialized
+		LPCWSTR lpStart = nullptr, lpNext = nullptr; // Required to be nullptr-initialized
 
 		// '^' is ESC
 		// ^[0;31;47m   $E[31;47m   ^[0m ^[0;1;31;47m  $E[1;31;47m  ^[0m
@@ -1262,7 +1261,7 @@ bool SrvAnsiImpl::WriteAnsiCodes(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, 
 		}
 		else
 		{
-			_ASSERTEX(lpNext > lpBuffer || lpNext == NULL);
+			_ASSERTEX(lpNext > lpBuffer || lpNext == nullptr);
 			++lpBuffer;
 		}
 	}

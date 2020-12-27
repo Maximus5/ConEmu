@@ -549,6 +549,11 @@ const char* CEStrA::c_str(const char* asNullSubstitute /*= nullptr*/) const
 	return ms_Val ? ms_Val : asNullSubstitute;
 }
 
+char* CEStrA::data() const
+{
+	return ms_Val;
+}
+
 ssize_t CEStrA::GetLen() const
 {
 	return ms_Val ? strlen(ms_Val) : 0;

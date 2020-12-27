@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <winerror.h>
 #include <winnt.h>
 #include <tchar.h>
+#include <chrono>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuColors3.h"
@@ -49,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#define ANSI_MAP_CHECK_TIMEOUT 1000
+#define ANSI_MAP_CHECK_TIMEOUT std::chrono::seconds(1)
 
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
@@ -68,7 +69,7 @@ void SrvAnsi::DisplayParm::Reset(const bool full)
 	if (full)
 		*this = DisplayParm{};
 
-	WORD nDefColors = SrvAnsi::GetDefaultAnsiAttr();
+	const WORD nDefColors = SrvAnsi::GetDefaultAnsiAttr();
 	_TextColor = CONFORECOLOR(nDefColors);
 	_BackColor = CONBACKCOLOR(nDefColors);
 
@@ -139,36 +140,41 @@ void SrvAnsi::DisplayParm::setCrossed(const bool val)
 
 
 
-SrvAnsi* SrvAnsi::object = nullptr;
-std::mutex SrvAnsi::object_mutex;
+SrvAnsi* SrvAnsi::object_ = nullptr;
+
+std::mutex& SrvAnsi::GetObjectMutex()
+{
+	static std::mutex objectMutex;  // NOLINT(clang-diagnostic-exit-time-destructors)
+	return objectMutex;
+}
 
 //static
 SrvAnsi* SrvAnsi::Object()
 {
 	// #condata Let Object accept requestor (connector) PID as argument
-	if (!object)
+	if (!object_)
 	{
-		std::unique_lock<std::mutex> lock(object_mutex);
-		if (!object)
+		std::unique_lock<std::mutex> lock(GetObjectMutex());
+		if (!object_)
 		{
-			object = new SrvAnsi();
+			object_ = new SrvAnsi();
 			lock.release();
 
 			Shutdown::RegisterEvent(SrvAnsi::Release, 0);
 		}
 	}
-	return object;
+	return object_;
 }
 
 //static
 void SrvAnsi::Release(LPARAM lParam)
 {
-	if (!object)
+	if (!object_)
 		return;
 
-	std::unique_lock<std::mutex> lock(object_mutex);
-	delete object;
-	object = nullptr;
+	std::unique_lock<std::mutex> lock(GetObjectMutex());
+	delete object_;
+	object_ = nullptr;
 }
 
 SrvAnsi::SrvAnsi()
@@ -182,18 +188,18 @@ SrvAnsi::SrvAnsi()
 
 	const condata::Attribute attr = GetDefaultAttr();
 	m_Primary.SetAttr(attr);
-	m_Primary.Resize({(unsigned)newWidth, newHeight});
-	m_Primary.SetBellCallback(BellBallback, this);
+	m_Primary.Resize({static_cast<unsigned>(newWidth), newHeight});
+	m_Primary.SetBellCallback(BellCallback, this);
 
 	m_Alternative.SetAttr(attr);
-	m_Alternative.Resize({(unsigned)newWidth, newHeight});
+	m_Alternative.Resize({static_cast<unsigned>(newWidth), newHeight});
 	// Alternative buffer is not expected to have backscroll (intended for Vim and other "fullscreen" applications)
 	m_Alternative.SetBackscrollMax(0);
-	m_Alternative.SetBellCallback(BellBallback, this);
+	m_Alternative.SetBellCallback(BellCallback, this);
 
 	// #condata Try to increase the buffer if the original title is too long?
 	wchar_t szOrigTitle[2000];
-	gsInitConTitle.Set(::GetConsoleTitle(szOrigTitle, (DWORD)std::size(szOrigTitle)) ? szOrigTitle : L"ConEmu");
+	gsInitConTitle.Set(::GetConsoleTitle(szOrigTitle, static_cast<DWORD>(std::size(szOrigTitle))) ? szOrigTitle : L"ConEmu");
 
 	StartXTermMode(true);
 }
@@ -225,18 +231,20 @@ condata::Table* SrvAnsi::GetTable(GetTableEnum _table)
 	return m_UsePrimary ? &m_Primary : &m_Alternative;
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 CESERVER_CONSOLE_MAPPING_HDR* SrvAnsi::GetConMap() const
 {
 	return (gpSrv && gpSrv->pConsoleMap) ? gpSrv->pConsoleMap->Ptr() : nullptr;
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 bool SrvAnsi::IsCmdProcess() const
 {
 	// #condata This interface is proposed for connector only yet...
 	return false;
 }
 
-void SrvAnsi::BellBallback(void* param)
+void SrvAnsi::BellCallback(void* param)
 {
 	SrvAnsi* obj = static_cast<SrvAnsi*>(param);
 	// #condata Add option to none/flash/beep?
@@ -253,6 +261,7 @@ void SrvAnsi::BellBallback(void* param)
 
 /* ************ Export ANSI printings ************ */
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void SrvAnsi::DebugStringUtf8(LPCWSTR asMessage)
 {
 	#ifdef _DEBUG
@@ -266,13 +275,13 @@ void SrvAnsi::DebugStringUtf8(LPCWSTR asMessage)
 		DebugString(asMessage);
 		return;
 	}
-	int iLen = lstrlen(asMessage);
+	const int iLen = wcslen(asMessage);
 	char szUtf8[200];
-	char* pszUtf8 = ((iLen*3+5) < countof(szUtf8)) ? szUtf8 : (char*)malloc(iLen*3+5);
+	char* pszUtf8 = ((iLen * 3 + 5) < static_cast<int>(countof(szUtf8))) ? szUtf8 : static_cast<char*>(malloc(iLen * 3 + 5));
 	if (!pszUtf8)
 		return;
-	pszUtf8[0] = (BYTE)0xEF; pszUtf8[1] = (BYTE)0xBB; pszUtf8[2] = (BYTE)0xBF;
-	int iCvt = WideCharToMultiByte(CP_UTF8, 0, asMessage, iLen, pszUtf8+3, iLen*3+1, NULL, NULL);
+	pszUtf8[0] = '\xEF'; pszUtf8[1] = '\xBB'; pszUtf8[2] = '\xBF';
+	const int iCvt = WideCharToMultiByte(CP_UTF8, 0, asMessage, iLen, pszUtf8+3, iLen*3+1, nullptr, nullptr);
 	if (iCvt > 0)
 	{
 		_ASSERTE(iCvt < (iLen*3+2));
@@ -284,6 +293,7 @@ void SrvAnsi::DebugStringUtf8(LPCWSTR asMessage)
 	#endif
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void SrvAnsi::FirstAnsiCall(const BYTE* lpBuf, DWORD nNumberOfBytes)
 {
 #ifdef SHOW_FIRST_ANSI_CALL
@@ -309,7 +319,8 @@ void SrvAnsi::InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes)
 
 	ScopedObject(CLastErrorGuard);
 
-	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hLog && (hLog != INVALID_HANDLE_VALUE))
 	{
 		// Succeeded
@@ -317,7 +328,7 @@ void SrvAnsi::InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes)
 	}
 }
 
-void SrvAnsi::DoneAnsiLog(bool bFinal)
+void SrvAnsi::DoneAnsiLog(const bool bFinal)
 {
 	if (!ghAnsiLogFile)
 		return;
@@ -333,12 +344,14 @@ void SrvAnsi::DoneAnsiLog(bool bFinal)
 	}
 	else
 	{
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HANDLE h = ghAnsiLogFile;
-		ghAnsiLogFile = NULL;
+		ghAnsiLogFile = nullptr;
 		CloseHandle(h);
 	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 UINT SrvAnsi::GetCodePage()
 {
 	//UINT cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
@@ -369,7 +382,7 @@ void SrvAnsi::WriteAnsiLogFormat(const char* format, ...)
 
 		char log_string[300] = "";
 		msprintf(log_string, countof(log_string), "\x1B]9;11;\"%s: %s\"\x7", s_ExeName, func_buffer);
-		WriteAnsiLogUtf8(log_string, (DWORD)strlen(log_string));
+		WriteAnsiLogUtf8(log_string, static_cast<DWORD>(strlen(log_string)));
 	}
 	va_end(argList);
 }
@@ -397,11 +410,11 @@ bool SrvAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 {
 	if (!lpBuffer || !nChars)
 		return FALSE;
-	BOOL bWrite; DWORD nWritten;
 	// Handle multi-thread writers
 	// But multi-process writers can't be handled correctly
-	SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
-	bWrite = WriteFile(ghAnsiLogFile, lpBuffer, nChars, &nWritten, NULL);
+	SetFilePointer(ghAnsiLogFile, 0, nullptr, FILE_END);
+	DWORD nWritten = 0;
+	const BOOL bWrite = WriteFile(ghAnsiLogFile, lpBuffer, nChars, &nWritten, nullptr);
 	UNREFERENCED_PARAMETER(nWritten);
 	gnEnterPressed = 0; gbAnsiLogNewLine = false;
 	gbAnsiWasNewLine = (lpBuffer[nChars-1] == '\n');
@@ -428,36 +441,34 @@ void SrvAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 			iEnterShift = 1;
 	}
 
-	char sBuf[80*3]; // Will be enough for most cases
+	char sBuf[80 * 3]; // Will be enough for most cases
+	CEStrA longBuf;
 	BOOL bWrite = FALSE;
-	DWORD nWritten = 0;
-	int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, NULL, 0, NULL, NULL);
+	const int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, nullptr, 0, nullptr, nullptr);
 	if (nNeed < 1)
 		return;
-	char* pszBuf = ((nNeed + iEnterShift + 1) <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed+iEnterShift+1);
+	char* pszBuf = ((nNeed + iEnterShift + 1) <= static_cast<int>(countof(sBuf))) ? sBuf : longBuf.GetBuffer(nNeed+iEnterShift+1);
 	if (!pszBuf)
 		return;
 	if (iEnterShift)
 		pszBuf[0] = '\n';
-	int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf+iEnterShift, nNeed, NULL, NULL);
+	const int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf + iEnterShift, nNeed, nullptr, nullptr);
 	// Must be OK, but check it
 	if (nLen > 0 && nLen <= nNeed)
 	{
 		pszBuf[iEnterShift+nNeed] = 0;
 		bWrite = WriteAnsiLogUtf8(pszBuf, nLen+iEnterShift);
 	}
-	if (pszBuf != sBuf)
-		free(pszBuf);
-	UNREFERENCED_PARAMETER(bWrite);
+	std::ignore = bWrite;
 }
 
 void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 {
-	static DWORD nLastCheck = 0;
+	static std::chrono::steady_clock::time_point nLastCheck{};
 	static bool bAnsiAllowed = true;
 	static bool bSuppressBells = true;
 
-	if (nLastCheck || ((GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT))
+	if ((std::chrono::steady_clock::now() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT)
 	{
 		CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
 		if (pMap)
@@ -467,12 +478,12 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 			//else
 			//	bAnsiAllowed = true;
 
-			bAnsiAllowed = ((pMap != NULL) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
-			bSuppressBells = ((pMap != NULL) && ((pMap->Flags & CECF_SuppressBells) != 0));
+			bAnsiAllowed = ((pMap != nullptr) && ((pMap->Flags & CECF_ProcessAnsi) != 0));
+			bSuppressBells = ((pMap != nullptr) && ((pMap->Flags & CECF_SuppressBells) != 0));
 
 			//free(pMap);
 		}
-		nLastCheck = GetTickCount();
+		nLastCheck = std::chrono::steady_clock::now();
 	}
 
 	if (pbAnsiAllowed)
@@ -489,6 +500,7 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 	if (csbi.dwSize.X > 0 && csbi.dwSize.Y > 0)
 		return csbi;
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (!GetConsoleScreenBufferInfo(hOut, &csbi))
 		throw condata::console_error("GetConsoleScreenBufferInfo failed");
@@ -503,19 +515,22 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 	if (clrDefault)
 		return clrDefault;
 
-	CONSOLE_SCREEN_BUFFER_INFO csbi = GetDefaultCSBI();
+	const CONSOLE_SCREEN_BUFFER_INFO csbi = GetDefaultCSBI();
 
-	static SHORT Con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
-	clrDefault = Con2Ansi[CONFORECOLOR(csbi.wAttributes)]
-		| (Con2Ansi[CONBACKCOLOR(csbi.wAttributes)] << 4);
+	static SHORT con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
+	clrDefault = con2Ansi[CONFORECOLOR(csbi.wAttributes)]
+		| static_cast<SHORT>(con2Ansi[CONBACKCOLOR(csbi.wAttributes)] << 4);
 
 	return clrDefault;
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 condata::Attribute SrvAnsi::GetDefaultAttr() const
 {
 	const CONSOLE_SCREEN_BUFFER_INFO csbi = GetDefaultCSBI();
-	return condata::Attribute{csbi.wAttributes};
+	condata::Attribute result{};
+	result.attr.attr = csbi.wAttributes;
+	return result;
 }
 
 void SrvAnsi::ApplyDisplayParm()
@@ -590,7 +605,7 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 				if (TextColor > 15)
 					attr.flags |= condata::Attribute::fFore24b;
 				else
-					attr.attr.foreIdx = (unsigned)TextColor;
+					attr.attr.foreIdx = static_cast<unsigned>(TextColor);
 				attr.crForeColor = RgbMap[TextColor&0xFF];
 			}
 			if (attr.flags & condata::Attribute::fFore24b)
@@ -635,7 +650,7 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 				if (BackColor > 15)
 					attr.flags |= condata::Attribute::fBack24b;
 				else
-					attr.attr.backIdx = (unsigned)BackColor;
+					attr.attr.backIdx = static_cast<unsigned>(BackColor);
 				attr.crBackColor = RgbMap[BackColor&0xFF];
 			}
 			if (attr.flags & condata::Attribute::fBack24b)
@@ -661,6 +676,7 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void SrvAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 {
 #if defined(DUMP_CONSOLE_OUTPUT)
@@ -673,8 +689,8 @@ void SrvAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 
 	if (!buf || !cchLen)
 	{
-		// В общем, много кто грешит попытками записи "пустых строк"
-		// Например, clink, perl, ...
+		// There are programs which try to write empty strings
+		// e.g. clink, perl, ...
 		//_ASSERTEX((buf && cchLen) || (gszClinkCmdLine && buf));
 	}
 
@@ -793,8 +809,10 @@ void SrvAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 #endif
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void SrvAnsi::SetCursorVisibility(bool visible)
 {
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_CURSOR_INFO ci = {};
 	if (::GetConsoleCursorInfo(hOut, &ci))
@@ -817,6 +835,7 @@ void SrvAnsi::SetCursorShape(unsigned style)
 			Ps = 5  -> blinking bar (xterm).
 			Ps = 6  -> steady bar (xterm).
 	*/
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_CURSOR_INFO ci = {};
 	if (GetConsoleCursorInfo(hOut, &ci))
@@ -834,16 +853,21 @@ bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite
 {
 	bool lbRc = false;
 
-	wchar_t* buf = NULL;
+	wchar_t* buf = nullptr;
 	wchar_t szTemp[280]; // would be enough in most cases
 	CEStr ptrTemp;
 	ssize_t bufMax;
 
+	// ReSharper disable once CppJoinDeclarationAndAssignment
 	DWORD cp;
-	CpCvtResult cvt;
-	const char *pSrc, *pTokenStart;
-	wchar_t *pDst, *pDstEnd;
-	DWORD nWritten = 0, nTotalWritten = 0;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	CpCvtResult cvt{};
+	const char* pSrc = nullptr;
+	const char* pTokenStart = nullptr;
+	wchar_t* pDst = nullptr;
+	wchar_t* pDstEnd = nullptr;
+	DWORD nWritten = 0;
+	DWORD nTotalWritten = 0;
 
 	SrvAnsiImpl writer(this, GetTable(GetTableEnum::current));
 
@@ -884,13 +908,13 @@ bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite
 		{
 			_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
 			buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
-			lbRc = writer.OurWriteConsole(buf, DWORD(pDst - buf), &nWritten);
+			lbRc = writer.OurWriteConsole(buf, static_cast<DWORD>(pDst - buf), &nWritten);
 			if (lbRc) nTotalWritten += nWritten;
 			pDst = buf;
 		}
 
 		cvt = m_Cvt.Convert(*pSrc, *pDst);
-		switch (cvt)
+		switch (cvt)  // NOLINT(clang-diagnostic-switch-enum)
 		{
 		case ccr_OK:
 		case ccr_BadUnicode:
@@ -902,6 +926,8 @@ bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite
 			m_Cvt.GetTail(*(++pDst));
 			pDst++;
 			break;
+		default:
+			break;
 		}
 	}
 
@@ -909,8 +935,9 @@ bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite
 	{
 		_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
 		buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
-		lbRc = writer.OurWriteConsole(buf, DWORD(pDst - buf), &nWritten);
-		if (lbRc) nTotalWritten += nWritten;
+		lbRc = writer.OurWriteConsole(buf, static_cast<DWORD>(pDst - buf), &nWritten);
+		if (lbRc)
+			nTotalWritten += nWritten;
 	}
 
 	// If succeeded
@@ -922,19 +949,22 @@ bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite
 
 		// for pty debug purposes
 		#ifdef _DEBUG
-		static unsigned buffered = 0, last_tick = 0;
+		static std::atomic_size_t buffered{ 0 };
+		static std::atomic<std::chrono::steady_clock::time_point> lastTick{};
 		buffered += nNumberOfCharsToWrite;
-		if (/*buffered >= 2048 ||*/ !last_tick || (GetTickCount() - last_tick) >= 5000)
+		if ((std::chrono::steady_clock::now() - lastTick.load()) >= std::chrono::seconds(5))
 		{
 			// std::unique_lock<std::mutex> lock(m_UseMutex); -- writer already locked the mutex
 			GetTable(GetTableEnum::current)->DebugDump(true);
 			buffered = 0;
-			last_tick = GetTickCount();
+			lastTick = std::chrono::steady_clock::now();
 		}
 		#endif
 	}
 
 fin:
+	std::ignore = pTokenStart;
+	std::ignore = nTotalWritten;
 	return lbRc;
 }
 
@@ -978,13 +1008,14 @@ DWORD WINAPI SrvAnsi::PipeThread(LPVOID pipe_arg)
 	if (p->input)
 	{
 		INPUT_RECORD pir[128];
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HANDLE hTermInput = GetStdHandle(STD_INPUT_HANDLE);
 		while (!p->self->m_pipe_stop)
 		{
 			// #condata Replace with internal input buffer
 			DWORD peek = 0, read = 0;
-			BOOL bRc = (PeekConsoleInputW(hTermInput, pir, (DWORD)std::size(pir), &peek) && peek)
-				? (ReadConsoleInputW(hTermInput, pir, peek, &read) && read)
+			const BOOL bRc = (PeekConsoleInputW(hTermInput, pir, static_cast<DWORD>(std::size(pir)), &peek) && (peek != 0))
+				? ReadConsoleInputW(hTermInput, pir, peek, &read)
 				: FALSE;
 			if (bRc && read)
 			{
@@ -1001,7 +1032,7 @@ DWORD WINAPI SrvAnsi::PipeThread(LPVOID pipe_arg)
 	{
 		while (!p->self->m_pipe_stop)
 		{
-			auto data = p->self->m_pipes.Read(true);
+			const auto data = p->self->m_pipes.Read(true);
 			if (!data.first)
 			{
 				_ASSERTE(FALSE && "output pipe was closed?");
@@ -1009,7 +1040,7 @@ DWORD WINAPI SrvAnsi::PipeThread(LPVOID pipe_arg)
 			}
 			if (data.second)
 			{
-				p->self->OurWriteConsoleA(static_cast<const char*>(data.first), data.second, NULL);
+				p->self->OurWriteConsoleA(static_cast<const char*>(data.first), data.second, nullptr);
 			}
 		}
 	}
@@ -1020,14 +1051,15 @@ DWORD WINAPI SrvAnsi::PipeThread(LPVOID pipe_arg)
 
 void SrvAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*/)
 {
+	// ReSharper disable once CppDeclaratorDisambiguatedAsFunction
 	extern BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out);
 
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD));
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR) + 3 * sizeof(DWORD));
 	if (pIn)
 	{
 		pIn->dwData[0] = mode;
-		pIn->dwData[1] = value;
-		pIn->dwData[2] = nPID ? nPID : GetCurrentProcessId();
+		pIn->dwData[1] = value;  // NOLINT(clang-diagnostic-array-bounds)
+		pIn->dwData[2] = nPID ? nPID : GetCurrentProcessId();  // NOLINT(clang-diagnostic-array-bounds)
 		CESERVER_REQ* pOut = nullptr;
 		cmd_StartXTerm(*pIn, &pOut);
 		ExecuteFreeResult(pIn);
@@ -1062,11 +1094,11 @@ void SrvAnsi::RefreshXTermModes()
 {
 	if (!gbWasXTermOutput)
 		return;
-	for (int i = 0; i < (int)countof(gWasXTermModeSet); ++i)
+	for (int i = 0; i < static_cast<int>(countof(gWasXTermModeSet)); ++i)
 	{
 		if (!gWasXTermModeSet[i].pid)
 			continue;
 		_ASSERTE(i != tmc_ConInMode);
-		ChangeTermMode((TermModeCommand)i, gWasXTermModeSet[i].value, gWasXTermModeSet[i].pid);
+		ChangeTermMode(static_cast<TermModeCommand>(i), gWasXTermModeSet[i].value, gWasXTermModeSet[i].pid);
 	}
 }
