@@ -32,32 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/pluginW1900.hpp"
 
 #include "../common/ConsoleTrueMod.h"
-//typedef unsigned __int64 CECOLORFLAGS;
-//static const CECOLORFLAGS
-//	CECF_FG_24BIT      = 0x0000000000000001ULL,
-//	CECF_BG_24BIT      = 0x0000000000000002ULL,
-//	CECF_24BITMASK     = CECF_FG_24BIT|CECF_BG_24BIT,
-//
-//	CECF_FG_BOLD       = 0x1000000000000000ULL,
-//	CECF_FG_ITALIC     = 0x2000000000000000ULL,
-//	CECF_FG_UNDERLINE  = 0x4000000000000000ULL,
-//	CECF_STYLEMASK     = CECF_FG_BOLD|CECF_FG_ITALIC|CECF_FG_UNDERLINE,
-//
-//	CECF_NONE          = 0;
-//
-//struct ConEmuColor
-//{
-//	CECOLORFLAGS Flags;
-//	COLORREF ForegroundColor;
-//	COLORREF BackgroundColor;
-//};
-
 
 struct ExtAttributesParm
 {
 	size_t StructSize;
 	HANDLE ConsoleOutput;
-	ConEmuColor Attributes;
+	ConEmu::Color Attributes;
 };
 
 BOOL ExtGetAttributes(ExtAttributesParm* Info);
@@ -95,7 +75,7 @@ struct ExtWriteTextParm
 	union
 	{
 		FarColor FARColor;
-		ConEmuColor CEColor;
+		ConEmu::Color CEColor;
 		AnnotationInfo AIColor;
 	};
 	const wchar_t* Buffer;
@@ -118,7 +98,7 @@ union ConEmuCharBuffer
 		CHAR_INFO* CEBuffer;
 		union
 		{
-			ConEmuColor* CEColor;
+			ConEmu::Color* CEColor;
 			AnnotationInfo* AIColor;
 		};
 	};
@@ -177,7 +157,7 @@ struct ExtFillOutputParm
 	EXTFILLOUTPUTFLAGS Flags;
 	HANDLE ConsoleOutput;
 	// Fill region with
-	ConEmuColor FillAttr;
+	ConEmu::Color FillAttr;
 	wchar_t FillChar;
 	// Where
 	COORD Coord;
@@ -209,7 +189,7 @@ struct ExtScrollScreenParm
 	INT_PTR Dir;
 
 	// Fill regions with
-	ConEmuColor FillAttr;
+	ConEmu::Color FillAttr;
 	wchar_t FillChar;
 
 	// essf_Region

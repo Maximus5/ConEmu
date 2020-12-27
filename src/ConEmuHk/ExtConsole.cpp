@@ -83,7 +83,7 @@ struct ExtCurrentAttr
 	WORD  CONForeIdx;
 	WORD  CONBackIdx;
 
-	ConEmuColor CEColor;
+	ConEmu::Color CEColor;
 	AnnotationInfo AIColor;
 } gExtCurrentAttr;
 
@@ -244,7 +244,7 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 	{
 		_ASSERTE(FALSE && "ExtGetBufferInfo failed in ExtGetAttributes");
 		gExtCurrentAttr.WasSet = false;
-		gExtCurrentAttr.CEColor.Flags = CECF_NONE;
+		gExtCurrentAttr.CEColor.Flags = ConEmu::ColorFlags::NONE;
 		gExtCurrentAttr.CEColor.ForegroundColor = defConForeIdx;
 		gExtCurrentAttr.CEColor.BackgroundColor = defConBackIdx;
 		memset(&gExtCurrentAttr.AIColor, 0, sizeof(gExtCurrentAttr.AIColor));
@@ -265,7 +265,7 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 		memset(&gExtCurrentAttr.CEColor, 0, sizeof(gExtCurrentAttr.CEColor));
 		memset(&gExtCurrentAttr.AIColor, 0, sizeof(gExtCurrentAttr.AIColor));
 
-		Info->Attributes.Flags = CECF_NONE;
+		Info->Attributes.Flags = ConEmu::ColorFlags::NONE;
 		Info->Attributes.ForegroundColor = CONFORECOLOR(csbi.wAttributes);
 		Info->Attributes.BackgroundColor = CONBACKCOLOR(csbi.wAttributes);
 	}
@@ -273,24 +273,24 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 	return TRUE;
 }
 
-static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WORD& n)
+static void ExtPrepareColor(const ConEmu::Color& Attributes, AnnotationInfo& t, WORD& n)
 {
 	//-- zeroing must be done by calling function
 	//memset(&t, 0, sizeof(t)); n = 0;
 
-	const CECOLORFLAGS& Flags = Attributes.Flags;
+	const auto& Flags = Attributes.Flags;
 	t.style = 0;
-	if (Flags & CECF_FG_BOLD)
+	if (Flags & ConEmu::ColorFlags::FG_BOLD)
 		t.style |= AI_STYLE_BOLD;
-	if (Flags & CECF_FG_ITALIC)
+	if (Flags & ConEmu::ColorFlags::FG_ITALIC)
 		t.style |= AI_STYLE_ITALIC;
-	if (Flags & CECF_FG_UNDERLINE)
+	if (Flags & ConEmu::ColorFlags::FG_UNDERLINE)
 		t.style |= AI_STYLE_UNDERLINE;
-	if (Flags & CECF_REVERSE)
+	if (Flags & ConEmu::ColorFlags::REVERSE)
 		t.style |= AI_STYLE_REVERSE;
 
 	DWORD nForeColor, nBackColor;
-	if (Flags & CECF_FG_24BIT)
+	if (Flags & ConEmu::ColorFlags::FG_24BIT)
 	{
 		//n |= 0x07;
 		nForeColor = Attributes.ForegroundColor & 0x00FFFFFF;
@@ -305,7 +305,7 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 		t.fg_valid = FALSE;
 	}
 
-	if (Flags & CECF_BG_24BIT)
+	if (Flags & ConEmu::ColorFlags::BG_24BIT)
 	{
 		nBackColor = Attributes.BackgroundColor & 0x00FFFFFF;
 		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
@@ -318,9 +318,9 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 		t.bk_valid = FALSE;
 	}
 
-	if (Flags & CECF_FG_UNDERLINE)
+	if (Flags & ConEmu::ColorFlags::FG_UNDERLINE)
 		n |= COMMON_LVB_UNDERSCORE;
-	if (Flags & CECF_REVERSE)
+	if (Flags & ConEmu::ColorFlags::REVERSE)
 		n |= COMMON_LVB_REVERSE_VIDEO;
 }
 
@@ -349,7 +349,7 @@ BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 
 	BOOL lbRc = TRUE;
 
-	// <G|S>etTextAttributes должны ожидать указатель на ОДИН ConEmuColor.
+	// <G|S>etTextAttributes должны ожидать указатель на ОДИН ConEmu::Color.
 	AnnotationInfo t = {};
 	WORD n = 0;
 	ExtPrepareColor(Info->Attributes, t, n);
@@ -549,22 +549,22 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 				{
 					*BufPtr.CEBuffer = *pc;
 
-					ConEmuColor clr = {};
+					ConEmu::Color clr = {};
 
 					if (pTrueColor)
 					{
 						DWORD Style = pTrueColor->style;
 						if (Style & AI_STYLE_BOLD)
-							clr.Flags |= CECF_FG_BOLD;
+							clr.Flags |= ConEmu::ColorFlags::FG_BOLD;
 						if (Style & AI_STYLE_ITALIC)
-							clr.Flags |= CECF_FG_ITALIC;
+							clr.Flags |= ConEmu::ColorFlags::FG_ITALIC;
 						if (Style & AI_STYLE_UNDERLINE)
-							clr.Flags |= CECF_FG_UNDERLINE;
+							clr.Flags |= ConEmu::ColorFlags::FG_UNDERLINE;
 					}
 
 					if (pTrueColor && pTrueColor->fg_valid)
 					{
-						clr.Flags |= CECF_FG_24BIT;
+						clr.Flags |= ConEmu::ColorFlags::FG_24BIT;
 						clr.ForegroundColor = pTrueColor->fg_color;
 					}
 					else
@@ -574,7 +574,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 
 					if (pTrueColor && pTrueColor->bk_valid)
 					{
-						clr.Flags |= CECF_BG_24BIT;
+						clr.Flags |= ConEmu::ColorFlags::BG_24BIT;
 						clr.BackgroundColor = pTrueColor->bk_color;
 					}
 					else
@@ -738,12 +738,12 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 
 					unsigned __int64 Flags = BufPtr.CEColor->Flags;
 
-					Bold = (Flags & CECF_FG_BOLD) != 0;
-					Italic = (Flags & CECF_FG_ITALIC) != 0;
-					Underline = (Flags & CECF_FG_UNDERLINE) != 0;
+					Bold = (Flags & ConEmu::ColorFlags::FG_BOLD) != 0;
+					Italic = (Flags & ConEmu::ColorFlags::FG_ITALIC) != 0;
+					Underline = (Flags & ConEmu::ColorFlags::FG_UNDERLINE) != 0;
 
-					Fore24bit = (Flags & CECF_FG_24BIT) != 0;
-					Back24bit = (Flags & CECF_BG_24BIT) != 0;
+					Fore24bit = (Flags & ConEmu::ColorFlags::FG_24BIT) != 0;
+					Back24bit = (Flags & ConEmu::ColorFlags::BG_24BIT) != 0;
 
 					ForegroundColor = BufPtr.CEColor->ForegroundColor & (Fore24bit ? COLORMASK : INDEXMASK);
 					BackgroundColor = BufPtr.CEColor->BackgroundColor & (Back24bit ? COLORMASK : INDEXMASK);
@@ -1422,7 +1422,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 		}
 		else if (Info->Flags & efof_ResetExt)
 		{
-			Info->FillAttr.Flags = CECF_NONE;
+			Info->FillAttr.Flags = ConEmu::ColorFlags::NONE;
 			// Цвет - без разницы. Будут сброшены только расширенные атрибуты,
 			// реальный цвет в консоли оставляем без изменений
 			Info->FillAttr.ForegroundColor = 7;
@@ -1748,7 +1748,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 	if (Info->Flags & essf_Current)
 	{
-		ExtAttributesParm DefClr = {sizeof(DefClr), h, ConEmuColor{}};
+		ExtAttributesParm DefClr = {sizeof(DefClr), h, ConEmu::Color{}};
 		ExtGetAttributes(&DefClr);
 		Info->FillAttr = DefClr.Attributes;
 	}

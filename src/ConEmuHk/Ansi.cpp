@@ -742,13 +742,13 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		{
 			if (Text256 == clr24b)
 			{
-				attr.Attributes.Flags |= CECF_FG_24BIT;
+				attr.Attributes.Flags |= ConEmu::ColorFlags::FG_24BIT;
 				attr.Attributes.ForegroundColor = TextColor&0xFFFFFF;
 			}
 			else
 			{
 				if (TextColor > 15)
-					attr.Attributes.Flags |= CECF_FG_24BIT;
+					attr.Attributes.Flags |= ConEmu::ColorFlags::FG_24BIT;
 				attr.Attributes.ForegroundColor = RgbMap[TextColor&0xFF];
 			}
 		}
@@ -765,27 +765,27 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		}
 
 		if (gDisplayParm.getBrightOrBold() && (Text256 || gDisplayParm.getBrightFore() || gDisplayParm.getBrightBack()))
-			attr.Attributes.Flags |= CECF_FG_BOLD;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_BOLD;
 		if (gDisplayParm.getItalic())
-			attr.Attributes.Flags |= CECF_FG_ITALIC;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_ITALIC;
 		if (gDisplayParm.getUnderline())
-			attr.Attributes.Flags |= CECF_FG_UNDERLINE;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_UNDERLINE;
 		if (gDisplayParm.getCrossed())
-			attr.Attributes.Flags |= CECF_FG_CROSSED;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_CROSSED;
 		if (gDisplayParm.getInverse())
-			attr.Attributes.Flags |= CECF_REVERSE;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::REVERSE;
 
 		if (Back256)
 		{
 			if (Back256 == clr24b)
 			{
-				attr.Attributes.Flags |= CECF_BG_24BIT;
+				attr.Attributes.Flags |= ConEmu::ColorFlags::BG_24BIT;
 				attr.Attributes.BackgroundColor = BackColor&0xFFFFFF;
 			}
 			else
 			{
 				if (BackColor > 15)
-					attr.Attributes.Flags |= CECF_BG_24BIT;
+					attr.Attributes.Flags |= ConEmu::ColorFlags::BG_24BIT;
 				attr.Attributes.BackgroundColor = RgbMap[BackColor&0xFF];
 			}
 		}
@@ -4220,7 +4220,7 @@ HANDLE CEAnsi::XTermBufferConEmuPrimary()
 		const WORD nDefAttr = GetDefaultTextAttr();
 		// Сброс только расширенных атрибутов
 		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
-			{CECF_NONE, CONFORECOLOR(nDefAttr), CONBACKCOLOR(nDefAttr)},
+			{ConEmu::ColorFlags::NONE, CONFORECOLOR(nDefAttr), CONBACKCOLOR(nDefAttr)},
 			L' ', {0,0}, static_cast<DWORD>(csbi.dwSize.X * csbi.dwSize.Y)};
 		ExtFillOutput(&fill);
 		CEAnsi* pObj = CEAnsi::Object();
