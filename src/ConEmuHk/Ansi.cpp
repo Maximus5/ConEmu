@@ -2457,6 +2457,8 @@ BOOL CEAnsi::ReportString(LPCWSTR asRet)
 		return FALSE;
 	INPUT_RECORD ir[16] = {};
 	const size_t nLen = wcslen(asRet);
+	if (nLen > std::numeric_limits<DWORD>::max())
+		return false;
 	INPUT_RECORD* pir = (nLen <= static_cast<int>(countof(ir))) ? ir : static_cast<INPUT_RECORD*>(calloc(nLen, sizeof(INPUT_RECORD)));
 	if (!pir)
 		return FALSE;
@@ -2476,7 +2478,7 @@ BOOL CEAnsi::ReportString(LPCWSTR asRet)
 	DWORD nWritten = 0;
 	// ReSharper disable once CppLocalVariableMayBeConst
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	const BOOL bSuccess = WriteConsoleInput(hIn, pir, nLen, &nWritten) && (nWritten == nLen);
+	const BOOL bSuccess = WriteConsoleInput(hIn, pir, static_cast<DWORD>(nLen), &nWritten) && (nWritten == nLen);
 
 	if (pir != ir)
 		free(pir);
