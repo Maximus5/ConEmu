@@ -239,9 +239,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_ANSICON_VAR_W             _CRT_WIDE(ENV_ANSICON_VAR_A)
 #define ENV_ANSICON_DEF_VAR_A       "ANSICON_DEF"  // ex. -> "7"
 #define ENV_ANSICON_DEF_VAR_W         _CRT_WIDE(ENV_ANSICON_DEF_VAR_A)
-#define ENV_ANSICON_VER_VAR_A       "ANSICON_VER"  // "170"
+#define ENV_ANSICON_VER_VAR_A       "ANSICON_VER"  // "189"
 #define ENV_ANSICON_VER_VAR_W         _CRT_WIDE(ENV_ANSICON_VER_VAR_A)
-#define ENV_ANSICON_VER_VALUE       "170"
+#define ENV_ANSICON_VER_VALUE       "189"
 
 
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
