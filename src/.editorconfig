@@ -20,12 +20,11 @@ resharper_enforce_line_ending_style=true
 resharper_function_declaration_return_type_style=on_single_line
 resharper_function_definition_return_type_style=on_single_line
 resharper_invocable_declaration_braces=next_line
-resharper_js_indent_size=2
 resharper_js_indent_style=tab
-resharper_js_tab_width=2
 resharper_line_break_after_colon_in_member_initializer_lists=on_single_line
 resharper_line_break_before_comma_in_member_initializer_lists=true
 resharper_member_initializer_list_style=line_break
+resharper_namespace_declaration_braces=end_of_line
 resharper_namespace_indentation=none
 resharper_simple_case_statement_style=line_break
 resharper_space_after_ref_in_data_member=true
@@ -66,7 +65,10 @@ resharper_built_in_type_reference_style_highlighting=hint
 resharper_comment_typo_highlighting=none
 resharper_cpp_access_specifier_with_no_declarations_highlighting=none
 resharper_cpp_clang_tidy_clang_diagnostic_covered_switch_default_highlighting=hint
+resharper_cpp_clang_tidy_clang_diagnostic_extra_semi_stmt_highlighting=hint
+resharper_cpp_clang_tidy_clang_diagnostic_old_style_cast_highlighting=hint
 resharper_cpp_clang_tidy_clang_diagnostic_switch_enum_highlighting=suggestion
+resharper_cpp_clang_tidy_clang_diagnostic_unused_macros_highlighting=hint
 resharper_cpp_clang_tidy_cppcoreguidelines_avoid_goto_highlighting=none
 resharper_cpp_clang_tidy_cppcoreguidelines_macro_usage_highlighting=none
 resharper_cpp_clang_tidy_hicpp_avoid_goto_highlighting=none
@@ -89,6 +91,8 @@ indent_size=tab
 trim_trailing_whitespace=true
 insert_final_newline=true
 charset=utf-8-bom
+cpp_indent_namespace_contents=false
+cpp_new_line_before_open_brace_namespace=same_line
 
 [*.{appxmanifest,asax,ascx,aspx,axml,build,c,c++,cc,cginc,compute,config,cp,cpp,cs,cshtml,csproj,css,cu,cuh,cxx,dbml,discomap,dtd,h,hh,hlsl,hlsli,hlslinc,hpp,htm,html,hxx,inc,inl,ino,ipp,jsproj,lsproj,master,mpp,njsproj,nuspec,proj,props,proto,razor,resw,resx,skin,StyleCop,targets,tasks,tpp,usf,ush,vb,vbproj,xaml,xamlx,xml,xoml,xsd}]
 indent_style=tab
@@ -99,3 +103,8 @@ tab_width=4
 indent_style=tab
 indent_size=tab
 tab_width=2
+
+[*.{appxmanifest,asax,ascx,aspx,axml,build,c,c++,cc,cginc,compute,config,cp,cpp,cs,cshtml,csproj,css,cu,cuh,cxx,dbml,discomap,dtd,h,hh,hlsl,hlsli,hlslinc,hpp,htm,html,hxx,inc,inl,ino,ipp,js,json,jsproj,jsx,lsproj,master,mpp,njsproj,nuspec,proj,props,proto,razor,resjson,resw,resx,skin,StyleCop,targets,tasks,tpp,ts,tsx,usf,ush,vb,vbproj,xaml,xamlx,xml,xoml,xsd}]
+indent_style=tab
+indent_size=tab
+tab_width=4
