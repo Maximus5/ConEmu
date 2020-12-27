@@ -391,7 +391,7 @@ BOOL WINAPI OnFillConsoleOutputAttribute(HANDLE hConsoleOutput, WORD wAttribute,
 	CEAnsi::WriteAnsiLogFormat("FillConsoleOutputAttribute(x%02X,%u,{%i,%i})",
 		wAttribute, nLength, dwWriteCoord.X, dwWriteCoord.Y);
 
-        const ConEmu::Color fillAttr = {ConEmu::ColorFlags::NONE, CONFORECOLOR(wAttribute), CONBACKCOLOR(wAttribute)};
+        const ConEmu::Color fillAttr = {ConEmu::ColorFlags::None, CONFORECOLOR(wAttribute), CONBACKCOLOR(wAttribute)};
 	ExtFillOutputParm fll = {sizeof(fll),
 		efof_Attribute|efof_ResetExt,
 		hConsoleOutput, fillAttr, 0, dwWriteCoord, nLength};

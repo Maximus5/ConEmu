@@ -742,13 +742,13 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		{
 			if (Text256 == clr24b)
 			{
-				attr.Attributes.Flags |= ConEmu::ColorFlags::FG_24BIT;
+				attr.Attributes.Flags |= ConEmu::ColorFlags::Fg24Bit;
 				attr.Attributes.ForegroundColor = TextColor&0xFFFFFF;
 			}
 			else
 			{
 				if (TextColor > 15)
-					attr.Attributes.Flags |= ConEmu::ColorFlags::FG_24BIT;
+					attr.Attributes.Flags |= ConEmu::ColorFlags::Fg24Bit;
 				attr.Attributes.ForegroundColor = RgbMap[TextColor&0xFF];
 			}
 		}
@@ -765,27 +765,27 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		}
 
 		if (gDisplayParm.getBrightOrBold() && (Text256 || gDisplayParm.getBrightFore() || gDisplayParm.getBrightBack()))
-			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_BOLD;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::Bold;
 		if (gDisplayParm.getItalic())
-			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_ITALIC;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::Italic;
 		if (gDisplayParm.getUnderline())
-			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_UNDERLINE;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::Underline;
 		if (gDisplayParm.getCrossed())
-			attr.Attributes.Flags |= ConEmu::ColorFlags::FG_CROSSED;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::Crossed;
 		if (gDisplayParm.getInverse())
-			attr.Attributes.Flags |= ConEmu::ColorFlags::REVERSE;
+			attr.Attributes.Flags |= ConEmu::ColorFlags::Reverse;
 
 		if (Back256)
 		{
 			if (Back256 == clr24b)
 			{
-				attr.Attributes.Flags |= ConEmu::ColorFlags::BG_24BIT;
+				attr.Attributes.Flags |= ConEmu::ColorFlags::Bg24Bit;
 				attr.Attributes.BackgroundColor = BackColor&0xFFFFFF;
 			}
 			else
 			{
 				if (BackColor > 15)
-					attr.Attributes.Flags |= ConEmu::ColorFlags::BG_24BIT;
+					attr.Attributes.Flags |= ConEmu::ColorFlags::Bg24Bit;
 				attr.Attributes.BackgroundColor = RgbMap[BackColor&0xFF];
 			}
 		}
@@ -4222,7 +4222,7 @@ HANDLE CEAnsi::XTermBufferConEmuPrimary()
 		const WORD nDefAttr = GetDefaultTextAttr();
 		// Сброс только расширенных атрибутов
 		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
-			{ConEmu::ColorFlags::NONE, CONFORECOLOR(nDefAttr), CONBACKCOLOR(nDefAttr)},
+			{ConEmu::ColorFlags::None, CONFORECOLOR(nDefAttr), CONBACKCOLOR(nDefAttr)},
 			L' ', {0,0}, static_cast<DWORD>(csbi.dwSize.X * csbi.dwSize.Y)};
 		ExtFillOutput(&fill);
 		CEAnsi* pObj = CEAnsi::Object();

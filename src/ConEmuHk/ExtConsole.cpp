@@ -244,7 +244,7 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 	{
 		_ASSERTE(FALSE && "ExtGetBufferInfo failed in ExtGetAttributes");
 		gExtCurrentAttr.WasSet = false;
-		gExtCurrentAttr.CEColor.Flags = ConEmu::ColorFlags::NONE;
+		gExtCurrentAttr.CEColor.Flags = ConEmu::ColorFlags::None;
 		gExtCurrentAttr.CEColor.ForegroundColor = defConForeIdx;
 		gExtCurrentAttr.CEColor.BackgroundColor = defConBackIdx;
 		memset(&gExtCurrentAttr.AIColor, 0, sizeof(gExtCurrentAttr.AIColor));
@@ -265,7 +265,7 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 		memset(&gExtCurrentAttr.CEColor, 0, sizeof(gExtCurrentAttr.CEColor));
 		memset(&gExtCurrentAttr.AIColor, 0, sizeof(gExtCurrentAttr.AIColor));
 
-		Info->Attributes.Flags = ConEmu::ColorFlags::NONE;
+		Info->Attributes.Flags = ConEmu::ColorFlags::None;
 		Info->Attributes.ForegroundColor = CONFORECOLOR(csbi.wAttributes);
 		Info->Attributes.BackgroundColor = CONBACKCOLOR(csbi.wAttributes);
 	}
@@ -280,17 +280,17 @@ static void ExtPrepareColor(const ConEmu::Color& Attributes, AnnotationInfo& t, 
 
 	const auto& Flags = Attributes.Flags;
 	t.style = 0;
-	if (Flags & ConEmu::ColorFlags::FG_BOLD)
+	if (Flags & ConEmu::ColorFlags::Bold)
 		t.style |= AI_STYLE_BOLD;
-	if (Flags & ConEmu::ColorFlags::FG_ITALIC)
+	if (Flags & ConEmu::ColorFlags::Italic)
 		t.style |= AI_STYLE_ITALIC;
-	if (Flags & ConEmu::ColorFlags::FG_UNDERLINE)
+	if (Flags & ConEmu::ColorFlags::Underline)
 		t.style |= AI_STYLE_UNDERLINE;
-	if (Flags & ConEmu::ColorFlags::REVERSE)
+	if (Flags & ConEmu::ColorFlags::Reverse)
 		t.style |= AI_STYLE_REVERSE;
 
 	DWORD nForeColor, nBackColor;
-	if (Flags & ConEmu::ColorFlags::FG_24BIT)
+	if (Flags & ConEmu::ColorFlags::Fg24Bit)
 	{
 		//n |= 0x07;
 		nForeColor = Attributes.ForegroundColor & 0x00FFFFFF;
@@ -305,7 +305,7 @@ static void ExtPrepareColor(const ConEmu::Color& Attributes, AnnotationInfo& t, 
 		t.fg_valid = FALSE;
 	}
 
-	if (Flags & ConEmu::ColorFlags::BG_24BIT)
+	if (Flags & ConEmu::ColorFlags::Bg24Bit)
 	{
 		nBackColor = Attributes.BackgroundColor & 0x00FFFFFF;
 		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
@@ -318,9 +318,9 @@ static void ExtPrepareColor(const ConEmu::Color& Attributes, AnnotationInfo& t, 
 		t.bk_valid = FALSE;
 	}
 
-	if (Flags & ConEmu::ColorFlags::FG_UNDERLINE)
+	if (Flags & ConEmu::ColorFlags::Underline)
 		n |= COMMON_LVB_UNDERSCORE;
-	if (Flags & ConEmu::ColorFlags::REVERSE)
+	if (Flags & ConEmu::ColorFlags::Reverse)
 		n |= COMMON_LVB_REVERSE_VIDEO;
 }
 
@@ -1422,7 +1422,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 		}
 		else if (Info->Flags & efof_ResetExt)
 		{
-			Info->FillAttr.Flags = ConEmu::ColorFlags::NONE;
+			Info->FillAttr.Flags = ConEmu::ColorFlags::None;
 			// Цвет - без разницы. Будут сброшены только расширенные атрибуты,
 			// реальный цвет в консоли оставляем без изменений
 			Info->FillAttr.ForegroundColor = 7;

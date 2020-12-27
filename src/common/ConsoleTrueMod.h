@@ -33,25 +33,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace ConEmu {
 
+// Flags for color and styles applied on a cell (TrueColor memory mapped buffer)
 enum class ColorFlags : uint64_t
 {
-	NONE = 0,
+	None = 0,
 
-	// BIT_MASK = FG_24BIT | BG_24BIT,
-	
-	FG_24BIT = 0x0000000000000001ULL,
-	BG_24BIT = 0x0000000000000002ULL,
+	// Cell contains 24bit foreground part
+	Fg24Bit = 0x0000000000000001ULL,
+	// Cell contains 24bit background part
+	Bg24Bit = 0x0000000000000002ULL,
 
-	TAB_CHAR = 0x0100000000000000ULL, // reserved. set in pos where "\t" was written
-	TAB_SPACE = 0x0200000000000000ULL, // reserved. set in pos after CECF_TAB_CHAR (where spaces actually was written)
+	// reserved. set in pos where "\t" was written
+	TabChar = 0x0100000000000000ULL,
+	// reserved. set in pos after TabChar (where spaces actually was written)
+	TabSpace = 0x0200000000000000ULL,
 
-	// STYLE_MASK = FG_BOLD | FG_ITALIC | FG_UNDERLINE | REVERSE | FG_CROSSED,
-	
-	FG_CROSSED = 0x0800000000000000ULL,
-	FG_BOLD = 0x1000000000000000ULL,
-	FG_ITALIC = 0x2000000000000000ULL,
-	FG_UNDERLINE = 0x4000000000000000ULL,
-	REVERSE = 0x8000000000000000ULL,	
+	// Text is crossed out
+	Crossed = 0x0800000000000000ULL,
+	// Bold font is used
+	Bold = 0x1000000000000000ULL,
+	// Italic font is used
+	Italic = 0x2000000000000000ULL,
+	// Text is underlined
+	Underline = 0x4000000000000000ULL,
+
+	// Foreground and background colors are exchanged
+	Reverse = 0x8000000000000000ULL,
 };
 
 inline ColorFlags operator|(const ColorFlags e1, const ColorFlags e2)
@@ -66,7 +73,7 @@ inline ColorFlags operator|=(const ColorFlags e1, const ColorFlags e2)
 
 inline bool operator&(const ColorFlags e1, const ColorFlags e2)
 {
-	return static_cast<ColorFlags>(static_cast<uint64_t>(e1) & static_cast<uint64_t>(e2)) != ColorFlags::NONE;
+	return static_cast<ColorFlags>(static_cast<uint64_t>(e1) & static_cast<uint64_t>(e2)) != ColorFlags::None;
 }
 
 struct Color

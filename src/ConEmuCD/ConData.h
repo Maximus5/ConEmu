@@ -84,26 +84,31 @@ struct Attribute
 	enum Flags : unsigned
 	{
 		/// No special flags
-		fDefault  = 0,
+		fDefault = 0,
 
 		/// Use Bold font
-		fBold     = 0x00000001,
+		fBold = 0x00000001,
 		/// Use Italic font
-		fItalic   = 0x00000002,
+		fItalic = 0x00000002,
 		// #condata Not supported yet, reserved
-		fCrossed  = 0x00000004,
+		fCrossed = 0x00000004,
+		// #condata Not supported yet, reserved
+		fUnderlined = 0x00000008,
 
 		// #condata crForeColor contains xterm-256 palette index (unused yet)
-		fFore8b   = 0x00000100,
+		fFore8b = 0x00000100,
 		/// crForeColor contains RGB value
-		fFore24b  = 0x00000200,
+		fFore24b = 0x00000200,
 		// #condata crBackColor contains xterm-256 palette index (unused yet)
-		fBack8b   = 0x00000400,
+		fBack8b = 0x00000400,
 		/// crBackColor contains RGB value
-		fBack24b  = 0x00000800,
+		fBack24b = 0x00000800,
+
+		// #condata Not supported yet, reserved
+		fReversed = 0x00001000,
 
 		/// row was '`n'-terminated
-		fWasLF     = 0x00010000,
+		fWasLF = 0x00010000,
 	};
 	/// Enum of Flags
 	unsigned flags;
