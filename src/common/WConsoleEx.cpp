@@ -157,16 +157,16 @@ ConsoleSectionHelper gsMapHelper;
 //
 BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 {
-	DWORD   dwConsoleOwnerPid, dwCurProcId;
-	PVOID   ptrView = 0;
-	DWORD   dwLastError=0;
-	WCHAR   ErrText[255];
+	DWORD   dwConsoleOwnerPid;
+	PVOID   ptrView = nullptr;
+	DWORD   dwLastError = 0;
+	WCHAR   errText[255] = L"";
 	//
 	//	Retrieve the process which "owns" the console
 	//
-	dwCurProcId = GetCurrentProcessId();
+	const DWORD dwCurProcId = GetCurrentProcessId();
 
-	DEBUGTEST(DWORD dwConsoleThreadId =)
+	DEBUGTEST(const DWORD dwConsoleThreadId =)
 	GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 
 	// We'll fail, if console was created by other process
@@ -201,8 +201,8 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	if (!gsMapHelper.CreateConsoleSection())
 	{
 		dwLastError = GetLastError();
-		swprintf_c(ErrText, L"Can't CreateFileMapping(hSection). ErrCode=%i", dwLastError);
-		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+		swprintf_c(errText, L"Can't CreateFileMapping(hSection). ErrCode=%i", dwLastError);
+		MessageBox(NULL, errText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 		return FALSE;
 	}
 
@@ -214,8 +214,8 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	if (!ptrView)
 	{
 		dwLastError = GetLastError();
-		swprintf_c(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
-		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+		swprintf_c(errText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
+		MessageBox(NULL, errText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 	}
 	else
 	{

@@ -420,18 +420,18 @@ HWND CConEmuInside::InsideFindParent()
 
 	// Do window enumeration
 	find.nPID = nParentPID;
-	::EnumWindows(EnumInsideFindParent, (LPARAM)&find);
+	::EnumWindows(EnumInsideFindParent, reinterpret_cast<LPARAM>(&find));
 
 
 	if (!find.hParentRoot)
 	{
-		int nBtn = MsgBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		const int nBtn = MsgBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 		if (nBtn != IDYES)
 		{
 			SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
-			return mh_InsideParentWND; // Закрыться!
+			return mh_InsideParentWND; // Close!
 		}
-		// Продолжить в обычном режиме
+		// Continue in normal mode
 		m_InsideIntegration = ii_None;
 		SetInsideParentWND(nullptr);
 		goto wrap;
@@ -444,9 +444,9 @@ HWND CConEmuInside::InsideFindParent()
 	if ((hExistConEmu = InsideFindConEmu(find.hParentRoot)) != nullptr)
 	{
 		_ASSERTE(FALSE && "Continue to create tab in existing instance");
-		// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
+		// If Explorer already contains ConEmu instance - open the new tab there
 		gpSetCls->SingleInstanceShowHide = sih_None;
-		LPCWSTR pszCmdLine = GetCommandLine();
+		const auto* pszCmdLine = GetCommandLine();
 		CmdArg lsArg;
 		LPCWSTR pszCmd = pszCmdLine;
 		while ((pszCmd = NextArg(pszCmd, lsArg)))
@@ -463,13 +463,13 @@ HWND CConEmuInside::InsideFindParent()
 		gpConEmu->RunSingleInstance(hExistConEmu, (pszCmd && *pszCmd) ? (pszCmd) : nullptr);
 
 		SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
-		return mh_InsideParentWND; // Закрыться!
+		return mh_InsideParentWND; // Close!
 	}
 
-	// Теперь нужно найти дочерние окна
-	// 1. в которое будем внедряться
-	// 2. по которому будем позиционироваться
-	// 3. для синхронизации текущего пути
+	// Now we need to find child windows
+	// 1. the one where we shall integrate
+	// 2. the anchor to position our window
+	// 3. the source to synchronize the CWD
 	InsideFindShellView(find.hParentRoot);
 
 RepeatCheck:
@@ -487,12 +487,12 @@ RepeatCheck:
 		}
 
 		swprintf_c(szMsg, L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
-		int nBtn = MsgBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
+		const int nBtn = MsgBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 
 		if (nBtn != IDYES)
 		{
 			SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
-			return mh_InsideParentWND; // Закрыться!
+			return mh_InsideParentWND; // Close!
 		}
 		m_InsideIntegration = ii_None;
 		SetInsideParentWND(nullptr);
@@ -506,10 +506,11 @@ wrap:
 	}
 	else
 	{
+		_ASSERTE(mh_InsideParentWND != nullptr);
 		GetWindowThreadProcessId(mh_InsideParentWND, &mn_InsideParentPID);
-		// Для мониторинга папки
+		// To monitor the path
 		GetCurrentDirectory(countof(ms_InsideParentPath), ms_InsideParentPath);
-		int nLen = lstrlen(ms_InsideParentPath);
+		const int nLen = lstrlen(ms_InsideParentPath);
 		if ((nLen > 3) && (ms_InsideParentPath[nLen-1] == L'\\'))
 		{
 			ms_InsideParentPath[nLen-1] = 0;
@@ -523,8 +524,8 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 {
 	bool bRepeat = false;
 	int nBtn = IDCANCEL;
-	DWORD_PTR nRc;
-	LRESULT lSendRc;
+	DWORD_PTR nRc = 0;
+	LRESULT lSendRc = 0;
 
 	if (gnOsVer < 0x600)
 	{
@@ -593,17 +594,16 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 
 			mh_TipPaneWndPost = mh_InitialRoot;
 			lSendRc = SendMessageTimeout(mh_TipPaneWndPost, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
-			UNREFERENCED_PARAMETER(lSendRc);
 
 			mb_InsidePaneWasForced = true;
-			// Подготовим сообщение если не удастся
+			// Prepare the error message in advance
 			wcscpy_c(szAddMsg, L"Forcing Explorer to show Tip pane failed.\nShow pane yourself and recall ConEmu.\n\n");
 		}
 	}
 
 	if (nBtn == IDYES)
 	{
-		// Первая проверка
+		// First check
 		SetInsideParentWND(nullptr);
 		m_InsideIntegration = ii_Auto;
 		InsideFindShellView(mh_InitialRoot);
@@ -612,7 +612,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			bRepeat = true;
 			goto wrap;
 		}
-		// Если не нашли - задержка и повторная проверка
+		// When not found - delay and repeat
 		Sleep(500);
 		SetInsideParentWND(nullptr);
 		m_InsideIntegration = ii_Auto;
@@ -624,7 +624,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		}
 
 		// Last chance - try to post key sequence "F10 Left Left Down Down Down Left"
-		// This will open popup menu containing "Tip of the day" menuitem
+		// This will open popup menu containing "Tip of the day" menu item
 		// "Esc Esc Esc" it and post {WM_COMMAND,EMID_TIPOFDAY} again
 		WORD vkPostKeys[] = {VK_ESCAPE, VK_ESCAPE, VK_ESCAPE, VK_RIGHT, VK_RIGHT, VK_RIGHT, VK_DOWN, VK_DOWN, VK_DOWN, VK_RIGHT, VK_ESCAPE, VK_ESCAPE, VK_ESCAPE, 0};
 
@@ -642,6 +642,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			if (mh_InsideParentWND && mh_InsideParentRel)
 			{
 				bRepeat = true;
+				// ReSharper disable once CppRedundantControlFlowJump
 				goto wrap;
 			}
 		}
@@ -652,6 +653,7 @@ wrap:
 	{
 		mb_TipPaneWasShown = true;
 	}
+	std::ignore = lSendRc;
 	return bRepeat;
 }
 
@@ -661,7 +663,7 @@ static bool CheckClassName(HWND h, LPCWSTR pszNeed)
 	if (!GetClassName(h, szClass, countof(szClass)))
 		return false;
 
-	int nCmp = lstrcmp(szClass, pszNeed);
+	const int nCmp = lstrcmp(szClass, pszNeed);
 
 	return (nCmp == 0);
 }

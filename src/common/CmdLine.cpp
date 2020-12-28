@@ -1300,7 +1300,10 @@ const wchar_t* PointToName(const wchar_t* asFileOrPath)
 	const wchar_t* pszFSlash = wcsrchr(pszBSlash ? pszBSlash : asFileOrPath, L'/');
 
 	const wchar_t* pszFile = pszFSlash ? pszFSlash : pszBSlash;
-	if (!pszFile) pszFile = asFileOrPath; else pszFile++;
+	if (!pszFile)
+		pszFile = asFileOrPath;
+	else
+		pszFile++;
 
 	return pszFile;
 }

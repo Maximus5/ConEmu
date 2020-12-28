@@ -110,7 +110,7 @@ void RegisterConsoleFontHKLM(LPCWSTR pszFontFace)
 		{
 			szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
 
-			if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
+			if (RegQueryValueExW(hk, szId, nullptr, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
 			{
 				RegSetValueExW(hk, szId, 0, REG_SZ, (LPBYTE)pszFontFace, (lstrlen(pszFontFace)+1)*2);
 				break;
@@ -185,7 +185,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
 	gState.runMode_ = RunMode::SetHook64;
 	LPWSTR pszNext = asCmdArg;
-	LPWSTR pszEnd = NULL;
+	LPWSTR pszEnd = nullptr;
 	BOOL lbForceGui = FALSE;
 	PROCESS_INFORMATION pi = {};
 
@@ -231,7 +231,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	GetProcessInfo(pi.dwProcessId, &pinf);
 	swprintf_c(szTitle, L"ConEmuCD PID=%u", GetCurrentProcessId());
 	swprintf_c(szDbgMsg, L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
-	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	#endif
 
 
@@ -250,7 +250,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 		wchar_t szDbgMsg[255], szTitle[128];
 		swprintf_c(szTitle, L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
 		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
-		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
 	else
 	{
@@ -260,7 +260,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
 			GetCurrentProcessId(), LODWORD(pi.hProcess), LODWORD(pi.hThread), pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
 			asCmdArg);
-		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
 
 	return CERR_HOOKS_FAILED;
@@ -271,7 +271,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
 	gState.runMode_ = RunMode::SetHook64;
 	LPWSTR pszNext = asCmdArg;
-	LPWSTR pszEnd = NULL;
+	LPWSTR pszEnd = nullptr;
 	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
 	wchar_t szStr[16];
 	wchar_t szTitle[128];
@@ -293,24 +293,24 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		#if defined(SHOW_ATTACH_MSGBOX)
 		if (!IsDebuggerPresent())
 		{
-			wchar_t szTitle[100]; swprintf_c(szTitle, L"%s PID=%u /INJECT", gsModuleName, gnSelfPID);
+			swprintf_c(szTitle, L"%s PID=%u /INJECT", gsModuleName, gnSelfPID);
 			const wchar_t* pszCmdLine = GetCommandLineW();
-			MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
+			MessageBox(nullptr,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 		}
 		#endif
 
 		CEStr lsName, lsPath;
 		{
 		CProcessData processes;
-		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
-		CEStr lsLog(L"Remote: PID=", ultow_s(nRemotePID, szStr, 10), L" Name=`", lsName, L"` Path=`", lsPath, L"`");
+		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH * 2), MAX_PATH * 2, nullptr);
+		const CEStr lsLog(L"Remote: PID=", ultow_s(nRemotePID, szStr, 10), L" Name=`", lsName, L"` Path=`", lsPath, L"`");
 		LogString(lsLog);
 		}
 
 		// Go to hook
 		// InjectRemote waits for thread termination
 		DWORD nErrCode = 0;
-		CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly, &nErrCode);
+		const CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly, &nErrCode);
 
 		swprintf_c(szInfo, L"InjectRemote result: %i (%s)", iHookRc,
 			(iHookRc == CIR_OK) ? L"CIR_OK" :
@@ -351,25 +351,25 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			L"ParentPID=%u ",
 			self.th32ParentProcessID);
 
-		CEStr lsError(lstrmerge(
+		const CEStr lsError(
 			szInfo,
 			lsPath.IsEmpty() ? lsName.IsEmpty() ? L"<Unknown>" : lsName.ms_Val : lsPath.ms_Val,
 			szParentPID,
-			parent.szExeFile));
+			parent.szExeFile);
 
 		LogString(lsError);
-		MessageBoxW(NULL, lsError, szTitle, MB_SYSTEMMODAL);
+		MessageBoxW(nullptr, lsError, szTitle, MB_SYSTEMMODAL);
 	}
 	else
 	{
 		//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
-		wchar_t szDbgMsg[512], szTitle[128];
+		wchar_t szDbgMsg[512];
 		swprintf_c(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
 		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
 			GetCurrentProcessId(), nRemotePID,
 			asCmdArg);
 		LogString(szDbgMsg);
-		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
 
 	return CERR_HOOKS_FAILED;
@@ -385,11 +385,11 @@ struct ProcInfo {
 int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*= false*/)
 {
 	int iRc = CERR_CARGUMENT;
-	//ProcInfo* pList = NULL;
+	//ProcInfo* pList = nullptr;
 	MArray<ProcInfo> List;
-	LPWSTR pszAllVars = NULL, pszSrc;
+	LPWSTR pszAllVars = nullptr, pszSrc;
 	int iVarCount = 0;
-	CESERVER_REQ *pIn = NULL;
+	CESERVER_REQ *pIn = nullptr;
 	const DWORD nSelfPID = GetCurrentProcessId();
 	DWORD nTestPID, nParentPID;
 	DWORD nSrvPID = 0;
@@ -498,7 +498,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			// way to run something like this:
 			// ConEmuC -export=ALL SSH_AGENT_PID,SSH_AUTH_SOCK
 			wchar_t* pszComma = szTmpPart.ms_Val;
-			while ((pszComma = (wchar_t*)wcspbrk(pszComma, L",;")) != NULL)
+			while ((pszComma = (wchar_t*)wcspbrk(pszComma, L",;")) != nullptr)
 			{
 				*pszComma = L' ';
 			}
@@ -619,7 +619,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	// Go, build tree (first step - query all running PIDs in the system)
 	nParentPID = nSelfPID;
 	// Don't do snapshot if only GUI was requested
-	h = (eExecAction != ConEmuExecAction::ExportGui) ? CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) : NULL;
+	h = (eExecAction != ConEmuExecAction::ExportGui) ? CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) : nullptr;
 	// Snapshot opened?
 	if (h && (h != INVALID_HANDLE_VALUE))
 	{
@@ -807,7 +807,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 {
 	int iRc = 0;
 	CEStr    szTemp;
-	LPCWSTR  pszText = NULL;
+	LPCWSTR  pszText = nullptr;
 	DWORD    cchLen = 0, dwWritten = 0;
 	bool     bAddNewLine = true;
 	bool     bProcessed = true;
@@ -816,7 +816,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bExpandEnvVar = false;
 	bool     bStreamBy1 = false;
 	CmdArg   szArg;
-	HANDLE   hFile = NULL;
+	HANDLE   hFile = nullptr;
 	DWORD    DefaultCP = 0;
 
 	#ifdef SHOW_OUTPUT_MSGBOX
@@ -886,12 +886,12 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	}
 	else if (eExecAction == ConEmuExecAction::OutEcho)
 	{
-		_ASSERTE(szTemp.ms_Val == NULL);
+		_ASSERTE(szTemp.ms_Val == nullptr);
 
 		while ((asCmdArg = NextArg(asCmdArg, szArg)))
 		{
 			LPCWSTR pszAdd = szArg.ms_Val;
-			_ASSERTE(pszAdd!=NULL);
+			_ASSERTE(pszAdd!=nullptr);
 
 			CEStr lsExpand;
 			CmdArg lsDemangle;
@@ -917,7 +917,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			}
 
 			// Concatenate result text
-			lstrmerge(&szTemp.ms_Val, szTemp.IsEmpty() ? NULL : L" ", pszAdd);
+			lstrmerge(&szTemp.ms_Val, szTemp.IsEmpty() ? nullptr : L" ", pszAdd);
 		}
 
 		if (bAddNewLine)
@@ -987,8 +987,8 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 	{
 		typedef BOOL (WINAPI* WriteProcessed_t)(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 		typedef BOOL (WINAPI* WriteProcessedA_t)(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, UINT Stream);
-		static WriteProcessed_t WriteProcessed = NULL;
-		static WriteProcessedA_t WriteProcessedA = NULL;
+		static WriteProcessed_t WriteProcessed = nullptr;
+		static WriteProcessedA_t WriteProcessedA = nullptr;
 		if (bProcessed && (!WriteProcessed || !WriteProcessedA))
 		{
 			// ConEmuHk.dll / ConEmuHk64.dll
@@ -1040,9 +1040,9 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 	{
 		// Current process output was redirected to file!
 
-		char* pszOem = NULL;
+		char* pszOem = nullptr;
 		UINT  cp = GetConsoleOutputCP();
-		int   nDstLen = WideCharToMultiByte(cp, 0, pszText, cchLen, NULL, 0, NULL, NULL);
+		int   nDstLen = WideCharToMultiByte(cp, 0, pszText, cchLen, nullptr, 0, nullptr, nullptr);
 		if (nDstLen < 1)
 		{
 			iRc = 2;
@@ -1052,7 +1052,7 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 		pszOem = (char*)malloc(nDstLen);
 		if (pszOem)
 		{
-			int nWrite = WideCharToMultiByte(cp, 0, pszText, cchLen, pszOem, nDstLen, NULL, NULL);
+			int nWrite = WideCharToMultiByte(cp, 0, pszText, cchLen, pszOem, nDstLen, nullptr, nullptr);
 			if (nWrite > 1)
 			{
 				bRc = WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
@@ -1168,7 +1168,7 @@ int DoExecAction(const ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of
 	case ConEmuExecAction::ErrorLevel: // ConEmuC -ErrorLevel
 		{
 			LogString(L"DoExecAction: ea_ErrorLevel");
-			wchar_t* pszEnd = NULL;
+			wchar_t* pszEnd = nullptr;
 			iRc = wcstol(asCmdArg, &pszEnd, 10);
 			break;
 		}

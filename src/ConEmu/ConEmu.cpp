@@ -11682,7 +11682,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 					AllowSetForegroundWindow(dwPID);
 
 					WARNING("Проверить, успевает ли диалог показаться, или потом для него ShowWindow зовется?");
-					if (IsWindowVisible(hWnd))  // ? оно успело ?
+					if (IsWindowVisible(hWnd))  // was it in time?
 					{
 						bool lbConPID = isConsolePID(dwPID);
 
@@ -11718,8 +11718,9 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 		#ifdef _DEBUG
 		case HSHELL_ACTIVATESHELLWINDOW:
 		{
-			// Не вызывается
-			wchar_t szDbg[128]; swprintf_c(szDbg, L"HSHELL_ACTIVATESHELLWINDOW(lParam=0x%08X)\n", (DWORD)lParam);
+			// Is not called
+			wchar_t szDbg[128];
+			swprintf_c(szDbg, L"HSHELL_ACTIVATESHELLWINDOW(lParam=0x%08X)\n", LODWORD(lParam));
 			DEBUGSTRFOREGROUND(szDbg);
 		}
 		break;
@@ -11732,11 +11733,11 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 			// Когда активируется Desktop - lParam == 0
 
 			wchar_t szDbg[128], szClass[64];
-			if (!lParam || !GetClassName((HWND)lParam, szClass, 63))
+			if (!lParam || !GetClassName(reinterpret_cast<HWND>(lParam), szClass, 63))
 				wcscpy_c(szClass, L"<nullptr>");
 
-			BOOL lbLBtn = isPressed(VK_LBUTTON);
-			swprintf_c(szDbg, L"HSHELL_WINDOWACTIVATED(lParam=0x%08X, %s, %i)\n", (DWORD)lParam, szClass, lbLBtn);
+			const BOOL lbLBtn = isPressed(VK_LBUTTON);
+			swprintf_c(szDbg, L"HSHELL_WINDOWACTIVATED(lParam=0x%08X, %s, %i)\n", LODWORD(lParam), szClass, lbLBtn);
 			DEBUGSTRFOREGROUND(szDbg);
 			#endif
 
