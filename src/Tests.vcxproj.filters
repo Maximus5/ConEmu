@@ -1340,6 +1340,9 @@
     <ClCompile Include="common\MTimer.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MToolHelp_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\MToolTip.cpp">
       <Filter>common</Filter>
     </ClCompile>

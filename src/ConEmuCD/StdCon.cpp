@@ -122,11 +122,11 @@ bool StdCon::AttachParentConsole(const DWORD parentPid)
 			if (hFindConWnd) GetWindowThreadProcessId(hFindConWnd, &nFindConPid);
 
 			PROCESSENTRY32 piCon = {}, piRoot = {};
-			GetProcessInfo(parentPid, &piRoot);
+			GetProcessInfo(parentPid, piRoot);
 			if (nFindConPid == parentPid)
 				piCon = piRoot;
 			else if (nFindConPid)
-				GetProcessInfo(nFindConPid, &piCon);
+				GetProcessInfo(nFindConPid, piCon);
 
 			if (hFindConWnd)
 				GetWindowText(hFindConWnd, szTitle, countof(szTitle));

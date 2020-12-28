@@ -467,7 +467,7 @@ public:
 		if (!bMonitored)
 		{
 			// Then check by process exe name
-			if (!GetProcessInfo(nForePID, &prc))
+			if (!GetProcessInfo(nForePID, prc))
 			{
 				#ifdef USEDEBUGSTRDEFTERM
 				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, can't get process name",

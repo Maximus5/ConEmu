@@ -391,9 +391,9 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 			const DWORD dwErr = GetLastError();
 
 			wchar_t szProc[64] = L"";
-			PROCESSENTRY32 pe = {sizeof(pe)};  // NOLINT(clang-diagnostic-missing-field-initializers)
-			if (GetProcessInfo(gpWorker->RootProcessId(), &pe))
-				_wcscpyn_c(szProc, countof(szProc), pe.szExeFile, countof(szProc));
+			PROCESSENTRY32 info = {};  // NOLINT(clang-diagnostic-missing-field-initializers)
+			if (GetProcessInfo(gpWorker->RootProcessId(), info))
+				_wcscpyn_c(szProc, countof(szProc), info.szExeFile, countof(szProc));
 
 			swprintf_c(szInfo, L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
 			CEStr lsInfo(lstrmerge(szInfo, dbgInfo.szDebuggingCmdLine, L"\n"));
@@ -478,9 +478,9 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 				DWORD dwErr = GetLastError();
 
 				wchar_t szProc[64]; szProc[0] = 0;
-				PROCESSENTRY32 pi = {sizeof(pi)};  // NOLINT(clang-diagnostic-missing-field-initializers)
-				if (GetProcessInfo(nDbgProcessID, &pi))
-					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
+				PROCESSENTRY32 info = {};  // NOLINT(clang-diagnostic-missing-field-initializers)
+				if (GetProcessInfo(nDbgProcessID, info))
+					_wcscpyn_c(szProc, countof(szProc), info.szExeFile, countof(szProc));
 
 				swprintf_c(szInfo, L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
 					szProc[0] ? szProc : L"not found", nDbgProcessID, dwErr);

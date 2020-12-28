@@ -737,11 +737,11 @@ bool WorkerServer::AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool force
 		nPID, hAltServer, forceThaw ? L"true" : L"false");
 	if (gpLogSize)
 	{
-		PROCESSENTRY32 AltSrv;
-		if (GetProcessInfo(nPID, &AltSrv))
+		PROCESSENTRY32 altSrv{};
+		if (GetProcessInfo(nPID, altSrv))
 		{
-			int iLen = lstrlen(szFnArg);
-			lstrcpyn(szFnArg+iLen, PointToName(AltSrv.szExeFile), countof(szFnArg)-iLen);
+			const int iLen = lstrlen(szFnArg);
+			lstrcpyn(szFnArg+iLen, PointToName(altSrv.szExeFile), countof(szFnArg)-iLen);
 		}
 	}
 	LogFunction(szFnArg);
@@ -3134,8 +3134,8 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	_ASSERTE(bCmdSet || ((gState.attachMode_ & (am_Async|am_Simple)) && this->RootProcessId()));
 	if (!bCmdSet && this->RootProcessId())
 	{
-		PROCESSENTRY32 pi;
-		if (GetProcessInfo(this->RootProcessId(), &pi))
+		PROCESSENTRY32 pi{};
+		if (GetProcessInfo(this->RootProcessId(), pi))
 		{
 			msprintf(pIn->StartStop.sCmdLine, cchCmdMax, L"\"%s\"", pi.szExeFile);
 		}

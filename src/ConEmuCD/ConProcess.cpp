@@ -1038,7 +1038,7 @@ DWORD ConProcess::WaitForRootConsoleProcess(DWORD nTimeout) const
 	DWORD i;
 
 	PROCESSENTRY32 pi = {};
-	GetProcessInfo(gnSelfPID, &pi);
+	GetProcessInfo(gnSelfPID, pi);
 
 	while (!nFoundPID && (nDelta < nTimeout))
 	{

@@ -32,23 +32,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MProcess.h"
 #include "MToolHelp.h"
 
-bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W& result)
 {
 	MToolHelpProcess prc;
-	return prc.Find(nPID, Info);
+	return prc.Find(nPID, result);
 }
 
-bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info)
+bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W& result)
 {
 	MToolHelpProcess prc;
-	return prc.Find(asExeName, Info);
+	return prc.Find(asExeName, result);
 }
 
 bool isTerminalMode()
 {
-	static bool TerminalMode = false, TerminalChecked = false;
+	static bool terminalMode = false;
+	static bool terminalChecked = false;
 
-	if (!TerminalChecked)
+	if (!terminalChecked)
 	{
 		// -- Environment variable "TERM" may be set by user
 		//TCHAR szVarValue[64];
@@ -59,21 +60,22 @@ bool isTerminalMode()
 		//}
 		//TerminalChecked = true;
 
-		PROCESSENTRY32 P = {sizeof(PROCESSENTRY32)};
+		PROCESSENTRY32 pi = {};
 		MToolHelpProcess prc;
 
-		if (!prc.Find(GetCurrentProcessId(), &P))
+		if (!prc.Find(GetCurrentProcessId(), pi))
 		{
 			_ASSERTE(FALSE && "Failed to load self-process-information");
 		}
 		else
 		{
 			int nSteps = 128; // protection from recursion
-			DWORD nParentPID = P.th32ParentProcessID;
-			DEBUGTEST(const DWORD nSelfParentPID = P.th32ParentProcessID);
+			DWORD nParentPid = pi.th32ParentProcessID;
+			// ReSharper disable once CppDeclaratorNeverUsed
+			DEBUGTEST(const DWORD nSelfParentPid = pi.th32ParentProcessID);
 			while (nSteps-- > 0)
 			{
-				if (!prc.Find(nParentPID, &P))
+				if (!prc.Find(nParentPid, pi))
 				{
 					#ifdef _DEBUG // due to unittests
 					// May happens when ConEmuC started some process in /Async mode
@@ -83,19 +85,19 @@ bool isTerminalMode()
 				}
 
 				// ReSharper disable twice StringLiteralTypo
-				if ((0 == lstrcmpi(P.szExeFile, L"tlntsess.exe")) || (0 == lstrcmpi(P.szExeFile, L"tlntsvr.exe")))
+				if ((0 == lstrcmpi(pi.szExeFile, L"tlntsess.exe")) || (0 == lstrcmpi(pi.szExeFile, L"tlntsvr.exe")))
 				{
-					TerminalMode = TerminalChecked = true;
+					terminalMode = terminalChecked = true;
 					break;
 				}
 
 				// ...grand parent
-				nParentPID = P.th32ParentProcessID;
+				nParentPid = pi.th32ParentProcessID;
 			}
 		}
 	}
 
 	// No sense to check again
-	TerminalChecked = true;
-	return TerminalMode;
+	terminalChecked = true;
+	return terminalMode;
 }

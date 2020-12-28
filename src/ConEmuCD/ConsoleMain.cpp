@@ -3695,11 +3695,11 @@ RunMode DetectRunModeFromCmdLine(LPCWSTR asCmdLine)
 // Проверить, что nPID это "ConEmuC.exe" или "ConEmuC64.exe"
 bool IsMainServerPID(DWORD nPID)
 {
-	PROCESSENTRY32 Info;
-	if (!GetProcessInfo(nPID, &Info))
+	PROCESSENTRY32 info{};
+	if (!GetProcessInfo(nPID, info))
 		return false;
-	if ((lstrcmpi(Info.szExeFile, L"ConEmuC.exe") == 0)
-		|| (lstrcmpi(Info.szExeFile, L"ConEmuC64.exe") == 0))
+	if ((lstrcmpi(info.szExeFile, L"ConEmuC.exe") == 0)
+		|| (lstrcmpi(info.szExeFile, L"ConEmuC64.exe") == 0))
 	{
 		return true;
 	}

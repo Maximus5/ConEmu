@@ -294,11 +294,11 @@ void CConEmuInside::SetInsideParentWND(HWND hParent)
 		{
 			m_InsideParentInfo.ParentPID = nPID;
 
-			PROCESSENTRY32W PInfo = {};
-			if (GetProcessInfo(nPID, &PInfo))
+			PROCESSENTRY32W info = {};
+			if (GetProcessInfo(nPID, info))
 			{
-				m_InsideParentInfo.ParentParentPID = PInfo.th32ParentProcessID;
-				wcscpy_c(m_InsideParentInfo.ExeName, PInfo.szExeFile);
+				m_InsideParentInfo.ParentParentPID = info.th32ParentProcessID;
+				wcscpy_c(m_InsideParentInfo.ExeName, info.szExeFile);
 			}
 		}
 
@@ -354,7 +354,6 @@ HWND CConEmuInside::InsideFindParent()
 {
 	bool bFirstStep = true;
 	DWORD nParentPID = 0;
-	PROCESSENTRY32 pi = {sizeof(pi)};
 	EnumFindParentArg find = {};
 
 	if (!m_InsideIntegration)
@@ -393,8 +392,9 @@ HWND CConEmuInside::InsideFindParent()
 
 	if (mn_InsideParentPID)
 	{
+		PROCESSENTRY32 pi = {};
 		if ((mn_InsideParentPID == GetCurrentProcessId())
-			|| !GetProcessInfo(mn_InsideParentPID, &pi))
+			|| !GetProcessInfo(mn_InsideParentPID, pi))
 		{
 			DisplayLastError(L"Invalid parent process specified");
 			m_InsideIntegration = ii_None;
@@ -406,8 +406,8 @@ HWND CConEmuInside::InsideFindParent()
 	}
 	else
 	{
-		PROCESSENTRY32 pi = {sizeof(pi)};
-		if (!GetProcessInfo(GetCurrentProcessId(), &pi) || !pi.th32ParentProcessID)
+		PROCESSENTRY32 pi = {};
+		if (!GetProcessInfo(GetCurrentProcessId(), pi) || !pi.th32ParentProcessID)
 		{
 			DisplayLastError(L"GetProcessInfo(GetCurrentProcessId()) failed");
 			m_InsideIntegration = ii_None;

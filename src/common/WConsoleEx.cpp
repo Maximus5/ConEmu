@@ -175,7 +175,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 		#ifdef _DEBUG
 		// Wine related
 		PROCESSENTRY32W pi = {};
-		GetProcessInfo(dwConsoleOwnerPid, &pi);
+		GetProcessInfo(dwConsoleOwnerPid, pi);
 		if (lstrcmpi(pi.szExeFile, L"wineconsole.exe")!=0)
 		{
 			wchar_t szDbgMsg[512], szTitle[128];

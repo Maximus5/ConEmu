@@ -125,7 +125,8 @@ bool InitDefTerm()
 	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, gnSelfPID);
 	if (hSnap != INVALID_HANDLE_VALUE)
 	{
-		MODULEENTRY32 mi = {sizeof(mi)};
+		MODULEENTRY32 mi = {};
+		mi.dwSize = sizeof(mi);
 		//wchar_t szOurName[MAX_PATH] = L"";
 		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
 		wchar_t szMinor[8] = L"";
@@ -242,7 +243,8 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		if (hSnap != INVALID_HANDLE_VALUE)
 		{
-			PROCESSENTRY32 pe = {sizeof(pe)};
+			PROCESSENTRY32 pe = {};
+			pe.dwSize = sizeof(pe);
 			if (Process32First(hSnap, &pe)) do
 			{
 				if (pe.th32ParentProcessID == gnSelfPID)
@@ -262,16 +264,13 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 	else
 	{
 		MToolHelpProcess findForks;
-		MArray<PROCESSENTRY32> Forks;
+		MArray<PROCESSENTRY32> forks = findForks.FindForks(GetCurrentProcessId());
 		TODO("OPTIMIZE: Try to find and process children from all levels, BUT ONLY from ROOT process?");
-		if (findForks.FindForks(Forks))
+		PROCESSENTRY32 p{};
+		while (forks.pop_back(p))
 		{
-			PROCESSENTRY32 p;
-			while (Forks.pop_back(p))
-			{
-				DefTermLogString(L"Forked process found, hooking");
-				gpDefTerm->StartDefTermHooker(p.th32ProcessID);
-			}
+			DefTermLogString(L"Forked process found, hooking");
+			gpDefTerm->StartDefTermHooker(p.th32ProcessID);
 		}
 	}
 

@@ -98,7 +98,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= fa
 			if (GetWindowThreadProcessId(ahWnd, &nPID))
 			{
 				PROCESSENTRY32 pi = {};
-				if (bProcessName && GetProcessInfo(nPID, &pi))
+				if (bProcessName && GetProcessInfo(nPID, pi))
 				{
 					pi.szExeFile[100] = 0;
 					msprintf(szProc, countof(szProc), L" - %s [%u]", pi.szExeFile, nPID);

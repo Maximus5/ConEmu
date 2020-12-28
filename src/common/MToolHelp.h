@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 
-#include <tlhelp32.h>
+#include <functional>
+#include <TlHelp32.h>
 
 #include "CmdLine.h"
 #include "MArray.h"
@@ -47,28 +48,28 @@ class MToolHelp
 {
 protected:
 	// Arguments for CreateToolhelp32Snapshot
-	DWORD m_Flags;
-	DWORD m_ByProcessId;
+	DWORD m_Flags = 0;
+	DWORD m_ByProcessId = 0;
 	// CreateToolhelp32Snapshot was called?
-	bool mb_Opened;
-	bool mb_Valid;
+	bool mb_Opened = false;
+	bool mb_Valid = false;
 	// Enumeration was finished, all items are placed in m_Items
-	bool mb_EndOfList;
+	bool mb_EndOfList = false;
 	// Enumeration was started
-	bool mb_Started;
+	bool mb_Started = false;
 	// Toolhelp handle
-	HANDLE mh_Snapshot;
+	HANDLE mh_Snapshot = nullptr;
 	// Internal variable
-	T m_Item;
+	T m_Item = {};
 
 protected:
-	MArray<T> m_Items;
-	INT_PTR mn_Position;
+	MArray<T> m_Items = {};
+	INT_PTR mn_Position = 0;
 
-	virtual bool Filter(T* lp)
+	virtual bool Filter(const T& item)
 	{
 		return true;
-	};
+	}
 
 	bool getNext()
 	{
@@ -99,7 +100,7 @@ protected:
 			{
 				mb_Started = true;
 				ZeroStruct(m_Item);
-				*((LPDWORD)&m_Item) = sizeof(T);
+				m_Item.dwSize = static_cast<DWORD>(sizeof(T));
 				bRc = get_first(mh_Snapshot, &m_Item);
 			}
 			else
@@ -113,7 +114,7 @@ protected:
 				return false;
 			}
 
-			if (Filter(&m_Item))
+			if (Filter(m_Item))
 			{
 				break;
 			}
@@ -121,34 +122,32 @@ protected:
 
 		m_Items.push_back(m_Item);
 		return true;
-	};
+	}
 
 public:
-	MToolHelp(DWORD dwFlags = 0, DWORD th32ProcessID = 0)
+	explicit MToolHelp(const DWORD dwFlags = 0, const DWORD th32ProcessId = 0)
 		: m_Flags(dwFlags)
-		, m_ByProcessId(th32ProcessID)
-		, mb_Opened(false)
-		, mb_Valid(false)
-		, mb_EndOfList(false)
-		, mb_Started(false)
-		, mh_Snapshot(NULL)
-		, mn_Position(0)
+		, m_ByProcessId(th32ProcessId)
 	{
-		ZeroStruct(m_Item);
-		*((LPDWORD)&m_Item) = sizeof(T);
-	};
+		m_Item.dwSize = static_cast<DWORD>(sizeof(T));
+	}
+
+	MToolHelp(const MToolHelp&) = delete;
+	MToolHelp(MToolHelp&&) = delete;
+	MToolHelp& operator=(const MToolHelp&) = delete;
+	MToolHelp& operator=(MToolHelp&&) = delete;
 
 	virtual ~MToolHelp()
 	{
 		Close();
-	};
+	}
 
-	void Close(bool bReset = false)
+	void Close()
 	{
 		SafeCloseHandle(mh_Snapshot);
 
 		ZeroStruct(m_Item);
-		*((LPDWORD)&m_Item) = sizeof(T);
+		m_Item.dwSize = static_cast<DWORD>(sizeof(T));
 
 		mb_Opened = false;
 		mb_Valid = false;
@@ -157,11 +156,11 @@ public:
 		mn_Position = 0;
 
 		MArray<T>().swap(m_Items);
-	};
+	}
 
 	bool Open()
 	{
-		Close(true);
+		Close();
 
 		mh_Snapshot = CreateToolhelp32Snapshot(m_Flags, m_ByProcessId);
 		mb_Opened = true;
@@ -169,28 +168,28 @@ public:
 		_ASSERTE(!mb_EndOfList && !mb_Started && (mn_Position == 0));
 
 		return mb_Valid;
-	};
+	}
 
-	bool Open(DWORD dwFlags, DWORD th32ProcessID)
+	bool Open(const DWORD dwFlags, const DWORD th32ProcessId)
 	{
 		m_Flags = dwFlags;
-		m_ByProcessId = th32ProcessID;
+		m_ByProcessId = th32ProcessId;
 		return Open();
-	};
+	}
 
 	bool LoadAll()
 	{
 		while (getNext())
 			;
 		return (m_Items.size() > 0);
-	};
+	}
 
 	void Reset()
 	{
 		mn_Position = 0;
-	};
+	}
 
-	bool Next(T* lp)
+	bool Next(T& result)
 	{
 		if (mn_Position >= m_Items.size())
 		{
@@ -201,27 +200,28 @@ public:
 			_ASSERTE(mn_Position < m_Items.size());
 		}
 
-		memmove(lp, &(m_Items[mn_Position]), sizeof(T));
+		result = m_Items[mn_Position];
 		mn_Position++;
 		return true;
-	};
+	}
 
-	bool Find(bool (*compare)(T* p, LPARAM lParam), LPARAM lParam, T* lp)
+	bool Find(const std::function<bool(const T& item)>& compare, T& result)
 	{
-		T item = {sizeof(T)};
+		T item = {};
+		item.dwSize = static_cast<DWORD>(sizeof(T));
 
 		Reset();
 
-		while (Next(&item))
+		while (Next(item))
 		{
-			if (compare(&item, lParam))
+			if (compare(item))
 			{
-				memmove(lp, &item, sizeof(T));
+				result = item;
 				return true;
 			}
 		}
 		return false;
-	};
+	}
 };
 
 class MToolHelpProcess : public MToolHelp<PROCESSENTRY32, Process32First, Process32Next>
@@ -230,108 +230,113 @@ public:
 	MToolHelpProcess()
 		: MToolHelp(TH32CS_SNAPPROCESS, 0)
 	{
-	};
+	}
+
+	MToolHelpProcess(const MToolHelpProcess&) = delete;
+	MToolHelpProcess(MToolHelpProcess&&) = delete;
+	MToolHelpProcess& operator=(const MToolHelpProcess&) = delete;
+	MToolHelpProcess& operator=(MToolHelpProcess&&) = delete;
+
+	~MToolHelpProcess() override = default;
 
 	// Inherited
 	// bool Next(PROCESSENTRY32* lp);
 
-	bool Find(DWORD nPID, PROCESSENTRY32* Info)
+	bool Find(DWORD pid, PROCESSENTRY32& result)
 	{
-		struct cmp
-		{
-			static bool compare(PROCESSENTRY32* p, LPARAM lParam)
-			{
-				return (p->th32ProcessID == LODWORD(lParam));
-			};
-		};
-		return MToolHelp::Find(cmp::compare, (LPARAM)(DWORD_PTR)nPID, Info);
-	};
+		return MToolHelp::Find([pid](const PROCESSENTRY32& item) {return item.th32ProcessID == pid; }, result);
+	}
 
-	bool Find(LPCWSTR asExeName, PROCESSENTRY32* Info)
+	bool Find(LPCWSTR asExeName, PROCESSENTRY32& result)
 	{
-		struct cmp
-		{
-			static bool compare(PROCESSENTRY32* p, LPARAM lParam)
-			{
-				LPCWSTR pszName1 = PointToName(p->szExeFile);
-				LPCWSTR pszName2 = (LPCWSTR)lParam;
-				int iCmp = lstrcmpi(pszName1, pszName2);
-				return (iCmp == 0);
-			};
-		};
 		LPCWSTR pszName = PointToName(asExeName);
 		if (!pszName || !*pszName)
 			return false;
-		return MToolHelp::Find(cmp::compare, (LPARAM)pszName, Info);
-	};
+		return MToolHelp::Find([pszName](const PROCESSENTRY32& item)
+			{
+				const auto* itemName = PointToName(item.szExeFile);
+				if (!itemName)
+					return false;
+				const int iCmp = lstrcmpi(itemName, pszName);
+				return (iCmp == 0);
+			}, result);
+	}
 
 	// Visual Studio Code spawns a lot of children processes
 	// So we have a long tree of Code.exe/Code.exe/Code.exe
-	// The function will find all first-level forks of current process
-	bool FindForks(MArray<PROCESSENTRY32>& Forks)
+	// The function will find all first-level forks of processId
+	MArray<PROCESSENTRY32> FindForks(const DWORD processId)
 	{
+		MArray<PROCESSENTRY32> forks;
 		CEStr lsSelfExe;
-		struct cmp
-		{
-			LPCWSTR pszName;
-			MArray<PROCESSENTRY32>* Forks;
-			DWORD nParentPID;
-			cmp() {};
-			~cmp() {};
-			static bool check(PROCESSENTRY32* p, LPARAM lParam)
-			{
-				cmp* pCmp = (cmp*)lParam;
-				// Process only first-level children
-				if (p->th32ParentProcessID != pCmp->nParentPID)
-					return false; // continue
-				// Compare names
-				LPCWSTR pszName1 = PointToName(p->szExeFile);
-				LPCWSTR pszName2 = pCmp->pszName;
-				int iCmp = lstrcmpi(pszName1, pszName2);
-				if (iCmp == 0)
-					pCmp->Forks->push_back(*p);
-				return false; // Process all processes in system...
-			};
-		} Cmp;
-		if (!GetModulePathName(NULL, lsSelfExe))
-			return false;
-		Cmp.pszName = PointToName(lsSelfExe);
-		Cmp.nParentPID = GetCurrentProcessId();
-		Cmp.Forks = &Forks;
+		if (!GetModulePathName(nullptr, lsSelfExe))
+			return {};
+		const auto* pszName = PointToName(lsSelfExe);
+		if (!pszName)
+			return {};
 		PROCESSENTRY32 dummy = {};
-		MToolHelp::Find(cmp::check, (LPARAM)&Cmp, &dummy);
-		return (Forks.size() > 0);
-	};
+		MToolHelp::Find([pszName, processId, &forks](const PROCESSENTRY32& item)
+			{
+				// Process only first-level children
+				if (item.th32ParentProcessID == processId)
+				{
+					// Compare names
+					const auto* itemName = PointToName(item.szExeFile);
+					if (itemName)
+					{
+						const int iCmp = lstrcmpi(itemName, pszName);
+						if (iCmp == 0)
+							forks.push_back(item);
+					}
+				}
+				return false; // Process all processes in system...
+			}, dummy);
+		return forks;
+	}
 };
 
-class MToolHelpModule : public MToolHelp<MODULEENTRY32, Module32First, Module32Next>
+class MToolHelpModule final : public MToolHelp<MODULEENTRY32, Module32First, Module32Next>
 {
 public:
-	MToolHelpModule(DWORD th32ProcessID, bool SnapModule32 = false)
-		: MToolHelp(TH32CS_SNAPMODULE|(SnapModule32 ? TH32CS_SNAPMODULE32 : 0), th32ProcessID)
+	explicit MToolHelpModule(const DWORD th32ProcessId, const bool SnapModule32 = false)
+		: MToolHelp(TH32CS_SNAPMODULE|(SnapModule32 ? TH32CS_SNAPMODULE32 : 0), th32ProcessId)
 	{
-	};
+	}
+
+	MToolHelpModule(const MToolHelpModule&) = delete;
+	MToolHelpModule(MToolHelpModule&&) = delete;
+	MToolHelpModule& operator=(const MToolHelpModule&) = delete;
+	MToolHelpModule& operator=(MToolHelpModule&&) = delete;
+
+	~MToolHelpModule() override = default;
 
 	// Inherited
 	// bool Next(MODULEENTRY32* lp);
 };
 
-class MToolHelpThread : public MToolHelp<THREADENTRY32, Thread32First, Thread32Next>
+class MToolHelpThread final : public MToolHelp<THREADENTRY32, Thread32First, Thread32Next>
 {
 public:
-	// Unfortunately, Thread32First/Next enumarate all thread in the system
+	// Unfortunately, Thread32First/Next enumerate all thread in the system
 	// We shall filter found threads by THREADENTRY32::th32OwnerProcessID
-	MToolHelpThread(DWORD th32ProcessID)
-		: MToolHelp(TH32CS_SNAPTHREAD, th32ProcessID)
+	explicit MToolHelpThread(const DWORD th32ProcessId)
+		: MToolHelp(TH32CS_SNAPTHREAD, th32ProcessId)
 	{
-	};
+	}
+
+	MToolHelpThread(const MToolHelpThread&) = delete;
+	MToolHelpThread(MToolHelpThread&&) = delete;
+	MToolHelpThread& operator=(const MToolHelpThread&) = delete;
+	MToolHelpThread& operator=(MToolHelpThread&&) = delete;
+
+	~MToolHelpThread() override = default;
 
 	// Inherited
 	// bool Next(THREADENTRY32* lp);
 
 protected:
-	virtual bool Filter(THREADENTRY32* lp)
+	bool Filter(const THREADENTRY32& item) override
 	{
-		return (lp->th32OwnerProcessID == m_ByProcessId);
-	};
+		return (item.th32OwnerProcessID == m_ByProcessId);
+	}
 };

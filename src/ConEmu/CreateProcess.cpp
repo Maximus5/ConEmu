@@ -311,7 +311,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	{
 		PROCESSENTRY32W explorer = {};
 		HANDLE hToken = nullptr, hTokenRun = nullptr, hExplorer = nullptr;
-		if (GetProcessInfo(L"explorer.exe", &explorer))
+		if (GetProcessInfo(L"explorer.exe", explorer))
 		{
 			hExplorer = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, explorer.th32ProcessID);
 			if (hExplorer

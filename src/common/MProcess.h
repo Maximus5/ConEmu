@@ -32,8 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include <tlhelp32.h>
 
-bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
-bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info);
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W& result);
+bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W& result);
 
 // Lower-cased to distinct from plugin's export
 bool isTerminalMode();

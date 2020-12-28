@@ -11686,11 +11686,11 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 					{
 						bool lbConPID = isConsolePID(dwPID);
 
-						PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+						PROCESSENTRY32 prc = {};
 						if (!lbConPID)
 						{
 							// Получить PID родительского процесса этого окошка
-							if (GetProcessInfo(dwPID, &prc))
+							if (GetProcessInfo(dwPID, prc))
 							{
 								dwParentPID = prc.th32ParentProcessID;
 

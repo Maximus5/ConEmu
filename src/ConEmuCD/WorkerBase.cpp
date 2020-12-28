@@ -1649,10 +1649,10 @@ int WorkerBase::CheckAttachProcess()
 	if (liArgsFailed)
 	{
 		const DWORD nSelfPID = GetCurrentProcessId();
-		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
+		PROCESSENTRY32 self = {}, parent = {};
 		// Not optimal, needs refactoring
-		if (GetProcessInfo(nSelfPID, &self))
-			GetProcessInfo(self.th32ParentProcessID, &parent);
+		if (GetProcessInfo(nSelfPID, self))
+			GetProcessInfo(self.th32ParentProcessID, parent);
 
 		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
 

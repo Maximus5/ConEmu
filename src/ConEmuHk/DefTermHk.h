@@ -39,14 +39,19 @@ extern CDefTermHk* gpDefTerm;
 
 bool InitDefTerm();
 bool isDefTermEnabled();
-void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel = NULL);
-void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = NULL);
+void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel = nullptr);
+void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = nullptr);
 
-class CDefTermHk : public CDefTermBase
+class CDefTermHk final : public CDefTermBase
 {
 public:
 	CDefTermHk();
-	virtual ~CDefTermHk();
+	~CDefTermHk() override;
+
+	CDefTermHk(const CDefTermHk&) = delete;
+	CDefTermHk(CDefTermHk&&) = delete;
+	CDefTermHk& operator=(const CDefTermHk&) = delete;
+	CDefTermHk& operator=(CDefTermHk&&) = delete;
 
 	void StartDefTerm();
 
@@ -54,9 +59,9 @@ public:
 	DWORD mn_InitDefTermContinueTID;
 	HANDLE mh_InitDefTermContinueFrom;
 
-	// Запустить сервер, и подцепиться к его консоли
+	// Start the server and attach to its console
 	HWND AllocHiddenConsole(bool bTempForVS);
-	// Вызывается из хуков после успешного AllocConsole (Win2k only? а смысл?)
+	// Called from hooks after successful AllocConsole
 	void OnAllocConsoleFinished(HWND hNewConWnd);
 
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
@@ -66,24 +71,24 @@ public:
 	size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
 
 protected:
-	HANDLE  mh_StopEvent;
-	wchar_t ms_ExeName[MAX_PATH];
-	DWORD   mn_LastCheck;
+	HANDLE  mh_StopEvent = nullptr;
+	wchar_t ms_ExeName[MAX_PATH] = L"";
+	DWORD   mn_LastCheck = 0;
 
-	DWORD   StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE phSrvProcess);
+	DWORD   StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE phSrvProcess);
 
 protected:
 	virtual CDefTermBase* GetInterface() override;
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) override;
+	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) override;
 	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
 	virtual void PostCreateThreadFinished() override;
 
 protected:
-	MFileLog* mp_FileLog;
+	MFileLog* mp_FileLog = nullptr;
 	void LogInit();
 	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
 protected:
 	friend bool InitDefTerm();
-	friend void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= NULL*/);
-	friend void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/);
+	friend void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= nullptr*/);
+	friend void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= nullptr*/);
 };

@@ -743,6 +743,7 @@
     <ClCompile Include="common\MStrEsc_test.cpp" />
     <ClCompile Include="common\MStrSafe.cpp" />
     <ClCompile Include="common\MTimer.cpp" />
+    <ClCompile Include="common\MToolHelp_test.cpp" />
     <ClCompile Include="common\MToolTip.cpp" />
     <ClCompile Include="common\Memory.cpp" />
     <ClCompile Include="common\Monitors.cpp" />

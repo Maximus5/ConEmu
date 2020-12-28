@@ -328,23 +328,23 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			return CERR_HOOKS_FAILED;
 		}
 
-		DWORD nSelfPID = GetCurrentProcessId();
-		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
+		const DWORD nSelfPid = GetCurrentProcessId();
+		PROCESSENTRY32 self = {}, parent = {};
 		// Not optimal, needs refactoring
-		if (GetProcessInfo(nSelfPID, &self))
-			GetProcessInfo(self.th32ParentProcessID, &parent);
+		if (GetProcessInfo(nSelfPid, self))
+			GetProcessInfo(self.th32ParentProcessID, parent);
 
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 
 		swprintf_c(szTitle,
-			L"%s %s, PID=%u", gsModuleName, gsVersion, nSelfPID);
+			L"%s %s, PID=%u", gsModuleName, gsVersion, nSelfPid);
 
 		swprintf_c(szInfo,
 			L"Injecting remote FAILED, code=%i:0x%08X\n"
 			L"%s %s, PID=%u\n"
 			L"RemotePID=%u ",
-			iHookRc, nErrCode, gsModuleName, gsVersion, nSelfPID, nRemotePID);
+			iHookRc, nErrCode, gsModuleName, gsVersion, nSelfPid, nRemotePID);
 
 		swprintf_c(szParentPID,
 			L"\n"
