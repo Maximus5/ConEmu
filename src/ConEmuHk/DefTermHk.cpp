@@ -122,11 +122,10 @@ bool InitDefTerm()
 	// выгрузить. Этим и займемся.
 	HMODULE hPrevHooks = nullptr;
 	_ASSERTEX(gnSelfPID!=0 && ghOurModule!=nullptr);
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, gnSelfPID);
-	if (hSnap != INVALID_HANDLE_VALUE)
+	MToolHelpModule snapshot(gnSelfPID);
+	if (snapshot.Open())
 	{
 		MODULEENTRY32 mi = {};
-		mi.dwSize = sizeof(mi);
 		//wchar_t szOurName[MAX_PATH] = L"";
 		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
 		wchar_t szMinor[8] = L"";
@@ -139,11 +138,12 @@ bool InitDefTerm()
 		wchar_t* pszDot = wcschr(szAddName, L'.');
 		wchar_t szCheckName[MAX_PATH+1];
 
-		if (pszDot && Module32First(hSnap, &mi))
+		if (pszDot)
 		{
 			pszDot[1] = 0; // Need to check only name, without version number
 			const int nCurLen = lstrlen(szAddName);
-			do {
+			while (snapshot.Next(mi))
+			{
 				if (mi.hModule == ghOurModule)
 					continue;
 				lstrcpyn(szCheckName, PointToName(mi.szExePath), nCurLen+1);
@@ -157,10 +157,8 @@ bool InitDefTerm()
 					hPrevHooks = mi.hModule;
 					break; // Prev (old version) instance found!
 				}
-			} while (Module32Next(hSnap, &mi));
+			}
 		}
-
-		CloseHandle(hSnap);
 	}
 
 	if (hPrevHooks)
@@ -216,36 +214,36 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 		SafeCloseHandle(gpDefTerm->mh_InitDefTermContinueFrom);
 
 		typedef void (WINAPI* RequestDefTermShutdown_t)();
-		RequestDefTermShutdown_t fnShutdown = (RequestDefTermShutdown_t)GetProcAddress(hPrevHooks, "RequestDefTermShutdown");
+		const auto fnShutdown = reinterpret_cast<RequestDefTermShutdown_t>(GetProcAddress(hPrevHooks, "RequestDefTermShutdown"));
 		if (fnShutdown)
 		{
 			fnShutdown();
 		}
+		else
+		{
+			_ASSERTE(FALSE && "RequestDefTermShutdown not found in ConEmuHk.dll");
+		}
 
 		SetLastError(0);
-		BOOL bFree = FreeLibrary(hPrevHooks);
-		DWORD nFreeRc = GetLastError();
+		const BOOL bFree = FreeLibrary(hPrevHooks);
+		const DWORD nFreeRc = GetLastError();
 		if (!bFree)
 		{
 			gpDefTerm->DisplayLastError(L"Unloading failed", nFreeRc);
 			return 2;
 		}
-		else
-		{
-			DefTermLogString(L"Unloading succeeded");
-		}
+		DefTermLogString(L"Unloading succeeded");
 	}
 
 	// For Visual Studio check all spawned processes (children of gnSelfPID), find *.vshost.exe
 	if (gbIsVStudio)
 	{
 		//_ASSERTEX(FALSE && "Continue to find existing *.vshost.exe");
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (hSnap != INVALID_HANDLE_VALUE)
+		MToolHelpProcess snapshot;
+		if (snapshot.Open())
 		{
 			PROCESSENTRY32 pe = {};
-			pe.dwSize = sizeof(pe);
-			if (Process32First(hSnap, &pe)) do
+			while (snapshot.Next(pe))
 			{
 				if (pe.th32ParentProcessID == gnSelfPID)
 				{
@@ -257,8 +255,7 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 						break;
 					}
 				}
-			} while (Process32Next(hSnap, &pe));
-			CloseHandle(hSnap);
+			}
 		}
 	}
 	else
@@ -266,8 +263,7 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 		MToolHelpProcess findForks;
 		MArray<PROCESSENTRY32> forks = findForks.FindForks(GetCurrentProcessId());
 		TODO("OPTIMIZE: Try to find and process children from all levels, BUT ONLY from ROOT process?");
-		PROCESSENTRY32 p{};
-		while (forks.pop_back(p))
+		for (const auto& p : forks)
 		{
 			DefTermLogString(L"Forked process found, hooking");
 			gpDefTerm->StartDefTermHooker(p.th32ProcessID);
@@ -513,8 +509,8 @@ void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 {
 	// Function AttachConsole exists in WinXP and above, need dynamic link
-	const AttachConsole_t _AttachConsole = GetAttachConsoleProc();
-	if (!_AttachConsole)
+	const auto attachConsole = GetAttachConsoleProc();
+	if (!attachConsole)
 	{
 		LogHookingStatus(GetCurrentProcessId(), L"Can't create hidden console, function does not exist");
 		return nullptr;
@@ -551,7 +547,7 @@ HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 	DWORD nWait = WaitForSingleObject(hSrvProcess, 0);
 	while (nWait != WAIT_OBJECT_0)
 	{
-		if (_AttachConsole(nSrvPid))
+		if (attachConsole(nSrvPid))
 		{
 			hCreatedCon = GetRealConsoleWindow();
 			if (hCreatedCon)
@@ -584,7 +580,8 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 	CEStr szAddArgs, szAddArgs2;
 	CEStr pszCmdLine;
 	DWORD nErr = 0;
-	STARTUPINFO si = {sizeof(si)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	PROCESS_INFORMATION pi = {};
 
 	size_t cchAddArgLen = GetSrvAddArgs(false, szAddArgs, szAddArgs2);
@@ -616,7 +613,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 
 		_ASSERTEX(szAddArgs2.IsEmpty()); // No "-new_console" switches are expected here!
 
-		DWORD nCreateFlags = NORMAL_PRIORITY_CLASS | (bNewConWnd ? CREATE_NEW_CONSOLE : 0);
+		const DWORD nCreateFlags = NORMAL_PRIORITY_CLASS | (bNewConWnd ? CREATE_NEW_CONSOLE : 0);
 		if (bNewConWnd)
 		{
 			si.wShowWindow = SW_HIDE;
@@ -729,7 +726,7 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 		+ ((m_Opt.pszConfigName && *m_Opt.pszConfigName) ? (12 + wcslen(m_Opt.pszConfigName)) : 0)
 		;
 	wchar_t* psz = rsArgs.GetBuffer(cchMax);
-	size_t cchNew = 32; // "-new_console:ni"
+	const size_t cchNew = 32; // "-new_console:ni"
 	wchar_t* pszNew = rsNewCon.GetBuffer(cchNew);
 
 	if (!psz || !pszNew)
