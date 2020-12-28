@@ -36,11 +36,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define USEDEBUGSTRDEFTERM
 #endif
 
+#include <cstdint>
+#include <chrono>
+#include <tuple>
 #include <windows.h>
 #include "Common.h"
 #include "MArray.h"
 #include "MSectionSimple.h"
 #include "ConEmuCheck.h"
+#include "MModule.h"
 #include "MProcess.h"
 #include "MProcessBits.h"
 #include "WThreads.h"
@@ -49,45 +53,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEF_TERM_ALIVE_CHECK_TIMEOUT 750
 #define DEF_TERM_ALIVE_RECHECK_TIMEOUT 1500
-#define DEF_TERM_INSTALL_TIMEOUT 30000
+#define DEF_TERM_INSTALL_TIMEOUT std::chrono::seconds(30)
+
+// Controls if console server shows "Press Enter to close console" after quick termination of started app
+enum class TerminalConfirmClose : uint32_t
+{
+	Auto = 0,
+	Always = 1, // implies " /CONFIRM"
+	Never = 2, // implies " /NOCINFIRM"
+};
 
 /* *********** Default terminal settings *********** */
 struct CEDefTermOpt
 {
 public:
-	BOOL     bUseDefaultTerminal;
-	BOOL     bAgressive;
-	BOOL     bNoInjects; // " /NOINJECT"
-	BOOL     bNewWindow; // " /GHWND=NEW"
-	BOOL     bDebugLog;
-	BOOL     nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never | " /CONFIRM" | " /NOCONFIRM"
+	BOOL     bUseDefaultTerminal = false;
+	BOOL     bAggressive = false;
+	BOOL     bNoInjects = false; // " /NOINJECT"
+	BOOL     bNewWindow = false; // " /GHWND=NEW"
+	BOOL     bDebugLog = false;
+	TerminalConfirmClose nDefaultTerminalConfirmClose = {};
 	ConEmu::ConsoleFlags nConsoleFlags = {}; // Used for populating m_SrvMapping in ShellProcessor
-	wchar_t* pszConEmuExe; // Полный путь к ConEmu.exe
-	wchar_t* pszConEmuBaseDir; // %ConEmuBaseDir%
-	wchar_t* pszCfgFile; // " /LoadCfgFile "...""
-	wchar_t* pszConfigName; // " /CONFIG "...""
-	wchar_t* pszzHookedApps; // ASCIIZZ
-	bool     bExternalPointers;
+	wchar_t* pszConEmuExe = nullptr; // The full path to the ConEmu.exe
+	wchar_t* pszConEmuBaseDir = nullptr; // %ConEmuBaseDir%
+	wchar_t* pszCfgFile = nullptr; // " /LoadCfgFile "...""
+	wchar_t* pszConfigName = nullptr; // " /CONFIG "...""
+	wchar_t* pszzHookedApps = nullptr; // ASCIIZZ
+	bool     bExternalPointers = false;
 	// Last checking time
-	FILETIME ftLastCheck;
+	FILETIME ftLastCheck = {};
+private:
+	// use dynamic link, because code is using in ConEmuHk too
+	MModule hAdvApi = {};
 public:
 	CEDefTermOpt()
 	{
-		bUseDefaultTerminal = FALSE;
-		bAgressive = FALSE;
-		bNoInjects = FALSE;
-		bNewWindow = FALSE;
-		bDebugLog = FALSE;
-		nDefaultTerminalConfirmClose = 0;
-		nConsoleFlags = CECF_Empty;
-		pszConEmuExe = NULL;
-		pszConEmuBaseDir = NULL;
-		pszCfgFile = NULL;
-		pszConfigName = NULL;
-		pszzHookedApps = NULL;
-		bExternalPointers = false;
-		ZeroStruct(ftLastCheck);
-	};
+	}
+
+	CEDefTermOpt(const CEDefTermOpt&) = delete;
+	CEDefTermOpt(CEDefTermOpt&&) = delete;
+	CEDefTermOpt& operator=(const CEDefTermOpt&) = delete;
+	CEDefTermOpt& operator=(CEDefTermOpt&&) = delete;
 
 	~CEDefTermOpt()
 	{
@@ -104,10 +110,16 @@ public:
 			if (pszzHookedApps)
 				free(pszzHookedApps);
 		}
-	};
+	}
 
 public:
-	bool Serialize(bool bSave=false)
+	enum class SerializeMode
+	{
+		Load,
+		Save,
+	};
+
+	bool Serialize(const SerializeMode mode = SerializeMode::Load)
 	{
 		if (!this)
 			return false;
@@ -118,61 +130,61 @@ public:
 		typedef LONG (WINAPI* RegQueryValueEx_t)(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 		typedef LONG (WINAPI* RegSetValueEx_t)(HKEY hKey, LPCWSTR lpValueName, DWORD Reserved, DWORD dwType, const BYTE *lpData, DWORD cbData);
 		typedef LONG (WINAPI* RegQueryInfoKey_t)(HKEY hKey, LPWSTR lpClass, LPDWORD lpcClass, LPDWORD lpReserved, LPDWORD lpcSubKeys, LPDWORD lpcMaxSubKeyLen, LPDWORD lpcMaxClassLen, LPDWORD lpcValues, LPDWORD lpcMaxValueNameLen, LPDWORD lpcMaxValueLen, LPDWORD lpcbSecurityDescriptor, PFILETIME lpftLastWriteTime);
-		static HMODULE hAdvApi = NULL;
-		static RegCreateKeyEx_t regCreateKeyEx = NULL;
-		static RegCloseKey_t regCloseKey = NULL;
-		static RegQueryValueEx_t regQueryValueEx = NULL;
-		static RegSetValueEx_t regSetValueEx = NULL;
-		static RegQueryInfoKey_t regQueryInfoKey = NULL;
+		static RegCreateKeyEx_t regCreateKeyEx = nullptr;
+		static RegCloseKey_t regCloseKey = nullptr;
+		static RegQueryValueEx_t regQueryValueEx = nullptr;
+		static RegSetValueEx_t regSetValueEx = nullptr;
+		static RegQueryInfoKey_t regQueryInfoKey = nullptr;
 		if (!hAdvApi)
 		{
-			hAdvApi = LoadLibrary(L"advapi32.dll");
-			if (!hAdvApi)
+			if (!hAdvApi.Load(L"advapi32.dll"))
 				return false;
 		}
 		if (!regCreateKeyEx || !regCloseKey || !regQueryValueEx || !regSetValueEx || !regQueryInfoKey)
 		{
-			regCreateKeyEx = (RegCreateKeyEx_t)GetProcAddress(hAdvApi, "RegCreateKeyExW");
-			regCloseKey = (RegCloseKey_t)GetProcAddress(hAdvApi, "RegCloseKey");
-			regQueryValueEx  = (RegQueryValueEx_t)GetProcAddress(hAdvApi, "RegQueryValueExW");
-			regSetValueEx = (RegSetValueEx_t)GetProcAddress(hAdvApi, "RegSetValueExW");
-			regQueryInfoKey = (RegQueryInfoKey_t)GetProcAddress(hAdvApi, "RegQueryInfoKeyW");
-			if (!regCreateKeyEx || !regCloseKey || !regQueryValueEx || !regSetValueEx || !regQueryInfoKey)
+			if (!hAdvApi.GetProcAddress("RegCreateKeyExW", regCreateKeyEx)
+				|| !hAdvApi.GetProcAddress("RegCloseKey", regCloseKey)
+				|| !hAdvApi.GetProcAddress("RegQueryValueExW", regQueryValueEx)
+				|| !hAdvApi.GetProcAddress("RegSetValueExW", regSetValueEx)
+				|| !hAdvApi.GetProcAddress("RegQueryInfoKeyW", regQueryInfoKey))
 				return false;
 		}
 
 		const LPCWSTR sSubKey = /*[HKCU]*/ L"Software\\ConEmu";
-		HKEY hk = NULL;
-		DWORD samDesired = bSave ? KEY_WRITE : KEY_READ;
+		HKEY hk = nullptr;
+		const DWORD samDesired = (mode == SerializeMode::Save) ? KEY_WRITE : KEY_READ;
 		DWORD dwValue = 0, dwSize, dwType;
-		LONG lRc = regCreateKeyEx(HKEY_CURRENT_USER, sSubKey, 0, NULL, 0, samDesired, NULL, &hk, &dwValue);
-		if ((lRc != 0) || (hk == NULL))
+		LONG lRc = regCreateKeyEx(HKEY_CURRENT_USER, sSubKey, 0, nullptr, 0, samDesired, nullptr, &hk, &dwValue);
+		if ((lRc != 0) || (hk == nullptr))
 		{
 			return false;
 		}
 
-		if (!bSave)
+		if (mode == SerializeMode::Load)
 		{
 			FILETIME ftKey = {};
-			lRc = regQueryInfoKey(hk, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &ftKey);
+			lRc = regQueryInfoKey(hk, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &ftKey);
 			if ((lRc == 0)
 				&& (ftLastCheck.dwHighDateTime || ftLastCheck.dwLowDateTime)
 				&& (memcmp(&ftKey, &ftLastCheck, sizeof(ftLastCheck)) == 0))
 			{
-				// Ничего не менялось, перечитывать не нужно
+				// Nothing was changed, no need to reload
 				regCloseKey(hk);
 				return (bUseDefaultTerminal != 0);
 			}
 			ftLastCheck = ftKey;
 		}
 
-		_ASSERTE(sizeof(nConsoleFlags)==sizeof(DWORD) && sizeof(bUseDefaultTerminal)==sizeof(DWORD));
+		_ASSERTE(sizeof(nConsoleFlags) == sizeof(DWORD));
+		_ASSERTE(sizeof(bUseDefaultTerminal) == sizeof(DWORD));
+		_ASSERTE(sizeof(nDefaultTerminalConfirmClose) == sizeof(DWORD));
 
 		struct strOpt {
 			LPCWSTR Name; void* ptr; DWORD Size; DWORD Type;
-		} Opt[] = {
+		} optionList[] = {
 			{L"DefTerm-Enabled",   &bUseDefaultTerminal, sizeof(bUseDefaultTerminal), REG_DWORD},
-			{L"DefTerm-Agressive", &bAgressive, sizeof(bAgressive), REG_DWORD},
+			// ReSharper disable once StringLiteralTypo
+			{L"DefTerm-Agressive", &bAggressive, sizeof(bAggressive), REG_DWORD},
 			{L"DefTerm-NoInjects", &bNoInjects, sizeof(bNoInjects), REG_DWORD},
 			{L"DefTerm-NewWindow", &bNewWindow, sizeof(bNewWindow), REG_DWORD},
 			{L"DefTerm-DebugLog",  &bDebugLog,  sizeof(bDebugLog),  REG_DWORD},
@@ -187,46 +199,50 @@ public:
 
 		bool bRc = false;
 
-		if (!bSave)
+		if (mode == SerializeMode::Load)
 		{
 			// Load
-			for (INT_PTR i = 0; i < countof(Opt); i++)
+			for (auto& opt : optionList)
 			{
-				if (Opt[i].Size)
+				if (opt.Size)
 				{
 					// BYTE or BOOL
 					dwSize = sizeof(dwValue);
-					lRc = regQueryValueEx(hk, Opt[i].Name, NULL, &dwType, (LPBYTE)&dwValue, &dwSize);
-					if (lRc != 0) dwValue = 0;
-					if (Opt[i].Size == sizeof(DWORD))
-						*((LPDWORD)Opt[i].ptr) = dwValue;
-					else if (Opt[i].Size == sizeof(BYTE))
-						*((LPBYTE)Opt[i].ptr) = LOBYTE(dwValue);
+					lRc = regQueryValueEx(hk, opt.Name, nullptr, &dwType, reinterpret_cast<LPBYTE>(&dwValue), &dwSize);
+
+					if (lRc != 0)
+						dwValue = 0;
+
+					if (opt.Size == sizeof(DWORD))
+						*static_cast<LPDWORD>(opt.ptr) = dwValue;
+					else if (opt.Size == sizeof(BYTE))
+						*static_cast<LPBYTE>(opt.ptr) = LOBYTE(dwValue);
 				}
 				else // String or MSZ
 				{
-					wchar_t* pszOld = *((wchar_t**)Opt[i].ptr);
-					wchar_t* pszNew = NULL;
+					wchar_t* pszOld = *static_cast<wchar_t**>(opt.ptr);
+					wchar_t* pszNew = nullptr;
 
 					dwSize = 0;
-					lRc = regQueryValueEx(hk, Opt[i].Name, NULL, &dwType, NULL, &dwSize);
+					lRc = regQueryValueEx(hk, opt.Name, nullptr, &dwType, nullptr, &dwSize);
 					if ((lRc == 0) && dwSize && (dwType == REG_SZ || dwType == REG_MULTI_SZ))
 					{
-						pszNew = (wchar_t*)calloc(dwSize+2*sizeof(wchar_t),1);
+						pszNew = static_cast<wchar_t*>(calloc(dwSize + 2 * sizeof(wchar_t), 1));
 						if (pszNew)
 						{
-							lRc = regQueryValueEx(hk, Opt[i].Name, NULL, &dwType, (LPBYTE)pszNew, &dwSize);
+							lRc = regQueryValueEx(hk, opt.Name, nullptr, &dwType, reinterpret_cast<LPBYTE>(pszNew), &dwSize);
 							// Do not need to store empty strings
 							if (!*pszNew)
 							{
 								free(pszNew);
-								pszNew = NULL;
+								pszNew = nullptr;
 							}
 						}
 					}
 
-					*((wchar_t**)Opt[i].ptr) = pszNew;
-					if (pszOld) free(pszOld);
+					*static_cast<wchar_t**>(opt.ptr) = pszNew;
+					SafeFree(pszOld);
+					std::ignore = lRc;
 				}
 			}
 
@@ -238,36 +254,36 @@ public:
 			// Save
 			bRc = true;
 
-			for (INT_PTR i = 0; i < countof(Opt); i++)
+			for (const auto& opt : optionList)
 			{
-				if (Opt[i].Size)
+				if (opt.Size)
 				{
 					// BYTE or BOOL
-					dwSize = Opt[i].Size;
-					lRc = regSetValueEx(hk, Opt[i].Name, NULL, Opt[i].Type, (LPBYTE)Opt[i].ptr, dwSize);
+					dwSize = opt.Size;
+					lRc = regSetValueEx(hk, opt.Name, 0, opt.Type, static_cast<const BYTE*>(opt.ptr), dwSize);
 				}
-				else if (Opt[i].Type == REG_SZ)
+				else if (opt.Type == REG_SZ)
 				{
-					LPCWSTR pSZ = *((wchar_t**)Opt[i].ptr);
+					LPCWSTR pSZ = *static_cast<wchar_t**>(opt.ptr);
 					if (!pSZ) pSZ = L"";
-					dwSize = (lstrlen(pSZ)+1) * sizeof(wchar_t);
-					lRc = regSetValueEx(hk, Opt[i].Name, NULL, REG_SZ, (LPBYTE)pSZ, dwSize);
+					dwSize = (lstrlen(pSZ) + 1) * sizeof(wchar_t);
+					lRc = regSetValueEx(hk, opt.Name, 0, REG_SZ, reinterpret_cast<const BYTE*>(pSZ), dwSize);
 				}
-				else if (Opt[i].Type == REG_MULTI_SZ)
+				else if (opt.Type == REG_MULTI_SZ)
 				{
-					LPCWSTR pMSZ = *((wchar_t**)Opt[i].ptr);
+					LPCWSTR pMSZ = *static_cast<wchar_t**>(opt.ptr);
 					if (!pMSZ) pMSZ = L"\0";
 					dwSize = sizeof(wchar_t);
 					LPCWSTR ptr = pMSZ;
 					while (*ptr)
 					{
-						int nLen = lstrlen(ptr);
+						const int nLen = lstrlen(ptr);
 						if (nLen < 1)
 							break;
-						dwSize += (nLen+1)*sizeof(wchar_t);
-						ptr += (nLen+1);
+						dwSize += (nLen + 1) * sizeof(wchar_t);
+						ptr += (nLen + 1);
 					}
-					lRc = regSetValueEx(hk, Opt[i].Name, NULL, REG_MULTI_SZ, (LPBYTE)pMSZ, dwSize);
+					lRc = regSetValueEx(hk, opt.Name, 0, REG_MULTI_SZ, reinterpret_cast<const BYTE*>(pMSZ), dwSize);
 				}
 				if (lRc != 0)
 					bRc = false;
@@ -289,8 +305,8 @@ protected:
 		HWND      hWnd;
 		HANDLE    hProcess;
 		DWORD     nPID;
-		DWORD     nHookTick; // informational field
-		DWORD_PTR nHookResult; // _PTR for alignment
+		DWORD     nHookResult;
+		std::chrono::steady_clock::time_point nHookTick; // informational field
 	};
 	struct ThreadArg
 	{
@@ -305,29 +321,29 @@ protected:
 	};
 
 private:
-	bool   mb_ConEmuGui;
-	bool   mb_ReadyToHook;
-	bool   mb_PostCreatedThread;
-	bool   mb_Initialized;
-	HWND   mh_LastWnd;
-	HWND   mh_LastIgnoredWnd;
-	HWND   mh_LastCall;
-	MArray<ThreadHandle> m_Threads;
-	MArray<ProcessInfo> m_Processed;
+	bool   mb_ConEmuGui = false;
+	bool   mb_ReadyToHook = false;
+	bool   mb_PostCreatedThread = false;
+	bool   mb_Initialized = false;
+	HWND   mh_LastWnd = nullptr;
+	HWND   mh_LastIgnoredWnd = nullptr;
+	HWND   mh_LastCall = nullptr;
+	MArray<ThreadHandle> m_Threads = {};
+	MArray<ProcessInfo> m_Processed = {};
 protected:
-	HANDLE mh_PostThread;
-	DWORD  mn_PostThreadId;
-	MSectionSimple* mcs;
-	bool   mb_Termination;
+	HANDLE mh_PostThread = nullptr;
+	DWORD  mn_PostThreadId = 0;
+	MSectionSimple* mcs = nullptr;
+	bool   mb_Termination = false;
 protected:
 	// Shell may not like injecting immediately after start-up
 	// If so, set (mb_ExplorerHookAllowed = false) in constructor
-	bool   mb_ExplorerHookAllowed;
+	bool   mb_ExplorerHookAllowed = false;
 
 protected:
 	CEDefTermOpt m_Opt;
 public:
-	const CEDefTermOpt* GetOpt()
+	const CEDefTermOpt* GetOpt() const
 	{
 		return &m_Opt;
 	};
@@ -335,7 +351,7 @@ public:
 protected:
 	virtual CDefTermBase* GetInterface() = 0;
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) = 0; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) = 0;
+	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) = 0;
 	virtual void ShowTrayIconError(LPCWSTR asErrText) = 0; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
 	virtual void ReloadSettings() = 0; // Copy from gpSet or load from [HKCU]
 
@@ -353,76 +369,71 @@ protected:
 
 public:
 	CDefTermBase(bool bConEmuGui)
+		: mb_ConEmuGui(bConEmuGui)
 	{
-		mb_ConEmuGui = bConEmuGui;
-		mb_ReadyToHook = false;
-		mh_LastWnd = mh_LastIgnoredWnd = mh_LastCall = NULL;
-		mh_PostThread = NULL;
-		mn_PostThreadId = 0;
-		mb_PostCreatedThread = false;
-		mb_Initialized = false;
-		mb_ExplorerHookAllowed = true;
-		mb_Termination = false;
 		mcs = new MSectionSimple(true);
-	};
+	}
+
+	CDefTermBase(const CDefTermBase&) = delete;
+	CDefTermBase(CDefTermBase&&) = delete;
+	CDefTermBase& operator=(const CDefTermBase&) = delete;
+	CDefTermBase& operator=(CDefTermBase&&) = delete;
 
 	virtual ~CDefTermBase()
 	{
 		// StopHookers(); -- Have to be called in the ancestor destructor!
-		_ASSERTE(mcs==NULL);
-	};
+		_ASSERTE(mcs == nullptr);
+	}
 
 public:
 	bool IsReady()
 	{
 		return (this && mb_Initialized && mb_ReadyToHook);
-	};
+	}
 
 	static bool IsShellTrayWindowClass(LPCWSTR asClassName)
 	{
-		bool bShellTrayWnd = (asClassName != NULL)
+		const bool bShellTrayWnd = (asClassName != nullptr)
 			&& ((lstrcmp(asClassName, L"Shell_TrayWnd") == 0)
 				);
 		return bShellTrayWnd;
-	};
+	}
 
 	static bool IsExplorerWindowClass(LPCWSTR asClassName)
 	{
-		bool bShellWnd = (asClassName != NULL)
+		const bool bShellWnd = (asClassName != nullptr)
 			&& ((lstrcmp(asClassName, L"CabinetWClass") == 0)
 				|| (lstrcmp(asClassName, L"ExploreWClass") == 0)
 				);
 		return bShellWnd;
-	};
+	}
 
 	static bool IsWindowResponsive(HWND hFore)
 	{
-		LRESULT lMsgRc;
 		DWORD_PTR dwResult = 0;
 
-		// To be sure that application is responsive (started successfully and is not hunged)
+		// To be sure that application is responsive (started successfully and is not hung)
 		// However, that does not guarantee that explorer.exe will be hooked properly
 		// During several restarts of explorer.exe from TaskMgr - sometimes it hungs...
 		// So, that is the last change but not sufficient (must be handled in GUI too)
 		// -- SMTO_ERRORONEXIT exist in Vista only
-		lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0,0, SMTO_NORMAL, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
+		const LRESULT lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0, 0, SMTO_NORMAL, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
 		return (lMsgRc != 0);
 	}
 
-	bool IsAppMonitored(HWND hFore, DWORD nForePID, bool bSkipShell = true, PROCESSENTRY32* pPrc = NULL, LPWSTR pszClass/*[MAX_PATH]*/ = NULL)
+	bool IsAppMonitored(HWND hFore, DWORD nForePID, bool bSkipShell = true, PROCESSENTRY32* pPrc = nullptr, LPWSTR pszClass/*[MAX_PATH]*/ = nullptr)
 	{
-		// Должен выполнять все проверки, запоминать успех/не успех,
-		// чтобы при вызове CheckForeground не выполнять проверки повторно
-		// Т.к. оно должно вызываться из CConEmuMain::RecheckForegroundWindow
+		// Should process all checks, storing successful/unsuccessful state,
+		// to not doing the same checks again on subsequent calls of CheckForeground.
+		// It's called from CConEmuMain::RecheckForegroundWindow
 
-		bool lbConHostLocked = false;
-		wchar_t szClass[MAX_PATH]; szClass[0] = 0;
+		wchar_t szClass[MAX_PATH] = L"";
 		PROCESSENTRY32 prc = {};
 		bool bMonitored = false;
 		bool bShellTrayWnd = false; // task bar
 		bool bShellWnd = false; // one of explorer windows (folder browsers)
 		#ifdef USEDEBUGSTRDEFTERM
-		wchar_t szInfo[MAX_PATH+80];
+		wchar_t szInfo[MAX_PATH + 80] = L"";
 		#endif
 
 		// Check window class
@@ -432,7 +443,8 @@ public:
 			bShellWnd = IsExplorerWindowClass(szClass);
 
 			#ifdef USEDEBUGSTRDEFTERM
-			swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u %u %u '%s'", (DWORD)(DWORD_PTR)hFore, nForePID, (UINT)bShellTrayWnd, (UINT)bShellWnd, szClass);
+			swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u %u %u '%s'",
+				LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID, static_cast<UINT>(bShellTrayWnd), static_cast<UINT>(bShellWnd), szClass);
 			DEBUGSTRDEFTERM(szInfo);
 			#endif
 
@@ -442,7 +454,8 @@ public:
 				|| isConsoleClass(szClass))
 			{
 				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u ignored by class", (DWORD)(DWORD_PTR)hFore, nForePID);
+				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u ignored by class",
+					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
 				DEBUGSTRDEFTERM(szInfo);
 				#endif
 				goto wrap;
@@ -457,7 +470,8 @@ public:
 			if (!GetProcessInfo(nForePID, &prc))
 			{
 				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, can't get process name", (DWORD)(DWORD_PTR)hFore, nForePID);
+				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, can't get process name",
+					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
 				DEBUGSTRDEFTERM(szInfo);
 				#endif
 				goto wrap;
@@ -469,7 +483,8 @@ public:
 			{
 				// This is "System" process and may not be hooked
 				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, csrss.exe", (DWORD)(DWORD_PTR)hFore, nForePID);
+				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, csrss.exe",
+					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
 				DEBUGSTRDEFTERM(szInfo);
 				#endif
 				goto wrap;
@@ -483,7 +498,8 @@ public:
 			{
 				mh_LastIgnoredWnd = hFore;
 				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored", (DWORD)(DWORD_PTR)hFore, nForePID);
+				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored",
+					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
 				DEBUGSTRDEFTERM(szInfo);
 				#endif
 				goto wrap;
@@ -549,7 +565,7 @@ public:
 		PROCESSENTRY32 prc = {};
 		bool bMonitored = false;
 		bool bNotified = false;
-		HANDLE hProcess = NULL;
+		HANDLE hProcess = nullptr;
 		DWORD nErrCode = 0;
 		wchar_t szInfo[MAX_PATH+80];
 
@@ -566,8 +582,8 @@ public:
 		{
 			AutoClearThreads();
 
-			HANDLE hPostThread = NULL; DWORD nThreadId = 0;
-			ThreadArg* pArg = (ThreadArg*)malloc(sizeof(ThreadArg));
+			HANDLE hPostThread = nullptr; DWORD nThreadId = 0;
+			ThreadArg* pArg = static_cast<ThreadArg*>(malloc(sizeof(ThreadArg)));
 			if (!pArg)
 			{
 				_ASSERTE(pArg);  // -V571
@@ -580,10 +596,10 @@ public:
 			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground creating background thread PostCheckThread");
 
 			hPostThread = apiCreateThread(PostCheckThread, pArg, &nThreadId, "DefTerm::PostCheckThread");
-			_ASSERTE(hPostThread!=NULL);
+			_ASSERTE(hPostThread!=nullptr);
 			if (hPostThread)
 			{
-				ThreadHandle th = {hPostThread, nThreadId, GetCurrentThreadId()};
+				const ThreadHandle th = {hPostThread, nThreadId, GetCurrentThreadId()};
 				m_Threads.push_back(th);
 
 				#ifdef USEDEBUGSTRDEFTERM
@@ -592,7 +608,7 @@ public:
 				#endif
 			}
 
-			lbRc = (hPostThread != NULL); // вернуть OK?
+			lbRc = (hPostThread != nullptr); // вернуть OK?
 			goto wrap;
 		}
 
@@ -608,9 +624,10 @@ public:
 		{
 			// That app is not ready for hooking
 			if (mh_LastCall == hFore)
-				mh_LastCall = NULL;
+				mh_LastCall = nullptr;
 			#ifdef USEDEBUGSTRDEFTERM
-			swprintf_c(szInfo, L"!!! DefTerm::CheckForeground skipped, x%08X is non-responsive !!!", (DWORD)(DWORD_PTR)hFore);
+			swprintf_c(szInfo, L"!!! DefTerm::CheckForeground skipped, x%08X is non-responsive !!!",
+				LODWORD(reinterpret_cast<DWORD_PTR>(hFore)));
 			DEBUGSTRDEFTERM(szInfo);
 			#endif
 			goto wrap;
@@ -641,7 +658,8 @@ public:
 			{
 				bMonitored = false;
 				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, already processed", (DWORD)(DWORD_PTR)hFore, nForePID);
+				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, already processed",
+					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
 				DEBUGSTRDEFTERM(szInfo);
 				#endif
 				break; // already hooked/processed
@@ -665,7 +683,7 @@ public:
 
 		ConhostLocker(true, lbConHostLocked);
 
-		_ASSERTE(hProcess == NULL);
+		_ASSERTE(hProcess == nullptr);
 		iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
 
 		ConhostLocker(false, lbConHostLocked);
@@ -688,33 +706,36 @@ public:
 			ProcessInfo inf = {};
 			inf.hWnd = hFore;
 			inf.hProcess = hProcess;
-			hProcess = NULL; // его закрывать (если есть) НЕ нужно, сохранен в массиве
+			hProcess = nullptr; // no need to close the handle (if any), it's saved in the array
 			inf.nPID = nForePID;
-			inf.nHookTick = GetTickCount();
+			inf.nHookTick = std::chrono::steady_clock::now();
 			inf.nHookResult = nResult;
 			m_Processed.push_back(inf);
 		}
 
 		// And what?
-		if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))
+		if ((nResult == static_cast<UINT>(CERR_HOOKS_WAS_SET)) || (nResult == static_cast<UINT>(CERR_HOOKS_WAS_ALREADY_SET)))
 		{
 			mh_LastWnd = hFore;
 			lbRc = true;
 			goto wrap;
 		}
 		// Failed, remember this
-		CloseHandle(hProcess);
+		if (hProcess)
+		{
+			CloseHandle(hProcess);
+		}
 		mh_LastIgnoredWnd = hFore;
 		_ASSERTE(lbRc == false);
 	wrap:
 		CS.Unlock();
 		if (bNotified)
 		{
-			NotifyHookingStatus(0, NULL);
+			NotifyHookingStatus(0, nullptr);
 			LogHookingStatus(nForePID, L"CheckForeground finished");
 		}
 		return lbRc;
-	};
+	}
 
 public:
 	void OnHookedListChanged()
@@ -732,13 +753,12 @@ public:
 		// Если проводника в списке НЕ было, а сейчас появился...
 		// Проверить процесс шелла
 		CheckShellWindow();
-	};
+	}
 
 public:
-	int StartDefTermHooker(DWORD nPID, HANDLE hDefProcess = NULL)
+	int StartDefTermHooker(DWORD nPID, HANDLE hDefProcess = nullptr)
 	{
-		int iRc;
-		HANDLE hProcess = NULL;
+		HANDLE hProcess = nullptr;
 		DWORD nResult = 0, nErrCode = 0;
 		MSectionLockSimple CS;
 		CS.Lock(mcs);
@@ -755,9 +775,9 @@ public:
 		// Always store to m_Processed
 		{
 			ProcessInfo inf = {};
-			inf.hProcess = hProcess; // hProcess закрывать НЕ нужно, сохранен в массиве
+			inf.hProcess = hProcess; // no need to close hProcess, handle is stored in the array
 			inf.nPID = nPID;
-			inf.nHookTick = GetTickCount();
+			inf.nHookTick = std::chrono::steady_clock::now();
 			inf.nHookResult = STILL_ACTIVE;
 			m_Processed.push_back(inf);
 		}
@@ -766,7 +786,7 @@ public:
 		CS.Unlock();
 
 		// Do the job
-		iRc = StartDefTermHooker(nPID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
+		const int iRc = StartDefTermHooker(nPID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
 
 		return iRc;
 	}
@@ -778,18 +798,20 @@ private:
 			return -1;
 
 		int iRc = -1;
-		wchar_t szCmdLine[MAX_PATH*2];
+		wchar_t szCmdLine[MAX_PATH*2] = L"";
 		wchar_t szConTitle[32] = L"ConEmu";
-		LPCWSTR pszSrvExe = NULL;
-		int nBits;
+		LPCWSTR pszSrvExe = nullptr;
+		int nBits = 0;
 		PROCESS_INFORMATION pi = {};
-		STARTUPINFO si = {sizeof(si)};
+		STARTUPINFO si = {};
+		si.cb = sizeof(si);
 		BOOL bStarted = FALSE;
-		HANDLE hMutex = NULL;
+		HANDLE hMutex = nullptr;
 		wchar_t szMutexName[64];
 		DWORD nMutexCreated = 0;
 		wchar_t szInfo[120];
-		DWORD nWaitStartTick = (DWORD)-1, nWaitDelta = (DWORD)-1;
+		std::chrono::steady_clock::time_point nWaitStartTick{};
+		std::chrono::steady_clock::duration nWaitDelta{};
 
 		nErrCode = 0;
 
@@ -798,7 +820,7 @@ private:
 		nMutexCreated = hMutex ? GetLastError() : 0;
 
 		// If was not opened yet
-		if (hProcess == NULL)
+		if (hProcess == nullptr)
 		{
 			hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, nForePID);
 		}
@@ -819,7 +841,7 @@ private:
 
 		if (nMutexCreated == ERROR_ALREADY_EXISTS)
 		{
-			// Hooking was started from another process (most probably in agressive mode)
+			// Hooking was started from another process (most probably in aggressive mode)
 			iRc = 0;
 			nResult = CERR_HOOKS_WAS_ALREADY_SET;
 			swprintf_c(szInfo, L"Mutex already exists");
@@ -838,7 +860,7 @@ private:
 			pszSrvExe = L"ConEmuC64.exe";
 			break;
 		default:
-			pszSrvExe = NULL;
+			pszSrvExe = nullptr;
 		}
 		if (!pszSrvExe)
 		{
@@ -864,7 +886,7 @@ private:
 		si.dwFlags = STARTF_USESHOWWINDOW;
 		si.lpTitle = szConTitle;
 		LogHookingStatus(nForePID, szCmdLine);
-		bStarted = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+		bStarted = CreateProcess(nullptr, szCmdLine, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
 		if (!bStarted)
 		{
 			//DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!");
@@ -882,17 +904,17 @@ private:
 
 		// Waiting for result, to avoid multiple hooks processed (due to closed mutex)
 		// Within VisualStudio and others don't do INFINITE wait to avoid dead locks
-		nWaitStartTick = GetTickCount();
+		nWaitStartTick = std::chrono::steady_clock::now();
 		while (!mb_Termination)
 		{
 			if (WaitForSingleObject(pi.hProcess, 100) == WAIT_OBJECT_0)
 				break;
-			nWaitDelta = GetTickCount() - nWaitStartTick;
+			nWaitDelta = std::chrono::steady_clock::now() - nWaitStartTick;
 			if (!mb_ConEmuGui && (nWaitDelta >= DEF_TERM_INSTALL_TIMEOUT))
 				break;
 		}
 		if (!GetExitCodeProcess(pi.hProcess, &nResult))
-			nResult = (DWORD)-1;
+			nResult = static_cast<DWORD>(-1);
 		swprintf_c(szInfo, L"Service process PID=%u finished with code=%u", pi.dwProcessId, nResult);
 		LogHookingStatus(nForePID, szInfo);
 
@@ -928,11 +950,13 @@ protected:
 			return;
 		}
 
-		#ifdef _DEBUG
-		DWORD nDbgWait = mh_PostThread ? WaitForSingleObject(mh_PostThread,0) : WAIT_OBJECT_0;
-		DWORD nDbgExitCode = (DWORD)-1; if (mh_PostThread) GetExitCodeThread(mh_PostThread, &nDbgExitCode);
-		_ASSERTE(nDbgWait==WAIT_OBJECT_0);
-		#endif
+#ifdef _DEBUG
+		const DWORD nDbgWait = mh_PostThread ? WaitForSingleObject(mh_PostThread, 0) : WAIT_OBJECT_0;
+		DWORD nDbgExitCode = static_cast<DWORD>(-1);
+		if (mh_PostThread)
+			GetExitCodeThread(mh_PostThread, &nDbgExitCode);
+		_ASSERTE(nDbgWait == WAIT_OBJECT_0);
+#endif
 
 		if (mb_PostCreatedThread)
 		{
@@ -952,43 +976,43 @@ protected:
 
 		// Even if it is not a ConEmu.exe we need to start thread,
 		// aggressive mode may be turned on by user in any moment
-		// We need just slow down our thred as possible...
+		// We need just slow down our thread as possible...
 
-		// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
+		// The process takes time, to not block the main thread we start it in background
 		mb_PostCreatedThread = true;
 		DWORD  nWait = WAIT_FAILED;
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HANDLE hPostThread = apiCreateThread(PostCreatedThread, GetInterface(), &mn_PostThreadId, "DefTerm::PostCreatedThread");
 
 		if (hPostThread)
 		{
 			if (bWaitForReady)
 			{
-				// Wait for 30 seconds or infinite if bNoThreading specifed (used for ConEmu.exe /SetDefTerm /Exit)
-				DWORD nWaitTimeout = bNoThreading ? INFINITE : DEF_TERM_INSTALL_TIMEOUT;
+				// Wait for 30 seconds or infinite if bNoThreading specified (used for ConEmu.exe /SetDefTerm /Exit)
+				const DWORD nWaitTimeout = bNoThreading
+					? INFINITE
+					: LODWORD(std::chrono::duration_cast<std::chrono::milliseconds>(DEF_TERM_INSTALL_TIMEOUT).count());
 				// Do wait
-				SetCursor(LoadCursor(NULL, IDC_WAIT));
-				DWORD nStart = GetTickCount();
+				SetCursor(LoadCursor(nullptr, IDC_WAIT));
+				const auto nStart = std::chrono::steady_clock::now();
 				nWait = WaitForSingleObject(hPostThread, nWaitTimeout);
-				SetCursor(LoadCursor(NULL, IDC_ARROW));
-				DWORD nDuration = GetTickCount() - nStart;
+				SetCursor(LoadCursor(nullptr, IDC_ARROW));
+				const auto nDuration = std::chrono::steady_clock::now() - nStart;
 				if (nWait == WAIT_OBJECT_0)
 				{
 					CloseHandle(hPostThread);
 					return;
 				}
-				else
-				{
-					//_ASSERTE(nWait == WAIT_OBJECT_0);
-					DisplayLastError(L"PostCreatedThread was not finished in 30 seconds");
-					UNREFERENCED_PARAMETER(nDuration);
-				}
+				//_ASSERTE(nWait == WAIT_OBJECT_0);
+				DisplayLastError(L"PostCreatedThread was not finished in 30 seconds");
+				std::ignore = nDuration;
 			}
 			else
 			{
 				mh_PostThread = hPostThread;
 			}
 
-			ThreadHandle th = {hPostThread, mn_PostThreadId, GetCurrentThreadId()};
+			const ThreadHandle th = { hPostThread, mn_PostThreadId, GetCurrentThreadId() };
 			m_Threads.push_back(th);
 		}
 		else
@@ -997,20 +1021,20 @@ protected:
 			{
 				DisplayLastError(L"Failed to start PostCreatedThread");
 			}
-			_ASSERTE(hPostThread!=NULL);
+			_ASSERTE(hPostThread != nullptr);
 			mb_PostCreatedThread = false;
 		}
-	};
+	}
 
 protected:
 	virtual void PreCreateThread()
 	{
-	};
+	}
 
 protected:
 	virtual void PostCreateThreadFinished()
 	{
-	};
+	}
 
 protected:
 	// nPID = 0 when hooking is done (remove status bar notification)
@@ -1019,17 +1043,17 @@ protected:
 	{
 		// descendant must return true if status bar was changed
 		return false;
-	};
+	}
 public:
 	// Messages to be placed in log
 	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 	{
 		DEBUGSTRDEFTERM(sMessage);
-	};
+	}
 	virtual bool isLogging()
 	{
 		return false;
-	};
+	}
 
 protected:
 	virtual void AutoClearThreads()
@@ -1039,12 +1063,12 @@ protected:
 
 		// Clear finished threads
 		ClearThreads(false);
-	};
+	}
 
 protected:
 	virtual void ConhostLocker(bool bLock, bool& bWasLocked)
 	{
-	};
+	}
 
 protected:
 	void ClearProcessed(bool bForceAll)
@@ -1054,7 +1078,9 @@ protected:
 		for (INT_PTR i = m_Processed.size(); i--;)
 		{
 			bool bTerm = false;
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HANDLE hProcess = m_Processed[i].hProcess;
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HWND hWnd = m_Processed[i].hWnd;
 
 			if (bForceAll)
@@ -1070,7 +1096,7 @@ protected:
 			}
 			else if (hProcess)
 			{
-				DWORD nWait = WaitForSingleObject(hProcess, 0);
+				const DWORD nWait = WaitForSingleObject(hProcess, 0);
 				if (nWait == WAIT_OBJECT_0)
 				{
 					bTerm = true;
@@ -1088,14 +1114,14 @@ protected:
 		if (mh_LastWnd && (bForceAll || !IsWindow(mh_LastWnd)))
 		{
 			if (mh_LastIgnoredWnd == mh_LastWnd)
-				mh_LastIgnoredWnd = NULL;
-			mh_LastWnd = NULL;
+				mh_LastIgnoredWnd = nullptr;
+			mh_LastWnd = nullptr;
 		}
 		if (mh_LastIgnoredWnd && (bForceAll || !IsWindow(mh_LastIgnoredWnd)))
 		{
-			mh_LastIgnoredWnd = NULL;
+			mh_LastIgnoredWnd = nullptr;
 		}
-	};
+	}
 
 protected:
 	void ClearThreads(bool bForceTerminate)
@@ -1127,16 +1153,16 @@ protected:
 
 			m_Threads.erase(i);
 		}
-	};
+	}
 
 protected:
 	static DWORD WINAPI PostCreatedThread(LPVOID lpParameter)
 	{
-		CDefTermBase *pTerm = (CDefTermBase*)lpParameter;
+		CDefTermBase *pTerm = static_cast<CDefTermBase*>(lpParameter);
 
-		if (pTerm->mb_ConEmuGui || pTerm->m_Opt.bAgressive)
+		if (pTerm->mb_ConEmuGui || pTerm->m_Opt.bAggressive)
 		{
-			// Проверит Shell (Taskbar) и активное окно (GetForegroundWindow)
+			// Tests Shell (Taskbar) and active window (GetForegroundWindow)
 			pTerm->CheckShellWindow();
 		}
 
@@ -1146,28 +1172,29 @@ protected:
 		pTerm->mb_PostCreatedThread = false;
 
 		return 0;
-	};
+	}
 
 protected:
-	// Чтобы избежать возможного зависания ConEmu.exe в процессе установки
-	// хука в процесс шелла (explorer.exe) при старте ConEmu и загрузке ConEmuHk
+	// To avoid possible ConEmu.exe hang in hook installation into shell process (explorer.exe)
+	// during ConEmu startup and ConEmuHk loading
 	static DWORD WINAPI PostCheckThread(LPVOID lpParameter)
 	{
 		bool bRc = false;
-		ThreadArg* pArg = (ThreadArg*)lpParameter;
+		ThreadArg* pArg = static_cast<ThreadArg*>(lpParameter);
 		if (pArg && !pArg->pTerm->mb_Termination)
 		{
 			bRc = pArg->pTerm->CheckForeground(pArg->hFore, pArg->nForePID, false, !pArg->pTerm->mb_ExplorerHookAllowed);
 			free(pArg);
 		}
 		return bRc;
-	};
+	}
 
 public:
 	// Is exe-name or application window class name in user-defined list?
-	bool IsAppMonitored(LPCWSTR szExeFile)
+	bool IsAppMonitored(LPCWSTR szExeFile) const
 	{
 		bool bMonitored = false;
+		// ReSharper disable once CppLocalVariableMayBeConst
 		LPCWSTR pszMonitored = m_Opt.pszzHookedApps;
 
 		if (pszMonitored)
@@ -1181,12 +1208,12 @@ public:
 					bMonitored = true;
 					break;
 				}
-				psz += lstrlen(psz)+1;
+				psz += lstrlen(psz) + 1;
 			}
 		}
 
 		return bMonitored;
-	};
+	}
 
 protected:
 	// Поставить хук в процесс шелла (explorer.exe)
@@ -1196,10 +1223,14 @@ protected:
 			return false;
 
 		bool bHooked = false;
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hFore = GetForegroundWindow();
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hShell = GetShellWindow();
-		HWND hTrayWnd = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HWND hTrayWnd = FindWindowEx(nullptr, nullptr, L"Shell_TrayWnd", nullptr);
 		DWORD nDesktopPID = 0, nShellPID = 0, nTrayPID = 0, nForePID = 0;
 
 		if (!bHooked && hShell)
@@ -1241,5 +1272,5 @@ protected:
 		}
 
 		return bHooked;
-	};
+	}
 };

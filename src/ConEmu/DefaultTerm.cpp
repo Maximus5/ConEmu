@@ -79,7 +79,7 @@ bool CDefaultTerminal::IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA)
 	return bCurState;
 }
 
-void CDefaultTerminal::ApplyAndSave(bool bApply, bool bSaveToReg)
+void CDefaultTerminal::ApplyAndSave(const bool bApply, const bool bSaveToReg)
 {
 	// Get new values from gpSet
 	if (bApply)
@@ -87,7 +87,7 @@ void CDefaultTerminal::ApplyAndSave(bool bApply, bool bSaveToReg)
 
 	// And save to [HKCU\Software\ConEmu]
 	if (bSaveToReg)
-		m_Opt.Serialize(true);
+		m_Opt.Serialize(CEDefTermOpt::SerializeMode::Save);
 }
 
 void CDefaultTerminal::CheckRegisterOsStartup()
@@ -171,7 +171,7 @@ void CDefaultTerminal::PreCreateThread()
 	CheckRegisterOsStartup();
 
 	// Write to [HKCU\Software\ConEmu]
-	m_Opt.Serialize(true);
+	m_Opt.Serialize(CEDefTermOpt::SerializeMode::Save);
 }
 
 void CDefaultTerminal::PostCreateThreadFinished()
@@ -197,7 +197,7 @@ void CDefaultTerminal::ReloadSettings()
 {
 	m_Opt.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
 
-	m_Opt.bAggressive = gpSet->isRegisterAgressive;
+	m_Opt.bAggressive = gpSet->isRegisterAggressive;
 	m_Opt.bNoInjects = gpSet->isDefaultTerminalNoInjects;
 	m_Opt.bNewWindow = gpSet->isDefaultTerminalNewWindow;
 	m_Opt.bDebugLog  = gpSet->isDefaultTerminalDebugLog;

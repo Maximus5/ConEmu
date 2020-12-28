@@ -54,11 +54,12 @@ LRESULT CSetPgDefTerm::OnInitDialog(HWND hDlg, bool abInitial)
 	CheckDlgButton(hDlg, cbDefaultTerminalStartup, bRegister);
 	CheckDlgButton(hDlg, cbDefaultTerminalTSA, bLeaveInTSA);
 	EnableWindow(GetDlgItem(hDlg, cbDefaultTerminalTSA), bRegister);
-	CheckDlgButton(hDlg, cbDefTermAgressive, gpSet->isRegisterAgressive);
+	CheckDlgButton(hDlg, cbDefTermAgressive, gpSet->isRegisterAggressive);
 	CheckDlgButton(hDlg, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
 	CheckDlgButton(hDlg, cbDefaultTerminalUseExisting, !gpSet->isDefaultTerminalNewWindow);
 	CheckDlgButton(hDlg, cbDefaultTerminalDebugLog, gpSet->isDefaultTerminalDebugLog);
-	CheckRadioButton(hDlg, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
+	CheckRadioButton(hDlg, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever,
+		rbDefaultTerminalConfAuto + static_cast<int>(gpSet->nDefaultTerminalConfirmClose));
 	wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
 	_ASSERTE(pszApps!=nullptr);
 	SetDlgItemText(hDlg, tDefaultTerminal, pszApps);

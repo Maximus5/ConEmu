@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/clink.h"
 #include "../common/CEHandle.h"
-#include "../common/MFileLogEx.h"
+#include "../common/DefTermBase.h"
 #include "../common/Monitors.h"
 #include "../common/WRegistry.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
@@ -650,11 +650,11 @@ void Settings::InitSettings()
 	isSetDefaultTerminal = false;
 	isRegisterOnOsStartup = false;
 	isRegisterOnOsStartupTSA = false;
-	isRegisterAgressive = true;
+	isRegisterAggressive = true;
 	isDefaultTerminalNoInjects = false;
 	isDefaultTerminalNewWindow = false;
 	isDefaultTerminalDebugLog = false;
-	nDefaultTerminalConfirmClose = 1 /* Always */;
+	nDefaultTerminalConfirmClose = TerminalConfirmClose::Always;
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
 	isProcessAnsi = true;
@@ -2413,7 +2413,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 	if (lbOpened)
 	{
-		// Check, if user'd saved font settings before
+		BYTE nVal;
+
+		// Check, if user has saved font settings before
 		{
 			DWORD dw = 0; bool b = false;
 			// If any of following options were saved before - don't change font size options
@@ -2480,11 +2482,18 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
 		reg->Load(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Load(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
-		reg->Load(L"DefaultTerminalAgressive", isRegisterAgressive);
+		// ReSharper disable once StringLiteralTypo
+		reg->Load(L"DefaultTerminalAgressive", isRegisterAggressive);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Load(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Load(L"DefaultTerminalDebugLog", isDefaultTerminalDebugLog);
-		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
+		// ReSharper disable once CppJoinDeclarationAndAssignment
+		nVal = static_cast<BYTE>(nDefaultTerminalConfirmClose);
+		if (reg->Load(L"DefaultTerminalConfirm", nVal))
+		{
+			nDefaultTerminalConfirmClose = static_cast<TerminalConfirmClose>(nVal);
+		}
+
 		{
 		wchar_t* pszApps = nullptr;
 		reg->Load(L"DefaultTerminalApps", &pszApps);
@@ -2644,7 +2653,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		//reg->Load(L"FarSyncSize", FarSyncSize);
 
-		BYTE nVal = ComSpec.csType;
+		nVal = ComSpec.csType;
 		reg->Load(L"ComSpec.Type", nVal);
 		if (nVal <= cst_Last) ComSpec.csType = (ComSpecType)nVal;
 		//
@@ -3602,11 +3611,11 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
 		reg->Save(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Save(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
-		reg->Save(L"DefaultTerminalAgressive", isRegisterAgressive);
+		reg->Save(L"DefaultTerminalAgressive", isRegisterAggressive);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Save(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Save(L"DefaultTerminalDebugLog", isDefaultTerminalDebugLog);
-		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
+		reg->Save(L"DefaultTerminalConfirm", static_cast<BYTE>(nDefaultTerminalConfirmClose));
 		{
 		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
 		reg->Save(L"DefaultTerminalApps", pszApps);

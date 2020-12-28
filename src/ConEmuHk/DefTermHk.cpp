@@ -285,7 +285,7 @@ void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= NULL*/)
 {
 	if (!gpDefTerm || !asMessage || !*asMessage)
 		return;
-	INT_PTR iLen = lstrlenA(asMessage);
+	const auto iLen = lstrlenA(asMessage);
 	CEStr lsMsg;
 	MultiByteToWideChar(CP_ACP, 0, asMessage, iLen, lsMsg.GetBuffer(iLen), iLen);
 	DefTermLogString(lsMsg.ms_Val, asLabel);
@@ -400,10 +400,10 @@ bool CDefTermHk::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
 
 void CDefTermHk::PostCreateThreadFinished()
 {
-	// Запустить цикл проверки, необходимый для Agressive mode
+	// Start checking loop, required for Aggressive mode
 	DWORD dwWait = WAIT_TIMEOUT;
 	DWORD nForePID = 0;
-	HWND  hFore = NULL;
+	HWND  hFore = nullptr;
 	while ((dwWait = WaitForSingleObject(mh_StopEvent, FOREGROUND_CHECK_DELAY)) == WAIT_TIMEOUT)
 	{
 		// If non-aggressive - don't do anything here...
@@ -750,14 +750,14 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 		_wcscat_c(psz, cchMax, L" /REUSE");
 
 	// Confirmations
-	if (m_Opt.nDefaultTerminalConfirmClose == 1)
+	if (m_Opt.nDefaultTerminalConfirmClose == TerminalConfirmClose::Always)
 	{
 		if (!bGuiArgs)
 			_wcscat_c(psz, cchMax, L" /CONFIRM");
 		else
 			wcscat_c(szNewConSw, L"c");
 	}
-	else if (m_Opt.nDefaultTerminalConfirmClose == 2)
+	else if (m_Opt.nDefaultTerminalConfirmClose == TerminalConfirmClose::Never)
 	{
 		if (!bGuiArgs)
 			_wcscat_c(psz, cchMax, L" /NOCONFIRM");

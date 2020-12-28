@@ -4403,7 +4403,7 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbDefaultTerminalTSA:
 			gpSet->isRegisterOnOsStartupTSA = (uCheck != BST_UNCHECKED); break;
 		case cbDefTermAgressive:
-			gpSet->isRegisterAgressive = (uCheck != BST_UNCHECKED); break;
+			gpSet->isRegisterAggressive = (uCheck != BST_UNCHECKED); break;
 		}
 
 		if (hDlg)
@@ -4431,8 +4431,9 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 	case rbDefaultTerminalConfAlways:
 	case rbDefaultTerminalConfNever:
 		gpSet->nDefaultTerminalConfirmClose =
-			isOptChecked(rbDefaultTerminalConfAuto, CB, uCheck) ? 0 :
-			isOptChecked(rbDefaultTerminalConfAlways, CB, uCheck) ? 1 : 2;
+			isOptChecked(rbDefaultTerminalConfAuto, CB, uCheck) ? TerminalConfirmClose::Auto
+			: isOptChecked(rbDefaultTerminalConfAlways, CB, uCheck) ? TerminalConfirmClose::Always
+			: TerminalConfirmClose::Never;
 		break;
 
 	#ifdef _DEBUG
