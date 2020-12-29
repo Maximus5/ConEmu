@@ -42,7 +42,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "Inside.h"
-#include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "VConRelease.h"
@@ -51,25 +50,50 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define EMID_TIPOFDAY 41536
 
+namespace {
+
+bool CheckClassName(HWND h, LPCWSTR pszNeed)
+{
+	wchar_t szClass[128];
+	if (!GetClassName(h, szClass, countof(szClass)))
+		return false;
+
+	const int nCmp = lstrcmp(szClass, pszNeed);
+
+	return (nCmp == 0);
+}
+
+HWND FindTopWindow(HWND hParent, LPCWSTR sClass)
+{
+	HWND hLast = nullptr;
+	HWND hFind = nullptr;
+	int Coord = 99999;
+	while ((hFind = FindWindowEx(hParent, hFind, sClass, nullptr)) != nullptr)
+	{
+		RECT rc; GetWindowRect(hFind, &rc);
+		if ((hLast == nullptr)
+			|| (rc.top < Coord))
+		{
+			Coord = rc.top;
+			hLast = hFind;
+		}
+	}
+	return hLast;
+}
+
+struct EnumFindParentArg
+{
+	DWORD nPID;
+	HWND  hParentRoot;
+};
+
+}
 
 CConEmuInside::CConEmuInside()
 {
-	m_InsideIntegration = ii_None;
-	mb_InsideIntegrationAdmin = false;
-	mn_InsideParentPID = 0;
-	mb_InsideSynchronizeCurDir = false;
-	ms_InsideSynchronizeCurDir = nullptr;
-	mb_InsidePaneWasForced = false;
-	mh_InsideParentWND = mh_InitialRoot = mh_InsideParentRel = nullptr;
-	mh_InsideParentPath = mh_InsideParentCD = nullptr; ms_InsideParentPath[0] = 0;
-	mb_TipPaneWasShown = false;
-	mh_TipPaneWndPost = nullptr;
-	//mh_InsideSysMenu = nullptr;
-	ZeroStruct(mrc_InsideParent);
-	ZeroStruct(mrc_InsideParentRel);
-	ZeroStruct(m_InsideParentInfo);
 }
 
+// static
 bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncDirCmdFmt, DWORD nParentPID, HWND hParentWnd)
 {
 	CConEmuInside* pInside = gpConEmu->mp_Inside;
@@ -84,7 +108,7 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 	}
 
 	pInside->mn_InsideParentPID = nParentPID;
-	pInside->SetInsideParentWND(hParentWnd);
+	pInside->SetInsideParentWnd(hParentWnd);
 
 	pInside->m_InsideIntegration = (hParentWnd == nullptr) ? ii_Auto : ii_Simple;
 
@@ -101,11 +125,11 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 	if (bSyncDir)
 	{
 		pInside->mb_InsideSynchronizeCurDir = true;
-		pInside->ms_InsideSynchronizeCurDir = lstrdup(pszSyncDirCmdFmt); // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+		pInside->ms_InsideSynchronizeCurDir.Set(pszSyncDirCmdFmt); // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 	}
 	else
 	{
-		_ASSERTE(pInside->ms_InsideSynchronizeCurDir==nullptr);
+		_ASSERTE(pInside->ms_InsideSynchronizeCurDir.IsEmpty());
 		pInside->mb_InsideSynchronizeCurDir = false;
 	}
 
@@ -120,19 +144,19 @@ CConEmuInside::~CConEmuInside()
 		PostMessage(mh_TipPaneWndPost, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0);
 	}
 
-	SafeFree(ms_InsideSynchronizeCurDir);
+	ms_InsideSynchronizeCurDir.Release();
 }
 
 BOOL CConEmuInside::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
 {
-	EnumFindParentArg* pFind = (EnumFindParentArg*)lParam;
+	EnumFindParentArg* pFind = reinterpret_cast<EnumFindParentArg*>(lParam);
 	DWORD nPID = 0;
 	if (IsWindowVisible(hwnd)
 		&& GetWindowThreadProcessId(hwnd, &nPID)
 		&& (nPID == pFind->nPID))
 	{
-		DWORD nNeedStyles = WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX;
-		DWORD nStyles = GetWindowLong(hwnd, GWL_STYLE);
+		const DWORD nNeedStyles = WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+		const DWORD nStyles = GetWindowLong(hwnd, GWL_STYLE);
 		if ((nStyles & nNeedStyles) == nNeedStyles)
 		{
 			// Found, stop enumeration
@@ -145,7 +169,8 @@ BOOL CConEmuInside::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-HWND  CConEmuInside::InsideFindConEmu(HWND hFrom)
+// static
+HWND CConEmuInside::InsideFindConEmu(HWND hFrom)
 {
 	wchar_t szClass[128];
 	HWND hChild = nullptr, hNext = nullptr;
@@ -191,13 +216,14 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 			GetClassName(hFrom, szParent, countof(szParent));
 			if (lstrcmp(szParent, L"CtrlNotifySink") == 0)
 			{
+				// ReSharper disable once CppLocalVariableMayBeConst
 				HWND hParent = GetParent(hFrom);
 				if (hParent)
 				{
 					GetClassName(hParent, szRoot, countof(szRoot));
 					_ASSERTE(lstrcmp(szRoot, L"DirectUIHWND") == 0);
 
-					SetInsideParentWND(hParent);
+					SetInsideParentWnd(hParent);
 					mh_InsideParentRel = hFrom;
 					m_InsideIntegration = ii_Explorer;
 
@@ -213,7 +239,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 		else if ((gnOsVer < 0x600) && (lstrcmp(szClass, L"BaseBar") == 0))
 		{
 			RECT rcBar = {}; GetWindowRect(hChild, &rcBar);
-			MapWindowPoints(nullptr, hFrom, (LPPOINT)&rcBar, 2);
+			MapWindowPoints(nullptr, hFrom, reinterpret_cast<LPPOINT>(&rcBar), 2);
 			RECT rcParent = {}; GetClientRect(hFrom, &rcParent);
 			if ((-10 <= (rcBar.right - rcParent.right))
 				&& ((rcBar.right - rcParent.right) <= 10))
@@ -228,6 +254,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 			GetClassName(hFrom, szParent, countof(szParent));
 			if (lstrcmp(szParent, L"Breadcrumb Parent") == 0)
 			{
+				// ReSharper disable once CppLocalVariableMayBeConst
 				HWND hParent = GetParent(hFrom);
 				if (hParent)
 				{
@@ -263,8 +290,9 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 				_ASSERTE(mh_InsideParentRel && L"ReBar must be found on XP & 2k3");
 				return true; // закончить поиск
 			}
-			SetInsideParentWND(hXpPlace);
+			SetInsideParentWnd(hXpPlace);
 			_ASSERTE(mh_InsideParentWND!=nullptr);
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HWND hRoot = GetParentRoot();
 			_ASSERTE(mh_InsideParentPath==nullptr || mh_InsideParentPath==hRoot);
 			mh_InsideParentPath = hRoot;
@@ -276,7 +304,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 	return false;
 }
 
-void CConEmuInside::SetInsideParentWND(HWND hParent)
+void CConEmuInside::SetInsideParentWnd(HWND hParent)
 {
 	mh_InsideParentWND = hParent;
 
@@ -289,13 +317,14 @@ void CConEmuInside::SetInsideParentWND(HWND hParent)
 		ZeroStruct(m_InsideParentInfo);
 
 		// Store basic information about parent process (reporting purposes)
-		DWORD nPID = 0;
-		if (GetWindowThreadProcessId(hParent, &nPID))
+		DWORD nPid = 0;
+		if (GetWindowThreadProcessId(hParent, &nPid))
 		{
-			m_InsideParentInfo.ParentPID = nPID;
+			mn_InsideParentPID = nPid;
+			m_InsideParentInfo.ParentPID = nPid;
 
 			PROCESSENTRY32W info = {};
-			if (GetProcessInfo(nPID, info))
+			if (GetProcessInfo(nPid, info))
 			{
 				m_InsideParentInfo.ParentParentPID = info.th32ParentProcessID;
 				wcscpy_c(m_InsideParentInfo.ExeName, info.szExeFile);
@@ -306,16 +335,26 @@ void CConEmuInside::SetInsideParentWND(HWND hParent)
 	}
 }
 
-bool CConEmuInside::isInsideWndSet()
+bool CConEmuInside::IsInsideWndSet() const
 {
 	if (!this || !mh_InsideParentWND || (mh_InsideParentWND == INSIDE_PARENT_NOT_FOUND))
 		return false;
 	return true;
 }
 
-bool CConEmuInside::isParentProcess(HWND hParent)
+bool CConEmuInside::IsSynchronizeCurDir() const
 {
-	if (!isInsideWndSet())
+	return mb_InsideSynchronizeCurDir;
+}
+
+void CConEmuInside::SetSynchronizeCurDir(const bool value)
+{
+	mb_InsideSynchronizeCurDir = value;
+}
+
+bool CConEmuInside::IsParentProcess(HWND hParent) const
+{
+	if (!IsInsideWndSet())
 	{
 		return false;
 	}
@@ -329,9 +368,9 @@ bool CConEmuInside::isParentProcess(HWND hParent)
 	return (nPID == m_InsideParentInfo.ParentPID);
 }
 
-HWND CConEmuInside::GetParentRoot()
+HWND CConEmuInside::GetParentRoot() const
 {
-	if (!isInsideWndSet())
+	if (!IsInsideWndSet())
 	{
 		return nullptr;
 	}
@@ -340,6 +379,7 @@ HWND CConEmuInside::GetParentRoot()
 	HWND hRootParent = mh_InsideParentWND;
 	while ((GetWindowLong(hRootParent, GWL_STYLE) & WS_CHILD) != 0)
 	{
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hNext = GetParent(hRootParent);
 		if (!hNext)
 			break;
@@ -347,6 +387,43 @@ HWND CConEmuInside::GetParentRoot()
 	}
 
 	return hRootParent;
+}
+
+HWND CConEmuInside::GetParentWnd() const
+{
+	if (!IsInsideWndSet())
+		return nullptr;
+	return mh_InsideParentWND;
+}
+
+CConEmuInside::InsideIntegration CConEmuInside::GetInsideIntegration() const
+{
+	return m_InsideIntegration;
+}
+
+const CConEmuInside::InsideParentInfo& CConEmuInside::GetParentInfo() const
+{
+	return m_InsideParentInfo;
+}
+
+bool CConEmuInside::IsInsideIntegrationAdmin() const
+{
+	return mb_InsideIntegrationAdmin;
+}
+
+void CConEmuInside::SetInsideIntegrationAdmin(const bool value)
+{
+	mb_InsideIntegrationAdmin = value;
+}
+
+const wchar_t* CConEmuInside::GetInsideSynchronizeCurDir() const
+{
+	return ms_InsideSynchronizeCurDir.c_str(L"");
+}
+
+void CConEmuInside::SetInsideSynchronizeCurDir(const wchar_t* value)
+{
+	ms_InsideSynchronizeCurDir.Set(value);
 }
 
 // Вызывается для инициализации из Settings::LoadSettings()
@@ -380,11 +457,11 @@ HWND CConEmuInside::InsideFindParent()
 			if (m_InsideIntegration == ii_Simple)
 			{
 				DisplayLastError(L"Specified window not found");
-				SetInsideParentWND(nullptr);
+				SetInsideParentWnd(nullptr);
 				goto wrap;
 			}
 			_ASSERTE(IsWindow(mh_InsideParentWND));
-			SetInsideParentWND(mh_InsideParentRel = nullptr);
+			SetInsideParentWnd(mh_InsideParentRel = nullptr);
 		}
 	}
 
@@ -398,7 +475,7 @@ HWND CConEmuInside::InsideFindParent()
 		{
 			DisplayLastError(L"Invalid parent process specified");
 			m_InsideIntegration = ii_None;
-			SetInsideParentWND(nullptr);
+			SetInsideParentWnd(nullptr);
 			goto wrap;
 		}
 
@@ -411,7 +488,7 @@ HWND CConEmuInside::InsideFindParent()
 		{
 			DisplayLastError(L"GetProcessInfo(GetCurrentProcessId()) failed");
 			m_InsideIntegration = ii_None;
-			SetInsideParentWND(nullptr);
+			SetInsideParentWnd(nullptr);
 			goto wrap;
 		}
 
@@ -428,12 +505,12 @@ HWND CConEmuInside::InsideFindParent()
 		const int nBtn = MsgBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 		if (nBtn != IDYES)
 		{
-			SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
+			SetInsideParentWnd(INSIDE_PARENT_NOT_FOUND);
 			return mh_InsideParentWND; // Close!
 		}
 		// Continue in normal mode
 		m_InsideIntegration = ii_None;
-		SetInsideParentWND(nullptr);
+		SetInsideParentWnd(nullptr);
 		goto wrap;
 	}
 
@@ -462,7 +539,7 @@ HWND CConEmuInside::InsideFindParent()
 		}
 		gpConEmu->RunSingleInstance(hExistConEmu, (pszCmd && *pszCmd) ? (pszCmd) : nullptr);
 
-		SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
+		SetInsideParentWnd(INSIDE_PARENT_NOT_FOUND);
 		return mh_InsideParentWND; // Close!
 	}
 
@@ -473,7 +550,7 @@ HWND CConEmuInside::InsideFindParent()
 	InsideFindShellView(find.hParentRoot);
 
 RepeatCheck:
-	if (!isInsideWndSet() || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
+	if (!IsInsideWndSet() || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
 	{
 		wchar_t szAddMsg[128] = L"", szMsg[1024];
 		if (bFirstStep)
@@ -491,16 +568,16 @@ RepeatCheck:
 
 		if (nBtn != IDYES)
 		{
-			SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
+			SetInsideParentWnd(INSIDE_PARENT_NOT_FOUND);
 			return mh_InsideParentWND; // Close!
 		}
 		m_InsideIntegration = ii_None;
-		SetInsideParentWND(nullptr);
+		SetInsideParentWnd(nullptr);
 		goto wrap;
 	}
 
 wrap:
-	if (!isInsideWndSet())
+	if (!IsInsideWndSet())
 	{
 		m_InsideIntegration = ii_None;
 	}
@@ -604,7 +681,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 	if (nBtn == IDYES)
 	{
 		// First check
-		SetInsideParentWND(nullptr);
+		SetInsideParentWnd(nullptr);
 		m_InsideIntegration = ii_Auto;
 		InsideFindShellView(mh_InitialRoot);
 		if (mh_InsideParentWND && mh_InsideParentRel)
@@ -614,7 +691,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		}
 		// When not found - delay and repeat
 		Sleep(500);
-		SetInsideParentWND(nullptr);
+		SetInsideParentWnd(nullptr);
 		m_InsideIntegration = ii_Auto;
 		InsideFindShellView(mh_InitialRoot);
 		if (mh_InsideParentWND && mh_InsideParentRel)
@@ -636,7 +713,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			lSendRc = SendMessageTimeout(mh_TipPaneWndPost, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
 			// Wait and check again
 			Sleep(500);
-			SetInsideParentWND(nullptr);
+			SetInsideParentWnd(nullptr);
 			m_InsideIntegration = ii_Auto;
 			InsideFindShellView(mh_InitialRoot);
 			if (mh_InsideParentWND && mh_InsideParentRel)
@@ -657,36 +734,8 @@ wrap:
 	return bRepeat;
 }
 
-static bool CheckClassName(HWND h, LPCWSTR pszNeed)
-{
-	wchar_t szClass[128];
-	if (!GetClassName(h, szClass, countof(szClass)))
-		return false;
-
-	const int nCmp = lstrcmp(szClass, pszNeed);
-
-	return (nCmp == 0);
-}
-
-static HWND FindTopWindow(HWND hParent, LPCWSTR sClass)
-{
-	HWND hLast = nullptr;
-	HWND hFind = nullptr;
-	int Coord = 99999;
-	while ((hFind = FindWindowEx(hParent, hFind, sClass, nullptr)) != nullptr)
-	{
-		RECT rc; GetWindowRect(hFind, &rc);
-		if ((hLast == nullptr)
-			|| (rc.top < Coord))
-		{
-			Coord = rc.top;
-			hLast = hFind;
-		}
-	}
-	return hLast;
-}
-
 // pvkKeys - 0-terminated VKKeys array
+// static
 bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 {
 	bool bSent = false;
@@ -700,14 +749,17 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 		return false;
 	}
 
-	// Только для XP
+	// Only for Windows XP
 	_ASSERTE(gnOsVer < 0x600);
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hWorker1 = GetDlgItem(hWnd, 0xA005);
 	if (!CheckClassName(hWorker1, L"WorkerW"))
 		return false;
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hReBar1 = GetDlgItem(hWorker1, 0xA005);
 	if (!CheckClassName(hReBar1, L"ReBarWindow32"))
 		return false;
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hMenuBar = FindTopWindow(hReBar1, L"ToolbarWindow32");
 	if (!hMenuBar)
 		return false;
@@ -719,10 +771,12 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 	while (pvkKeys[k])
 	{
 		// Prep send msg values
-		UINT nMsg1 = (pvkKeys[k] == VK_F10) ? WM_SYSKEYDOWN : WM_KEYDOWN;
+		const UINT nMsg1 = (pvkKeys[k] == VK_F10) ? WM_SYSKEYDOWN : WM_KEYDOWN;
+		// ReSharper disable once CppDeclaratorNeverUsed
 		DEBUGTEST(UINT nMsg2 = (pvkKeys[k] == VK_F10) ? WM_SYSKEYUP : WM_KEYUP);
-		UINT vkScan = MapVirtualKey(pvkKeys[k], 0/*MAPVK_VK_TO_VSC*/);
-		LPARAM lParam1 = 0x00000001 | (vkScan << 16);
+		const UINT vkScan = MapVirtualKey(pvkKeys[k], 0/*MAPVK_VK_TO_VSC*/);
+		const LPARAM lParam1 = 0x00000001 | (vkScan << 16);
+		// ReSharper disable once CppDeclaratorNeverUsed
 		DEBUGTEST(LPARAM lParam2 = 0xC0000001 | (vkScan << 16));
 
 		// Post KeyDown&KeyUp
@@ -765,7 +819,7 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 	// SendMessageTimeout failed?
 	_ASSERTE(bSent);
 
-	UNREFERENCED_PARAMETER(nErrCode);
+	std::ignore = nErrCode;
 
 	return bSent;
 }
@@ -790,7 +844,7 @@ void CConEmuInside::InsideUpdateDir()
 	{
 		wchar_t szCurText[512] = {};
 		DWORD_PTR lRc = 0;
-		if (SendMessageTimeout(mh_InsideParentPath, WM_GETTEXT, countof(szCurText), (LPARAM)szCurText, SMTO_ABORTIFHUNG|SMTO_NORMAL, 300, &lRc))
+		if (SendMessageTimeout(mh_InsideParentPath, WM_GETTEXT, countof(szCurText), reinterpret_cast<LPARAM>(szCurText), SMTO_ABORTIFHUNG|SMTO_NORMAL, 300, &lRc))
 		{
 			if (gnOsVer < 0x600)
 			{
@@ -820,10 +874,10 @@ void CConEmuInside::InsideUpdateDir()
 			// Если успешно - сравниваем с ms_InsideParentPath
 			if (pszPath && *pszPath && (lstrcmpi(ms_InsideParentPath, pszPath) != 0))
 			{
-				int nLen = lstrlen(pszPath);
-				if (nLen >= (int)countof(ms_InsideParentPath))
+				const int nLen = lstrlen(pszPath);
+				if (nLen >= static_cast<int>(countof(ms_InsideParentPath)))
 				{
-					_ASSERTE((nLen<countof(ms_InsideParentPath)) && "Too long path?");
+					_ASSERTE((nLen < static_cast<int>(countof(ms_InsideParentPath))) && "Too long path?");
 				}
 				else //if (VCon->RCon())
 				{
@@ -839,7 +893,7 @@ void CConEmuInside::InsideUpdateDir()
 
 void CConEmuInside::InsideUpdatePlacement()
 {
-	if (!isInsideWndSet() || !IsWindow(mh_InsideParentWND))
+	if (!IsInsideWndSet() || !IsWindow(mh_InsideParentWND))
 		return;
 
 	if ((m_InsideIntegration != ii_Explorer) && (m_InsideIntegration != ii_Simple))
@@ -853,6 +907,7 @@ void CConEmuInside::InsideUpdatePlacement()
 		bool bFound = false;
 		while (((hChild = FindWindowEx(mh_InsideParentWND, hChild, nullptr, nullptr)) != nullptr))
 		{
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HWND hView = FindWindowEx(hChild, nullptr, L"SHELLDLL_DefView", nullptr);
 			if (hView && IsWindowVisible(hView))
 			{
@@ -866,20 +921,21 @@ void CConEmuInside::InsideUpdatePlacement()
 			return;
 	}
 
-	if (!isParentIconic())
+	if (!IsParentIconic())
 	{
 		RECT rcParent = {}, rcRelative = {};
 		GetClientRect(mh_InsideParentWND, &rcParent);
 		if (m_InsideIntegration != ii_Simple)
 		{
 			GetWindowRect(mh_InsideParentRel, &rcRelative);
-			MapWindowPoints(nullptr, mh_InsideParentWND, (LPPOINT)&rcRelative, 2);
+			MapWindowPoints(nullptr, mh_InsideParentWND, reinterpret_cast<LPPOINT>(&rcRelative), 2);
 		}
 
-		if (memcmp(&mrc_InsideParent, &rcParent, sizeof(rcParent))
-			|| ((m_InsideIntegration != ii_Simple) && memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative))))
+		if (memcmp(&mrc_InsideParent, &rcParent, sizeof(rcParent)) != 0
+			|| ((m_InsideIntegration != ii_Simple)
+				&& memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative)) != 0))
 		{
-			// Рассчитать
+			// Evaluate
 			RECT rcWnd = {}; // GetDefaultRect();
 			if (GetInsideRect(&rcWnd))
 			{
@@ -894,7 +950,7 @@ void CConEmuInside::InsideUpdatePlacement()
 	}
 }
 
-bool CConEmuInside::GetInsideRect(RECT* prWnd)
+bool CConEmuInside::GetInsideRect(RECT* prWnd) const
 {
 	RECT rcWnd = {};
 
@@ -904,7 +960,7 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 		return false;
 	}
 
-	if (isParentIconic())
+	if (IsParentIconic())
 	{
 		return false;
 	}
@@ -919,7 +975,7 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 	{
 		RECT rcChild = {};
 		GetWindowRect(mh_InsideParentRel, &rcChild);
-		MapWindowPoints(nullptr, mh_InsideParentWND, (LPPOINT)&rcChild, 2);
+		MapWindowPoints(nullptr, mh_InsideParentWND, reinterpret_cast<LPPOINT>(&rcChild), 2);
 		IntersectRect(&rcRelative, &rcParent, &rcChild);
 
 		// WinXP & Win2k3
@@ -958,9 +1014,10 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 	return true;
 }
 
-bool CConEmuInside::isParentIconic()
+bool CConEmuInside::IsParentIconic() const
 {
 	BOOL bIconic;
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hParent = GetParentRoot();
 	if (hParent)
 		bIconic = ::IsIconic(hParent);
@@ -973,37 +1030,42 @@ bool CConEmuInside::isParentIconic()
 
 // When parent is minimized, it may force our window to be shrinked
 // due to auto-resize its contents...
+// static
 bool CConEmuInside::isSelfIconic()
 {
 	RECT rcOur = {};
-	WINDOWPLACEMENT wpl = {sizeof(wpl)};
+	WINDOWPLACEMENT wpl = {};
+	wpl.length = sizeof(wpl);
 	GetWindowRect(ghWnd, &rcOur);
 	GetWindowPlacement(ghWnd, &wpl);
-	int nMinWidth = 32, nMinHeight = 32;
+	const int nMinWidth = 32;
+	const int nMinHeight = 32;
 	if ((RectWidth(rcOur) < nMinWidth) || (RectHeight(rcOur) < nMinHeight))
 		return true;
 	return false;
 }
 
-bool CConEmuInside::inMinimizing(WINDOWPOS *p /*= nullptr*/)
+bool CConEmuInside::IsInMinimizing(WINDOWPOS *p /*= nullptr*/) const
 {
-	if (isParentIconic())
+	if (IsParentIconic())
 		return true;
 	return false;
 }
 
-HWND CConEmuInside::CheckInsideFocus()
+HWND CConEmuInside::CheckInsideFocus() const
 {
-	if (!isInsideWndSet())
+	if (!IsInsideWndSet())
 	{
 		//_ASSERTE(FALSE && "Inside was not initialized");
 		return nullptr;
 	}
 
 	wchar_t szInfo[512];
-	GUITHREADINFO tif = { sizeof(tif) };
+	GUITHREADINFO tif = {};
+	tif.cbSize = sizeof(tif);
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hParentWnd = GetParentRoot();
-	DWORD nTID = GetWindowThreadProcessId(hParentWnd, nullptr);
+	const DWORD nTID = GetWindowThreadProcessId(hParentWnd, nullptr);
 
 	if (!GetGUIThreadInfo(nTID, &tif))
 	{

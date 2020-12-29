@@ -2314,7 +2314,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 //-----------------------------------------------------------------------
 	if (gpConEmu->mp_Inside)
 	{
-		if (gpConEmu->mp_Inside->m_InsideIntegration == CConEmuInside::ii_Auto)
+		if (gpConEmu->mp_Inside->GetInsideIntegration() == CConEmuInside::ii_Auto)
 		{
 			HWND hParent = gpConEmu->mp_Inside->InsideFindParent();
 
@@ -2342,9 +2342,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		}
 
 		if (gpConEmu->mp_Inside
-			&& ((gpConEmu->mp_Inside->mh_InsideParentWND == nullptr)
-				|| ((gpConEmu->mp_Inside->mh_InsideParentWND != INSIDE_PARENT_NOT_FOUND)
-					&& !IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND))))
+			&& ((gpConEmu->mp_Inside->GetParentWnd() == nullptr)
+				|| ((gpConEmu->mp_Inside->GetParentWnd() != INSIDE_PARENT_NOT_FOUND)
+					&& !IsWindow(gpConEmu->mp_Inside->GetParentWnd()))))
 		{
 			SafeDelete(gpConEmu->mp_Inside);
 		}
@@ -4988,12 +4988,12 @@ void Settings::IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmp
 	if (pbNoEmpty) *pbNoEmpty = false;
 	if (pbAllowEmpty) *pbAllowEmpty = false;
 
-	DWORD vk = ConEmuChord::GetHotkey(GetHotkeyById(nDescrID));
+	const DWORD vk = ConEmuChord::GetHotkey(GetHotkeyById(nDescrID));
 
-	// если НЕ 0 - должен быть нажат
+	// If it's not zero - should be pressed
 	if (vk)
 	{
-		if (!isPressed(vk))
+		if (!isPressed(LOBYTE(vk)))
 			return;
 	}
 

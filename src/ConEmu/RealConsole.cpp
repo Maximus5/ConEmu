@@ -1517,10 +1517,10 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 			if (CD)
 			{
-				pszFormat = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->ms_InsideSynchronizeCurDir : nullptr; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
+				pszFormat = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetInsideSynchronizeCurDir() : nullptr; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
 				if (!pszFormat || !*pszFormat)
 				{
-					LPCWSTR pszExe = GetActiveProcessName();
+					const auto* pszExe = GetActiveProcessName();
 					if (pszExe && (lstrcmpi(pszExe, L"powershell.exe") == 0))
 					{
 						//swprintf_c(psz, cchMax/*#SECURELEN*/, L"%ccd \"%s\"%c", 27, asCmd, L'\n');
@@ -1540,10 +1540,10 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 				cchMax += _tcslen(pszFormat);
 			}
 
-			wchar_t* pszData = (wchar_t*)calloc(cchMax, sizeof(wchar_t));
-			if (pszData)
+			CEStr pszData;
+			if (pszData.GetBuffer(cchMax))
 			{
-				wchar_t* psz = pszData;
+				wchar_t* psz = pszData.data();
 				if (CD)
 				{
 					_ASSERTE(pszFormat!=nullptr); // уже должен был быть подготовлен выше
@@ -1628,8 +1628,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					swprintf_c(psz, cchMax/*#SECURELEN*/, L"%c%s%c", 27, asCmd, L'\n');
 				}
 
-				PostString(pszData, wcslen(pszData), false);
-				free(pszData);
+				PostString(pszData.data(), pszData.GetLen(), false);
 			}
 		}
 	}
@@ -1662,10 +1661,10 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 	}
 
 	// If user want to type simultaneously into visible or all consoles
-	EnumVConFlags is_grouped = allow_group ? mp_VCon->isGroupedInput() : evf_None;
+	const EnumVConFlags isGrouped = allow_group ? mp_VCon->isGroupedInput() : evf_None;
 
 	// Call OnKeysSending to reset top-left in the buffer if was locked (after scroll)
-	if (is_grouped)
+	if (isGrouped)
 	{
 		struct implKeys
 		{
@@ -1675,7 +1674,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 				return true;
 			}
 		};
-		CVConGroup::EnumVCon(is_grouped, implKeys::DoKeysSending, 0);
+		CVConGroup::EnumVCon(isGrouped, implKeys::DoKeysSending, 0);
 	}
 	else
 	{
@@ -1805,7 +1804,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 		swprintf_c(szLog, L"PostString was prepared %u key events", (DWORD)cchSucceeded);
 		gpConEmu->LogString(szLog);
 
-		if (is_grouped)
+		if (isGrouped)
 		{
 			struct implPost
 			{
@@ -1819,7 +1818,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 					return true;
 				}
 			} impl = {pirChars, cchSucceeded};
-			CVConGroup::EnumVCon(is_grouped, implPost::DoPost, (LPARAM)&impl);
+			CVConGroup::EnumVCon(isGrouped, implPost::DoPost, (LPARAM)&impl);
 			lbRc = true;
 		}
 		else

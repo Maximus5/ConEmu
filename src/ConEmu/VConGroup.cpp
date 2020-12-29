@@ -4305,10 +4305,10 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx& args, bool abAllowScript
 	}
 
 	if (gpConEmu->isInside()
-		&& gpConEmu->mp_Inside->mb_InsideIntegrationAdmin)
+		&& gpConEmu->mp_Inside->IsInsideIntegrationAdmin())
 	{
 		LogString(L"!!! Forcing first console to run as Admin (mb_InsideIntegrationAdmin) !!!");
-		gpConEmu->mp_Inside->mb_InsideIntegrationAdmin = false;
+		gpConEmu->mp_Inside->SetInsideIntegrationAdmin(false);
 		args.RunAsAdministrator = crb_On;
 	}
 

@@ -48,10 +48,10 @@ CDefaultTerminal::CDefaultTerminal()
 
 CDefaultTerminal::~CDefaultTerminal()
 {
-	StopHookers();
+	CDefTermBase::StopHookers();
 }
 
-bool CDefaultTerminal::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
+bool CDefaultTerminal::isDefaultTerminalAllowed(const bool bDontCheckName /*= false*/)
 {
 	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 		return false;
@@ -61,11 +61,10 @@ bool CDefaultTerminal::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
 bool CDefaultTerminal::IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA)
 {
 	bool bCurState = false, bLeaveTSA = gpSet->isRegisterOnOsStartupTSA;
-	LPCWSTR ValueName = StartupValueName /* L"ConEmuDefaultTerminal" */;
+	const auto* valueName = StartupValueName /* L"ConEmuDefaultTerminal" */;
 	CEStr lsData;
-	int iLen;
 
-	iLen = RegGetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, lsData);
+	const int iLen = RegGetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", valueName, lsData);
 	if (iLen > 0)
 	{
 		bCurState = true;
@@ -92,18 +91,18 @@ void CDefaultTerminal::ApplyAndSave(const bool bApply, const bool bSaveToReg)
 
 void CDefaultTerminal::CheckRegisterOsStartup()
 {
-	LPCWSTR ValueName = StartupValueName;
+	const auto* ValueName = StartupValueName;
 	bool bCurState = false;
-	bool bNeedState = gpSet->isSetDefaultTerminal && gpSet->isRegisterOnOsStartup;
+	const bool bNeedState = gpSet->isSetDefaultTerminal && gpSet->isRegisterOnOsStartup;
 	LONG lRc;
 	bool bPrevTSA = false;
 
 	// Need to acquire proper startup (config+xml at least) arguments
 	CEStr szAddArgs;
-	LPCWSTR pszAddArgs = gpConEmu->MakeConEmuStartArgs(szAddArgs);
+	const auto* pszAddArgs = gpConEmu->MakeConEmuStartArgs(szAddArgs);
 
 	// Allocate memory
-	CEStr szNeedValue(
+	const CEStr szNeedValue(
 		L"\"", gpConEmu->ms_ConEmuExe, L"\" ",
 		pszAddArgs, // -config, -loadcfgfile and others...
 		L"-SetDefTerm -Detached -MinTSA",
@@ -136,7 +135,7 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	}
 }
 
-void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false*/)
+void CDefaultTerminal::StartGuiDefTerm(const bool bManual, const bool bNoThreading /*= false*/)
 {
 	// Do not need to run init procedure, if feature is disabled
 	if (!isDefaultTerminalAllowed())
@@ -183,7 +182,7 @@ CDefTermBase* CDefaultTerminal::GetInterface()
 	return this;
 }
 
-int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=nullptr*/, HWND hParent/*=nullptr*/)
+int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, const DWORD dwError/*=0*/, const DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=nullptr*/, HWND hParent/*=nullptr*/)
 {
 	return ::DisplayLastError(asLabel, dwError, dwMsgFlags, asTitle, hParent);
 }
@@ -203,16 +202,17 @@ void CDefaultTerminal::ReloadSettings()
 	m_Opt.bDebugLog  = gpSet->isDefaultTerminalDebugLog;
 	m_Opt.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
 
-	ConEmuGuiMapping GuiInfo = {};
-	gpConEmu->GetGuiInfo(GuiInfo);
-	m_Opt.nConsoleFlags = GuiInfo.Flags;
+	ConEmuGuiMapping guiInfo = {};
+	gpConEmu->GetGuiInfo(guiInfo);
+	m_Opt.nConsoleFlags = guiInfo.Flags;
 
 	m_Opt.bExternalPointers = true;
+	// in "external pointers" mode m_Opt does not release memory
 	m_Opt.pszConEmuExe = gpConEmu->ms_ConEmuExe;
 	m_Opt.pszConEmuBaseDir = gpConEmu->ms_ConEmuBaseDir;
-	m_Opt.pszCfgFile = gpConEmu->opt.LoadCfgFile.Exists ? (wchar_t*)gpConEmu->opt.LoadCfgFile.GetStr() : nullptr;
-	m_Opt.pszConfigName = (wchar_t*)gpSetCls->GetConfigName();
-	m_Opt.pszzHookedApps = (wchar_t*)gpSet->GetDefaultTerminalAppsMSZ(); // ASCIIZZ
+	m_Opt.pszCfgFile = gpConEmu->opt.LoadCfgFile.Exists ? const_cast<wchar_t*>(gpConEmu->opt.LoadCfgFile.GetStr()) : nullptr;
+	m_Opt.pszConfigName = const_cast<wchar_t*>(gpSetCls->GetConfigName());
+	m_Opt.pszzHookedApps = const_cast<wchar_t*>(gpSet->GetDefaultTerminalAppsMSZ()); // ASCIIZZ
 }
 
 void CDefaultTerminal::AutoClearThreads()
@@ -224,7 +224,7 @@ void CDefaultTerminal::AutoClearThreads()
 	ClearThreads(false);
 }
 
-void CDefaultTerminal::ConhostLocker(bool bLock, bool& bWasLocked)
+void CDefaultTerminal::ConhostLocker(const bool bLock, bool& bWasLocked)
 {
 	if (bLock)
 	{
@@ -238,7 +238,7 @@ void CDefaultTerminal::ConhostLocker(bool bLock, bool& bWasLocked)
 
 // nPID = 0 when hooking is done (remove status bar notification)
 // sName is executable name or window class name
-bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
+bool CDefaultTerminal::NotifyHookingStatus(const DWORD nPID, LPCWSTR sName)
 {
 	wchar_t szInfo[200] = L"";
 
@@ -248,8 +248,8 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 		if (sName && *sName)
 		{
 			wcscat_c(szInfo, L" ");
-			int nLen = lstrlen(szInfo);
-			lstrcpyn(szInfo+nLen, sName, countof(szInfo)-nLen);
+			const int nLen = lstrlen(szInfo);
+			lstrcpyn(szInfo + nLen, sName, countof(szInfo) - nLen);
 		}
 	}
 
@@ -258,10 +258,10 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 	return true;
 }
 
-void CDefaultTerminal::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
+void CDefaultTerminal::LogHookingStatus(const DWORD nForePID, LPCWSTR sMessage)
 {
-	wchar_t szPID[16];
-	CEStr lsLog(L"DefTerm[", ultow_s(nForePID, szPID, 10), L"]: ", sMessage);
+	wchar_t szPID[16] = L"";
+	const CEStr lsLog(L"DefTerm[", ultow_s(nForePID, szPID, 10), L"]: ", sMessage);
 	gpConEmu->LogString(lsLog);
 }
 

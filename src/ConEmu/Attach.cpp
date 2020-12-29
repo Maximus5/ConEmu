@@ -361,7 +361,7 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		lbCan = false;
 	if (lbCan && gpConEmu->isOurConsoleWindow(hFind))
 		lbCan = false;
-	if (lbCan && gpConEmu->mp_Inside && gpConEmu->mp_Inside->isParentProcess(hFind))
+	if (lbCan && gpConEmu->mp_Inside && gpConEmu->mp_Inside->IsParentProcess(hFind))
 		lbCan = false;
 
 	GetClassName(hFind, Info.szClass, countof(Info.szClass));

@@ -884,11 +884,11 @@ void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
 	{
 		swprintf_c(szCreateFail,
 			L"Inside mode: Parent (%s): PID=%u ParentPID=%u HWND=x%p EXE=",
-			(::IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND) ? L"Valid" : L"Invalid"),
-			gpConEmu->mp_Inside->m_InsideParentInfo.ParentPID,
-			gpConEmu->mp_Inside->m_InsideParentInfo.ParentParentPID,
-			static_cast<LPVOID>(gpConEmu->mp_Inside->mh_InsideParentWND));
-		const CEStr lsLog(szCreateFail, gpConEmu->mp_Inside->m_InsideParentInfo.ExeName);
+			(::IsWindow(gpConEmu->mp_Inside->GetParentWnd()) ? L"Valid" : L"Invalid"),
+			gpConEmu->mp_Inside->GetParentInfo().ParentPID,
+			gpConEmu->mp_Inside->GetParentInfo().ParentParentPID,
+			static_cast<LPVOID>(gpConEmu->mp_Inside->GetParentWnd()));
+		const CEStr lsLog(szCreateFail, gpConEmu->mp_Inside->GetParentInfo().ExeName);
 		LogString(lsLog);
 	}
 
@@ -2794,7 +2794,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Если в режиме "Inside" подходящего окна не нашли и юзер отказался от "обычного" режима
 	// mh_InsideParentWND инициализируется вызовом InsideFindParent из Settings::LoadSettings()
-	if (gpConEmu->mp_Inside && (gpConEmu->mp_Inside->mh_InsideParentWND == INSIDE_PARENT_NOT_FOUND))
+	if (gpConEmu->mp_Inside && (gpConEmu->mp_Inside->GetParentWnd() == INSIDE_PARENT_NOT_FOUND))
 	{
 		DEBUGSTRSTARTUP(L"Bad InsideParentHWND, exiting");
 		return 100;

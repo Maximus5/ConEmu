@@ -903,7 +903,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= nullptr*/)
 			switch (m_Items[i].nID)
 			{
 			case csi_SyncInside:
-				SetTextColor(hDrawDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir) ? crText : crDash);
+				SetTextColor(hDrawDC, (gpConEmu->mp_Inside && gpConEmu->mp_Inside->IsSynchronizeCurDir()) ? crText : crDash);
 				break;
 			case csi_CapsLock:
 				SetTextColor(hDrawDC, mb_Caps ? crText : crDash);
@@ -1361,7 +1361,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				case csi_SyncInside:
 					if (gpConEmu->mp_Inside)
 					{
-						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = !gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir;
+						gpConEmu->mp_Inside->SetSynchronizeCurDir(!gpConEmu->mp_Inside->IsSynchronizeCurDir());
 					}
 					break;
 				case csi_CapsLock:

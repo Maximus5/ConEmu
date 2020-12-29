@@ -347,7 +347,7 @@ CDefTermHk::CDefTermHk()
 CDefTermHk::~CDefTermHk()
 {
 	SafeDelete(mp_FileLog);
-	StopHookers();
+	CDefTermHk::StopHookers();
 }
 
 void CDefTermHk::StartDefTerm()

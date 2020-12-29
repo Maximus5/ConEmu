@@ -1939,17 +1939,17 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	if (mp_Inside)
 	{
-		if (!mp_Inside->mh_InsideParentWND)
+		if (!mp_Inside->GetParentWnd())
 		{
 			_ASSERTE(mp_Inside == nullptr); // Must be cleared already!
-			_ASSERTE(!mp_Inside->m_InsideIntegration || mp_Inside->mh_InsideParentWND);
+			_ASSERTE(!mp_Inside->GetInsideIntegration() || mp_Inside->GetParentWnd());
 			//m_InsideIntegration = ii_None;
 			SafeDelete(mp_Inside);
 		}
 		else
 		{
 			DWORD nParentTID, nParentPID;
-			nParentTID = GetWindowThreadProcessId(mp_Inside->mh_InsideParentWND, &nParentPID);
+			nParentTID = GetWindowThreadProcessId(mp_Inside->GetParentWnd(), &nParentPID);
 			_ASSERTE(nParentTID && nParentPID);
 			BOOL bAttach = AttachThreadInput(GetCurrentThreadId(), nParentTID, TRUE);
 			if (!bAttach)
@@ -2005,7 +2005,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		_ASSERTE(this->WndWidth.Value && this->WndHeight.Value);
 	}
 
-	HWND hParent = mp_Inside ? mp_Inside->mh_InsideParentWND : ghWndApp;
+	HWND hParent = mp_Inside ? mp_Inside->GetParentWnd() : ghWndApp;
 
 	if (gpSet->isLogging())
 	{
@@ -2018,11 +2018,11 @@ BOOL CConEmuMain::CreateMainWindow()
 			opt.DesktopMode ? L" Desktop" : L"",
 			LODWORD(hParent),
 			this->WndPos.x, this->WndPos.y, nWidth, nHeight, style, styleEx,
-			GetWindowModeName(gpSet->isQuakeStyle ? (ConEmuWindowMode)gpSet->_WindowMode : WindowMode));
+			GetWindowModeName(gpSet->isQuakeStyle ? static_cast<ConEmuWindowMode>(gpSet->_WindowMode) : WindowMode));
 		LogString(szCreate);
 	}
 
-	// Create window intentionally small in size, we ajust it lately
+	// Create window intentionally small in size, we adjust it lately
 	const int minWidth = 160, minHeight = 16;
 	POINT ptCreate = this->RealPosFromVisual(WndPos.x, WndPos.y);
 	SizeInfo::RequestDpi({gpSetCls->QueryDpi(), gpSetCls->QueryDpi()});
@@ -2035,7 +2035,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		DWORD nErrCode = GetLastError();
 
 		// Don't warn, if "Inside" mode was requested and parent was closed
-		_ASSERTE(!mp_Inside || (hParent == mp_Inside->mh_InsideParentWND));
+		_ASSERTE(!mp_Inside || (hParent == mp_Inside->GetParentWnd()));
 
 		WarnCreateWindowFail(L"main window", hParent, nErrCode);
 
@@ -5593,7 +5593,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore /*= nullp
 
 	if (mp_Inside)
 	{
-		if (mp_Inside->isParentProcess(hForeWnd))
+		if (mp_Inside->IsParentProcess(hForeWnd))
 		{
 			if (hForcedForeground)
 			{
@@ -5631,7 +5631,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore /*= nullp
 				{
 					NewState |= fgf_ConEmuDialog;
 				}
-				else if (mp_Inside && mp_Inside->isParentProcess(hForeWnd))
+				else if (mp_Inside && mp_Inside->IsParentProcess(hForeWnd))
 				{
 					// Already processed
 				}
@@ -5730,8 +5730,8 @@ bool CConEmuMain::isInside()
 	if (!mp_Inside)
 		return false;
 
-	_ASSERTE(mp_Inside->m_InsideIntegration != CConEmuInside::ii_None);
-	return (mp_Inside->m_InsideIntegration != CConEmuInside::ii_None);
+	_ASSERTE(mp_Inside->GetInsideIntegration() != CConEmuInside::ii_None);
+	return (mp_Inside->GetInsideIntegration() != CConEmuInside::ii_None);
 }
 
 // Returns true if we were started in "Inside" mode
@@ -5742,10 +5742,10 @@ bool CConEmuMain::isInsideInvalid()
 	if (!isInside())
 		return false;
 	// If we failed to or not yet determined the parent window HWND
-	if (!mp_Inside->mh_InsideParentWND)
+	if (!mp_Inside->GetParentWnd())
 		return false;
 	// Check parent descriptor
-	if (::IsWindow(mp_Inside->mh_InsideParentWND))
+	if (::IsWindow(mp_Inside->GetParentWnd()))
 		return false;
 	// Abnormal termination of parent window?
 	return true;
@@ -11858,7 +11858,7 @@ void CConEmuMain::OnTimer_Background()
 	if (!mp_Inside)
 		return; // Don't care otherwise
 
-	if (!IsWindow(mp_Inside->mh_InsideParentWND))
+	if (!IsWindow(mp_Inside->GetParentWnd()))
 	{
 		// Don't kill consoles? Let RealConsoles appear to user?
 		// CVConGroup::DoCloseAllVCon(true);
@@ -12192,7 +12192,7 @@ void CConEmuMain::OnTimer_ActivateSplit()
 		bool isChildGui = false;
 		if (!isIconic()
 			&& (hForeWnd == ghWnd
-				|| (mp_Inside && mp_Inside->isParentProcess(hForeWnd))
+				|| (mp_Inside && mp_Inside->IsParentProcess(hForeWnd))
 				|| (isChildGui = CVConGroup::isOurGuiChildWindow(hForeWnd))
 			))
 		{

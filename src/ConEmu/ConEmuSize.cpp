@@ -1408,7 +1408,7 @@ RECT CConEmuSize::GetDefaultRect()
 			WindowMode = wmNormal;
 
 			// #DPI What if parent window covers several monitors?
-			SetRequestedMonitor(MonitorFromWindow(mp_ConEmu->mp_Inside->mh_InsideParentWND, MONITOR_DEFAULTTONEAREST));
+			SetRequestedMonitor(MonitorFromWindow(mp_ConEmu->mp_Inside->GetParentWnd(), MONITOR_DEFAULTTONEAREST));
 			if (!IsRectEmpty(&rcWnd))
 			{
 				if (!mp_ConEmu->isCalculated())
@@ -5509,7 +5509,7 @@ bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 	bool bIconic = _bool(::IsIconic(ghWnd));
 
 	if (!bIconic && mp_ConEmu->mp_Inside)
-		bIconic = mp_ConEmu->mp_Inside->isParentIconic();
+		bIconic = mp_ConEmu->mp_Inside->IsParentIconic();
 
 	if (!abRaw && !bIconic)
 	{
@@ -6032,7 +6032,7 @@ bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= nullptr*/)
 	if (p && IsRectMinimized(p->x, p->y))
 		return true;
 
-	if (mp_ConEmu->mp_Inside && mp_ConEmu->mp_Inside->inMinimizing(p))
+	if (mp_ConEmu->mp_Inside && mp_ConEmu->mp_Inside->IsInMinimizing(p))
 		return true;
 
 	#ifdef _DEBUG

@@ -361,7 +361,7 @@ LRESULT CSetPgIntegr::OnInitDialog(HWND hDlg, bool abInitial)
 		SetDlgItemText(hDlg, tInsideShell, CONEMU_HERE_POSH);
 		//SetDlgItemText(hDlg, tInsideIcon, szIcon);
 		SetDlgItemText(hDlg, tInsideIcon, L"powershell.exe");
-		checkDlgButton(hDlg, cbInsideSyncDir, gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir);
+		checkDlgButton(hDlg, cbInsideSyncDir, gpConEmu->mp_Inside && gpConEmu->mp_Inside->IsSynchronizeCurDir());
 		SetDlgItemText(hDlg, tInsideSyncDir, L""); // Auto
 	}
 
@@ -418,7 +418,7 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				case cbInsideSyncDir:
 					if (gpConEmu->mp_Inside)
 					{
-						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = isChecked2(hDlg, cb);
+						gpConEmu->mp_Inside->SetSynchronizeCurDir(isChecked2(hDlg, cb));
 					}
 					break;
 				case bInsideRegister:
@@ -448,8 +448,8 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				case tInsideSyncDir:
 					if (gpConEmu->mp_Inside)
 					{
-						SafeFree(gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir);
-						gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemTextPtr(hDlg, tInsideSyncDir);
+						const CEStr format(GetDlgItemTextPtr(hDlg, tInsideSyncDir));
+						gpConEmu->mp_Inside->SetInsideSynchronizeCurDir(format);
 					}
 					break;
 				default:

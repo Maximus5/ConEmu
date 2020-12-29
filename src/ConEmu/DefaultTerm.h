@@ -35,18 +35,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/DefTermBase.h"
 
-class CDefaultTerminal : public CDefTermBase
+class CDefaultTerminal final : public CDefTermBase
 {
 public:
 	CDefaultTerminal();
-	virtual ~CDefaultTerminal();
+	~CDefaultTerminal() override;
+
+	CDefaultTerminal(const CDefaultTerminal&) = delete;
+	CDefaultTerminal(CDefaultTerminal&&) = delete;
+	CDefaultTerminal& operator=(const CDefaultTerminal&) = delete;
+	CDefaultTerminal& operator=(CDefaultTerminal&&) = delete;
 
 	void StartGuiDefTerm(bool bManual, bool bNoThreading = false);
 	void OnTaskbarCreated();
 
 	void CheckRegisterOsStartup();
 	void ApplyAndSave(bool bApply, bool bSaveToReg);
-	bool IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA);
+	static bool IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA);
 
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 

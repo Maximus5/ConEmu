@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define INSIDE_PARENT_NOT_FOUND ((HWND)-1)
 
-class CConEmuInside
+class CConEmuInside final
 {
 public:
 	enum InsideIntegration
@@ -42,61 +42,79 @@ public:
 		ii_Simple,
 	};
 
-public:
-	CConEmuInside();
-	virtual ~CConEmuInside();
-
-	static bool InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncDirCmdFmt, DWORD nParentPID, HWND hParentWnd);
-
-public:
-	// Режим интеграции. Запуститься как дочернее окно, например, в области проводника.
-	InsideIntegration m_InsideIntegration;
-
-	struct
+	struct InsideParentInfo
 	{
 		DWORD ParentPID;           // ID of mh_InsideParentWND
 		DWORD ParentParentPID;     // Parent of mn_InsideParentPID
 		wchar_t ExeName[MAX_PATH]; // ParentPID executable
-	} m_InsideParentInfo;
+	};
 
-	bool  mb_InsideIntegrationAdmin; // Run first started console "As Admin"
-	bool  mb_InsideSynchronizeCurDir;
-	wchar_t* ms_InsideSynchronizeCurDir; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
-	bool  mb_InsidePaneWasForced;
-	DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
-	HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
-	void  SetInsideParentWND(HWND hParent);
-	bool  isInsideWndSet();
-	bool  isParentProcess(HWND hParent);
-	HWND  GetParentRoot();
+public:
+	CConEmuInside();
+	~CConEmuInside();
 
-	bool  inMinimizing(WINDOWPOS *p /*= nullptr*/);
-	bool  isParentIconic();
-	bool  isSelfIconic();
+	CConEmuInside(const CConEmuInside&) = delete;
+	CConEmuInside(CConEmuInside&&) = delete;
+	CConEmuInside& operator=(const CConEmuInside&) = delete;
+	CConEmuInside& operator=(CConEmuInside&&) = delete;
+
+	static bool InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncDirCmdFmt, DWORD nParentPID, HWND hParentWnd);
+
+protected:
+	// Integration mode. Run as child window, e.g. in the Windows Explorer pane.
+	InsideIntegration m_InsideIntegration = ii_None;
+
+	InsideParentInfo m_InsideParentInfo = {};
+
+	bool  mb_InsideIntegrationAdmin = false; // Run first started console "As Admin"
+	bool  mb_InsideSynchronizeCurDir = false;
+	CEStr ms_InsideSynchronizeCurDir; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
+	bool  mb_InsidePaneWasForced = false;
+	DWORD mn_InsideParentPID = 0;  // PID "родительского" процесса режима интеграции
+	HWND  mh_InsideParentWND = nullptr; // Это окно используется как родительское в режиме интеграции
+
+public:
+	bool  IsInsideWndSet() const;
+	void  SetInsideParentWnd(HWND hParent);
+	bool  IsParentProcess(HWND hParent) const;
+	HWND  GetParentRoot() const;
+	HWND  GetParentWnd() const;
+	InsideIntegration GetInsideIntegration() const;
+
+	const InsideParentInfo& GetParentInfo() const;
+
+	bool IsInsideIntegrationAdmin() const;
+	void SetInsideIntegrationAdmin(bool value);
+
+	bool IsSynchronizeCurDir() const;
+	void SetSynchronizeCurDir(bool value);
+	const wchar_t* GetInsideSynchronizeCurDir() const;
+	void SetInsideSynchronizeCurDir(const wchar_t* value);
+
+	bool  IsInMinimizing(WINDOWPOS *p /*= nullptr*/) const;
+	bool  IsParentIconic() const;
+	static bool  isSelfIconic();
 	HWND  InsideFindParent();
 	void  InsideParentMonitor();
-	bool  GetInsideRect(RECT* prWnd);
-	HWND  CheckInsideFocus();
+	bool  GetInsideRect(RECT* prWnd) const;
+	HWND  CheckInsideFocus() const;
 
 private:
-	HWND  mh_InitialRoot;
-	HWND  mh_InsideParentRel;  // Может быть nullptr (ii_Simple). HWND относительно которого нужно позиционироваться
-	HWND  mh_InsideParentPath; // Win7 Text = "Address: D:\MYDOC"
-	HWND  mh_InsideParentCD;   // Edit для смены текущей папки, например -> "C:\USERS"
-	RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
-	HWND  mh_TipPaneWndPost;
-	bool  mb_TipPaneWasShown;
-	wchar_t ms_InsideParentPath[MAX_PATH+1];
-	struct EnumFindParentArg
-	{
-		DWORD nPID;
-		HWND  hParentRoot;
-	};
+	HWND  mh_InitialRoot = nullptr;
+	HWND  mh_InsideParentRel = nullptr;  // Может быть nullptr (ii_Simple). HWND относительно которого нужно позиционироваться
+	HWND  mh_InsideParentPath = nullptr; // Win7 Text = "Address: D:\MYDOC"
+	HWND  mh_InsideParentCD = nullptr;   // Edit для смены текущей папки, например -> "C:\USERS"
+	RECT  mrc_InsideParent = {};
+	RECT  mrc_InsideParentRel = {}; // для сравнения, чтоб знать, что подвинуться нада
+	HWND  mh_TipPaneWndPost = nullptr;
+	bool  mb_TipPaneWasShown = false;
+	wchar_t ms_InsideParentPath[MAX_PATH+1] = L"";
+
 	static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
-	HWND  InsideFindConEmu(HWND hFrom);
+	static HWND  InsideFindConEmu(HWND hFrom);
 	bool  InsideFindShellView(HWND hFrom);
 	void  InsideUpdateDir();
 	void  InsideUpdatePlacement();
 	bool  TurnExplorerTipPane(wchar_t (&szAddMsg)[128]);
-	bool  SendVkKeySequence(HWND hWnd, WORD* pvkKeys);
+	static bool  SendVkKeySequence(HWND hWnd, WORD* pvkKeys);
 };

@@ -421,7 +421,7 @@ public:
 		return (lMsgRc != 0);
 	}
 
-	bool IsAppMonitored(HWND hFore, DWORD nForePID, bool bSkipShell = true, PROCESSENTRY32* pPrc = nullptr, LPWSTR pszClass/*[MAX_PATH]*/ = nullptr)
+	bool IsAppMonitored(HWND hFore, const DWORD nForePID, const bool bSkipShell = true, PROCESSENTRY32* pPrc = nullptr, LPWSTR pszClass/*[MAX_PATH]*/ = nullptr)
 	{
 		// Should process all checks, storing successful/unsuccessful state,
 		// to not doing the same checks again on subsequent calls of CheckForeground.
@@ -510,10 +510,11 @@ public:
 			memmove(pPrc, &prc, sizeof(*pPrc));
 		if (pszClass)
 			lstrcpyn(pszClass, szClass, MAX_PATH);
+		std::ignore = bShellWnd;
 		return bMonitored;
 	}
 
-	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true, bool bSkipShell = true)
+	bool CheckForeground(HWND hFore, const DWORD nForePid, const bool bRunInThread = true, const bool bSkipShell = true)
 	{
 		if (mb_Termination)
 		{
@@ -536,14 +537,14 @@ public:
 		// Если еще не были инициализированы?
 		if (!mb_ReadyToHook
 			// Или ошибка в параметрах
-			|| (!hFore || !nForePID)
+			|| (!hFore || !nForePid)
 			// Или это вобще окно этого процесса
-			|| (nForePID == GetCurrentProcessId()))
+			|| (nForePid == GetCurrentProcessId()))
 		{
 			// Сразу выходим
 			DEBUGSTRDEFTERM(L"!!! DefTerm::CheckForeground skipped, uninitialized (mb_ReadyToHook, hFore, nForePID) !!!");
 			_ASSERTE(mb_ReadyToHook && "Must be initialized");
-			_ASSERTE(hFore && nForePID);
+			_ASSERTE(hFore && nForePid);
 			return false;
 		}
 
@@ -558,10 +559,10 @@ public:
 
 		bool lbRc = false;
 		int  iHookerRc = -1;
-		MSectionLockSimple CS;
+		MSectionLockSimple guard;
 		bool lbConHostLocked = false;
 		DWORD nResult = 0;
-		wchar_t szClass[MAX_PATH]; szClass[0] = 0;
+		wchar_t szClass[MAX_PATH] = L"";
 		PROCESSENTRY32 prc = {};
 		bool bMonitored = false;
 		bool bNotified = false;
@@ -572,7 +573,7 @@ public:
 
 		if (bRunInThread && (hFore == mh_LastCall))
 		{
-			// Просто выйти. Это проверка на частые фоновые вызовы.
+			// Just exit. It's a check for rapid background calls.
 			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground skipped, already bRunInThread");
 			goto wrap;
 		}
@@ -591,7 +592,7 @@ public:
 			}
 			pArg->pTerm = GetInterface();
 			pArg->hFore = hFore;
-			pArg->nForePID = nForePID;
+			pArg->nForePID = nForePid;
 
 			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground creating background thread PostCheckThread");
 
@@ -608,14 +609,14 @@ public:
 				#endif
 			}
 
-			lbRc = (hPostThread != nullptr); // вернуть OK?
+			lbRc = (hPostThread != nullptr); // return OK?
 			goto wrap;
 		}
 
 		if (mb_Termination)
 			goto wrap;
 
-		// To be sure that application is responsive (started successfully and is not hunged)
+		// To be sure that application is responsive (started successfully and is not hung)
 		// However, that does not guarantee that explorer.exe will be hooked properly
 		// During several restarts of explorer.exe from TaskMgr - sometimes it hungs...
 		// So, that is the last change but not sufficient (must be handled in GUI too)
@@ -633,7 +634,7 @@ public:
 			goto wrap;
 		}
 
-		CS.Lock(mcs);
+		guard.Lock(mcs);
 
 		// Clear dead processes and windows
 		ClearProcessed(false);
@@ -642,7 +643,7 @@ public:
 			goto wrap;
 
 		// Check if app is monitored by window class and process name
-		bMonitored = IsAppMonitored(hFore, nForePID, bSkipShell, &prc, szClass);
+		bMonitored = IsAppMonitored(hFore, nForePid, bSkipShell, &prc, szClass);
 
 		if (!bMonitored)
 		{
@@ -654,12 +655,12 @@ public:
 		// But may be it was processed already?
 		for (INT_PTR i = m_Processed.size(); i-- && !mb_Termination;)
 		{
-			if (m_Processed[i].nPID == nForePID)
+			if (m_Processed[i].nPID == nForePid)
 			{
 				bMonitored = false;
 				#ifdef USEDEBUGSTRDEFTERM
 				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, already processed",
-					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
+					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePid);
 				DEBUGSTRDEFTERM(szInfo);
 				#endif
 				break; // already hooked/processed
@@ -677,19 +678,19 @@ public:
 		_ASSERTE(isDefaultTerminalAllowed());
 
 		swprintf_c(szInfo, L"CheckForeground x%08X <<== trying to set hooks", LODWORD(hFore));
-		LogHookingStatus(nForePID, szInfo);
+		LogHookingStatus(nForePid, szInfo);
 
-		bNotified = NotifyHookingStatus(nForePID, prc.szExeFile[0] ? prc.szExeFile : szClass);
+		bNotified = NotifyHookingStatus(nForePid, prc.szExeFile[0] ? prc.szExeFile : szClass);
 
 		ConhostLocker(true, lbConHostLocked);
 
 		_ASSERTE(hProcess == nullptr);
-		iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
+		iHookerRc = StartDefTermHooker(nForePid, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
 
 		ConhostLocker(false, lbConHostLocked);
 
 		swprintf_c(szInfo, L"CheckForeground x%08X <<== nResult=%i iHookerRc=%i", LODWORD(hFore), nResult, iHookerRc);
-		LogHookingStatus(nForePID, szInfo);
+		LogHookingStatus(nForePid, szInfo);
 
 		if (iHookerRc != 0)
 		{
@@ -707,7 +708,7 @@ public:
 			inf.hWnd = hFore;
 			inf.hProcess = hProcess;
 			hProcess = nullptr; // no need to close the handle (if any), it's saved in the array
-			inf.nPID = nForePID;
+			inf.nPID = nForePid;
 			inf.nHookTick = std::chrono::steady_clock::now();
 			inf.nHookResult = nResult;
 			m_Processed.push_back(inf);
@@ -728,11 +729,11 @@ public:
 		mh_LastIgnoredWnd = hFore;
 		_ASSERTE(lbRc == false);
 	wrap:
-		CS.Unlock();
+		guard.Unlock();
 		if (bNotified)
 		{
 			NotifyHookingStatus(0, nullptr);
-			LogHookingStatus(nForePID, L"CheckForeground finished");
+			LogHookingStatus(nForePid, L"CheckForeground finished");
 		}
 		return lbRc;
 	}
@@ -745,10 +746,10 @@ public:
 		if (!isDefaultTerminalAllowed(true))
 			return;
 
-		MSectionLockSimple CS;
-		CS.Lock(mcs);
+		MSectionLockSimple guard;
+		guard.Lock(mcs);
 		ClearProcessed(true);
-		CS.Unlock();
+		guard.Unlock();
 
 		// Если проводника в списке НЕ было, а сейчас появился...
 		// Проверить процесс шелла
@@ -760,8 +761,8 @@ public:
 	{
 		HANDLE hProcess = nullptr;
 		DWORD nResult = 0, nErrCode = 0;
-		MSectionLockSimple CS;
-		CS.Lock(mcs);
+		MSectionLockSimple guard;
+		guard.Lock(mcs);
 
 		// Сюда мы попадаем после CreateProcess (ConEmuHk) или из VisualStudio для "*.vshost.exe"
 		// Так что теоретически и дескриптор открыть должны уметь и хуки поставить
@@ -783,7 +784,7 @@ public:
 		}
 
 		// Because we must unlock the section before StartDefTermHooker to avoid dead locks in VS
-		CS.Unlock();
+		guard.Unlock();
 
 		// Do the job
 		const int iRc = StartDefTermHooker(nPID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
@@ -798,7 +799,7 @@ private:
 			return -1;
 
 		int iRc = -1;
-		wchar_t szCmdLine[MAX_PATH*2] = L"";
+		wchar_t szCmdLine[MAX_PATH * 2] = L"";
 		wchar_t szConTitle[32] = L"ConEmu";
 		LPCWSTR pszSrvExe = nullptr;
 		int nBits = 0;
