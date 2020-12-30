@@ -152,7 +152,7 @@ struct SwitchParser
 		return false;
 	}
 
-	static Switch* GetNextSwitch(LPCWSTR& rpsz, CEStr& szArg)
+	static Switch* GetNextSwitch(LPCWSTR& rpsz, CmdArg& szArg)
 	{
 		LPCWSTR psz = rpsz;
 		CmdArg szNext;
@@ -162,6 +162,7 @@ struct SwitchParser
 		else
 			szNext.Release();
 
+		szArg.LoadPosFrom(szNext);
 		auto* ps = new Switch(szArg.Detach(), szNext.Detach());
 		return ps;
 	}
@@ -741,11 +742,11 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, const ShellIntegrType iMode, cons
 				if (isChecked(hDlg, cbInsideSyncDir))
 				{
 					wcscpy_c(szOpt, L"-inside:");
-					const int opeLen = lstrlen(szOpt); _ASSERTE(opeLen==8);
-					GetDlgItemText(hDlg, tInsideSyncDir, szOpt+opeLen, countof(szShell)-opeLen);
-					if (szOpt[8] == 0)
+					const int optLen = lstrlen(szOpt); _ASSERTE(optLen==8);
+					const auto cmdLen = GetDlgItemText(hDlg, tInsideSyncDir, szOpt + optLen, countof(szOpt) - optLen);
+					if (cmdLen == 0)
 					{
-						szOpt[0] = 0;
+						wcscpy_s(szOpt + optLen, countof(szOpt) - optLen, INSIDE_DEFAULT_SYNC_DIR_CMD);
 					}
 				}
 
@@ -834,11 +835,12 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= nullptr*/, int* pnInside /*= n
 						{
 							while ((pszTemp = NextArg(pszTemp, szArg)))
 							{
-								if (szArg.IsSwitch(L"-inside"))
+								if (szArg.OneOfSwitches(L"-inside", L"-inside:"))
 								{
-									bHasInside = true; break;
+									bHasInside = true;
+									break;
 								}
-								else if (szArg.OneOfSwitches(L"-run",L"-RunList",L"-cmd",L"-CmdList"))
+								if (szArg.OneOfSwitches(L"-run",L"-RunList",L"-cmd",L"-CmdList"))
 								{
 									break; // stop checking
 								}
@@ -943,7 +945,10 @@ void CSetPgIntegr::FillHereValues(const WORD cb) const
 
 	if (cb==cbInsideName)
 	{
-		SetDlgItemText(mh_Dlg, tInsideSyncDir, Switches.dirSync_.c_str(L""));
+		const wchar_t* syncCmd = Switches.dirSync_.c_str(L"");
+		if (wcscmp(syncCmd, INSIDE_DEFAULT_SYNC_DIR_CMD) == 0)
+			syncCmd = L"";
+		SetDlgItemText(mh_Dlg, tInsideSyncDir, syncCmd);
 		checkDlgButton(mh_Dlg, cbInsideSyncDir, Switches.dirSync_ ? BST_CHECKED : BST_UNCHECKED);
 	}
 

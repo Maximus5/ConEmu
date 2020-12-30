@@ -125,7 +125,7 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 	if (bSyncDir)
 	{
 		pInside->mb_InsideSynchronizeCurDir = true;
-		pInside->ms_InsideSynchronizeCurDir.Set(pszSyncDirCmdFmt); // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+		pInside->SetInsideSynchronizeCurDir(pszSyncDirCmdFmt); // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 	}
 	else
 	{
@@ -423,7 +423,10 @@ const wchar_t* CConEmuInside::GetInsideSynchronizeCurDir() const
 
 void CConEmuInside::SetInsideSynchronizeCurDir(const wchar_t* value)
 {
-	ms_InsideSynchronizeCurDir.Set(value);
+	if (!value || wcscmp(value, INSIDE_DEFAULT_SYNC_DIR_CMD) == 0)
+		ms_InsideSynchronizeCurDir.Clear();
+	else
+		ms_InsideSynchronizeCurDir.Set(value);
 }
 
 // Вызывается для инициализации из Settings::LoadSettings()

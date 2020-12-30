@@ -1478,21 +1478,20 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 		return false;
 
 	bool lbRc = false;
-	// "\x27 cd /d \"%s\" \x0A"
-	DWORD nActivePID = GetActivePID();
-	if (nActivePID && (mp_ABuf->m_Type == rbt_Primary))
+	const DWORD nActivePid = GetActivePID();
+	if (nActivePid && (mp_ABuf->m_Type == rbt_Primary))
 	{
 		size_t cchMax = _tcslen(asCmd);
 
 		if (CD && isFar(true))
 		{
 			// Change folder using Far Macro
-			cchMax = cchMax*2 + 128;
-			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
-			if (pszMacro)
+			cchMax = cchMax * 2 + 128;
+			CEStr pszMacro;
+			if (pszMacro.GetBuffer(cchMax))
 			{
-				_wcscpy_c(pszMacro, cchMax, L"@Panel.SetPath(0,\"");
-				wchar_t* pszDst = pszMacro+_tcslen(pszMacro);
+				_wcscpy_c(pszMacro.data(), cchMax, L"@Panel.SetPath(0,\"");
+				wchar_t* pszDst = pszMacro.data() + _tcslen(pszMacro);
 				LPCWSTR pszSrc = asCmd;
 				while (*pszSrc)
 				{
@@ -1502,10 +1501,10 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 				}
 				*(pszDst++) = L'"';
 				*(pszDst++) = L')';
-				*(pszDst++) = 0;
+				*(pszDst) = 0;
 
 				PostMacro(pszMacro, TRUE/*async*/);
-				SafeFree(pszMacro);
+				lbRc = true;
 			}
 		}
 		else
@@ -1517,7 +1516,8 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 			if (CD)
 			{
-				pszFormat = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetInsideSynchronizeCurDir() : nullptr; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
+				// \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
+				pszFormat = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetInsideSynchronizeCurDir() : nullptr;
 				if (!pszFormat || !*pszFormat)
 				{
 					const auto* pszExe = GetActiveProcessName();
@@ -1526,7 +1526,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 						//swprintf_c(psz, cchMax/*#SECURELEN*/, L"%ccd \"%s\"%c", 27, asCmd, L'\n');
 						pszFormat = L"\\ecd \\1\\n";
 					}
-					else if (pszExe && (lstrcmpi(pszExe, L"bash.exe") == 0 || lstrcmpi(pszExe, L"sh.exe") == 0))
+					else if (isUnixFS() || (pszExe && (lstrcmpi(pszExe, L"bash.exe") == 0 || lstrcmpi(pszExe, L"sh.exe") == 0)))
 					{
 						pszFormat = L"\\e\\bcd \\2\\n";
 					}
@@ -1537,19 +1537,19 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					}
 				}
 
+				_ASSERTE(pszFormat != nullptr); // may should not be nullptr
 				cchMax += _tcslen(pszFormat);
 			}
 
 			CEStr pszData;
 			if (pszData.GetBuffer(cchMax))
 			{
-				wchar_t* psz = pszData.data();
 				if (CD)
 				{
-					_ASSERTE(pszFormat!=nullptr); // уже должен был быть подготовлен выше
+					_ASSERTE(pszFormat != nullptr); // may should not be nullptr
 					// \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
 
-					wchar_t* pszDst = psz;
+					wchar_t* pszDst = pszData.data();
 					wchar_t* pszEnd = pszDst + cchMax - 1;
 
 					while (*pszFormat && (pszDst < pszEnd))
@@ -1622,10 +1622,11 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 						}
 					}
 					*pszDst = 0;
-				}
+				} // end of "if (CD)"
 				else
 				{
-					swprintf_c(psz, cchMax/*#SECURELEN*/, L"%c%s%c", 27, asCmd, L'\n');
+					const auto* clearPrompt = isUnixFS() ? L"\x1B\x08" : L"\x1B";
+					swprintf_c(pszData.data(), pszData.GetMaxCount(), L"%s%s%c", clearPrompt, asCmd, L'\n');
 				}
 
 				PostString(pszData.data(), pszData.GetLen(), false);
