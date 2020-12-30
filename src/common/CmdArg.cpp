@@ -133,9 +133,11 @@ bool CmdArg::CompareSwitch(const wchar_t* asSwitch, const bool caseSensitive /*=
 
 	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
 	const int len = lstrlen(asSwitch);
-	if ((len > 1) && ((asSwitch[len-1] == L'=') || (asSwitch[len-1] == L':')))
+	if ((len > 1) && ((asSwitch[len - 1] == L'=') || (asSwitch[len - 1] == L':')))
 	{
-		iCmp = lstrcmpni(ms_Val+1, asSwitch, (len - 1));
+		iCmp = caseSensitive
+			? wcsncmp(ms_Val + 1, asSwitch, static_cast<size_t>(len - 1))
+			: lstrcmpni(ms_Val + 1, asSwitch, (len - 1));
 		if ((iCmp == 0) && ((ms_Val[len] == L'=') || (ms_Val[len] == L':')))
 			return true;
 	}
