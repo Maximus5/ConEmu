@@ -236,15 +236,13 @@ void CDefaultTerminal::ConhostLocker(const bool bLock, bool& bWasLocked)
 	}
 }
 
-// nPID = 0 when hooking is done (remove status bar notification)
-// sName is executable name or window class name
-bool CDefaultTerminal::NotifyHookingStatus(const DWORD nPID, LPCWSTR sName)
+bool CDefaultTerminal::NotifyHookingStatus(const DWORD processId, LPCWSTR sName)
 {
 	wchar_t szInfo[200] = L"";
 
-	if (nPID)
+	if (processId)
 	{
-		msprintf(szInfo, countof(szInfo), L"DefTerm[%u]: Setup", nPID);
+		msprintf(szInfo, countof(szInfo), L"DefTerm[%u]: Setup", processId);
 		if (sName && *sName)
 		{
 			wcscat_c(szInfo, L" ");

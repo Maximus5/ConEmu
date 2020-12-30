@@ -64,9 +64,11 @@ protected:
 	virtual void PostCreateThreadFinished() override;
 	virtual void AutoClearThreads() override;
 	virtual void ConhostLocker(bool bLock, bool& bWasLocked) override;
-	// nPID = 0 when hooking is done (remove status bar notification)
-	// sName is executable name or window class name
-	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName) override;
+	/// @brief Overrided by ConEmu GUI descendant to show action in the StatusBar
+	/// @param processId 0 when hooking is done (remove status bar notification)
+	/// @param sName is executable name or window class name
+	/// @return true if StatusBar was updated (so need to reset it later)
+	virtual bool NotifyHookingStatus(DWORD processId, LPCWSTR sName) override;
 public:
 	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
 	virtual bool isLogging() override;

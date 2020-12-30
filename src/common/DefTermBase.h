@@ -329,10 +329,13 @@ private:
 	HWND   mh_LastIgnoredWnd = nullptr;
 	HWND   mh_LastCall = nullptr;
 	MArray<ThreadHandle> m_Threads = {};
+	MSectionSimple* mcs_Threads = nullptr;
 	MArray<ProcessInfo> m_Processed = {};
+	MSectionSimple* mcs_Processes = nullptr;
 protected:
 	HANDLE mh_PostThread = nullptr;
 	DWORD  mn_PostThreadId = 0;
+	/// @brief Blocks main check routine and settings reloading
 	MSectionSimple* mcs = nullptr;
 	bool   mb_Termination = false;
 protected:
@@ -372,6 +375,8 @@ public:
 		: mb_ConEmuGui(bConEmuGui)
 	{
 		mcs = new MSectionSimple(true);
+		mcs_Threads = new MSectionSimple(true);
+		mcs_Processes = new MSectionSimple(true);
 	}
 
 	CDefTermBase(const CDefTermBase&) = delete;
@@ -383,6 +388,8 @@ public:
 	{
 		// StopHookers(); -- Have to be called in the ancestor destructor!
 		_ASSERTE(mcs == nullptr);
+		_ASSERTE(mcs_Threads == nullptr);
+		_ASSERTE(mcs_Processes == nullptr);
 	}
 
 public:
@@ -421,7 +428,14 @@ public:
 		return (lMsgRc != 0);
 	}
 
-	bool IsAppMonitored(HWND hFore, const DWORD nForePID, const bool bSkipShell = true, PROCESSENTRY32* pPrc = nullptr, LPWSTR pszClass/*[MAX_PATH]*/ = nullptr)
+	/// @brief Checks if the process described by hFore and ForePID shall be hooked to support DefTerm.
+	/// @param hFore HWND of the top window (found by GetForegroundWindow)
+	/// @param nForePID PID of the hFore
+	/// @param bSkipShell If true than skip Windows Taskbar process
+	/// @param pPrc [OUT] May point to a buffer receiving PROCESSENTRY32
+	/// @param pszClass [OUT] May point to a buffer receiving the class name of the hFore
+	/// @return true if we should inject ConEmuHk into the nForePID process
+	bool IsAppMonitored(HWND hFore, const DWORD nForePID, const bool bSkipShell = true, PROCESSENTRY32* pPrc = nullptr, CEStr* pszClass = nullptr)
 	{
 		// Should process all checks, storing successful/unsuccessful state,
 		// to not doing the same checks again on subsequent calls of CheckForeground.
@@ -463,7 +477,7 @@ public:
 		}
 
 		// May be hooked by class name? e.g. "TaskManagerWindow"
-		bMonitored = IsAppMonitored(szClass);
+		bMonitored = IsAppNameMonitored(szClass);
 		if (!bMonitored)
 		{
 			// Then check by process exe name
@@ -491,7 +505,7 @@ public:
 			}
 
 			// Is it in monitored applications?
-			bMonitored = IsAppMonitored(prc.szExeFile);
+			bMonitored = IsAppNameMonitored(prc.szExeFile);
 
 			// And how it is?
 			if (!bMonitored)
@@ -509,7 +523,7 @@ public:
 		if (pPrc)
 			memmove(pPrc, &prc, sizeof(*pPrc));
 		if (pszClass)
-			lstrcpyn(pszClass, szClass, MAX_PATH);
+			pszClass->Set(szClass);
 		std::ignore = bShellWnd;
 		return bMonitored;
 	}
@@ -523,25 +537,25 @@ public:
 
 		if (!isDefaultTerminalAllowed())
 		{
-			#ifdef USEDEBUGSTRDEFTERM
+#ifdef USEDEBUGSTRDEFTERM
 			static bool bNotified = false;
 			if (!bNotified)
 			{
 				bNotified = true;
 				DEBUGSTRDEFTERM(L"!!! DefTerm::CheckForeground skipped, !isDefaultTerminalAllowed !!!");
 			}
-			#endif
+#endif
 			return false;
 		}
 
-		// Если еще не были инициализированы?
+		// if we were not yet initialized
 		if (!mb_ReadyToHook
-			// Или ошибка в параметрах
+			// or arguments error
 			|| (!hFore || !nForePid)
-			// Или это вобще окно этого процесса
+			// or it's our process
 			|| (nForePid == GetCurrentProcessId()))
 		{
-			// Сразу выходим
+			// Do nothing, exit!
 			DEBUGSTRDEFTERM(L"!!! DefTerm::CheckForeground skipped, uninitialized (mb_ReadyToHook, hFore, nForePID) !!!");
 			_ASSERTE(mb_ReadyToHook && "Must be initialized");
 			_ASSERTE(hFore && nForePid);
@@ -551,7 +565,6 @@ public:
 		if (hFore == mh_LastWnd || hFore == mh_LastIgnoredWnd)
 		{
 			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground skipped, hFore was already checked");
-			// Это окно уже проверялось
 			return (hFore == mh_LastWnd);
 		}
 
@@ -562,13 +575,14 @@ public:
 		MSectionLockSimple guard;
 		bool lbConHostLocked = false;
 		DWORD nResult = 0;
-		wchar_t szClass[MAX_PATH] = L"";
+		CEStr szClass;
 		PROCESSENTRY32 prc = {};
 		bool bMonitored = false;
 		bool bNotified = false;
+		bool alreadyProcessed = false;
 		HANDLE hProcess = nullptr;
 		DWORD nErrCode = 0;
-		wchar_t szInfo[MAX_PATH+80];
+		wchar_t szInfo[MAX_PATH + 80];
 
 
 		if (bRunInThread && (hFore == mh_LastCall))
@@ -597,16 +611,18 @@ public:
 			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground creating background thread PostCheckThread");
 
 			hPostThread = apiCreateThread(PostCheckThread, pArg, &nThreadId, "DefTerm::PostCheckThread");
-			_ASSERTE(hPostThread!=nullptr);
+			_ASSERTE(hPostThread != nullptr);
 			if (hPostThread)
 			{
-				const ThreadHandle th = {hPostThread, nThreadId, GetCurrentThreadId()};
+				MSectionLockSimple threadGuard;
+				threadGuard.Lock(mcs_Threads);
+				const ThreadHandle th = { hPostThread, nThreadId, GetCurrentThreadId() };
 				m_Threads.push_back(th);
 
-				#ifdef USEDEBUGSTRDEFTERM
+#ifdef USEDEBUGSTRDEFTERM
 				swprintf_c(szInfo, L"DefTerm::CheckForeground created TID=%u", nThreadId);
 				DEBUGSTRDEFTERM(szInfo);
-				#endif
+#endif
 			}
 
 			lbRc = (hPostThread != nullptr); // return OK?
@@ -626,11 +642,11 @@ public:
 			// That app is not ready for hooking
 			if (mh_LastCall == hFore)
 				mh_LastCall = nullptr;
-			#ifdef USEDEBUGSTRDEFTERM
+#ifdef USEDEBUGSTRDEFTERM
 			swprintf_c(szInfo, L"!!! DefTerm::CheckForeground skipped, x%08X is non-responsive !!!",
 				LODWORD(reinterpret_cast<DWORD_PTR>(hFore)));
 			DEBUGSTRDEFTERM(szInfo);
-			#endif
+#endif
 			goto wrap;
 		}
 
@@ -643,7 +659,7 @@ public:
 			goto wrap;
 
 		// Check if app is monitored by window class and process name
-		bMonitored = IsAppMonitored(hFore, nForePid, bSkipShell, &prc, szClass);
+		bMonitored = IsAppMonitored(hFore, nForePid, bSkipShell, &prc, &szClass);
 
 		if (!bMonitored)
 		{
@@ -653,25 +669,29 @@ public:
 
 		// That is hooked executable/classname
 		// But may be it was processed already?
-		for (INT_PTR i = m_Processed.size(); i-- && !mb_Termination;)
 		{
-			if (m_Processed[i].nPID == nForePid)
+			MSectionLockSimple processGuard;
+			processGuard.Lock(mcs_Processes);
+			for (INT_PTR i = m_Processed.size(); i-- && !mb_Termination;)
 			{
-				bMonitored = false;
-				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, already processed",
-					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePid);
-				DEBUGSTRDEFTERM(szInfo);
-				#endif
-				break; // already hooked/processed
+				if (m_Processed[i].nPID == nForePid)
+				{
+					alreadyProcessed = true;
+					#ifdef USEDEBUGSTRDEFTERM
+					swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, already processed",
+						LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePid);
+					DEBUGSTRDEFTERM(szInfo);
+					#endif
+					break; // already hooked/processed
 			}
 		}
+	}
 
 		// May be hooked already?
-		if (!bMonitored || mb_Termination)
+		if (alreadyProcessed || mb_Termination)
 		{
-			mh_LastWnd = hFore;
-			lbRc = true;
+			mh_LastIgnoredWnd = hFore;
+			lbRc = false;
 			goto wrap;
 		}
 
@@ -711,7 +731,8 @@ public:
 			inf.nPID = nForePid;
 			inf.nHookTick = std::chrono::steady_clock::now();
 			inf.nHookResult = nResult;
-			m_Processed.push_back(inf);
+
+			StoreProcessed(inf);
 		}
 
 		// And what?
@@ -751,8 +772,8 @@ public:
 		ClearProcessed(true);
 		guard.Unlock();
 
-		// Если проводника в списке НЕ было, а сейчас появился...
-		// Проверить процесс шелла
+		// If there were no Explorer in the allowed list, but now it was added
+		// than check the Shell process (TaskBar)
 		CheckShellWindow();
 	}
 
@@ -764,8 +785,8 @@ public:
 		MSectionLockSimple guard;
 		guard.Lock(mcs);
 
-		// Сюда мы попадаем после CreateProcess (ConEmuHk) или из VisualStudio для "*.vshost.exe"
-		// Так что теоретически и дескриптор открыть должны уметь и хуки поставить
+		// We get here after CreateProcess (ConEmuHk) or from VisualStudio for "*.vshost.exe"
+		// Here we should be able to open a descriptor and set hooks
 
 		if (hDefProcess)
 		{
@@ -780,7 +801,8 @@ public:
 			inf.nPID = nPID;
 			inf.nHookTick = std::chrono::steady_clock::now();
 			inf.nHookResult = STILL_ACTIVE;
-			m_Processed.push_back(inf);
+
+			StoreProcessed(inf);
 		}
 
 		// Because we must unlock the section before StartDefTermHooker to avoid dead locks in VS
@@ -1013,6 +1035,8 @@ protected:
 				mh_PostThread = hPostThread;
 			}
 
+			MSectionLockSimple threadGuard;
+			threadGuard.Lock(mcs_Threads);
 			const ThreadHandle th = { hPostThread, mn_PostThreadId, GetCurrentThreadId() };
 			m_Threads.push_back(th);
 		}
@@ -1038,9 +1062,11 @@ protected:
 	}
 
 protected:
-	// nPID = 0 when hooking is done (remove status bar notification)
-	// sName is executable name or window class name
-	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
+	/// @brief Overrided by ConEmu GUI descendant to show action in the StatusBar
+	/// @param processId 0 when hooking is done (remove status bar notification)
+	/// @param sName is executable name or window class name
+	/// @return true if StatusBar was updated (so need to reset it later)
+	virtual bool NotifyHookingStatus(const DWORD processId, LPCWSTR sName)
 	{
 		// descendant must return true if status bar was changed
 		return false;
@@ -1072,9 +1098,37 @@ protected:
 	}
 
 protected:
+	void StoreProcessed(const ProcessInfo& info)
+	{
+		MSectionLockSimple processGuard;
+		processGuard.Lock(mcs_Processes);
+
+		bool found = false;
+
+		for (auto& exist : m_Processed)
+		{
+			if (exist.nPID == info.nPID)
+			{
+				if (exist.hProcess && exist.hProcess != info.hProcess)
+					SafeCloseHandle(exist.hProcess);
+				exist = info;
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			m_Processed.push_back(info);
+		}
+	}
+
 	void ClearProcessed(bool bForceAll)
 	{
 		//_ASSERTE(isMainThread());
+
+		MSectionLockSimple processGuard;
+		processGuard.Lock(mcs_Processes);
 
 		for (INT_PTR i = m_Processed.size(); i--;)
 		{
@@ -1125,9 +1179,12 @@ protected:
 	}
 
 protected:
-	void ClearThreads(bool bForceTerminate)
+	void ClearThreads(const bool bForceTerminate)
 	{
 		_ASSERTE((!bForceTerminate || mb_Termination) && "Termination state is expected here!");
+
+		MSectionLockSimple threadGuard;
+		threadGuard.Lock(mcs_Threads);
 
 		for (INT_PTR i = m_Threads.size(); i--;)
 		{
@@ -1147,7 +1204,7 @@ protected:
 				}
 				else
 				{
-					continue; // Эта нить еще не закончила
+					continue; // This thread is yet alive
 				}
 			}
 			SafeCloseHandle(hThread);
@@ -1191,8 +1248,10 @@ protected:
 	}
 
 public:
-	// Is exe-name or application window class name in user-defined list?
-	bool IsAppMonitored(LPCWSTR szExeFile) const
+	/// @brief Is exe-name or application window class name in user-defined list?
+	/// @param name File name (no path) or class name to check
+	/// @return true if name exists in hooked apps list
+	bool IsAppNameMonitored(const wchar_t* name) const
 	{
 		bool bMonitored = false;
 		// ReSharper disable once CppLocalVariableMayBeConst
@@ -1204,12 +1263,12 @@ public:
 			const wchar_t* psz = pszMonitored;
 			while (*psz)
 			{
-				if (lstrcmpi(psz, szExeFile) == 0)
+				if (lstrcmpi(psz, name) == 0)
 				{
 					bMonitored = true;
 					break;
 				}
-				psz += lstrlen(psz) + 1;
+				psz += wcslen(psz) + 1;
 			}
 		}
 

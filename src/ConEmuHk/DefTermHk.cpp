@@ -392,7 +392,7 @@ bool CDefTermHk::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
 	if (!m_Opt.pszConEmuExe || !*m_Opt.pszConEmuExe || !m_Opt.pszConEmuBaseDir || !*m_Opt.pszConEmuBaseDir)
 		return false;
 	// Check current executable in m_Opt.pszzHookedApps
-	if (!bDontCheckName && !IsAppMonitored(ms_ExeName))
+	if (!bDontCheckName && !IsAppNameMonitored(ms_ExeName))
 		return false;
 	// Okay
 	return true;
