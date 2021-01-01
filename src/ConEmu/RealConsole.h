@@ -195,7 +195,7 @@ class CRealConsole
 		HWND    hConWnd;
 		BYTE    m_ConsoleKeyShortcuts;
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
-		HKEY    PrepareConsoleRegistryKey(LPCWSTR asSubKey);
+		HKEY    PrepareConsoleRegistryKey(LPCWSTR asSubKey) const;
 		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = nullptr);
 		void    PrepareNewConArgs();
 	public:
@@ -702,7 +702,9 @@ class CRealConsole
 		bool StartProcess();
 		static bool CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args, LPWSTR psCurCmd, LPCWSTR& lpszWorkDir, STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei, DWORD& dwLastError, bool bExternal = false);
 		private:
-		bool StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
+		bool StartProcessInt(LPCWSTR& lpszCmd, CEStr& curCmdBuffer, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch,
+				HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/,
+				BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
 		void ResetVarsOnStart();
 		protected:
 		bool StartMonitorThread();

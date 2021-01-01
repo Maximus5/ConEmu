@@ -574,17 +574,16 @@ bool CRealConsole::PreCreate(RConStartArgsEx *args)
 		return false;
 	}
 
-	// В этот момент логи данной консоли еще не созданы, пишем в GUI-шный
+	// At the moment our real console logs aren't created yet, use global one
 	if (gpSet->isLogging())
 	{
 		wchar_t szPrefix[128];
 		swprintf_c(szPrefix, L"CRealConsole::PreCreate, hView=x%08X, hBack=x%08X, Detached=%u, AsAdmin=%u, PTY=x%04X",
-			(DWORD)(DWORD_PTR)mp_VCon->GetView(), (DWORD)(DWORD_PTR)mp_VCon->GetBack(),
-			(UINT)args->Detached, args->nPTY, (UINT)args->RunAsAdministrator);
-		CEStr szInfo, szNewCon;
-		szNewCon = args->CreateCommandLine();
-		szInfo = lstrmerge(szPrefix, L", Cmd=‘", args->pszSpecialCmd, L"’, NewCon=‘", szNewCon.ms_Val, L"’");
-		mp_ConEmu->LogString(szInfo ? szInfo.ms_Val : szPrefix);
+			LODWORD(reinterpret_cast<DWORD_PTR>(mp_VCon->GetView())), LODWORD(reinterpret_cast<DWORD_PTR>(mp_VCon->GetBack())),
+			static_cast<UINT>(args->Detached), static_cast<UINT>(args->RunAsAdministrator), static_cast<UINT>(args->nPTY));
+		const CEStr fullCommand = args->CreateCommandLine(false);
+		const CEStr szInfo(szPrefix, L", Cmd=‘", fullCommand.c_str(), L"’");
+		mp_ConEmu->LogString(szInfo.c_str(szPrefix));
 	}
 
 	bool bCopied = m_Args.AssignFrom(*args);
@@ -3602,16 +3601,16 @@ bool CRealConsole::StartMonitorThread()
 	return lbRc;
 }
 
-HKEY CRealConsole::PrepareConsoleRegistryKey(LPCWSTR asSubKey)
+HKEY CRealConsole::PrepareConsoleRegistryKey(LPCWSTR asSubKey) const
 {
 	HKEY hkConsole = nullptr;
 	LONG lRegRc;
 
 
-	CEStr lsKey(JoinPath(L"Console", asSubKey)); // Default is "Console\\ConEmu"
+	const CEStr lsKey(JoinPath(L"Console", asSubKey)); // Default is "Console\\ConEmu"
 	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, lsKey, 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hkConsole, nullptr)))
 	{
-		DWORD nSize = sizeof(DWORD), nValue, nType, nNewValue;
+		DWORD nSize = sizeof(DWORD), nNewValue;
 		struct {
 			LPCWSTR pszName;
 			DWORD nType;
@@ -3620,57 +3619,64 @@ HKEY CRealConsole::PrepareConsoleRegistryKey(LPCWSTR asSubKey)
 				LPCWSTR pszDef;
 			};
 			DWORD nMin, nMax;
-		} BufferValues[] = {
+		} consoleOptions[] = {
 			// Issue 700: Default history buffers count too small.
-			{ L"HistoryBufferSize", REG_DWORD, {(DWORD_PTR)50}, 16, 999 },
-			{ L"NumberOfHistoryBuffers", REG_DWORD, {(DWORD_PTR)32}, 16, 999 },
+			{ L"HistoryBufferSize", REG_DWORD, {static_cast<DWORD_PTR>(50)}, 16, 999 },
+			{ L"NumberOfHistoryBuffers", REG_DWORD, {static_cast<DWORD_PTR>(32)}, 16, 999 },
 			// Restrict windows from creating console using undesired font
-			{ L"FaceName", REG_SZ, {(DWORD_PTR)gpSet->ConsoleFont.lfFaceName} },
-			{ L"FontSize", REG_DWORD, {(DWORD_PTR)(LOWORD(gpSet->ConsoleFont.lfHeight) << 16)} },
+			{ L"FaceName", REG_SZ, {reinterpret_cast<DWORD_PTR>(gpSet->ConsoleFont.lfFaceName)}, 0, 0 },
+			{ L"FontSize", REG_DWORD, {static_cast<DWORD_PTR>((LOWORD(gpSet->ConsoleFont.lfHeight) << 16))}, 0, 0 },
 			// Avoid extra conhost resizes on startup
-			{ L"ScreenBufferSize", REG_DWORD, {(DWORD_PTR)((LOWORD(mp_RBuf->GetBufferHeight()) << 16) | LOWORD(mp_RBuf->GetBufferWidth()))} },
-			{ L"WindowSize", REG_DWORD, {(DWORD_PTR)((LOWORD(mp_RBuf->GetTextHeight()) << 16) | LOWORD(mp_RBuf->GetTextWidth()))} },
+			{ L"ScreenBufferSize", REG_DWORD, {static_cast<DWORD_PTR>((LOWORD(mp_RBuf->GetBufferHeight()) << 16) | LOWORD(mp_RBuf->GetBufferWidth()))}, 0, 0 },
+			{ L"WindowSize", REG_DWORD, {static_cast<DWORD_PTR>((LOWORD(mp_RBuf->GetTextHeight()) << 16) | LOWORD(mp_RBuf->GetTextWidth()))}, 0, 0 },
 		};
-		for (size_t i = 0; i < countof(BufferValues); ++i)
+		for (auto& option : consoleOptions)
 		{
-			bool bHasMinMax = (BufferValues[i].nType == REG_DWORD) && (BufferValues[i].nMin || BufferValues[i].nMax);
+			const bool bHasMinMax = (option.nType == REG_DWORD) && (option.nMin || option.nMax);
 
-			switch (BufferValues[i].nType)
+			switch (option.nType)
 			{
 			case REG_DWORD:
-				lRegRc = RegQueryValueEx(hkConsole, BufferValues[i].pszName, nullptr, &nType, (LPBYTE)&nValue, &nSize);
+			{
+				DWORD nValue = 0, nType = 0;
+				lRegRc = RegQueryValueEx(hkConsole, option.pszName, nullptr, &nType, reinterpret_cast<LPBYTE>(&nValue), &nSize);
 				if ((lRegRc != 0) || (nType != REG_DWORD) || (nSize != sizeof(DWORD))
-					|| (bHasMinMax && ((nValue < BufferValues[i].nMin) || (nValue > BufferValues[i].nMax)))
-					|| (!bHasMinMax && (nValue != BufferValues[i].nDef))
+					|| (bHasMinMax && ((nValue < option.nMin) || (nValue > option.nMax)))
+					|| (!bHasMinMax && (nValue != option.nDef))
 					)
 				{
-					nNewValue = LODWORD(BufferValues[i].nDef);
-					if (BufferValues[i].nMin || BufferValues[i].nMax)
+					nNewValue = LODWORD(option.nDef);
+					if (option.nMin || option.nMax)
 					{
-						if (!lRegRc && (nValue < BufferValues[i].nMin))
-							nNewValue = BufferValues[i].nMin;
-						else if (!lRegRc && (nValue > BufferValues[i].nMax))
-							nNewValue = BufferValues[i].nMax;
+						if (!lRegRc && (nValue < option.nMin))
+							nNewValue = option.nMin;
+						else if (!lRegRc && (nValue > option.nMax))
+							nNewValue = option.nMax;
 					}
 
-					lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_DWORD, (LPBYTE)&nNewValue, sizeof(nNewValue));
+					lRegRc = RegSetValueEx(hkConsole, option.pszName, 0, REG_DWORD, reinterpret_cast<const BYTE*>(&nNewValue), sizeof(nNewValue));
 				}
-				break; // REG_DWORD
+				break;
+			} // case REG_DWORD:
 
 			case REG_SZ:
-				if (BufferValues[i].pszDef)
+			{
+				if (option.pszDef)
 				{
-					nNewValue = (wcslen(BufferValues[i].pszDef) + 1) * sizeof(BufferValues[i].pszDef[0]);
-					lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_SZ, (LPBYTE)BufferValues[i].pszDef, nNewValue);
+					nNewValue = (wcslen(option.pszDef) + 1) * sizeof(option.pszDef[0]);
+					lRegRc = RegSetValueEx(hkConsole, option.pszName, 0, REG_SZ, reinterpret_cast<const BYTE*>(option.pszDef), nNewValue);
 				}
-				break; // REG_SZ
+				break;
+			} // case REG_SZ
 
 			} // switch (BufferValues[i].nType)
+
+			std::ignore = lRegRc;
 		}
 	}
 	else
 	{
-		CEStr lsMsg(L"Failed to create/open registry key", L"\n[HKCU\\", lsKey, L"]");
+		const CEStr lsMsg(L"Failed to create/open registry key", L"\n[HKCU\\", lsKey, L"]");
 		DisplayLastError(lsMsg, lRegRc);
 		hkConsole = nullptr;
 	}
@@ -4333,20 +4339,21 @@ bool CRealConsole::StartProcess()
 	mb_InCreateRoot = true;
 
 	//=====================================
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
+	STARTUPINFO si{};
+	PROCESS_INFORMATION pi{};
 	CEStr szInitConTitle(CEC_INITTITLE);
 	MCHKHEAP;
-	ZeroMemory(&si, sizeof(si));
+
 	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS|STARTF_USESIZE/*|STARTF_USEPOSITION*/;
+	si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USECOUNTCHARS | STARTF_USESIZE/*|STARTF_USEPOSITION*/;
 	si.lpTitle = szInitConTitle.ms_Val;
-	// К сожалению, можно задать только размер БУФЕРА в символах.
+
+	// Buffer size in cells
 	si.dwXCountChars = mp_RBuf->GetBufferWidth() /*con.m_sbi.dwSize.X*/;
 	si.dwYCountChars = mp_RBuf->GetBufferHeight() /*con.m_sbi.dwSize.Y*/;
 
-	// Размер окна нужно задавать в пикселях, а мы заранее не знаем сколько будет нужно...
-	// Но можно задать хоть что-то, чтобы окошко сразу не разъехалось (в расчете на шрифт 4*6)...
+	// Window size should be in *pixels*, we could only estimate it, based on the font size 4x6
+	// #TODO: Use configured gpSet->ConsoleFont.lfHeight instead of default 4x6, need to evaluate width though
 	if (mp_RBuf->isScroll() /*con.bBufferHeight*/)
 	{
 		si.dwXSize = 4 * mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/ + 2*GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXVSCROLL);
@@ -4358,14 +4365,11 @@ bool CRealConsole::StartProcess()
 		si.dwYSize = 6 * mp_RBuf->GetTextHeight()/*con.m_sbi.dwSize.X*/ + 2*GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION);
 	}
 
-	// Если просят "отладочный" режим - покажем окошко
 	si.wShowWindow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 	isShowConsole = gpSet->isConVisible;
-	//RECT rcDC; GetWindowRect('ghWnd DC', &rcDC);
-	//si.dwX = rcDC.left; si.dwY = rcDC.top;
+
 	ZeroMemory(&pi, sizeof(pi));
 	MCHKHEAP;
-	wchar_t* psCurCmd = nullptr;
 	_ASSERTE((m_Args.pszStartupDir == nullptr) || (*m_Args.pszStartupDir != 0));
 
 	// Altered console title was set?
@@ -4375,9 +4379,6 @@ bool CRealConsole::StartProcess()
 	// Prepare cmd line
 	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpConEmu->GetCmd(nullptr, true);
 	_ASSERTE(lpszRawCmd && *lpszRawCmd);
-	//SafeFree(mpsz_CmdBuffer);
-	//mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
-	//LPCWSTR lpszCmd = mpsz_CmdBuffer ? mpsz_CmdBuffer : lpszRawCmd;
 	LPCWSTR lpszCmd = lpszRawCmd;
 	LPCWSTR lpszWorkDir = nullptr;
 	DWORD dwLastError = 0;
@@ -4431,7 +4432,7 @@ bool CRealConsole::StartProcess()
 		if (!m_ConHostSearch)
 		{
 			m_ConHostSearch.Attach(new CConHostSearch());
-			bNeedConHostSearch = (bool)m_ConHostSearch;
+			bNeedConHostSearch = m_ConHostSearch.IsValid();
 		}
 		else
 		{
@@ -4455,11 +4456,10 @@ bool CRealConsole::StartProcess()
 		mp_ConEmu->Taskbar_UpdateOverlay();
 
 
-	bool bAllowDefaultCmd = (!m_Args.pszSpecialCmd || !*m_Args.pszSpecialCmd);
-	//int nStep = (m_Args.pszSpecialCmd!=nullptr) ? 2 : 1;
 	int nStep = 1;
 
 	UpdateStartState(rss_StartingServer);
+
 
 	// Go
 	while (nStep <= 2)
@@ -4467,19 +4467,21 @@ bool CRealConsole::StartProcess()
 		_ASSERTE(nStep==1 || nStep==2);
 		MCHKHEAP;
 
+		CEStr curCmd;
+
 		// Do actual process creation
-		lbRc = StartProcessInt(lpszCmd, psCurCmd, lpszWorkDir, bNeedConHostSearch, hSetForeground,
+		lbRc = StartProcessInt(lpszCmd, curCmd, lpszWorkDir, bNeedConHostSearch, hSetForeground,
 			nCreateBegin, nCreateEnd, nCreateDuration, nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, si, pi, dwLastError);
 
 		if (lbRc)
 		{
 			UpdateStartState(rss_ServerStarted);
-			break; // OK, запустили
+			break; // OK, started
 		}
 
 		/* End of process start-up */
 
-		// ОШИБКА!!
+		// Failure!!
 		if (InRecreate())
 		{
 			m_Args.Detached = crb_On;
@@ -4487,59 +4489,48 @@ bool CRealConsole::StartProcess()
 			SafeCloseHandle(mh_MainSrv);
 			_ASSERTE(isDetached());
 			wchar_t szErrInfo[80];
-			swprintf_c(szErrInfo, L"Restart console failed (code %i)", (int)dwLastError);
+			swprintf_c(szErrInfo, L"Restart console failed (code %i)", static_cast<int>(dwLastError));
 			SetConStatus(szErrInfo, cso_Critical);
 		}
 
 		//Box("Cannot execute the command.");
 		//DWORD dwLastError = GetLastError();
 		DEBUGSTRPROC(L"CreateProcess failed\n");
-		size_t nErrLen = _tcslen(psCurCmd)+120+(lpszWorkDir ? _tcslen(lpszWorkDir) : 16/*"%USERPROFILE%"*/);
-
-		LPCWSTR pszDefaultCmd = bAllowDefaultCmd ? gpConEmu->GetDefaultCmd() : nullptr;
-		nErrLen += pszDefaultCmd ? (100 + _tcslen(pszDefaultCmd)) : 0;
 
 		// Get description of 'dwLastError'
 		size_t cchFormatMax = 1024;
-		TCHAR* pszErr = (TCHAR*)Alloc(cchFormatMax,sizeof(TCHAR));
-		if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		                    nullptr, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-		                    pszErr, cchFormatMax, nullptr))
+		CEStr errDescr;
+		if (errDescr.GetBuffer(cchFormatMax))
 		{
-			swprintf_c(pszErr, cchFormatMax/*#SECURELEN*/, L"Unknown system error: 0x%x", dwLastError);
+			if (0 == FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				nullptr, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+				errDescr.data(), cchFormatMax, nullptr))
+			{
+				swprintf_c(errDescr.data(), cchFormatMax/*#SECURELEN*/, L"Unknown system error: 0x%x", dwLastError);
+			}
 		}
 
-		nErrLen += _tcslen(pszErr);
-		TCHAR* psz = (TCHAR*)Alloc(nErrLen+255,sizeof(TCHAR));
-		int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-		switch (dwLastError)
+		wchar_t descrAndCode[128] = L"";
+		if (dwLastError == ERROR_ACCESS_DENIED)
+			swprintf_c(descrAndCode, std::size(descrAndCode), L"Can't create new console, check your antivirus\r\nError code: %i\r\n", static_cast<int>(dwLastError));
+		else
+			swprintf_c(descrAndCode, std::size(descrAndCode), L"Can't create new console, command execution failed\r\nError code: %i\r\n", static_cast<int>(dwLastError));
+
+		int nButtons = MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND;
+		LPCWSTR actionDescr = nullptr;
+		if (nStep == 1)
 		{
-		case ERROR_ACCESS_DENIED:
-			swprintf_c(psz, nErrLen/*#SECURELEN*/, L"Can't create new console, check your antivirus (code %i)!\r\n", (int)dwLastError); break;
-		default:
-			swprintf_c(psz, nErrLen/*#SECURELEN*/, L"Can't create new console, command execution failed (code %i)\r\n", (int)dwLastError);
-		}
-		_wcscat_c(psz, nErrLen, pszErr);
-		_wcscat_c(psz, nErrLen, L"\r\n");
-		_wcscat_c(psz, nErrLen, psCurCmd);
-		_wcscat_c(psz, nErrLen, L"\r\n\r\nWorking folder:\r\n\"");
-		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"%USERPROFILE%");
-		_wcscat_c(psz, nErrLen, L"\"");
-
-
-
-		if (nStep==1)
-		{
-			if (psz[_tcslen(psz)-1]!=L'\n') _wcscat_c(psz, nErrLen, L"\r\n");
-			_wcscat_c(psz, nErrLen, L"\r\n");
-			_wcscat_c(psz, nErrLen, L"Choose your shell?");
+			actionDescr = L"\r\n\r\n" L"Try again with new console dialog?";
 			nButtons |= MB_YESNO;
 		}
 
+		const CEStr errorText(descrAndCode, L"\r\n",
+			curCmd.c_str(), L"\r\n\r\nWorking folder:\r\n\"",
+			lpszWorkDir ? lpszWorkDir : L"%USERPROFILE%", L"\"",
+			actionDescr);
+
 		MCHKHEAP
-		//Box(psz);
-		int nBrc = MsgBox(psz, nButtons, mp_ConEmu->GetDefaultTitle(), nullptr, false);
-		Free(psz); Free(pszErr);
+		int nBrc = MsgBox(errorText, nButtons, mp_ConEmu->GetDefaultTitle(), nullptr, false);
 
 		if (nBrc == IDYES)
 		{
@@ -4565,15 +4556,12 @@ bool CRealConsole::StartProcess()
 
 		if (nBrc != IDYES)
 		{
-			// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
-			//mp_ConEmu->Destroy();
-			//SetEvent(mh_CreateRootEvent);
 			if (mp_ConEmu->isValid(pVCon))
 			{
 				mb_InCreateRoot = FALSE;
 				if (InRecreate())
 				{
-					TODO("Поставить флаг Detached?");
+					// #TODO: Set Detached flag?
 				}
 				else
 				{
@@ -4591,9 +4579,7 @@ bool CRealConsole::StartProcess()
 		nStep ++;
 		MCHKHEAP
 
-		SafeFree(psCurCmd);
-
-		// Изменилась команда, пересчитать настройки
+		// Command was changed, refresh settings
 		PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true);
 		if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
 		{
@@ -4604,11 +4590,8 @@ bool CRealConsole::StartProcess()
 
 	MCHKHEAP
 
-	SafeFree(psCurCmd);
-
 	MCHKHEAP
-	//TODO: а делать ли это?
-	SafeCloseHandle(pi.hThread); pi.hThread = nullptr;
+	SafeCloseHandle(pi.hThread);
 	//CloseHandle(pi.hProcess); pi.hProcess = nullptr;
 	SetMainSrvPID(pi.dwProcessId, pi.hProcess);
 	//mn_MainSrv_PID = pi.dwProcessId;
@@ -4618,8 +4601,8 @@ bool CRealConsole::StartProcess()
 	if (bNeedConHostSearch)
 	{
 		_ASSERTE(lbRc);
-		// Ищем новые процессы "conhost.exe"
-		// Но т.к. он мог еще "не появиться" - не ругаемся
+		// Search for new "conhost.exe" processes
+		// But it could be not in time, so no warnings yet
 		if (ConHostSearch(false))
 		{
 			m_ConHostSearch.Release();
@@ -4634,12 +4617,11 @@ bool CRealConsole::StartProcess()
 
 	if (m_Args.RunAsAdministrator != crb_On)
 	{
-		// Инициализировать имена пайпов, событий, мэппингов и т.п.
+		// names of pipes, events, mappings, etc.
 		InitNames();
 	}
 
 wrap:
-	//SetEvent(mh_CreateRootEvent);
 
 	if (bConHostLocked)
 	{
@@ -4647,7 +4629,7 @@ wrap:
 		bConHostLocked = false;
 	}
 
-	// В режиме "администратора" мы будем в "CreateRoot" до тех пор, пока нам не отчитается запущенный сервер
+	// In "As Admin" mode we are in the "CreateRoot" until started server notifies us
 	if (!lbRc || mn_MainSrv_PID)
 	{
 		mb_InCreateRoot = FALSE;
@@ -4671,26 +4653,29 @@ wrap:
 	return lbRc;
 }
 
-bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir,
+bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, CEStr& curCmdBuffer, LPCWSTR& lpszWorkDir,
 								   bool bNeedConHostSearch, HWND hSetForeground,
 								   DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration,
 								   BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/,
 								   STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError)
 {
 	bool lbRc = false;
-	DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
+	const DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
 
-	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // еще не должно быть установлено или должно быть сброшено
+	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // should not be set yet, or should be already cleared
 
-	bool bDirChanged = gpConEmu->ChangeWorkDir(gpConEmu->WorkDir(lpszWorkDir));
-	LPCWSTR lpszConEmuC = mp_ConEmu->ConEmuCExeFull(lpszCmd);
-	if (bDirChanged) gpConEmu->ChangeWorkDir(nullptr);
+	const bool bDirChanged = gpConEmu->ChangeWorkDir(gpConEmu->WorkDir(lpszWorkDir));
+	const auto* lpszConEmuC = mp_ConEmu->ConEmuCExeFull(lpszCmd);
+	if (bDirChanged)
+		gpConEmu->ChangeWorkDir(nullptr);
 
 	GetLocalTime(&mst_ServerStartingTime);
-	LPSYSTEMTIME lpst = (lstrcmpi(PointToName(lpszConEmuC), L"ConEmuC64.exe") == 0) ? &mp_ConEmu->mst_LastConsole64StartTime : &mp_ConEmu->mst_LastConsole32StartTime;
-	bool bIsFirstConsole = ((lpst->wYear != mst_ServerStartingTime.wYear)
-							|| (lpst->wMonth != mst_ServerStartingTime.wMonth)
-							|| (lpst->wDay != mst_ServerStartingTime.wDay));
+	SYSTEMTIME* lpst = (lstrcmpi(PointToName(lpszConEmuC), L"ConEmuC64.exe") == 0)
+		? &mp_ConEmu->mst_LastConsole64StartTime
+		: &mp_ConEmu->mst_LastConsole32StartTime;
+	const bool bIsFirstConsole = ((lpst->wYear != mst_ServerStartingTime.wYear)
+		|| (lpst->wMonth != mst_ServerStartingTime.wMonth)
+		|| (lpst->wDay != mst_ServerStartingTime.wDay));
 	*lpst = mst_ServerStartingTime;
 
 	int nCurLen = 0;
@@ -4700,9 +4685,10 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		lpszCmd = L"";
 	}
 	INT_PTR nLen = _tcslen(lpszCmd);
-	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 380 + MAX_PATH*2;
+	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 380 + MAX_PATH * 2;
 	MCHKHEAP;
-	psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+
+	auto* psCurCmd = curCmdBuffer.GetBuffer(nLen);
 	_ASSERTE(psCurCmd);
 
 
@@ -4717,10 +4703,10 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_wcscat_c(psCurCmd, nLen, L"\" ");
 		if (gpSet->isLogging())
 			_wcscat_c(psCurCmd, nLen, L"-log ");
-		DWORD nSessionID = (DWORD)-1;
-		apiQuerySessionID(GetCurrentProcessId(), nSessionID);
-		INT_PTR curLen = _tcslen(psCurCmd);
-		msprintf(psCurCmd+curLen, nLen-curLen, L"-system:%u -cmd ", nSessionID);
+		DWORD nSessionId = static_cast<DWORD>(-1);
+		apiQuerySessionID(GetCurrentProcessId(), nSessionId);
+		const INT_PTR curLen = _tcslen(psCurCmd);
+		msprintf(psCurCmd + curLen, nLen - curLen, L"-system:%u -cmd ", nSessionId);
 	}
 
 	_wcscat_c(psCurCmd, nLen, L"\"");
@@ -4730,8 +4716,9 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	//lstrcpy(psCurCmd, mp_ConEmu->ms_ConEmuCExeName);
 	_wcscat_c(psCurCmd, nLen, L"\" ");
 
-	unsigned logLevel = isLogging();
-	if (logLevel) _wcscat_c(psCurCmd, nLen, (logLevel == 3) ? L" /LOG3" : (logLevel == 2) ? L" /LOG2" : L" /LOG");
+	const unsigned logLevel = isLogging();
+	if (logLevel)
+		_wcscat_c(psCurCmd, nLen, (logLevel == 3) ? L" /LOG3" : (logLevel == 2) ? L" /LOG2" : L" /LOG");
 
 	if ((m_Args.RunAsAdministrator == crb_On) && !mp_ConEmu->mb_IsUacAdmin)
 	{
@@ -4765,21 +4752,21 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	}
 
 	_ASSERTE(mp_RBuf==mp_ABuf);
-	int nWndWidth = mp_RBuf->GetTextWidth();
-	int nWndHeight = mp_RBuf->GetTextHeight();
+	const int nWndWidth = mp_RBuf->GetTextWidth();
+	const int nWndHeight = mp_RBuf->GetTextHeight();
 	/*было - GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);*/
 	_ASSERTE(nWndWidth>0 && nWndHeight>0);
 
-	const DWORD nAID = GetMonitorThreadID();
+	const DWORD ActiveId = GetMonitorThreadID();
 	_ASSERTE(mp_ConEmu->mp_RunQueue->isRunnerThread());
-	_ASSERTE(mn_MonitorThreadID!=0 && mn_MonitorThreadID==nAID && nAID!=GetCurrentThreadId());
+	_ASSERTE(mn_MonitorThreadID != 0 && mn_MonitorThreadID == ActiveId && ActiveId != GetCurrentThreadId());
 
 	nCurLen = _tcslen(psCurCmd);
-	_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		        L" /AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
-		        nAID, GetCurrentProcessId(), LODWORD(ghWnd), nWndWidth, nWndHeight, mn_DefaultBufferHeight,
-		        gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
-		        nColors);
+	_wsprintf(psCurCmd + nCurLen, SKIPLEN(nLen - nCurLen)
+		L" /AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
+		ActiveId, GetCurrentProcessId(), LODWORD(ghWnd), nWndWidth, nWndHeight, mn_DefaultBufferHeight,
+		gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
+		nColors);
 
 	/*if (gpSet->FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
 		wcscat(psCurCmd, L" \"/FF=");
@@ -4787,7 +4774,8 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		wcscat(psCurCmd, L"\"");
 	}*/
 
-	if (!gpSet->isConVisible) _wcscat_c(psCurCmd, nLen, L" /HIDE");
+	if (!gpSet->isConVisible)
+		_wcscat_c(psCurCmd, nLen, L" /HIDE");
 
 	// /CONFIRM | /NOCONFIRM | /NOINJECT
 	m_Args.AppendServerArgs(psCurCmd, nLen);
@@ -4801,8 +4789,9 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	#endif
 
 	#ifdef _DEBUG
-	wchar_t szMonitorID[20]; swprintf_c(szMonitorID, L"%u", nAID);
-	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, szMonitorID);
+	wchar_t monitorId[20] = L"";
+	swprintf_c(monitorId, L"%u", ActiveId);
+	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, monitorId);
 	#endif
 
 	if (bNeedConHostSearch)
@@ -4817,8 +4806,8 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	if (isLogging())
 	{
-		CEStr szNewCon; szNewCon = m_Args.CreateCommandLine();
-		CEStr lsLog(L"Starting VCon[", mp_VCon->IndexStr(), L"]: Cmd=‘", psCurCmd, L"’, NewCon=‘", szNewCon.ms_Val, L"’");
+		const CEStr szNewCon = m_Args.CreateCommandLine(false);
+		const CEStr lsLog(L"Starting VCon[", mp_VCon->IndexStr(), L"]: Cmd=‘", psCurCmd, L"’, NewCon=‘", szNewCon.ms_Val, L"’");
 		LogString(lsLog);
 	}
 
@@ -4830,21 +4819,20 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		wchar_t szInfo[32] = L"";
 		if (!lbRc)
 		{
-			CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] failed, code=", ultow_s(dwLastError, szInfo, 10));
+			const CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] failed, code=", ultow_s(dwLastError, szInfo, 10));
 			LogString(lsLog);
 		}
 		else
 		{
 			if (pi.dwProcessId)
 				swprintf_c(szInfo, L", ServerPID=%u", pi.dwProcessId);
-			CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] started", szInfo);
+			const CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] started", szInfo);
 			LogString(lsLog);
 		}
 	}
 
 	nCreateEnd = GetTickCount();
 	nCreateDuration = nCreateEnd - nCreateBegin;
-	UNREFERENCED_PARAMETER(nCreateDuration);
 
 	// If known - save main server PID and HANDLE
 	if (lbRc && ((m_Args.RunAsAdministrator != crb_On) || mp_ConEmu->mb_IsUacAdmin))
@@ -4881,21 +4869,14 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		}
 
 		DEBUGSTRPROC(L"CreateProcess OK\n");
-		//lbRc = TRUE;
-		/*if (!AttachPID(pi.dwProcessId)) {
-			DEBUGSTRPROC(_T("AttachPID failed\n"));
-			SetEvent(mh_CreateRootEvent); mb_InCreateRoot = FALSE;
-			{ lbRc = FALSE; goto wrap; }
-		}
-		DEBUGSTRPROC(_T("AttachPID OK\n"));*/
-		//break; // OK, запустили
 	}
 	else if (mn_InRecreate)
 	{
 		m_Args.Detached = crb_On;
-		mn_InRecreate = (DWORD)-1;
+		mn_InRecreate = static_cast<DWORD>(-1);
 	}
 
+	std::ignore = nCreateDuration;
 	/* End of process start-up */
 	return lbRc;
 }
