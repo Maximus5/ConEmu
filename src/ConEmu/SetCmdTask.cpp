@@ -166,10 +166,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 	CmdArg szArg;
 	while ((pszArgs = NextArg(pszArgs, szArg)))
 	{
-		if (szArg.ms_Val[0] == L'-')
-			szArg.ms_Val[0] = L'/';
-
-		if (lstrcmpi(szArg, L"/dir") == 0)
+		if (szArg.IsSwitch(L"-dir"))
 		{
 			if (!((pszArgs = NextArg(pszArgs, szArg))))
 				break;
@@ -177,7 +174,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 			{
 				wchar_t* pszExpand = nullptr;
 
-				// Например, "%USERPROFILE%"
+				// e.g. "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
 				{
 					pszExpand = ExpandEnvStr(szArg);
@@ -187,7 +184,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 				pArgs->pszStartupDir = pszExpand ? pszExpand : lstrdup(szArg);
 			}
 		}
-		else if (lstrcmpi(szArg, L"/icon") == 0)
+		else if (szArg.IsSwitch(L"-icon"))
 		{
 			if (!((pszArgs = NextArg(pszArgs, szArg))))
 				break;
@@ -195,7 +192,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 			{
 				wchar_t* pszExpand = nullptr;
 
-				// Например, "%USERPROFILE%"
+				// e.g. "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
 				{
 					pszExpand = ExpandEnvStr(szArg);
@@ -205,26 +202,26 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 				pArgs->pszIconFile = pszExpand ? pszExpand : lstrdup(szArg);
 			}
 		}
-		else if ((lstrcmpi(szArg, L"/single") == 0) || (lstrcmpi(szArg, L"/reuse") == 0))
+		else if (szArg.OneOfSwitches(L"-single", L"-reuse"))
 		{
 			// Used in the other parts of code
 		}
-		else if (lstrcmpi(szArg, L"/NoSingle") == 0)
+		else if (szArg.IsSwitch(L"-NoSingle"))
 		{
 			// Force to run in new ConEmu window
 			pArgs->aRecreate = cra_CreateWindow;
 		}
-		else if (lstrcmpi(szArg, L"/quake") == 0)
+		else if (szArg.IsSwitch(L"-quake"))
 		{
 			// Turn on quake mode in starting console?
 			// Disallowed if current window is already in Quake mode.
 			if (!gpSet->isQuakeStyle)
-				lstrmerge(&pArgs->pszAddGuiArg, L"/quake ");
+				lstrmerge(&pArgs->pszAddGuiArg, L"-quake ");
 		}
-		else if (lstrcmpi(szArg, L"/noquake") == 0)
+		else if (szArg.IsSwitch(L"-NoQuake"))
 		{
 			// Disable quake in starting console
-			lstrmerge(&pArgs->pszAddGuiArg, L"/noquake ");
+			lstrmerge(&pArgs->pszAddGuiArg, L"-NoQuake ");
 		}
 		else
 		{
