@@ -49,8 +49,8 @@ protected:
 
 	static bool Load(size_t cbExtraSize, CEStartupEnv*& pEnv, LPBYTE& ptrEnd)
 	{
-		pEnv = NULL;
-		ptrEnd = NULL;
+		pEnv = nullptr;
+		ptrEnd = nullptr;
 
 		STARTUPINFOW si = {};
 		si.cb = sizeof(si);
@@ -60,7 +60,7 @@ protected:
 		os.dwOSVersionInfoSize = sizeof(os);
 		GetOsVersionInformational(reinterpret_cast<OSVERSIONINFOW*>(&os));
 
-		wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
+		wchar_t* pszEnvPathStore = static_cast<wchar_t*>(malloc(1024*sizeof(*pszEnvPathStore)));
 		if (pszEnvPathStore)
 		{
 			DWORD cbPathMax = 1024;
@@ -68,7 +68,7 @@ protected:
 			if (cbPathSize >= 1024)
 			{
 				cbPathMax = cbPathSize+1;
-				pszEnvPathStore = (wchar_t*)realloc(pszEnvPathStore, cbPathMax*sizeof(*pszEnvPathStore));
+				pszEnvPathStore = static_cast<wchar_t*>(realloc(pszEnvPathStore, cbPathMax*sizeof(*pszEnvPathStore)));
 				if (pszEnvPathStore)
 				{
 					cbPathSize = GetEnvironmentVariable(L"PATH", pszEnvPathStore, (cbPathSize+1));
@@ -81,32 +81,32 @@ protected:
 			}
 		}
 
-		LPCWSTR pszCmdLine = GetCommandLine();
+		const auto* pszCmdLine = GetCommandLine();
 
-		wchar_t* pszExecMod = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszExecMod));
+		wchar_t* pszExecMod = static_cast<wchar_t*>(calloc(MAX_PATH*2, sizeof(*pszExecMod)));
 		if (pszExecMod)
-			GetModuleFileName(NULL, pszExecMod, MAX_PATH*2);
+			GetModuleFileName(nullptr, pszExecMod, MAX_PATH*2);
 
-		wchar_t* pszWorkDir = (wchar_t*)calloc(MAX_PATH*2,sizeof(*pszWorkDir));
+		wchar_t* pszWorkDir = static_cast<wchar_t*>(calloc(MAX_PATH*2, sizeof(*pszWorkDir)));
 		if (pszWorkDir)
 			GetCurrentDirectory(MAX_PATH*2, pszWorkDir);
 
 		size_t cchTotal = sizeof(*pEnv) + cbExtraSize;
 
-		size_t cchEnv = pszEnvPathStore ? (lstrlen(pszEnvPathStore)+1) : 0;
-		cchTotal += cchEnv*sizeof(wchar_t);
+		const size_t cchEnv = pszEnvPathStore ? (lstrlen(pszEnvPathStore)+1) : 0;
+		cchTotal += cchEnv * sizeof(wchar_t);
 
-		size_t cchExe = pszExecMod ? (lstrlen(pszExecMod)+1) : 0;
-		cchTotal += cchExe*sizeof(wchar_t);
+		const size_t cchExe = pszExecMod ? (lstrlen(pszExecMod)+1) : 0;
+		cchTotal += cchExe * sizeof(wchar_t);
 
-		size_t cchCmd = pszCmdLine ? (lstrlen(pszCmdLine)+1) : 0;
-		cchTotal += cchCmd*sizeof(wchar_t);
+		const size_t cchCmd = pszCmdLine ? (lstrlen(pszCmdLine)+1) : 0;
+		cchTotal += cchCmd * sizeof(wchar_t);
 
-		size_t cchDir = pszWorkDir ? (lstrlen(pszWorkDir)+1) : 0;
-		cchTotal += cchDir*sizeof(wchar_t);
+		const size_t cchDir = pszWorkDir ? (lstrlen(pszWorkDir)+1) : 0;
+		cchTotal += cchDir * sizeof(wchar_t);
 
-		size_t cchTtl = si.lpTitle ? (lstrlen(si.lpTitle)+1) : 0;
-		cchTotal += cchTtl*sizeof(wchar_t);
+		const size_t cchTtl = si.lpTitle ? (lstrlen(si.lpTitle)+1) : 0;
+		cchTotal += cchTtl * sizeof(wchar_t);
 
 		pEnv = AllocEnv(cchTotal);
 
@@ -120,9 +120,9 @@ protected:
 			pEnv->si = si;
 			pEnv->os = os;
 
-			pEnv->hStartMon = (si.dwFlags & STARTF_USESTDHANDLES) ? NULL : (HMONITOR)si.hStdOutput;
+			pEnv->hStartMon = (si.dwFlags & STARTF_USESTDHANDLES) ? nullptr : static_cast<HMONITOR>(si.hStdOutput);
 
-			// Информационно. К физической консоли потом могут и через RDP подключиться...
+			// Informational. Even physical console may be later be connected via RDP...
 			pEnv->bIsRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
 
 			pEnv->bIsDbcs = IsWinDBCS();
@@ -133,10 +133,10 @@ protected:
 			pEnv->bIsWinPE = 2;
 			pEnv->bIsAdmin = 2;
 
-			LPCWSTR pszReactCompare = GetReactOsName();
-			int nCmdLen = lstrlen(pszReactCompare);
+			const auto* pszReactCompare = GetReactOsName();
+			const int nCmdLen = lstrlen(pszReactCompare);
 			wchar_t* pszReactOS = os.szCSDVersion + lstrlen(os.szCSDVersion) + 1;
-			if (*pszReactOS && ((pszReactOS+nCmdLen+1) < (os.szCSDVersion + countof(os.szCSDVersion))))
+			if (*pszReactOS && ((pszReactOS + nCmdLen + 1) < (os.szCSDVersion + countof(os.szCSDVersion))))
 			{
 				pszReactOS[nCmdLen] = 0;  // -V557
 				pEnv->bIsReactOS = (lstrcmpi(pszReactOS, pszReactCompare) == 0);
@@ -161,15 +161,18 @@ protected:
 			}
 
 			struct { CE_HANDLE_INFO* p; DWORD nId; }
-				lHandles[] = {{&pEnv->hIn, STD_INPUT_HANDLE}, {&pEnv->hOut, STD_OUTPUT_HANDLE}, {&pEnv->hErr, STD_ERROR_HANDLE}};
-			for (size_t i = 0; i < countof(lHandles); i++)
+			lHandles[] = {
+				{&pEnv->hIn, STD_INPUT_HANDLE},
+				{&pEnv->hOut, STD_OUTPUT_HANDLE},
+				{&pEnv->hErr, STD_ERROR_HANDLE} };
+			for (auto& lHandle : lHandles)
 			{
-				lHandles[i].p->hStd = GetStdHandle(lHandles[i].nId);
-				if (!GetConsoleMode(lHandles[i].p->hStd, &lHandles[i].p->nMode))
-					lHandles[i].p->nMode = (DWORD)-1;
+				lHandle.p->hStd = GetStdHandle(lHandle.nId);
+				if (!GetConsoleMode(lHandle.p->hStd, &lHandle.p->nMode))
+					lHandle.p->nMode = static_cast<DWORD>(-1);
 			}
 
-			wchar_t* psz = (wchar_t*)(pEnv+1);
+			wchar_t* psz = reinterpret_cast<wchar_t*>(pEnv + 1);
 
 			if (pszCmdLine)
 			{
@@ -207,21 +210,21 @@ protected:
 				psz += cchTtl;
 			}
 
-			ptrEnd = (LPBYTE)psz;
+			ptrEnd = reinterpret_cast<LPBYTE>(psz);
 		}
 
 		SafeFree(pszEnvPathStore);
 		SafeFree(pszExecMod);
 		SafeFree(pszWorkDir);
 
-		return (pEnv != NULL && ptrEnd != NULL);
+		return (pEnv != nullptr && ptrEnd != nullptr);
 	}
 
 public:
 	static CEStartupEnv* Create()
 	{
-		CEStartupEnv* pEnv = NULL;
-		LPBYTE ptrEnd = NULL;
+		CEStartupEnv* pEnv = nullptr;
+		LPBYTE ptrEnd = nullptr;
 		Load(0, pEnv, ptrEnd);
 		return pEnv;
 	}

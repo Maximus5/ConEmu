@@ -113,12 +113,12 @@ const wchar_t *shell32  = L"shell32.dll",	*shell32_noext  = L"shell32";
 const wchar_t *advapi32 = L"advapi32.dll",	*advapi32_noext = L"advapi32";
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 HMODULE
-	ghKernelBase = NULL,
-	ghKernel32 = NULL,
-	ghUser32 = NULL,
-	ghGdi32 = NULL,
-	ghShell32 = NULL,
-	ghAdvapi32 = NULL;
+	ghKernelBase = nullptr,
+	ghKernel32 = nullptr,
+	ghUser32 = nullptr,
+	ghGdi32 = nullptr,
+	ghShell32 = nullptr,
+	ghAdvapi32 = nullptr;
 HMODULE* ghSysDll[] = {
 	&ghKernelBase,
 	&ghKernel32,
@@ -148,7 +148,7 @@ struct PreloadModules {
 size_t GetPreloadModules(PreloadModules** ppModules)
 {
 	static size_t snModulesCount = 0;
-	static PreloadModules* spModules = NULL;
+	static PreloadModules* spModules = nullptr;
 	if (spModules)
 	{
 		if (ppModules)
@@ -177,20 +177,20 @@ void CheckLoadedModule(LPCWSTR asModule)
 	if (!asModule || !*asModule)
 		return;
 
-	PreloadModules* Checks = NULL;
+	PreloadModules* Checks = nullptr;
 	size_t nChecks = GetPreloadModules(&Checks);
 
 	for (size_t m = 0; m < nChecks; m++)
 	{
-		if ((*Checks[m].pModulePtr) != NULL)
+		if ((*Checks[m].pModulePtr) != nullptr)
 			continue;
 
 		if (!lstrcmpiW(asModule, Checks[m].sModule) || !lstrcmpiW(asModule, Checks[m].sModuleNoExt))
 		{
 			*Checks[m].pModulePtr = LoadLibraryW(Checks[m].sModule); // LoadLibrary, т.к. и нам он нужен - накрутить счетчик
-			if ((*Checks[m].pModulePtr) != NULL)
+			if ((*Checks[m].pModulePtr) != nullptr)
 			{
-				_ASSERTEX(Checks[m].Funcs[countof(Checks[m].Funcs)-1].sFuncName == NULL);
+				_ASSERTEX(Checks[m].Funcs[countof(Checks[m].Funcs)-1].sFuncName == nullptr);
 
 				for (size_t f = 0; f < countof(Checks[m].Funcs) && Checks[m].Funcs[f].sFuncName; f++)
 				{
@@ -206,7 +206,7 @@ void FreeLoadedModule(HMODULE hModule)
 	if (!hModule)
 		return;
 
-	PreloadModules* Checks = NULL;
+	PreloadModules* Checks = nullptr;
 	size_t nChecks = GetPreloadModules(&Checks);
 
 	for (size_t m = 0; m < nChecks; m++)
@@ -214,18 +214,18 @@ void FreeLoadedModule(HMODULE hModule)
 		if ((*Checks[m].pModulePtr) != hModule)
 			continue;
 
-		if (GetModuleHandle(Checks[m].sModule) == NULL)
+		if (GetModuleHandle(Checks[m].sModule) == nullptr)
 		{
 			// По идее, такого быть не должно, т.к. счетчик мы накрутили, библиотека не должна была выгрузиться
-			_ASSERTEX(*Checks[m].pModulePtr == NULL);
+			_ASSERTEX(*Checks[m].pModulePtr == nullptr);
 
-			*Checks[m].pModulePtr = NULL;
+			*Checks[m].pModulePtr = nullptr;
 
-			_ASSERTEX(Checks[m].Funcs[countof(Checks[m].Funcs)-1].sFuncName == NULL);
+			_ASSERTEX(Checks[m].Funcs[countof(Checks[m].Funcs)-1].sFuncName == nullptr);
 
 			for (size_t f = 0; f < countof(Checks[m].Funcs) && Checks[m].Funcs[f].sFuncName; f++)
 			{
-				*Checks[m].Funcs[f].pFuncPtr = NULL;
+				*Checks[m].Funcs[f].pFuncPtr = nullptr;
 			}
 		}
 	}
@@ -236,16 +236,16 @@ void FreeLoadedModule(HMODULE hModule)
 /// Let's know all processed modules
 ///
 
-HkModuleMap* gpHookedModules = NULL;
+HkModuleMap* gpHookedModules = nullptr;
 
 bool InitializeHookedModules()
 {
 	if (!gpHookedModules)
 	{
-		//MessageBox(NULL, L"InitializeHookedModules", L"Hooks", MB_SYSTEMMODAL);
+		//MessageBox(nullptr, L"InitializeHookedModules", L"Hooks", MB_SYSTEMMODAL);
 
 		//WARNING: "new" вызывать из DllStart нельзя! DllStart вызывается НЕ из главной нити,
-		//WARNING: причем, когда главная нить еще не была запущена. В итоге, если это 
+		//WARNING: причем, когда главная нить еще не была запущена. В итоге, если это
 		//WARNING: попытаться сделать мы получим:
 		//WARNING: runtime error R6030  - CRT not initialized
 		// -- gpHookedModules = new MArray<HkModuleInfo>;
@@ -253,7 +253,7 @@ bool InitializeHookedModules()
 		HkModuleMap* pMap = (HkModuleMap*)calloc(sizeof(HkModuleMap),1);
 		if (!pMap)
 		{
-			_ASSERTE(pMap!=NULL);
+			_ASSERTE(pMap!=nullptr);
 		}
 		else if (!pMap->Init())
 		{
@@ -265,7 +265,7 @@ bool InitializeHookedModules()
 		}
 	}
 
-	return (gpHookedModules != NULL);
+	return (gpHookedModules != nullptr);
 }
 
 void FinalizeHookedModules()
@@ -273,8 +273,8 @@ void FinalizeHookedModules()
 	HLOG1("FinalizeHookedModules",0);
 	if (gpHookedModules)
 	{
-		HkModuleInfo** pp = NULL;
-		INT_PTR iCount = gpHookedModules->GetKeysValues(NULL, &pp);
+		HkModuleInfo** pp = nullptr;
+		INT_PTR iCount = gpHookedModules->GetKeysValues(nullptr, &pp);
 		if (iCount > 0)
 		{
 			for (INT_PTR i = 0; i < iCount; i++)
@@ -287,7 +287,7 @@ void FinalizeHookedModules()
 	HLOGEND1();
 }
 
-HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchNameMax = 0)
+HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = nullptr, size_t cchNameMax = 0)
 {
 	// Must be initialized already, but JIC
 	if (!gpHookedModules)
@@ -295,13 +295,13 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 
 	if (!gpHookedModules)
 	{
-		_ASSERTE(gpHookedModules!=NULL);
-		return NULL;
+		_ASSERTE(gpHookedModules!=nullptr);
+		return nullptr;
 	}
 
 	//bool lbHooked = false;
 
-	HkModuleInfo* p = NULL;
+	HkModuleInfo* p = nullptr;
 	if (gpHookedModules->Get(hModule, &p))
 	{
 		//_ASSERTE(p->Hooked == 1 || p->Hooked == 2);
@@ -326,8 +326,8 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 	_ASSERTE(gpHookedModules);
 	if (!gpHookedModules)
 	{
-		_ASSERTE(gpHookedModules!=NULL);
-		return NULL;
+		_ASSERTE(gpHookedModules!=nullptr);
+		return nullptr;
 	}
 
 	HkModuleInfo* p = IsHookedModule(hModule);
@@ -337,7 +337,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 		p = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
 		if (!p)
 		{
-			_ASSERTE(p!=NULL);
+			_ASSERTE(p!=nullptr);
 		}
 		else
 		{
@@ -362,11 +362,11 @@ void RemoveHookedModule(HMODULE hModule)
 	_ASSERTE(gpHookedModules);
 	if (!gpHookedModules)
 	{
-		_ASSERTE(gpHookedModules!=NULL);
+		_ASSERTE(gpHookedModules!=nullptr);
 		return;
 	}
 
-	HkModuleInfo* p = NULL;
+	HkModuleInfo* p = nullptr;
 	if (gpHookedModules->Get(hModule, &p, true/*Remove*/))
 	{
 		SafeFree(p);
@@ -376,12 +376,12 @@ void RemoveHookedModule(HMODULE hModule)
 
 
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
-HMODULE ghOnLoadLibModule = NULL;
-OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
-OnLibraryLoaded_t gfOnLibraryUnLoaded = NULL;
+HMODULE ghOnLoadLibModule = nullptr;
+OnLibraryLoaded_t gfOnLibraryLoaded = nullptr;
+OnLibraryLoaded_t gfOnLibraryUnLoaded = nullptr;
 
 
-HookItem *gpHooks = NULL; // [MAX_HOOKED_PROCS]
+HookItem *gpHooks = nullptr; // [MAX_HOOKED_PROCS]
 size_t gnHookedFuncs = 0;
 
 
@@ -391,9 +391,9 @@ DWORD gnLastLogSetChange = 0;
 
 // Используется в том случае, если требуется выполнить оригинальную функцию, без нашей обертки
 // пример в OnPeekConsoleInputW
-void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= 0*/, void* ApiFunction/*= NULL*/, HookItem** ph/*= NULL*/, bool abAllowNulls /*= false*/)
+void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= 0*/, void* ApiFunction/*= nullptr*/, HookItem** ph/*= nullptr*/, bool abAllowNulls /*= false*/)
 {
-	void* lpfn = NULL;
+	void* lpfn = nullptr;
 
 	// Initialized?
 	if (!gpHooks || !HooksWereSetRaw)
@@ -445,7 +445,7 @@ wrap:
 				asserted = true;
 		}
 		#endif
-		if (ph) *ph = NULL;
+		if (ph) *ph = nullptr;
 		lpfn = ApiFunction;
 	}
 
@@ -457,9 +457,9 @@ wrap:
 FARPROC WINAPI GetLoadLibraryW()
 {
 	// KERNEL ADDRESS
-	LPVOID fnLoadLibraryW = NULL; // Can't use (LPVOID)&LoadLibraryW anymore, our imports are changed
-	HookItem* p = NULL;
-	if (GetOriginalAddress((LPVOID)OnLoadLibraryW, HOOK_FN_ID(LoadLibraryW), NULL, &p, true))
+	LPVOID fnLoadLibraryW = nullptr; // Can't use (LPVOID)&LoadLibraryW anymore, our imports are changed
+	HookItem* p = nullptr;
+	if (GetOriginalAddress((LPVOID)OnLoadLibraryW, HOOK_FN_ID(LoadLibraryW), nullptr, &p, true))
 	{
 		fnLoadLibraryW = p->HookedAddress;
 		if (!fnLoadLibraryW)
@@ -584,7 +584,7 @@ int InitHooks(HookItem* apHooks)
 		return -3;
 	}
 
-	if (gpHooks == NULL)
+	if (gpHooks == nullptr)
 	{
 		// gh#250: Fight with CreateToolhelp32Snapshot lags
 		MH_INITIALIZE mhInit = {sizeof(mhInit)};
@@ -628,7 +628,7 @@ int InitHooks(HookItem* apHooks)
 		{
 			KernelHooked = true;
 
-			_ASSERTEX(ghKernel32 != NULL);
+			_ASSERTEX(ghKernel32 != nullptr);
 			// Windows 7 still uses kernel32.dll,
 			// 64-bit version of MultiRun was printed unprocessed ANSI
 			if (IsWin8())
@@ -644,9 +644,9 @@ int InitHooks(HookItem* apHooks)
 		{
 			DWORD NameCRC = CalculateNameCRC32(apHooks[i].Name);
 
-			if (apHooks[i].Name==NULL || apHooks[i].DllName==NULL)
+			if (apHooks[i].Name==nullptr || apHooks[i].DllName==nullptr)
 			{
-				_ASSERTE(apHooks[i].Name!=NULL && apHooks[i].DllName!=NULL);
+				_ASSERTE(apHooks[i].Name!=nullptr && apHooks[i].DllName!=nullptr);
 				break;
 			}
 
@@ -697,14 +697,14 @@ int InitHooks(HookItem* apHooks)
 			gnHookedFuncs = j+1;
 
 			// Clear next item just in case
-			gpHooks[j+1].Name = NULL;
-			gpHooks[j+1].NewAddress = NULL;
+			gpHooks[j+1].Name = nullptr;
+			gpHooks[j+1].NewAddress = nullptr;
 		}
 	}
 
 	// Local variables to speed up GetModuleHandle calls
-	HMODULE hLastModule = NULL;
-	LPCWSTR pszLastModule = NULL;
+	HMODULE hLastModule = nullptr;
+	LPCWSTR pszLastModule = nullptr;
 
 	// Determine original function addresses
 	for (i = 0; gpHooks[i].NewAddress; i++)
@@ -736,13 +736,13 @@ int InitHooks(HookItem* apHooks)
 				}
 			}
 
-			if (mod == NULL)
+			if (mod == nullptr)
 			{
-				_ASSERTE(mod != NULL 
+				_ASSERTE(mod != nullptr
 					// Библиотеки, которые могут быть НЕ подлинкованы на старте
-					|| (gpHooks[i].DllName == shell32 
-						|| gpHooks[i].DllName == user32 
-						|| gpHooks[i].DllName == gdi32 
+					|| (gpHooks[i].DllName == shell32
+						|| gpHooks[i].DllName == user32
+						|| gpHooks[i].DllName == gdi32
 						|| gpHooks[i].DllName == advapi32
 						));
 			}
@@ -775,7 +775,7 @@ int InitHooks(HookItem* apHooks)
 					gpHooks[i].HookedAddress = (void*)GetProcAddress(mod, ExportName);
 				}
 
-				if (gpHooks[i].HookedAddress != NULL)
+				if (gpHooks[i].HookedAddress != nullptr)
 				{
 					iFunc++;
 				}
@@ -783,7 +783,7 @@ int InitHooks(HookItem* apHooks)
 				else
 				{
 					// WinXP does not have many hooked functions, don't show dozens of asserts
-					_ASSERTE(!IsWin7() || (gpHooks[i].HookedAddress != NULL));
+					_ASSERTE(!IsWin7() || (gpHooks[i].HookedAddress != nullptr));
 				}
 				#endif
 
@@ -812,7 +812,7 @@ HookItem* FindFunction(const char* pszFuncName)
 	//if (pc)
 	//	return pc->p;
 
-	return NULL;
+	return nullptr;
 }
 
 
@@ -833,7 +833,7 @@ bool StartupHooks()
 	// Консольное окно уже должно быть инициализировано в DllMain
 	// real console window handle should be already initialized in DllMain
 	HWND hRealConsole = GetRealConsoleWindow();
-	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (hRealConsole == NULL) || (ghConWnd != NULL && ghConWnd == hRealConsole));
+	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (hRealConsole == nullptr) || (ghConWnd != nullptr && ghConWnd == hRealConsole));
 	wchar_t sClass[128];
 	if (ghConWnd)
 	{
@@ -869,7 +869,7 @@ bool StartupHooks()
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
 
 	// Prepare array and check basic requirements (LdrNotification, LoadLibrary, etc.)
-	InitHooks(NULL);
+	InitHooks(nullptr);
 
 
 	// Populate hooked function list
@@ -928,7 +928,7 @@ void ShutdownHooks()
 		if (ghSysDll[s] && *ghSysDll[s])
 		{
 			FreeLibrary(*ghSysDll[s]);
-			*ghSysDll[s] = NULL;
+			*ghSysDll[s] = nullptr;
 		}
 	}
 	HLOGEND1();
@@ -957,7 +957,7 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 {
 	if (!ProcName|| !DllName)
 	{
-		_ASSERTE(ProcName!=NULL && DllName!=NULL);
+		_ASSERTE(ProcName!=nullptr && DllName!=nullptr);
 		return false;
 	}
 	_ASSERTE(ProcName[0]!=0 && DllName[0]!=0);
@@ -988,7 +988,7 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 	bool lbFound = false;
 
 	//TH32CS_SNAPMODULE - may hang during LoadLibrary/FreeLibrary.
-	lbFound = (IsHookedModule(ahModule, pszName, cchNameMax) != NULL);
+	lbFound = (IsHookedModule(ahModule, pszName, cchNameMax) != nullptr);
 
 	return lbFound;
 }
@@ -1020,7 +1020,7 @@ bool SetImportsChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool 
 //  Это для того, чтобы не выполнять множественные хуки при множественных LoadLibrary
 bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 {
-	IMAGE_IMPORT_DESCRIPTOR* Import = NULL;
+	IMAGE_IMPORT_DESCRIPTOR* Import = nullptr;
 	DWORD Size = 0;
 	HMODULE hExecutable = GetModuleHandle(0);
 
@@ -1044,7 +1044,7 @@ bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
 	*/
 
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
-	IMAGE_NT_HEADERS* nt_header = NULL;
+	IMAGE_NT_HEADERS* nt_header = nullptr;
 
 	HLOG0("SetImports.Init",(DWORD)Module);
 
@@ -1249,7 +1249,7 @@ bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_heade
 				}
 			}
 
-			PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
+			PIMAGE_IMPORT_BY_NAME pOrdinalNameO = nullptr;
 			IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
 			IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
 
@@ -1301,7 +1301,7 @@ bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_heade
 					}
 					#endif
 
-					const char* pszFuncName = NULL;
+					const char* pszFuncName = nullptr;
 
 
 					// We get function address and (if s==1) function name
@@ -1318,7 +1318,7 @@ bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_heade
 							_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
 
 							// If we failed to determine original address of the procedure (kernel32/WriteConsoleOutputW, etc.)
-							if (ph->HookedAddress == NULL)
+							if (ph->HookedAddress == nullptr)
 							{
 								continue;
 							}
@@ -1414,7 +1414,7 @@ bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_heade
 						HLOG1("SetImportsPrep.WorkExport",f);
 
 						// When we get here - jj matches pszFuncName or FuncPtr
-						if (p->Addresses[jj].ppAdr != NULL)
+						if (p->Addresses[jj].ppAdr != nullptr)
 						{
 							HLOGEND1();
 							continue; // уже обработали, следующий импорт
@@ -1492,7 +1492,7 @@ bool SetImportsChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool 
 	{
 		while (j < gnHookedFuncs)
 		{
-			// Может быть NULL, если импортируются не все функции
+			// Может быть nullptr, если импортируются не все функции
 			if (p->Addresses[j].ppAdr && bFnNeedHook[j])
 			{
 				if (*p->Addresses[j].ppAdr == p->Addresses[j].pOur)
@@ -1604,8 +1604,8 @@ void UnsetImports()
 	if (!gpHooks || !gpHookedModules)
 		return;
 
-	HkModuleInfo** pp = NULL;
-	INT_PTR iCount = gpHookedModules->GetKeysValues(NULL, &pp);
+	HkModuleInfo** pp = nullptr;
+	INT_PTR iCount = gpHookedModules->GetKeysValues(nullptr, &pp);
 	if (iCount > 0)
 	{
 		for (INT_PTR i = 0; i < iCount; i++)
@@ -1623,10 +1623,10 @@ bool SetAllHooks()
 	if (!gpHooks)
 	{
 		// Functions were not defined?
-		_ASSERTE(gpHooks!=NULL);
+		_ASSERTE(gpHooks!=nullptr);
 
 		HLOG1("SetAllHooks.InitHooks",0);
-		InitHooks(NULL);
+		InitHooks(nullptr);
 		if (!gpHooks)
 			return false;
 		HLOGEND1();
@@ -1688,10 +1688,10 @@ bool SetAllHooks()
 
 
 	extern FARPROC CallWriteConsoleW;
-	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW), NULL, NULL, gbPrepareDefaultTerminal);
+	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW), nullptr, nullptr, gbPrepareDefaultTerminal);
 
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
-	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, HOOK_FN_ID(GetConsoleWindow), NULL, NULL, gbPrepareDefaultTerminal);
+	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, HOOK_FN_ID(GetConsoleWindow), nullptr, nullptr, gbPrepareDefaultTerminal);
 
 	DebugString(L"Functions prepared\n");
 
@@ -1711,12 +1711,12 @@ void UnsetAllHooks()
 		HLOGEND1();
 	}
 
-	// Set all "original" function calls to NULL
+	// Set all "original" function calls to nullptr
 	{
 	extern FARPROC CallWriteConsoleW;
-	CallWriteConsoleW = NULL;
+	CallWriteConsoleW = nullptr;
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
-	gfGetRealConsoleWindow = NULL;
+	gfGetRealConsoleWindow = nullptr;
 
 	HLOG1("hkFunc.OnHooksUnloaded", 0);
 	OnHooksUnloaded();
@@ -1740,7 +1740,7 @@ void UnsetAllHooks()
 				g_mhCritical = status = MH_DisableHook(gpHooks[nFuncID].HookedAddress);
 				if (status == MH_OK)
 				{
-					gpHooks[nFuncID].CallAddress = NULL;
+					gpHooks[nFuncID].CallAddress = nullptr;
 				}
 			}
 		}
@@ -1789,13 +1789,13 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		return;
 
 
-	CESERVER_REQ* pIn = NULL;
+	CESERVER_REQ* pIn = nullptr;
 	wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 	wchar_t szErrCode[64]; szErrCode[0] = 0;
 	msprintf(szErrCode, countof(szErrCode), L"ErrCode=0x%08X", dwErrCode);
 	if (!asModuleA && !asModuleW)
 	{
-		wcscpy_c(szModule, L"<NULL>");
+		wcscpy_c(szModule, L"<nullptr>");
 		asModuleW = szModule;
 	}
 	else if (asModuleA)
@@ -1804,13 +1804,13 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		szModule[countof(szModule)-1] = 0;
 		asModuleW = szModule;
 	}
-	pIn = ExecuteNewCmdOnCreate(NULL, ghConWnd, eLoadLibrary, L"Fail", asModuleW, szErrCode, L"", NULL, NULL, NULL, NULL,
+	pIn = ExecuteNewCmdOnCreate(nullptr, ghConWnd, eLoadLibrary, L"Fail", asModuleW, szErrCode, L"", nullptr, nullptr, nullptr, nullptr,
 		#ifdef _WIN64
 		64
 		#else
 		32
 		#endif
-		, 0, NULL, NULL, NULL);
+		, 0, nullptr, nullptr, nullptr);
 	if (pIn)
 	{
 		HWND hConWnd = GetRealConsoleWindow();
@@ -1841,7 +1841,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	bool lbAllSysLoaded = true;
 	for (size_t s = 0; s < countof(ghSysDll); s++)
 	{
-		if (ghSysDll[s] && (*ghSysDll[s] == NULL))
+		if (ghSysDll[s] && (*ghSysDll[s] == nullptr))
 		{
 			lbAllSysLoaded = false;
 			break;
@@ -1856,7 +1856,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		// не загружены во время первичной инициализации
 		// Соответственно для них (если они появились) нужно
 		// получить "оригинальные" адреса процедур
-		iFunc = InitHooks(NULL);
+		iFunc = InitHooks(nullptr);
 		HLOGEND1();
 	}
 
@@ -1872,7 +1872,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 	if (!asModuleA && !asModuleW)
 	{
-		wcscpy_c(szModule, L"<NULL>");
+		wcscpy_c(szModule, L"<nullptr>");
 		pszModuleW = szModule;
 	}
 	else if (asModuleA)
@@ -1934,14 +1934,14 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
 	// lbResource получается TRUE например при вызовах из version.dll
 
-	if ((iStep == 0) && gbLogLibraries && !(gnDllState & ds_DllStoping))
+	if ((iStep == 0) && gbLogLibraries && !(gnDllState & ds_DllStopping))
 	{
 		LogModuleUnloaded(pszModule, hModule);
 	}
 
 
 	// Than only real dlls (!LDR_IS_RESOURCE)
-	if ((iStep > 0) && !lbResource && !(gnDllState & ds_DllStoping))
+	if ((iStep > 0) && !lbResource && !(gnDllState & ds_DllStopping))
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
 		// iStep == 2 comes from LdrDllNotification(Unload)
@@ -1958,9 +1958,9 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 
 			if (ghOnLoadLibModule == hModule)
 			{
-				ghOnLoadLibModule = NULL;
-				gfOnLibraryLoaded = NULL;
-				gfOnLibraryUnLoaded = NULL;
+				ghOnLoadLibModule = nullptr;
+				gfOnLibraryLoaded = nullptr;
+				gfOnLibraryUnLoaded = nullptr;
 			}
 
 			if (gpHooks)
@@ -1969,10 +1969,10 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 				{
 					if (gpHooks[i].hCallbackModule == hModule)
 					{
-						gpHooks[i].hCallbackModule = NULL;
-						gpHooks[i].PreCallBack = NULL;
-						gpHooks[i].PostCallBack = NULL;
-						gpHooks[i].ExceptCallBack = NULL;
+						gpHooks[i].hCallbackModule = nullptr;
+						gpHooks[i].PreCallBack = nullptr;
+						gpHooks[i].PostCallBack = nullptr;
+						gpHooks[i].ExceptCallBack = nullptr;
 					}
 				}
 			}
@@ -2027,7 +2027,7 @@ void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
 			gnExeFlags |= caf_Clink;
 	}
 
-	CShellProc* sp = NULL;
+	CShellProc* sp = nullptr;
 
 	if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
 	{
@@ -2049,12 +2049,12 @@ void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
 
 	if (gbLogLibraries)
 	{
-		CESERVER_REQ* pIn = NULL;
+		CESERVER_REQ* pIn = nullptr;
 
 		wchar_t szInfo[64] = L"";
 		FormatModuleHandle(hModule, L"Module=0x%08X", L"Module=0x%08X%08X", szInfo, countof(szInfo));
 
-		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, NULL, NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
+		pIn = sp->NewCmdOnCreate(eLoadLibrary, nullptr, pwszModule, szInfo, nullptr, nullptr, nullptr, nullptr, nullptr, WIN3264TEST(32,64), 0, nullptr, nullptr, nullptr);
 		if (pIn)
 		{
 			HWND hConWnd = GetRealConsoleWindow();
@@ -2074,7 +2074,7 @@ void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule)
 	{
 		wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
-		CESERVER_REQ* pIn = NULL;
+		CESERVER_REQ* pIn = nullptr;
 		if (pwszModule && *pwszModule)
 		{
 			lstrcpyn(szModule, pwszModule, countof(szModule));
@@ -2091,13 +2091,13 @@ void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule)
 				wcscpy_c(szModule, szHandle+2);
 		}
 
-		pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL, NULL,
+		pIn = sp->NewCmdOnCreate(eFreeLibrary, nullptr, szModule, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 			#ifdef _WIN64
 			64
 			#else
 			32
 			#endif
-			, 0, NULL, NULL, NULL);
+			, 0, nullptr, nullptr, nullptr);
 		if (pIn)
 		{
 			HWND hConWnd = GetRealConsoleWindow();

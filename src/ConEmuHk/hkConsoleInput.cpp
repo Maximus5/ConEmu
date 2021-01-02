@@ -59,7 +59,7 @@ BOOL gbWasSucceededInRead = FALSE;
 
 static bool USE_INTERNAL_QUEUE = true;
 
-static CESERVER_CONSOLE_APP_MAPPING* gpReadConAppMap = NULL;
+static CESERVER_CONSOLE_APP_MAPPING* gpReadConAppMap = nullptr;
 static DWORD gnReadConAppPID = 0;
 
 #ifdef _DEBUG
@@ -78,7 +78,7 @@ extern void CheckPowershellProgressPresence();
 /* **************** */
 
 // Helper function
-void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFlags*/, CESERVER_CONSOLE_APP_MAPPING** ppAppMap = NULL)
+void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFlags*/, CESERVER_CONSOLE_APP_MAPPING** ppAppMap = nullptr)
 {
 	#if defined(_DEBUG) && defined(PRE_PEEK_CONSOLE_INPUT)
 	INPUT_RECORD ir = {}; DWORD nRead = 0, nBuffer = 0;
@@ -128,7 +128,7 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 }
 
 // Helper function
-void PostReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFlags*/, CESERVER_CONSOLE_APP_MAPPING* pAppMap = NULL)
+void PostReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFlags*/, CESERVER_CONSOLE_APP_MAPPING* pAppMap = nullptr)
 {
 	if ((nFlags & rcif_LLInput) && !(nFlags & rcif_Peek))
 	{
@@ -261,7 +261,7 @@ void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVO
 	CEAnsi::OnReadConsoleAfter(true, bNoLineFeed);
 
 	// Сброс кешированных значений
-	GetConsoleScreenBufferInfoCached(NULL, NULL);
+	GetConsoleScreenBufferInfoCached(nullptr, nullptr);
 
 	PostReadConsoleInput(hConsoleInput, (bUnicode ? rcif_Unicode : rcif_Ansi));
 }
@@ -300,7 +300,7 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 			gbWasSucceededInRead = TRUE;
 
 		// Сброс кешированных значений
-		GetConsoleScreenBufferInfoCached(NULL, NULL);
+		GetConsoleScreenBufferInfoCached(nullptr, nullptr);
 	}
 
 	if (!nRead || !lpBuffer)
@@ -408,7 +408,7 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	ORIGINAL_KRNL(ReadConsoleA);
 	BOOL lbRc = FALSE;
 
-	_ASSERTE(pInputControl==NULL); // pInputControl is expected to be NULL in ANSI version
+	_ASSERTE(pInputControl==nullptr); // pInputControl is expected to be nullptr in ANSI version
 	OnReadConsoleStart(false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, (MY_CONSOLE_READCONSOLE_CONTROL*)pInputControl);
 
 	lbRc = F(ReadConsoleA)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
@@ -620,7 +620,7 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	PostReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_Peek|rcif_LLInput);
 
 	//#ifdef USE_INPUT_SEMAPHORE
-	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, nullptr);
 	//#endif
 
 	if (ph && ph->PostCallBack)
@@ -689,7 +689,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	PostReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_Peek|rcif_LLInput);
 
 	//#ifdef USE_INPUT_SEMAPHORE
-	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, nullptr);
 	//#endif
 
 	if (ph && ph->PostCallBack)
@@ -748,7 +748,7 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = NULL;
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = nullptr;
 	PreReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_LLInput, &pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
@@ -770,7 +770,7 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	PostReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_LLInput, pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
-	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, nullptr);
 	//#endif
 
 	if (ph && ph->PostCallBack)
@@ -810,7 +810,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = NULL;
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = nullptr;
 	PreReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_LLInput, &pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
@@ -821,7 +821,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	#if 0
 	// get-help Get-ChildItem -full | out-host -paging
 	HANDLE hInTest;
-	HANDLE hTestHandle = NULL;
+	HANDLE hTestHandle = nullptr;
 	DWORD nInMode, nArgMode;
 	BOOL bInTest = FALSE, bArgTest = FALSE;
 	if (gbPowerShellMonitorProgress)
@@ -874,7 +874,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	PostReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_LLInput, pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
-	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
+	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, nullptr);
 	//#endif
 
 	if (ph && ph->PostCallBack)

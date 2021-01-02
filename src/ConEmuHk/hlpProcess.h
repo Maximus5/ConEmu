@@ -223,7 +223,7 @@ extern DWORD gnTimeEnvVarLastCheck;
 extern wchar_t gszTimeEnvVarSave[32];
 /* ************ Hooking time functions ************ */
 
-void GuiSetProgress(AnsiProgressStatus st, WORD pr, LPCWSTR pszName = NULL);
+void GuiSetProgress(AnsiProgressStatus st, WORD pr, LPCWSTR pszName = nullptr);
 
 #if defined(__GNUC__)
 extern "C" {
@@ -239,10 +239,10 @@ extern "C" {
 
 void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate = ds_Undefined);
 
-#include <intrin.h>
-
 // Defined in "DbgHooks.h"
 #ifdef USEHOOKLOG
+	#include <intrin.h>
+
 	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
 
 	#define getTime GetTickCount

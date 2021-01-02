@@ -136,7 +136,7 @@ void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)
 	#endif
 
 	#ifdef PRINT_EXE_TIMINGS
-	WriteProcessed3(szTimingMsg, lstrlen(szTimingMsg), NULL, hTimingHandle);
+	WriteProcessed3(szTimingMsg, lstrlen(szTimingMsg), nullptr, hTimingHandle);
 	#else
 	OutputDebugString(szTimingMsg);
 	#endif
@@ -154,7 +154,7 @@ extern "C" {
 #endif
 	//__declspec(dllexport) HHOOK ghKeyHook = 0;
 	//__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
-	//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
+	//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = nullptr;
 #if defined(__GNUC__)
 };
 #endif
@@ -162,11 +162,11 @@ extern "C" {
 
 //__declspec(dllexport) HHOOK ghKeyHook = 0;
 //__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
-//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = NULL;
+//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = nullptr;
 
 //HHOOK ghKeyHook = 0;
 //DWORD gnVkWinFix = 0xF0;
-//HWND  ghKeyHookConEmuRoot = NULL;
+//HWND  ghKeyHookConEmuRoot = nullptr;
 
 extern HMODULE ghOurModule;
 wchar_t gsConEmuBaseDir[MAX_PATH + 1] = L"";
@@ -247,15 +247,15 @@ struct ProcessEventFlags {
 	DWORD  nErrCode;
 } gEvtProcessRoot = {}, gEvtThreadRoot = {}, gEvtDefTerm = {}, gEvtDefTermOk = {};
 
-ConEmuInOutPipe *gpCEIO_In = NULL, *gpCEIO_Out = NULL, *gpCEIO_Err = NULL;
+ConEmuInOutPipe *gpCEIO_In = nullptr, *gpCEIO_Out = nullptr, *gpCEIO_Err = nullptr;
 void StartPTY();
 void StopPTY();
 
 MModule ghSrvDll{};
 //typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
-RequestLocalServer_t gfRequestLocalServer = NULL;
+RequestLocalServer_t gfRequestLocalServer = nullptr;
 TODO("AnnotationHeader* gpAnnotationHeader");
-AnnotationHeader* gpAnnotationHeader = NULL;
+AnnotationHeader* gpAnnotationHeader = nullptr;
 
 
 #ifdef USEPIPELOG
@@ -325,7 +325,7 @@ namespace HookLogger
 
 #ifdef _DEBUG
 	#ifdef UseDebugExceptionFilter
-		LPTOP_LEVEL_EXCEPTION_FILTER gfnPrevFilter = NULL;
+		LPTOP_LEVEL_EXCEPTION_FILTER gfnPrevFilter = nullptr;
 		LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo);
 	#endif
 #endif
@@ -415,13 +415,13 @@ void SetServerPID(DWORD anMainSrvPID)
 bool isSuppressBells()
 {
 	bool bSuppressBells = false;
-	CEAnsi::GetFeatures(NULL, &bSuppressBells);
+	CEAnsi::GetFeatures(nullptr, &bSuppressBells);
 	return bSuppressBells;
 }
 
-MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
-CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
-MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap = NULL;
+MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = nullptr;
+CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = nullptr;
+MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap = nullptr;
 
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 {
@@ -451,7 +451,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 		if (!gpConMap)
 		{
-			gpConInfo = NULL;
+			gpConInfo = nullptr;
 			goto wrap;
 		}
 		gpConMap->InitName(CECONMAPNAME, LODWORD(ghConWnd)); //-V205
@@ -468,7 +468,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 		{
 			gnGuiPID = gpConInfo->nGuiPID;
 			ghConEmuWnd = gpConInfo->hConEmuRoot;
-			_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
+			_ASSERTE(ghConEmuWnd==nullptr || gnGuiPID!=0);
 
 			SetConEmuHkWindows(gpConInfo->hConEmuWndDc, gpConInfo->hConEmuWndBack);
 
@@ -483,19 +483,19 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 		{
 			_ASSERTE(gpConInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
 			gpConMap->CloseMap();
-			gpConInfo = NULL;
+			gpConInfo = nullptr;
 			delete gpConMap;
-			gpConMap = NULL;
+			gpConMap = nullptr;
 		}
 	}
 	else
 	{
 		delete gpConMap;
-		gpConMap = NULL;
+		gpConMap = nullptr;
 	}
 
 wrap:
-	bAnsi = ((gpConInfo != NULL) && (gpConInfo->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
+	bAnsi = ((gpConInfo != nullptr) && (gpConInfo->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
 	if (abForceRecreate || (bLastAnsi != bAnsi))
 	{
 		// Это может случиться при запуске нового "чистого" cmd - "start cmd" из ConEmu\cmd
@@ -510,9 +510,9 @@ wrap:
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
 
 		// Set AnsiCon compatible variables too
-		CheckAnsiConVar(NULL);
+		CheckAnsiConVar(nullptr);
 	}
-	bAnsiLog = ((gpConInfo != NULL) && (gpConInfo->AnsiLog.Enabled && *gpConInfo->AnsiLog.Path));
+	bAnsiLog = ((gpConInfo != nullptr) && (gpConInfo->AnsiLog.Enabled && *gpConInfo->AnsiLog.Path));
 	if (bAnsiLog)
 	{
 		CEAnsi::InitAnsiLog(gpConInfo->AnsiLog.Path, gpConInfo->AnsiLog.LogAnsiCodes);
@@ -523,15 +523,15 @@ wrap:
 CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr()
 {
 	if (!ghConWnd)
-		return NULL;
+		return nullptr;
 	if (!gpAppMap && !GetConMap())
-		return NULL;
+		return nullptr;
 	return gpAppMap->Ptr();
 }
 
 CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsoleInputFlags*/)
 {
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : nullptr;
 	if (pAppMap)
 	{
 		DWORD nSelfPID = GetCurrentProcessId();
@@ -547,7 +547,7 @@ CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsole
 
 CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapRows(LONG anLastConsoleRow, bool abForce)
 {
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : nullptr;
 	if (pAppMap)
 	{
 		if (abForce)
@@ -603,10 +603,10 @@ BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
 LONG   gnHookServerNeedStart = 0;
-HANDLE ghHookServerStarted = NULL;
+HANDLE ghHookServerStarted = nullptr;
 void   StartHookServer();
 
-PipeServer<CESERVER_REQ> *gpHookServer = NULL;
+PipeServer<CESERVER_REQ> *gpHookServer = nullptr;
 bool gbHookServerForcedTermination = false;
 
 void CheckHookServer();
@@ -652,7 +652,7 @@ ShowExeMsgBox gbShowExeMsgBox = smb_None;
 //	Comment below to raise a crash: //DWORD nWait = WaitForSingleObject(ghDebugSshLibsCan, 5000);
 
 DWORD gnDummyLibLoaderThreadTID = 0;
-HANDLE ghDebugSshLibs = NULL, ghDebugSshLibsRc = NULL, ghDebugSshLibsCan = NULL;
+HANDLE ghDebugSshLibs = nullptr, ghDebugSshLibsRc = nullptr, ghDebugSshLibsCan = nullptr;
 DWORD WINAPI DummyLibLoaderThread(LPVOID /*apParm*/)
 {
 	char szInfo[100];
@@ -815,7 +815,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
 
 
-	_ASSERTEX(gpHookServer==NULL);
+	_ASSERTEX(gpHookServer==nullptr);
 	// gbPrepareDefaultTerminal turned on in DllMain
 	if (!gbPrepareDefaultTerminal)
 	{
@@ -842,12 +842,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			else
 			{
 				// Console application - use delayed startup (from first console input read function)
-				ghHookServerStarted = CreateEvent(NULL, FALSE, FALSE, NULL);
+				ghHookServerStarted = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 			}
 		}
 		else
 		{
-			_ASSERTEX(gpHookServer!=NULL);
+			_ASSERTEX(gpHookServer!=nullptr);
 		}
 	}
 
@@ -869,11 +869,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			{
 				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 				//BOOL lbDosBoxAllowed = FALSE;
-				if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
+				if (!GetModuleFileName(nullptr, szExeName, MAX_PATH+1)) szExeName[0] = 0;
 
 				CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
-					szExeName, GetCommandLineW(), NULL,
-					NULL, NULL, NULL, NULL, // flags
+					szExeName, GetCommandLineW(), nullptr,
+					nullptr, nullptr, nullptr, nullptr, // flags
 					gnImageBits, gnImageSubsystem,
 					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 				if (pIn)
@@ -941,13 +941,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				_ASSERTE(gnServerPID!=0);
 				pIn->AttachGuiApp.nServerPID = gnServerPID;
 				pIn->AttachGuiApp.nPID = GetCurrentProcessId();
-				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
+				GetModuleFileName(nullptr, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 				wchar_t szGuiPipeName[128];
 				msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", DWORD(dwConEmuHwnd));
 
-				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
+				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, nullptr);
 
 				free(pIn);
 
@@ -965,7 +965,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
 							gnGuiPID = pOut->hdr.nSrcPID;
 							//ghConEmuWnd = (HWND)dwConEmuHwnd;
-							_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
+							_ASSERTE(ghConEmuWnd==nullptr || gnGuiPID!=0);
 							_ASSERTE(pOut->AttachGuiApp.hConEmuWnd == HWND(dwConEmuHwnd));
 							ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
 							SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
@@ -979,7 +979,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							if (pOut->AttachGuiApp.hkl)
 							{
 								LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
-								BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+								BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != nullptr;
 								UNREFERENCED_PARAMETER(lbRc);
 							}
 							OnConWndChanged(ghConWnd);
@@ -1004,8 +1004,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		else
 		{
 			wchar_t szText[80]; msprintf(szText, countof(szText), L"PID=%u, ConEmuHk, DefTerm enabled", GetCurrentProcessId());
-			wchar_t szPath[MAX_PATH]; GetModuleFileName(NULL, szPath, countof(szPath));
-			MessageBox(NULL, szPath, szText, MB_ICONINFORMATION|MB_SYSTEMMODAL);
+			wchar_t szPath[MAX_PATH]; GetModuleFileName(nullptr, szPath, countof(szPath));
+			MessageBox(nullptr, szPath, szText, MB_ICONINFORMATION|MB_SYSTEMMODAL);
 		}
 		#endif
 
@@ -1029,17 +1029,17 @@ DWORD DllStart_Continue()
 
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-		//GetModuleFileName(NULL, szModule, countof(szModule));
+		//GetModuleFileName(nullptr, szModule, countof(szModule));
 		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(gsExeName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal || (gbIsNetVsHost && ghConWnd));
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
-		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
+		//	MessageBoxW(nullptr, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
 		//else if (!lstrcmpi(pszName, L"cc1plus.exe"))
-		//	MessageBoxW(NULL, L"cc1plus.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
+		//	MessageBoxW(nullptr, L"cc1plus.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
 		//else if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-		//	MessageBoxW(NULL, L"mingw32-make.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
+		//	MessageBoxW(nullptr, L"mingw32-make.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
 		//if (!lstrcmpi(pszName, L"g++.exe"))
-		//	MessageBoxW(NULL, L"g++.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
+		//	MessageBoxW(nullptr, L"g++.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
 		//{
 		#endif
 
@@ -1059,8 +1059,8 @@ DWORD DllStart_Continue()
 		//}
 		#endif
 
-		// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
-		if (ghConWnd != NULL)
+		// Если nullptr - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
+		if (ghConWnd != nullptr)
 		{
 			if (gbSelfIsRootConsoleProcess)
 			{
@@ -1113,7 +1113,7 @@ DWORD DllStart_Continue()
 	//		if (pIn)
 	//		{
 	//			pIn->dwData[0] = GetCurrentProcessId();
-	//			CESERVER_REQ* pOut = ExecuteGuiCmd(gpDefaultTermParm->hGuiWnd, pIn, NULL, TRUE);
+	//			CESERVER_REQ* pOut = ExecuteGuiCmd(gpDefaultTermParm->hGuiWnd, pIn, nullptr, TRUE);
 	//			ExecuteFreeResult(pIn);
 	//			ExecuteFreeResult(pOut);
 	//		}
@@ -1130,11 +1130,11 @@ DWORD DllStart_Continue()
 void InitExeFlags()
 {
 	// Mutually exclusive
-	if (GetModuleHandle(L"cygwin1.dll") != NULL)
+	if (GetModuleHandle(L"cygwin1.dll") != nullptr)
 		gnExeFlags |= caf_Cygwin1;
-	else if (GetModuleHandle(L"msys-1.0.dll") != NULL)
+	else if (GetModuleHandle(L"msys-1.0.dll") != nullptr)
 		gnExeFlags |= caf_Msys1;
-	else if (GetModuleHandle(L"msys-2.0.dll") != NULL)
+	else if (GetModuleHandle(L"msys-2.0.dll") != nullptr)
 		gnExeFlags |= caf_Msys2;
 
 	// Most probably, clink is not loaded yet, but we'll check
@@ -1145,7 +1145,7 @@ void InitExeFlags()
 void InitExeName()
 {
 	wchar_t szMsg[MAX_PATH+1];
-	if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
+	if (!GetModuleFileName(nullptr, szMsg, countof(szMsg)))
 		wcscpy_c(szMsg, L"GetModuleFileName failed");
 	const wchar_t* pszName = PointToName(szMsg);
 
@@ -1156,7 +1156,7 @@ void InitExeName()
 	if (!wcschr(gsExeName, L'.'))
 	{
 		// Must be extension?
-		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+		_ASSERTEX(wcschr(pszName,L'.')!=nullptr);
 		wcscat_c(gsExeName, L".exe");
 	}
 	CharLowerBuff(gsExeName, lstrlen(gsExeName));
@@ -1205,7 +1205,7 @@ void InitExeName()
 	if (GetEnvironmentVariable(ENV_CONEMU_CPCVT_APP_W, szMsg, countof(szMsg)-1) && *szMsg)
 	{
 		wchar_t *pszName = szMsg, *pszNext;
-		LPCWSTR pszEnd = NULL;
+		LPCWSTR pszEnd = nullptr;
 		UINT nFrom, nTo;
 		while (pszName && *pszName)
 		{
@@ -1279,12 +1279,12 @@ void InitExeName()
 	{
 		gbIsCmdProcess = true;
 		#if 0
-		apiCreateThread(DummyLibLoaderCmdThread, NULL, &gnDummyLibLoaderCmdThreadTID, "DummyLibLoaderCmdThread");
+		apiCreateThread(DummyLibLoaderCmdThread, nullptr, &gnDummyLibLoaderCmdThreadTID, "DummyLibLoaderCmdThread");
 		#endif
 	}
 	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
 	{
-		gbIsNodeJSProcess = true;
+		gbIsNodeJsProcess = true;
 	}
 	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
 		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
@@ -1305,10 +1305,10 @@ void InitExeName()
 	{
 		gbIsSshProcess = true;
 		#if 0
-		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
-		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
-		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
-		apiCreateThread(DummyLibLoaderThread, NULL, &gnDummyLibLoaderThreadTID, "DummyLibLoaderThread");
+		ghDebugSshLibs = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		ghDebugSshLibsRc = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		ghDebugSshLibsCan = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		apiCreateThread(DummyLibLoaderThread, nullptr, &gnDummyLibLoaderThreadTID, "DummyLibLoaderThread");
 		#endif
 	}
 	else if (lstrcmpi(gsExeName, L"less.exe") == 0)
@@ -1549,7 +1549,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
 		SafeCloseHandle(ghHookServerStarted);
 		free(gpHookServer);
-		gpHookServer = NULL;
+		gpHookServer = nullptr;
 		DLOGEND1();
 	}
 
@@ -1561,7 +1561,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		DLOG1("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
 		HHOOK hh = ghGuiClientRetHook;
-		ghGuiClientRetHook = NULL;
+		ghGuiClientRetHook = nullptr;
 		UnhookWindowsHookEx(hh);
 		DLOGEND1();
 	}
@@ -1600,9 +1600,9 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		DLOG1("gpConMap->CloseMap",0);
 		print_timings(L"gpConMap->CloseMap");
 		gpConMap->CloseMap();
-		gpConInfo = NULL;
+		gpConInfo = nullptr;
 		delete gpConMap;
-		gpConMap = NULL;
+		gpConMap = nullptr;
 		DLOGEND1();
 	}
 
@@ -1625,7 +1625,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		print_timings(L"gpAppMap->CloseMap");
 		gpAppMap->CloseMap();
 		delete gpAppMap;
-		gpAppMap = NULL;
+		gpAppMap = nullptr;
 		DLOGEND1();
 	}
 
@@ -1658,8 +1658,8 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	#ifdef _DEBUG
 		#ifdef UseDebugExceptionFilter
 			// ?gfnPrevFilter?
-			// Вернуть. A value of NULL for this parameter specifies default handling within UnhandledExceptionFilter.
-			SetUnhandledExceptionFilter(NULL);
+			// Вернуть. A value of nullptr for this parameter specifies default handling within UnhandledExceptionFilter.
+			SetUnhandledExceptionFilter(nullptr);
 		#endif
 	#endif
 
@@ -1756,11 +1756,11 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	if (ghConWnd)
 	{
 		HandleInformation Info = {};
-		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_INPUT_HANDLE), hs_StdIn, 0, NULL, &Info);
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_INPUT_HANDLE), hs_StdIn, 0, nullptr, &Info);
 		_ASSERTE(!gbConEmuConnector || (Info.is_input));
-		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_OUTPUT_HANDLE), hs_StdOut, 0, NULL, &Info);
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_OUTPUT_HANDLE), hs_StdOut, 0, nullptr, &Info);
 		_ASSERTE(!gbConEmuConnector || (Info.is_ansi && Info.is_output));
-		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_ERROR_HANDLE), hs_StdErr, 0, NULL, &Info);
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_ERROR_HANDLE), hs_StdErr, 0, nullptr, &Info);
 		_ASSERTE(!gbConEmuConnector || (Info.is_ansi && Info.is_error));
 		ZeroStruct(Info); // for debug breakpoint
 	}
@@ -1845,7 +1845,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 		if (!gbPrepareDefaultTerminal
 			&& (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-			&& (ghConWnd == NULL))
+			&& (ghConWnd == nullptr))
 		{
 			// Forcing DefTerm for detached console processes
 			// Especially for Code, which starts "cmd /c start /wait"
@@ -1880,7 +1880,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	DLOG1_("DllMain.InQueue",ul_reason_for_call);
 	//gcchLastWriteConsoleMax = 4096;
 	//gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
-	gInQueue.Initialize(512, NULL);
+	gInQueue.Initialize(512, nullptr);
 	DLOGEND1();
 
 	DLOG1_("DllMain.Misc",ul_reason_for_call);
@@ -1907,7 +1907,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	DLOGEND1();
 
 	DLOG1_("DllMain.DllStart",ul_reason_for_call);
-	if (DllStart(NULL) != 0)
+	if (DllStart(nullptr) != 0)
 	{
 		if (gbPrepareDefaultTerminal)
 		{
@@ -1924,7 +1924,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 		// Cygwin version of ssh almost completely fails with FixSshThreads
 		// Different forking technologies?
 		HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
-		if (hMsys != NULL)
+		if (hMsys != nullptr)
 		{
 			// Suspend all third-party threads to avoid cygwin's ssh crashes
 			FixSshThreads(0);
@@ -1941,7 +1941,7 @@ BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
 	gDllMainCallInfo[DLL_THREAD_ATTACH].OnCall();
 
-	bool bAlreadyExists = gStartedThreads.Get(GetCurrentThreadId(), NULL);
+	bool bAlreadyExists = gStartedThreads.Get(GetCurrentThreadId(), nullptr);
 	if (!bAlreadyExists)
 	{
 		gStartedThreads.Set(GetCurrentThreadId(), FALSE);
@@ -2237,14 +2237,14 @@ void SendStarted()
 	//_ASSERTE(FALSE && "Continue to SendStarted");
 	print_timings(L"SendStarted.1");
 
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
 	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP); //-V119
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
 
 	if (pIn)
 	{
 		print_timings(L"SendStarted.2");
-		if (!GetModuleFileName(NULL, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
+		if (!GetModuleFileName(nullptr, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
 			pIn->StartStop.sModuleName[0] = 0;
 		#ifdef _DEBUG
 		LPCWSTR pszFileName = wcsrchr(pIn->StartStop.sModuleName, L'\\');
@@ -2292,14 +2292,14 @@ void SendStarted()
 				gbWasBufferHeight = pOut->StartStopRet.bWasBufferHeight;
 				gnGuiPID = pOut->StartStopRet.dwPID;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
-				_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
+				_ASSERTE(ghConEmuWnd==nullptr || gnGuiPID!=0);
 				SetConEmuHkWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 				_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 				_ASSERTE(ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
 				print_timings(L"SendStarted.7");
 				SetServerPID(pOut->StartStopRet.dwMainSrvPID);
-				ExecuteFreeResult(pOut); pOut = NULL;
+				ExecuteFreeResult(pOut); pOut = nullptr;
 			}
 		}
 		else
@@ -2308,7 +2308,7 @@ void SendStarted()
 		}
 
 		print_timings(L"SendStarted.8");
-		ExecuteFreeResult(pIn); pIn = NULL;
+		ExecuteFreeResult(pIn); pIn = nullptr;
 	}
 	print_timings(L"SendStarted.done");
 }
@@ -2325,7 +2325,7 @@ void SendStopped()
 
 	//_ASSERTE(FALSE && "Continue to SendStopped");
 
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
 	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
 	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
 
@@ -2333,7 +2333,7 @@ void SendStopped()
 	{
 		pIn->StartStop.nStarted = sst_AppStop;
 
-		if (!GetModuleFileName(NULL, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
+		if (!GetModuleFileName(nullptr, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
 			pIn->StartStop.sModuleName[0] = 0;
 
 		pIn->StartStop.hWnd = ghConWnd;
@@ -2345,27 +2345,27 @@ void SendStopped()
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		// May be set to NULL in some cases (connector+wslbridge)
-		if (hOut != NULL)
+		// May be set to nullptr in some cases (connector+wslbridge)
+		if (hOut != nullptr)
 		{
 			// НЕ MyGet..., а то можем заблокироваться...
-			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
+			// ghConOut может быть nullptr, если ошибка произошла во время разбора аргументов
 			GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 
 			pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 		}
 
-		if (ghAttachGuiClient == NULL)
+		if (ghAttachGuiClient == nullptr)
 			pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
 		else if (gnGuiPID)
 			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, FALSE/*bAsyncNoResult*/);
 
-		ExecuteFreeResult(pIn); pIn = NULL;
+		ExecuteFreeResult(pIn); pIn = nullptr;
 
 		if (pOut)
 		{
 			ExecuteFreeResult(pOut);
-			pOut = NULL;
+			pOut = nullptr;
 		}
 	}
 }
@@ -2374,7 +2374,7 @@ void StartPTY()
 {
 	if (gpCEIO_In)
 	{
-		_ASSERTEX(gpCEIO_In==NULL);
+		_ASSERTEX(gpCEIO_In==nullptr);
 		return;
 	}
 
@@ -2483,7 +2483,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 			if (lRc == 0)
 			{
 				DWORD nCreatedPID = CShellProc::mn_LastStartedPID;
-				HWND  hCreatedWnd = NULL;
+				HWND  hCreatedWnd = nullptr;
 				if (nCreatedPID)
 				{
 					// Find create PUTTY/KITTY window
@@ -2493,7 +2493,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 					DWORD nStarted = GetTickCount(), nDelta, nMaxWait = 5000;
 					while ((nDelta = (GetTickCount() - nStarted)) < nMaxWait)
 					{
-						if ((hCreatedWnd = FindWindow(szClass, NULL)) != NULL)
+						if ((hCreatedWnd = FindWindow(szClass, nullptr)) != nullptr)
 						{
 							if ((hCreatedWnd != ghAttachGuiClient)
 								&& GetWindowThreadProcessId(hCreatedWnd, &nPID)
@@ -2503,7 +2503,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 							}
 							else
 							{
-								hCreatedWnd = NULL;
+								hCreatedWnd = nullptr;
 							}
 						}
 						Sleep(200);
@@ -2527,7 +2527,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 							si.dwFlags = STARTF_USESHOWWINDOW;
 							PROCESS_INFORMATION pi = {};
 							DWORD nCreateFlags = NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE;
-							if (CreateProcess(NULL, szSrvCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi))
+							if (CreateProcess(nullptr, szSrvCmd, nullptr, nullptr, FALSE, nCreateFlags, nullptr, nullptr, &si, &pi))
 							{
 								CloseHandle(pi.hProcess);
 								CloseHandle(pi.hThread);
@@ -2646,7 +2646,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 	else
 	{
-		BOOL bRunRc = CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, pszCurDir, &si, &pi);
+		BOOL bRunRc = CreateProcess(nullptr, pszCmd, nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE, nullptr, pszCurDir, &si, &pi);
 		iRc = bRunRc ? 0 : GetLastError();
 		goto wrap;
 	}
@@ -2665,7 +2665,7 @@ HWND WINAPI GetRealConsoleWindow()
 {
 	HWND hConWnd = myGetConsoleWindow();
 
-	_ASSERTEX(hConWnd==NULL || isConsoleWindow(hConWnd));
+	_ASSERTEX(hConWnd==nullptr || isConsoleWindow(hConWnd));
 
 	return hConWnd;
 }
@@ -2726,15 +2726,15 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_SETGUIEXTERN:
 		if (ghAttachGuiClient && (pCmd->DataSize() >= sizeof(CESERVER_REQ_SETGUIEXTERN)))
 		{
-			SetGuiExternMode(pCmd->SetGuiExtern.bExtern, NULL/*pCmd->SetGuiExtern.bDetach ? &pCmd->SetGuiExtern.rcOldPos : NULL*/);
+			SetGuiExternMode(pCmd->SetGuiExtern.bExtern, nullptr/*pCmd->SetGuiExtern.bDetach ? &pCmd->SetGuiExtern.rcOldPos : nullptr*/);
 			returnDWORD(gbGuiClientExternMode);
 
 			if (pCmd->SetGuiExtern.bExtern && pCmd->SetGuiExtern.bDetach)
 			{
 				gbAttachGuiClient = gbGuiClientAttached = FALSE;
-				ghAttachGuiClient = NULL;
-				ghConEmuWnd = NULL;
-				SetConEmuHkWindows(NULL, NULL);
+				ghAttachGuiClient = nullptr;
+				ghConEmuWnd = nullptr;
+				SetConEmuHkWindows(nullptr, nullptr);
 				SetServerPID(0);
 			}
 
@@ -2743,7 +2743,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_LANGCHANGE:
 		{
 			LONG_PTR hkl = (LONG_PTR)(LONG)pCmd->dwData[0];
-			BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != NULL;
+			BOOL lbRc = ActivateKeyboardLayout((HKL)hkl, KLF_SETFORPROCESS) != nullptr;
 			DWORD nErrCode = lbRc ? 0 : GetLastError();
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
@@ -2760,7 +2760,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			PROCESS_INFORMATION pi = {};
 			STARTUPINFO si = {sizeof(si)};
 
-			if (GetModuleFileName(ghOurModule, szSrvPathName, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSrvPathName)) != NULL))
+			if (GetModuleFileName(ghOurModule, szSrvPathName, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSrvPathName)) != nullptr))
 			{
 				// Запускаем сервер той же битности, что и текущий процесс
 				_wcscpy_c(pszNamePtr, 16, ConEmuC_EXE_3264);
@@ -2791,7 +2791,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 					si.wShowWindow = SW_SHOWNORMAL;
 				}
 
-				lbRc = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+				lbRc = CreateProcess(nullptr, szCmdLine, nullptr, nullptr, FALSE, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
 				if (lbRc)
 				{
 					CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
@@ -2861,12 +2861,12 @@ void StartHookServer()
 
 		_ASSERTE(lstrcmpi(gsExeName,L"ls.exe") != 0)
 
-		if (!gpHookServer->StartPipeServer(true, szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
+		if (!gpHookServer->StartPipeServer(true, szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, nullptr, nullptr, HookServerReady))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
 			gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
 			free(gpHookServer);
-			gpHookServer = NULL;
+			gpHookServer = nullptr;
 		}
 	}
 
@@ -2912,7 +2912,7 @@ LONG WINAPI HkExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 {
 	wchar_t szTitle[128], szText[MAX_PATH*2]; szText[0] = 0;
 	msprintf(szTitle, countof(szTitle), L"Exception, PID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-	GetModuleFileName(NULL, szText, countof(szText));
+	GetModuleFileName(nullptr, szText, countof(szText));
 	int nBtn = GuiMessageBox(ghConEmuWnd, szText, szTitle, MB_RETRYCANCEL|MB_SYSTEMMODAL);
 	return (nBtn == IDRETRY) ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER;
 }
@@ -2940,7 +2940,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	{
 		if (!GetConMap(TRUE))
 		{
-			SetConEmuHkWindows(NULL, NULL);
+			SetConEmuHkWindows(nullptr, nullptr);
 		}
 
 		if ((Parm->Flags & slsf_ReinitWindows) == Parm->Flags)
@@ -3011,7 +3011,7 @@ wrap:
 // When _st_ is 0: remove progress.
 // When _st_ is 1: set progress value to _pr_ (number, 0-100).
 // When _st_ is 2: set error state in progress on Windows 7 taskbar
-void GuiSetProgress(const AnsiProgressStatus st, const WORD pr, LPCWSTR pszName /*= NULL*/)
+void GuiSetProgress(const AnsiProgressStatus st, const WORD pr, LPCWSTR pszName /*= nullptr*/)
 {
 	const int nLen = pszName ? (lstrlen(pszName) + 1) : 1;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR) + sizeof(WORD) * (2 + nLen));

@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* **************** */
 
-static wchar_t* gszClinkCmdLine = NULL;
+static wchar_t* gszClinkCmdLine = nullptr;
 
 /* **************** */
 
@@ -99,7 +99,7 @@ static bool IsInteractive()
 	}
 
 	const wchar_t* pos = cmdLine;
-	while ((pos = wcschr(pos, L'/')) != NULL)
+	while ((pos = wcschr(pos, L'/')) != nullptr)
 	{
 		switch (pos[1])
 		{
@@ -121,11 +121,11 @@ bool IsClinkLoaded()
 		return false;
 	// Check, if clink library is loaded
 	HMODULE hClink;
-	if ((hClink = GetModuleHandle(CLINK_DLL_NAME_v1)) != NULL)
+	if ((hClink = GetModuleHandle(CLINK_DLL_NAME_v1)) != nullptr)
 		return true;
-	if ((hClink = GetModuleHandle(CLINK_DLL_NAME_v0)) != NULL)
+	if ((hClink = GetModuleHandle(CLINK_DLL_NAME_v0)) != nullptr)
 		return true;
-	return (hClink != NULL);
+	return (hClink != nullptr);
 }
 
 
@@ -195,7 +195,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 									HKEY hk;
 									if (_RegOpenKeyEx(i?HKEY_LOCAL_MACHINE:HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hk))
 										continue;
-									if (!F(RegQueryValueExW)(hk, lpValueName, NULL, NULL, (LPBYTE)pszCmd, &(cbSize = cbMax))
+									if (!F(RegQueryValueExW)(hk, lpValueName, nullptr, nullptr, (LPBYTE)pszCmd, &(cbSize = cbMax))
 										&& (cbSize+2) < cbMax)
 									{
 										cbSize /= 2; pszCmd[cbSize] = 0;
@@ -213,7 +213,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 									_wcscpy_c(pszCmd+iLen, cchMax-iLen, L" & "); // conveyer next command indifferent to %errorlevel%
 
 									cbSize = cbMax - (iLen + 3)*sizeof(*pszCmd);
-									if (F(RegQueryValueExW)(hKey, lpValueName, NULL, NULL, (LPBYTE)(pszCmd + iLen + 3), &cbSize)
+									if (F(RegQueryValueExW)(hKey, lpValueName, nullptr, nullptr, (LPBYTE)(pszCmd + iLen + 3), &cbSize)
 										|| (pszCmd[iLen+3] == 0))
 									{
 										pszCmd[iLen] = 0; // There is no self value in registry

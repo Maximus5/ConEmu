@@ -370,7 +370,8 @@ BOOL WINAPI OnAllocConsole(void)
 	// Попытаться создать консольное окно "по тихому"
 	if (gpDefTerm && !hOldConWnd && !gnServerPID)
 	{
-		HWND hCreatedCon = gpDefTerm->AllocHiddenConsole(false);
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HWND hCreatedCon = CDefTermHk::AllocHiddenConsole(false);
 		if (hCreatedCon)
 		{
 			hOldConWnd = hCreatedCon;

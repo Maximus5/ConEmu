@@ -116,7 +116,7 @@ private:
 				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
-	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
+	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd) const;
 	HWND FindCheckConEmuWindow();
 	void LogExitLine(int rc, int line) const;
 	void LogShellString(LPCWSTR asMessage) const;

@@ -133,7 +133,7 @@ void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESER
 
 	if (bLock)
 	{
-		HANDLE hOurThreadHandle = NULL;
+		HANDLE hOurThreadHandle = nullptr;
 
 		// We need to give our thread handle (to server process) to avoid
 		// locking of server reading thread (in case of our thread fails)
@@ -142,7 +142,7 @@ void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESER
 		if (!hServer)
 		{
 			dwErr = GetLastError();
-			_ASSERTEX(hServer!=NULL && "Open server handle fails, Can't dup handle!");
+			_ASSERTEX(hServer!=nullptr && "Open server handle fails, Can't dup handle!");
 		}
 		else
 		{
@@ -150,8 +150,8 @@ void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESER
 					SYNCHRONIZE|THREAD_QUERY_INFORMATION, FALSE, 0))
 			{
 				dwErr = GetLastError();
-				_ASSERTEX(hServer!=NULL && "DuplicateHandle fails, Can't dup handle!");
-				hOurThreadHandle = NULL;
+				_ASSERTEX(hServer!=nullptr && "DuplicateHandle fails, Can't dup handle!");
+				hOurThreadHandle = nullptr;
 			}
 			CloseHandle(hServer);
 		}
@@ -198,22 +198,22 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 
 	static DWORD s_LastCheckTick = 0;
 	static CONSOLE_SCREEN_BUFFER_INFO s_csbi = {};
-	static HANDLE s_hConOut = NULL;
+	static HANDLE s_hConOut = nullptr;
 	static DWORD s_last_attr = -1;
 	//DWORD nTickDelta = 0;
 	//const DWORD TickDeltaMax = 250;
 
-	if (hConsoleOutput == NULL)
+	if (hConsoleOutput == nullptr)
 	{
 		// Сброс
-		s_hConOut = NULL;
-		GetConsoleModeCached(NULL, NULL);
+		s_hConOut = nullptr;
+		GetConsoleModeCached(nullptr, nullptr);
 		return FALSE;
 	}
 
 	if (!lpConsoleScreenBufferInfo)
 	{
-		_ASSERTEX(lpConsoleScreenBufferInfo!=NULL);
+		_ASSERTEX(lpConsoleScreenBufferInfo!=nullptr);
 		return FALSE;
 	}
 
@@ -271,20 +271,20 @@ BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced /*
 
 	static DWORD s_LastCheckTick = 0;
 	static DWORD s_dwMode = 0;
-	static HANDLE s_hConHandle = NULL;
+	static HANDLE s_hConHandle = nullptr;
 	DWORD nTickDelta = 0;
 	const DWORD TickDeltaMax = 250;
 
-	if (hConsoleHandle == NULL)
+	if (hConsoleHandle == nullptr)
 	{
 		// Сброс
-		s_hConHandle = NULL;
+		s_hConHandle = nullptr;
 		return FALSE;
 	}
 
 	if (!lpMode)
 	{
-		_ASSERTEX(lpMode!=NULL);
+		_ASSERTEX(lpMode!=nullptr);
 		return FALSE;
 	}
 
@@ -326,8 +326,8 @@ BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced /*
 
 AttachConsole_t GetAttachConsoleProc()
 {
-	static HMODULE hKernel = NULL;
-	static AttachConsole_t _AttachConsole = NULL;
+	static HMODULE hKernel = nullptr;
+	static AttachConsole_t _AttachConsole = nullptr;
 	if (!hKernel)
 	{
 		hKernel = GetModuleHandle(L"kernel32.dll");
@@ -342,9 +342,11 @@ AttachConsole_t GetAttachConsoleProc()
 bool AttachServerConsole()
 {
 	bool lbAttachRc = false;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
 	DWORD nErrCode;
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hCurCon = GetRealConsoleWindow();
-	if (hCurCon == NULL && gnServerPID != 0)
+	if (hCurCon == nullptr && gnServerPID != 0)
 	{
 		// функция есть только в WinXP и выше
 		AttachConsole_t _AttachConsole = GetAttachConsoleProc();
