@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_LOADCFGFILE_MSGBOX
 //#define SHOW_SERVER_STARTED_MSGBOX
 //#define SHOW_COMSPEC_STARTED_MSGBOX
+#define SHOW_INJECTS_MSGBOX
 #endif
 
 #include "ConsoleArgs.h"
@@ -304,6 +305,16 @@ void ConsoleArgs::ShowComspecStartedMsgBox(LPCWSTR asCmdLine)
 #endif
 }
 
+void ConsoleArgs::ShowInjectsMsgBox(const ConEmuExecAction mode, const wchar_t* asCmdLine)
+{
+#ifdef SHOW_INJECTS_MSGBOX
+	wchar_t szTitle[100] = L"";
+	swprintf_c(szTitle, L"ConEmuC [%s] started (PID=%i)",
+		mode == ConEmuExecAction::InjectDefTrm ? L"InjectDefTerm" : L"InjectRemote", gnSelfPID);
+	MessageBox(nullptr, asCmdLine, szTitle, 0);
+#endif
+}
+
 void ConsoleArgs::AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue)
 {
 	lstrmerge(&conemuAddArgs_.ms_Val, asSwitch);
@@ -509,18 +520,18 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		}
 		else if (szArg.IsSwitch(L"/INJECT="))
 		{
-			// _ASSERTE(FALSE && "Continue to InjectRemote");
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectRemote;
 			command_.Set(szArg.GetExtra());
+			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""));
 			break;
 		}
 		else if (szArg.IsSwitch(L"/DEFTRM="))
 		{
-			// _ASSERTE(FALSE && "Continue to InjectDefTrm");
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectDefTrm;
 			command_.Set(szArg.GetExtra());
+			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""));
 			break;
 		}
 		else if (szArg.OneOfSwitches(L"/STRUCT", L"/DumpStruct"))

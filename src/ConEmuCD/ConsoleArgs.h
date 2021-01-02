@@ -160,6 +160,7 @@ protected:
 	static void ShowConfigMsgBox(const CEStr& szArg, LPCWSTR cmdLineRest);
 	static void ShowServerStartedMsgBox(LPCWSTR asCmdLine);
 	static void ShowComspecStartedMsgBox(LPCWSTR asCmdLine);
+	static void ShowInjectsMsgBox(ConEmuExecAction mode, const wchar_t* asCmdLine);
 	void AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue);
 public:
 	int ParseCommandLine(LPCWSTR pszCmdLine, ConsoleMainMode anWorkMode);
