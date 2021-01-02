@@ -422,32 +422,6 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 			return FALSE;
 		}
 
-		// May be not required at all?
-		#if 0
-		if (FindCheckConEmuWindow())
-		{
-			DWORD nGuiPID;
-			if (!GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID) || !nGuiPID)
-			{
-				_ASSERTEX(FALSE && "LoadGuiMapping failed, getWindowThreadProcessId failed");
-				return FALSE;
-			}
-
-			if (!::LoadGuiMapping(nGuiPID, m_GuiMapping))
-			{
-				_ASSERTEX(FALSE && "LoadGuiMapping failed");
-				return FALSE;
-			}
-
-			*gpDefaultTermParm = m_GuiMapping;
-
-			// Checking loaded settings
-			if (!isDefTermEnabled())
-			{
-				return FALSE; // disabled now
-			}
-		}
-		#endif
 
 		const CEDefTermOpt* pOpt = gpDefTerm->GetOpt();
 		_ASSERTE(pOpt!=NULL); // Can't be null because it returns the pointer to member variable
@@ -3088,7 +3062,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				}
 				else
 				{
-					OnResumeDebugeeThreadCalled(lpPI->hThread, lpPI);
+					OnResumeDebuggeeThreadCalled(lpPI->hThread, lpPI);
 				}
 			}
 			// Starting debugging session from VS (for example)?
@@ -3187,7 +3161,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 	}
 }
 
-bool CShellProc::OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= NULL*/)
+bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= NULL*/)
 {
 	if ((!hThread || (m_WaitDebugVsThread.hThread != hThread)) && !lpPI)
 		return false;

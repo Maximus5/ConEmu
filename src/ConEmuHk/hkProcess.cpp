@@ -779,7 +779,7 @@ DWORD WINAPI OnResumeThread(HANDLE hThread)
 	//typedef DWORD (WINAPI* OnResumeThread_t)(HANDLE);
 	ORIGINAL_KRNL(ResumeThread);
 
-	CShellProc::OnResumeDebugeeThreadCalled(hThread);
+	CShellProc::OnResumeDebuggeeThreadCalled(hThread);
 
 	DWORD nRc = F(ResumeThread)(hThread);
 

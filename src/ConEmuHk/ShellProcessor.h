@@ -146,7 +146,7 @@ public:
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
 	// Used with DefTerm+VSDebugger
-	static bool OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI = NULL);
+	static bool OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI = NULL);
 protected:
 	static PROCESS_INFORMATION m_WaitDebugVsThread;
 public:
