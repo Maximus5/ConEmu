@@ -256,6 +256,11 @@ bool CDefaultTerminal::NotifyHookingStatus(const DWORD processId, LPCWSTR sName)
 	return true;
 }
 
+bool CDefaultTerminal::IsAppAllowed(HWND hFore, DWORD processId)
+{
+	return false;
+}
+
 void CDefaultTerminal::LogHookingStatus(const DWORD nForePID, LPCWSTR sMessage)
 {
 	wchar_t szPID[16] = L"";

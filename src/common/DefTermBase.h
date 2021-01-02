@@ -39,8 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdint>
 #include <chrono>
 #include <tuple>
-#include <windows.h>
+#include <Windows.h>
 #include "Common.h"
+#include "CEStr.h"
 #include "MArray.h"
 #include "MSectionSimple.h"
 #include "ConEmuCheck.h"
@@ -368,6 +369,8 @@ protected:
 		ClearProcessed(true);
 
 		SafeDelete(mcs);
+		SafeDelete(mcs_Threads);
+		SafeDelete(mcs_Processes);
 	}
 
 public:
@@ -446,9 +449,15 @@ public:
 		bool bMonitored = false;
 		bool bShellTrayWnd = false; // task bar
 		bool bShellWnd = false; // one of explorer windows (folder browsers)
-		#ifdef USEDEBUGSTRDEFTERM
 		wchar_t szInfo[MAX_PATH + 80] = L"";
-		#endif
+
+		if (!IsAppAllowed(hFore, nForePID))
+		{
+			swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u is rejected by ConEmu",
+				LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
+			LogHookingStatus(nForePID, szInfo);
+			goto wrap;
+		}
 
 		// Check window class
 		if (GetClassName(hFore, szClass, countof(szClass)))
@@ -506,21 +515,24 @@ public:
 
 			// Is it in monitored applications?
 			bMonitored = IsAppNameMonitored(prc.szExeFile);
-
-			// And how it is?
-			if (!bMonitored)
-			{
-				mh_LastIgnoredWnd = hFore;
-				#ifdef USEDEBUGSTRDEFTERM
-				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored",
-					LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
-				DEBUGSTRDEFTERM(szInfo);
-				#endif
-				goto wrap;
-			}
 		}
 	wrap:
-		if (pPrc)
+		// And how it is?
+		if (!bMonitored)
+		{
+			mh_LastIgnoredWnd = hFore;
+			#ifdef USEDEBUGSTRDEFTERM
+			swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored",
+				LODWORD(reinterpret_cast<DWORD_PTR>(hFore)), nForePID);
+			DEBUGSTRDEFTERM(szInfo);
+			#endif
+		}
+		else
+		{
+			// _ASSERTE(FALSE && "Continue to hook DefTerm allowed process");
+		}
+
+		if (pPrc && prc.dwSize)
 			memmove(pPrc, &prc, sizeof(*pPrc));
 		if (pszClass)
 			pszClass->Set(szClass);
@@ -1245,6 +1257,15 @@ protected:
 			free(pArg);
 		}
 		return bRc;
+	}
+
+	/// @brief In the Inside mode we set hooks only to our parent window which we have integrated in
+	/// @param hFore GetForegroundWindow
+	/// @param processId PID
+	/// @return true if we may proceed with the process
+	virtual bool IsAppAllowed(HWND hFore, DWORD processId)
+	{
+		return true;
 	}
 
 public:

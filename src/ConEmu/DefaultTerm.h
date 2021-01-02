@@ -69,6 +69,11 @@ protected:
 	/// @param sName is executable name or window class name
 	/// @return true if StatusBar was updated (so need to reset it later)
 	virtual bool NotifyHookingStatus(DWORD processId, LPCWSTR sName) override;
+	/// @brief In the Inside mode we set hooks only to our parent window which we have integrated in
+	/// @param hFore GetForegroundWindow
+	/// @param processId PID
+	/// @return true if we may proceed with the process
+	bool IsAppAllowed(HWND hFore, DWORD processId) override;
 public:
 	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
 	virtual bool isLogging() override;

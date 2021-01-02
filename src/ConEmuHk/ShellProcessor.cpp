@@ -408,40 +408,19 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		// ghConWnd may be nullptr (if was started for devenv.exe) or NOT nullptr (after AllocConsole in *.vshost.exe)
 		//_ASSERTEX(ghConWnd!=nullptr && "ConWnd was not initialized");
 
-		if (!gpDefTerm)
+		// Parameters are stored in the registry now
+		if (!CDefTermHk::IsDefTermEnabled())
 		{
 			_ASSERTEX(gpDefTerm != nullptr);
 			LogShellString(L"LoadSrvMapping failed: !IsDefTermEnabled()");
 			return FALSE;
 		}
 
-		// Parameters are stored in the registry now
-		if (!isDefTermEnabled())
+		if (!CDefTermHk::LoadDefTermSrvMapping(m_SrvMapping))
 		{
-			LogShellString(L"LoadSrvMapping failed: !isDefTermEnabled()");
+			LogShellString(L"LoadSrvMapping failed: !LoadDefTermSrvMapping()");
 			return FALSE;
 		}
-
-
-		const CEDefTermOpt* pOpt = gpDefTerm->GetOpt();
-		_ASSERTE(pOpt!=NULL); // Can't be null because it returns the pointer to member variable
-
-		ZeroStruct(m_SrvMapping);
-		m_SrvMapping.cbSize = sizeof(m_SrvMapping);
-
-		m_SrvMapping.nProtocolVersion = CESERVER_REQ_VER;
-		m_SrvMapping.nGuiPID = 0; //nGuiPID;
-		m_SrvMapping.hConEmuRoot = NULL; //ghConEmuWnd;
-		m_SrvMapping.hConEmuWndDc = NULL;
-		m_SrvMapping.hConEmuWndBack = NULL;
-		m_SrvMapping.Flags = pOpt->nConsoleFlags;
-		m_SrvMapping.useInjects = pOpt->bNoInjects ? ConEmuUseInjects::DontUse : ConEmuUseInjects::Use;
-		// Пути
-		lstrcpy(m_SrvMapping.sConEmuExe, pOpt->pszConEmuExe ? pOpt->pszConEmuExe : L"");
-		lstrcpy(m_SrvMapping.ComSpec.ConEmuBaseDir, pOpt->pszConEmuBaseDir ? pOpt->pszConEmuBaseDir : L"");
-		lstrcpy(m_SrvMapping.ComSpec.ConEmuExeDir, pOpt->pszConEmuExe ? pOpt->pszConEmuExe : L"");
-		wchar_t* pszSlash = wcsrchr(m_SrvMapping.ComSpec.ConEmuExeDir, L'\\');
-		if (pszSlash) *pszSlash = 0;
 
 		_ASSERTE(m_SrvMapping.ComSpec.ConEmuExeDir[0] && m_SrvMapping.ComSpec.ConEmuBaseDir[0]);
 
@@ -1743,7 +1722,7 @@ int CShellProc::PrepareExecuteParms(
 	// !!! anFlags может быть nullptr;
 	// !!! asAction может быть nullptr;
 	_ASSERTE(*psFile==nullptr && *psParam==nullptr);
-	if (!ghConEmuWndDC && !isDefTermEnabled())
+	if (!ghConEmuWndDC && !CDefTermHk::IsDefTermEnabled())
 		return 0; // Перехватывать только под ConEmu
 
 	if (!asFile && !asParam)
@@ -2546,7 +2525,7 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsEx
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
 	{
 		LogShellString(L"OnShellExecuteA skipped");
 		return TRUE; // Перехватывать только под ConEmu
@@ -2603,7 +2582,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
 	{
 		LogShellString(L"OnShellExecuteW skipped");
 		return TRUE; // Перехватывать только под ConEmu
@@ -2686,7 +2665,7 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 	if (!lpExecInfo)
 		return TRUE;
 
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
 	{
 		LogShellString(L"OnShellExecuteExA skipped");
 		return TRUE; // Перехватывать только под ConEmu
@@ -2717,7 +2696,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 	if (!lpExecInfo)
 		return TRUE;
 
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
 	{
 		LogShellString(L"OnShellExecuteExW skipped");
 		return TRUE; // Перехватывать только под ConEmu или в DefTerm
@@ -2813,7 +2792,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 {
 	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 	{
-		if (isDefTermEnabled())
+		if (CDefTermHk::IsDefTermEnabled())
 		{
 			// OK, continue to "Default terminal" feature (console applications and batch files only)
 		}
@@ -2902,7 +2881,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 	}
 	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
-	else if (isDefTermEnabled() && !bConsoleNoWindow && nShowCmd && anCreationFlags && lpSI)
+	else if (CDefTermHk::IsDefTermEnabled() && !bConsoleNoWindow && nShowCmd && anCreationFlags && lpSI)
 	{
 		switch (mn_ImageSubsystem)
 		{
@@ -2917,7 +2896,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 				{
 					_ASSERTE(gnServerPID==0);
 					// Alloc hidden console and attach it to our VS GUI window
-					if (gpDefTerm->AllocHiddenConsole(true))
+					if (CDefTermHk::AllocHiddenConsole(true))
 					{
 						_ASSERTE(gnServerPID!=0);
 						// Удалось создать скрытое консольное окно, приложение можно запустить в нем
@@ -3047,7 +3026,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			CEAnsi::ChangeTermMode(tmc_TerminalType, (m_Args.nPTY & pty_XTerm) ? 1 : 0, lpPI->dwProcessId);
 		}
 
-		if (isDefTermEnabled())
+		if (CDefTermHk::IsDefTermEnabled())
 		{
 			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
 			if (mb_PostInjectWasRequested)
@@ -3131,7 +3110,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 	LogShellString(szDbgMsg);
 
 	LPCWSTR pszDllDir = nullptr;
-	if (isDefTermEnabled() && gpDefTerm)
+	if (CDefTermHk::IsDefTermEnabled() && gpDefTerm)
 		pszDllDir = gpDefTerm->GetOpt()->pszConEmuBaseDir;
 	else
 		pszDllDir = gsConEmuBaseDir;
@@ -3258,7 +3237,7 @@ void CShellProc::OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE a
 
 void CShellProc::LogShellString(LPCWSTR asMessage) const
 {
-	DefTermLogString(asMessage);
+	CDefTermHk::DefTermLogString(asMessage);
 
 	#ifdef PRINT_SHELL_LOG
 	wprintf(L"%s\n", asMessage);

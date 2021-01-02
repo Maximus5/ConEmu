@@ -37,11 +37,6 @@ class CDefTermHk;
 
 extern CDefTermHk* gpDefTerm;
 
-bool InitDefTerm();
-bool isDefTermEnabled();
-void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel = nullptr);
-void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = nullptr);
-
 class CDefTermHk final : public CDefTermBase
 {
 public:
@@ -53,14 +48,21 @@ public:
 	CDefTermHk& operator=(const CDefTermHk&) = delete;
 	CDefTermHk& operator=(CDefTermHk&&) = delete;
 
+	static bool InitDefTerm();
+	static bool IsDefTermEnabled();
+	static void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel = nullptr);
+	static void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = nullptr);
+	static bool LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping);
+	static size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
+	// Start the server and attach to its console
+	static HWND AllocHiddenConsole(bool bTempForVS);
+
 	void StartDefTerm();
 
 	static DWORD WINAPI InitDefTermContinue(LPVOID ahPrevHooks);
 	DWORD mn_InitDefTermContinueTID;
 	HANDLE mh_InitDefTermContinueFrom;
 
-	// Start the server and attach to its console
-	HWND AllocHiddenConsole(bool bTempForVS);
 	// Called from hooks after successful AllocConsole
 	void OnAllocConsoleFinished(HWND hNewConWnd);
 
@@ -68,14 +70,14 @@ public:
 	virtual void StopHookers() override;
 	virtual void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
 
-	size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
-
 protected:
 	HANDLE  mh_StopEvent = nullptr;
 	wchar_t ms_ExeName[MAX_PATH] = L"";
 	DWORD   mn_LastCheck = 0;
 
 	DWORD   StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE phSrvProcess);
+
+	static bool FindConEmuInside(DWORD& guiPid, HWND& guiHwnd);
 
 protected:
 	virtual CDefTermBase* GetInterface() override;

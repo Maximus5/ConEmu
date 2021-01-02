@@ -995,7 +995,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	// gbPrepareDefaultTerminal turned on in DllMain
 	if (gbPrepareDefaultTerminal)
 	{
-		if (!InitDefTerm())
+		if (!CDefTermHk::InitDefTerm())
 		{
 			TODO("Show error message?");
 			return 1; // FAILED!
@@ -1449,7 +1449,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	print_timings(L"DllStop");
 
-	gnDllState |= ds_DllStoping
+	gnDllState |= ds_DllStopping
 		| (bFinal ? ds_DllStopFinal : ds_DllStopNonFinal);
 
 	static bool bTermStopped = false;

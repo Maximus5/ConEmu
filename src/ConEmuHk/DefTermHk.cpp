@@ -70,7 +70,7 @@ bool gbIsGdbHost = false;
 CDefTermHk* gpDefTerm = nullptr;
 
 // helper
-bool isDefTermEnabled()
+bool CDefTermHk::IsDefTermEnabled()
 {
 	if (!gbPrepareDefaultTerminal || !gpDefTerm)
 		return false;
@@ -97,7 +97,7 @@ void WINAPI RequestDefTermShutdown()
 	DoDllStop(true, ds_OnDefTermShutdown);
 }
 
-bool InitDefTerm()
+bool CDefTermHk::InitDefTerm()
 {
 	bool lbRc = true;
 
@@ -280,7 +280,7 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 	return 0;
 }
 
-void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= nullptr*/)
+void CDefTermHk::DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= nullptr*/)
 {
 	if (!gpDefTerm || !asMessage || !*asMessage)
 		return;
@@ -290,7 +290,7 @@ void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= nullptr*/)
 	DefTermLogString(lsMsg.ms_Val, asLabel);
 }
 
-void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= nullptr*/)
+void CDefTermHk::DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= nullptr*/)
 {
 	if (!asMessage || !*asMessage)
 	{
@@ -320,6 +320,41 @@ void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= nullptr*/)
 	}
 
 	gpDefTerm->LogHookingStatus(GetCurrentProcessId(), pszReady);
+}
+
+bool CDefTermHk::LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping)
+{
+	srvMapping = CESERVER_CONSOLE_MAPPING_HDR{};
+
+	if (!gbPrepareDefaultTerminal || !gpDefTerm)
+		return false;
+
+	const auto& opt = gpDefTerm->m_Opt;
+
+	srvMapping.cbSize = sizeof(srvMapping);
+
+	srvMapping.nProtocolVersion = CESERVER_REQ_VER;
+	srvMapping.nGuiPID = 0; //nGuiPID;
+	srvMapping.hConEmuRoot = nullptr; //ghConEmuWnd;
+	srvMapping.hConEmuWndDc = nullptr;
+	srvMapping.hConEmuWndBack = nullptr;
+	srvMapping.Flags = opt.nConsoleFlags;
+	srvMapping.useInjects = opt.bNoInjects ? ConEmuUseInjects::DontUse : ConEmuUseInjects::Use;
+
+	lstrcpy(srvMapping.sConEmuExe, opt.pszConEmuExe ? opt.pszConEmuExe : L"");
+	lstrcpy(srvMapping.ComSpec.ConEmuBaseDir, opt.pszConEmuBaseDir ? opt.pszConEmuBaseDir : L"");
+	lstrcpy(srvMapping.ComSpec.ConEmuExeDir, opt.pszConEmuExe ? opt.pszConEmuExe : L"");
+	wchar_t* pszName = const_cast<wchar_t*>(PointToName(srvMapping.ComSpec.ConEmuExeDir));
+	if (pszName && pszName > srvMapping.ComSpec.ConEmuExeDir)
+		*(pszName - 1) = L'\0';
+
+	if (srvMapping.ComSpec.ConEmuExeDir[0] == L'\0' || srvMapping.ComSpec.ConEmuBaseDir[0] == L'\0')
+	{
+		_ASSERTE(srvMapping.ComSpec.ConEmuExeDir[0] && srvMapping.ComSpec.ConEmuBaseDir[0]);
+		return false;
+	}
+
+	return true;
 }
 
 
@@ -506,31 +541,37 @@ void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 	DefTermMsg(asErrText);
 }
 
-HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
+HWND CDefTermHk::AllocHiddenConsole(const bool bTempForVS)
 {
+	if (!gpDefTerm)
+	{
+		_ASSERTE(gpDefTerm != nullptr);
+		return nullptr;
+	}
+
 	// Function AttachConsole exists in WinXP and above, need dynamic link
 	const auto attachConsole = GetAttachConsoleProc();
 	if (!attachConsole)
 	{
-		LogHookingStatus(GetCurrentProcessId(), L"Can't create hidden console, function does not exist");
+		gpDefTerm->LogHookingStatus(GetCurrentProcessId(), L"Can't create hidden console, function does not exist");
 		return nullptr;
 	}
 
-	LogHookingStatus(GetCurrentProcessId(), L"AllocHiddenConsole");
+	gpDefTerm->LogHookingStatus(GetCurrentProcessId(), L"AllocHiddenConsole");
 
-	ReloadSettings();
-	_ASSERTEX(isDefTermEnabled() && (gbIsNetVsHost || bTempForVS || gbPrepareDefaultTerminal));
+	gpDefTerm->ReloadSettings();
+	_ASSERTEX(IsDefTermEnabled() && (gbIsNetVsHost || bTempForVS || gbPrepareDefaultTerminal));
 
-	if (!isDefTermEnabled())
+	if (!IsDefTermEnabled())
 	{
 		// Disabled in settings or registry
-		LogHookingStatus(GetCurrentProcessId(), L"Application skipped by settings");
+		gpDefTerm->LogHookingStatus(GetCurrentProcessId(), L"Application skipped by settings");
 		return nullptr;
 	}
 
 	HANDLE hSrvProcess = nullptr;
 	const DWORD nAttachPid = bTempForVS ? 0 : gnSelfPID;
-	const DWORD nSrvPid = StartConsoleServer(nAttachPid, true, &hSrvProcess);
+	const DWORD nSrvPid = gpDefTerm->StartConsoleServer(nAttachPid, true, &hSrvProcess);
 	if (!nSrvPid)
 	{
 		// Failed to start process?
@@ -568,7 +609,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 {
 	// Options must be loaded already
 	const CEDefTermOpt* pOpt = GetOpt();
-	if (!pOpt || !isDefTermEnabled())
+	if (!pOpt || !IsDefTermEnabled())
 	{
 		LogHookingStatus(GetCurrentProcessId(), L"Application skipped by settings");
 		return 0;
@@ -657,6 +698,11 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 	return pi.dwProcessId;
 }
 
+bool CDefTermHk::FindConEmuInside(DWORD& guiPid, HWND& guiHwnd)
+{
+	return false;
+}
+
 void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
 {
 	if (!gbPrepareDefaultTerminal || !this)
@@ -674,9 +720,9 @@ void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
 
 	ReloadSettings();
 
-	if (!isDefTermEnabled())
+	if (!IsDefTermEnabled())
 	{
-		_ASSERTEX(isDefTermEnabled());
+		_ASSERTEX(IsDefTermEnabled());
 		// Disabled in settings or registry
 		LogHookingStatus(GetCurrentProcessId(), L"OnAllocConsoleFinished: !isDefTermEnabled()");
 		return;
@@ -715,15 +761,20 @@ void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
 
 size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 {
+	if (!gpDefTerm)
+	{
+		_ASSERTE(gpDefTerm != nullptr);
+		return 0;
+	}
+
 	rsArgs.Clear();
 	rsNewCon.Clear();
 
-	if (!this)
-		return 0;
+	const auto& opt = gpDefTerm->m_Opt;
 
-	const size_t cchMax = 64
-		+ ((m_Opt.pszCfgFile && *m_Opt.pszCfgFile) ? (20 + wcslen(m_Opt.pszCfgFile)) : 0)
-		+ ((m_Opt.pszConfigName && *m_Opt.pszConfigName) ? (12 + wcslen(m_Opt.pszConfigName)) : 0)
+	const size_t cchMax = 128
+		+ ((opt.pszCfgFile && *opt.pszCfgFile) ? (20 + wcslen(opt.pszCfgFile)) : 0)
+		+ ((opt.pszConfigName && *opt.pszConfigName) ? (12 + wcslen(opt.pszConfigName)) : 0)
 		;
 	wchar_t* psz = rsArgs.GetBuffer(cchMax);
 	const size_t cchNew = 32; // "-new_console:ni"
@@ -737,29 +788,34 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 
 	wchar_t szNewConSw[10] = L"";
 
+	DWORD guiPid = 0;
+	HWND guiHwnd = nullptr;
+
 	// Do not inject ConEmuHk in the target process?
-	if (m_Opt.bNoInjects && !bGuiArgs)
+	if (opt.bNoInjects && !bGuiArgs)
 		_wcscat_c(psz, cchMax, L" /NOINJECT");
-	else if (m_Opt.bNoInjects)
+	else if (opt.bNoInjects)
 		wcscat_c(szNewConSw, L"i");
 
 	// New or existing window we shall use?
-	if (m_Opt.bNewWindow && !bGuiArgs)
+	if (opt.bNewWindow && !bGuiArgs)
 		_wcscat_c(psz, cchMax, L" /GHWND=NEW");
-	else if (m_Opt.bNewWindow)
+	else if (opt.bNewWindow)
 		_wcscat_c(psz, cchMax, L" /NOSINGLE");
+	else if (!opt.bNewWindow && !bGuiArgs && FindConEmuInside(guiPid, guiHwnd))
+		msprintf(psz + wcslen(psz), cchMax - wcslen(psz), L" /GID=%u /GHWND=%08X", guiPid, LODWORD(guiHwnd));
 	else if (bGuiArgs)
 		_wcscat_c(psz, cchMax, L" /REUSE");
 
 	// Confirmations
-	if (m_Opt.nDefaultTerminalConfirmClose == TerminalConfirmClose::Always)
+	if (opt.nDefaultTerminalConfirmClose == TerminalConfirmClose::Always)
 	{
 		if (!bGuiArgs)
 			_wcscat_c(psz, cchMax, L" /CONFIRM");
 		else
 			wcscat_c(szNewConSw, L"c");
 	}
-	else if (m_Opt.nDefaultTerminalConfirmClose == TerminalConfirmClose::Never)
+	else if (opt.nDefaultTerminalConfirmClose == TerminalConfirmClose::Never)
 	{
 		if (!bGuiArgs)
 			_wcscat_c(psz, cchMax, L" /NOCONFIRM");
@@ -768,16 +824,16 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 	}
 
 	// That switches must be processed in server too!
-	if (m_Opt.pszCfgFile && *m_Opt.pszCfgFile)
+	if (opt.pszCfgFile && *opt.pszCfgFile)
 	{
 		_wcscat_c(psz, cchMax, L" /LoadCfgFile \"");
-		_wcscat_c(psz, cchMax, m_Opt.pszCfgFile);
+		_wcscat_c(psz, cchMax, opt.pszCfgFile);
 		_wcscat_c(psz, cchMax, L"\"");
 	}
-	if (m_Opt.pszConfigName && *m_Opt.pszConfigName)
+	if (opt.pszConfigName && *opt.pszConfigName)
 	{
 		_wcscat_c(psz, cchMax, L" /CONFIG \"");
-		_wcscat_c(psz, cchMax, m_Opt.pszConfigName);
+		_wcscat_c(psz, cchMax, opt.pszConfigName);
 		_wcscat_c(psz, cchMax, L"\"");
 	}
 

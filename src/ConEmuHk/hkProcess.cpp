@@ -59,7 +59,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	BOOL bShell = FALSE;
 
 	const CEStr lsLog = lstrmerge(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
-	DefTermLogString(lsLog);
+	CDefTermHk::DefTermLogString(lsLog);
 
 	// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
 	CmdArg szExe;
@@ -81,13 +81,13 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1))
 		{
 			hr = static_cast<HRESULT>(-1);
-			DefTermLogString(L"OnShellExecCmdLine: FindImageSubsystem failed");
+			CDefTermHk::DefTermLogString(L"OnShellExecCmdLine: FindImageSubsystem failed");
 			goto wrap;
 		}
 		if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		{
 			hr = static_cast<HRESULT>(-1);
-			DefTermLogString(L"OnShellExecCmdLine: !=IMAGE_SUBSYSTEM_WINDOWS_CUI");
+			CDefTermHk::DefTermLogString(L"OnShellExecCmdLine: !=IMAGE_SUBSYSTEM_WINDOWS_CUI");
 			goto wrap;
 		}
 	}
