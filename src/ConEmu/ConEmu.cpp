@@ -2167,9 +2167,14 @@ void CConEmuMain::InitComSpecStr(ConEmuComspec& ComSpec)
 	wcscpy_c(ComSpec.ConEmuBaseDir, ms_ConEmuBaseDir);
 }
 
-void CConEmuMain::GetGuiInfo(ConEmuGuiMapping& GuiInfo)
+void CConEmuMain::GetGuiInfo(ConEmuGuiMapping& GuiInfo) const
 {
 	GuiInfo = m_GuiInfo;
+}
+
+const ConEmuGuiMapping& CConEmuMain::GetGuiInfo() const
+{
+	return m_GuiInfo;
 }
 
 void CConEmuMain::UpdateGuiInfoMapping()

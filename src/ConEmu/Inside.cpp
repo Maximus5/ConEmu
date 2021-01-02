@@ -311,6 +311,8 @@ void CConEmuInside::SetInsideParentWnd(HWND hParent)
 	if (!hParent || (hParent == INSIDE_PARENT_NOT_FOUND))
 	{
 		mh_InsideParentRel = nullptr;
+
+		insideMapping_.CloseMap();
 	}
 	else
 	{
@@ -332,6 +334,8 @@ void CConEmuInside::SetInsideParentWnd(HWND hParent)
 		}
 
 		mh_InitialRoot = GetParentRoot();
+
+		UpdateDefTermMapping();
 	}
 }
 
@@ -1090,4 +1094,49 @@ HWND CConEmuInside::CheckInsideFocus() const
 	}
 
 	return tif.hwndFocus;
+}
+
+void CConEmuInside::UpdateDefTermMapping()
+{
+	if (!insideMapping_.IsValid())
+	{
+		if (!mh_InitialRoot)
+		{
+			return;
+		}
+		DWORD nRootPid = 0;
+		if (GetWindowThreadProcessId(mh_InitialRoot, &nRootPid))
+		{
+			insideMapping_.InitName(CEINSIDEMAPNAME, nRootPid);
+			if (!insideMapping_.Create())
+			{
+				DisplayLastError(insideMapping_.GetErrorText(), insideMapping_.GetLastErrorCode());
+				return;
+			}
+		}
+		else
+		{
+			DisplayLastError(L"GetWindowThreadProcessId failed");
+			return;
+		}
+	}
+
+	CESERVER_INSIDE_MAPPING_HDR info{};
+	info.cbSize = sizeof(info);
+	info.nProtocolVersion = CESERVER_REQ_VER;
+	wcscpy_c(info.sConEmuExe, gpConEmu->ms_ConEmuExe);
+	wcscpy_c(info.sConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
+	info.nGuiPID = GetCurrentProcessId();
+	info.hConEmuRoot = ghWnd;
+	info.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
+	info.isDefaultTerminalNoInjects = gpSet->isDefaultTerminalNoInjects;
+	info.isDefaultTerminalDebugLog = gpSet->isDefaultTerminalDebugLog;
+	info.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
+	const CEStr apps(gpSet->GetDefaultTerminalApps());
+	lstrcpyn(info.defaultTerminalApps, apps.c_str(L""), countof(info.defaultTerminalApps));
+
+	const auto& guiInfo = gpConEmu->GetGuiInfo();
+	info.flags = guiInfo.Flags;
+
+	insideMapping_.SetFrom(&info);
 }

@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "ConEmu.h"
 #include "ConEmuStart.h"
+#include "Inside.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Status.h"
@@ -202,8 +203,7 @@ void CDefaultTerminal::ReloadSettings()
 	m_Opt.bDebugLog  = gpSet->isDefaultTerminalDebugLog;
 	m_Opt.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
 
-	ConEmuGuiMapping guiInfo = {};
-	gpConEmu->GetGuiInfo(guiInfo);
+	const auto& guiInfo = gpConEmu->GetGuiInfo();
 	m_Opt.nConsoleFlags = guiInfo.Flags;
 
 	m_Opt.bExternalPointers = true;
@@ -213,6 +213,11 @@ void CDefaultTerminal::ReloadSettings()
 	m_Opt.pszCfgFile = gpConEmu->opt.LoadCfgFile.Exists ? const_cast<wchar_t*>(gpConEmu->opt.LoadCfgFile.GetStr()) : nullptr;
 	m_Opt.pszConfigName = const_cast<wchar_t*>(gpSetCls->GetConfigName());
 	m_Opt.pszzHookedApps = const_cast<wchar_t*>(gpSet->GetDefaultTerminalAppsMSZ()); // ASCIIZZ
+
+	if (gpConEmu->mp_Inside)
+	{
+		gpConEmu->mp_Inside->UpdateDefTermMapping();
+	}
 }
 
 void CDefaultTerminal::AutoClearThreads()

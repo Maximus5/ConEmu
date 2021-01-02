@@ -214,7 +214,8 @@ class CConEmuMain
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 	public:
-		void GetGuiInfo(ConEmuGuiMapping& GuiInfo);
+		void GetGuiInfo(ConEmuGuiMapping& GuiInfo) const;
+		const ConEmuGuiMapping& GetGuiInfo() const;
 	private:
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();

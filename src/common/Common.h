@@ -264,6 +264,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd )
 #define CECONMAPNAME_A       "ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
 #define CECONAPPMAPNAME     L"ConEmuAppMapping.%08X"   // --> CESERVER_CONSOLE_APP_MAPPING ( % == (DWORD)ghConWnd )
+#define CEINSIDEMAPNAME     L"ConEmuDefTermInside.%u"  // -->CESERVER_INSIDE_MAPPING_HDR ( % == PID of the root window ConEmu is integrated into )
 #define CEFARMAPNAME        L"ConEmuFarMapping.%u"     // --> CEFAR_INFO_MAPPING               ( % == nFarPID )
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u" // --> PanelViewSetMapping
 //#ifdef _DEBUG
@@ -1685,6 +1686,40 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 
 	ConEmuComspec ComSpec;
 };
+
+enum class TerminalConfirmClose : uint32_t;
+
+// CEINSIDEMAPNAME L"ConEmuDefTermInside.%u" ( % == PID of the root window ConEmu is integrated into )
+struct CESERVER_INSIDE_MAPPING_HDR
+{
+	/// CESERVER_INSIDE_MAPPING_HDR size
+	DWORD cbSize;
+	/// CESERVER_REQ_VER, changed on each struct modification
+	DWORD nProtocolVersion;
+	/// Full path to ConEmu.exe (GUI)
+	wchar_t  sConEmuExe[MAX_PATH+1];
+	/// NO trailing slash. Contains ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
+	wchar_t  sConEmuBaseDir[MAX_PATH];
+	/// PID of ConEmu.exe
+	DWORD nGuiPID;
+	/// Root(!) ConEmu window
+	HWND2 hConEmuRoot;
+
+	/// Set of in-console flags
+	ConEmu::ConsoleFlags flags;
+
+	/// Default terminal is enabled
+	BOOL bUseDefaultTerminal;
+	/// Soft mode, no injects
+	BOOL isDefaultTerminalNoInjects;
+	/// Debug purposes, enable logging in DefTerm
+	BOOL isDefaultTerminalDebugLog;
+	/// "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
+	TerminalConfirmClose nDefaultTerminalConfirmClose;
+	// "|" delimited
+	wchar_t defaultTerminalApps[MAX_PATH];
+};
+
 
 typedef DWORD CEActiveAppFlags;
 const CEActiveAppFlags

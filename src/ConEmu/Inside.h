@@ -32,6 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INSIDE_PARENT_NOT_FOUND ((HWND)-1)
 #define INSIDE_DEFAULT_SYNC_DIR_CMD L"*"
 
+#include "../common/MFileMapping.h"
+#include "../common/Common.h"
+
 class CConEmuInside final
 {
 public:
@@ -74,6 +77,8 @@ protected:
 	DWORD mn_InsideParentPID = 0;  // PID "родительского" процесса режима интеграции
 	HWND  mh_InsideParentWND = nullptr; // Это окно используется как родительское в режиме интеграции
 
+	MFileMapping<CESERVER_INSIDE_MAPPING_HDR> insideMapping_;
+
 public:
 	bool  IsInsideWndSet() const;
 	void  SetInsideParentWnd(HWND hParent);
@@ -99,6 +104,8 @@ public:
 	void  InsideParentMonitor();
 	bool  GetInsideRect(RECT* prWnd) const;
 	HWND  CheckInsideFocus() const;
+
+	void UpdateDefTermMapping();
 
 private:
 	HWND  mh_InitialRoot = nullptr;
