@@ -89,32 +89,32 @@ void TestShellProcessor()
 		case 0:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"mingw32-make \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
 			break;
 		case 1:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"\"mingw32-make.exe\" \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
 			break;
 		case 2:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"\"C:\\GCC\\mingw\\bin\\mingw32-make.exe\" \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
 			break;
 		case 3:
 			pszFile = L"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE";
 			pszParam = L"prince megahit";
-			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
 			break;
 		case 4:
-			pszFile = NULL;
+			pszFile = nullptr;
 			pszParam = L" \"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE\"";
-			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
 			break;
 		case 5:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L" \"1.cpp\" ";
-			sp->OnShellExecuteW(NULL, &pszFile, &pszParam, NULL, &nCreateFlags, &nShowCmd);
+			sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, &nCreateFlags, &nShowCmd);
 			break;
 		default:
 			break;
@@ -147,8 +147,8 @@ void LogFarExecCommand(
 	wchar_t far_info[120];
 	msprintf(far_info, std::size(far_info),
 		L", Version=%u.%u.%u%s x%u, LongConsoleOutput=%s",
-		gFarMode.FarVer.dwVerMajor, gFarMode.FarVer.dwVerMinor, gFarMode.FarVer.dwBuild,
-		gFarMode.FarVer.Bis ? L"bis" : L"", gFarMode.FarVer.dwBits,
+		gFarMode.farVer.dwVerMajor, gFarMode.farVer.dwVerMinor, gFarMode.farVer.dwBuild,
+		gFarMode.farVer.Bis ? L"bis" : L"", gFarMode.farVer.dwBits,
 		gFarMode.bLongConsoleOutput ? L"yes" : L"no");
 	CEStr log_str(
 		L"Far.exe: action=",
@@ -1895,7 +1895,7 @@ int CShellProc::PrepareExecuteParms(
 	// Used to automatically increase the height of the console (backscroll) buffer when starting smth from Far Manager prompt,
 	// save output to our server internal buffer, and revert the height to original size.
 	// Was useful until ‘Far -w’ appeared.
-	BOOL bLongConsoleOutput = gFarMode.FarVer.dwVerMajor && gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
+	BOOL bLongConsoleOutput = gFarMode.farVer.dwVerMajor && gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
 
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();
@@ -2240,8 +2240,6 @@ int CShellProc::PrepareExecuteParms(
 
 	_ASSERTE(mn_ImageBits!=0);
 
-	// Если это Фар - однозначно вставляем ConEmuC.exe
-	// -- bFarHookMode заменен на bLongConsoleOutput --
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
@@ -2269,7 +2267,7 @@ int CShellProc::PrepareExecuteParms(
 				}
 				if (bLongConsoleOutput) // Far Manager, support "View console output" from Far Plugin
 				{
-					const auto& ver = gFarMode.FarVer;
+					const auto& ver = gFarMode.farVer;
 					// Certain builds of Far Manager 3.x use ShellExecute
 					if ((aCmd == eShellExecute)
 						&& (ver.dwVerMajor >= 3)

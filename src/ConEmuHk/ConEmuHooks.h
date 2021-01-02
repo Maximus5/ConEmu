@@ -30,33 +30,45 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // This file is used in ConEmuPlugin and ExtendedConsole modules
 
-#include <windows.h>
+#include <Windows.h>
+
+#include "../common/Common.h"
 
 // Options are set when the process is Far Manager
 struct HookModeFar
 {
-	DWORD cbSize;               // size of the struct
-	BOOL  bFarHookMode;         // set to TRUE from ConEmu.dll Far plugin !!! MUST BE FIRST BOOL !!!
-	BOOL  bFARuseASCIIsort;     // have to hook: OnCompareStringW
-	BOOL  bShellNoZoneCheck;    // -> OnShellExecuteXXX
-	BOOL  bMonitorConsoleInput; // on (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
-	BOOL  bPopupMenuPos;        // on EMenu call показать меню в позиции мышиного курсора
-	BOOL  bLongConsoleOutput;   // increase buffer height during console applications execution (ignored in "far.exe /w")
-	FarVersion FarVer;
-	void  (WINAPI* OnCurDirChanged)();
+	// size of the struct
+	DWORD cbSize;
+	// set to TRUE from ConEmu.dll Far plugin !!! MUST BE FIRST BOOL !!!
+	BOOL  bFarHookMode;
+	// have to hook: OnCompareStringW
+	BOOL  bFarUseAsciiSort;
+	// -> OnShellExecuteXXX
+	BOOL  bShellNoZoneCheck;
+	// on (Read/Peek)ConsoleInput(A/W) send info to GUI/Settings/Debug
+	BOOL  bMonitorConsoleInput;
+	// on EMenu call show the menu at mouse cursor position
+	BOOL  bPopupMenuPos;
+	// increase buffer height during console applications execution (ignored in "far.exe /w")
+	BOOL  bLongConsoleOutput;
+	// Far Manager version info
+	FarVersion farVer;
+	// Callback to call (in plugin) when Far Manager tries to read console input.
+	// Sort of a hack to execute the code when Far is in synchronous api aware mode.
+	void  (WINAPI* onCurDirChanged)();
 };
 
 extern struct HookModeFar gFarMode;
 extern SrvLogString_t gfnSrvLogString;
 
-typedef struct HookCallbackArg
+struct HookCallbackArg
 {
 	BOOL         bMainThread;
 	// pointer to variable with result of original function
 	LPVOID       lpResult;
-	// arguments (or pointers to them) of original funciton, casted to DWORD_PTR
+	// arguments (or pointers to them) of original function, casted to DWORD_PTR
 	DWORD_PTR    lArguments[10];
-} HookCallbackArg;
+};
 
 // PreCallBack may returns (FALSE) to skip original function calling,
 //		in that case, caller got pArgs->lResult

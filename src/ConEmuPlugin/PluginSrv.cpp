@@ -138,11 +138,11 @@ void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet)
 
 	// Установить переменные окружения
 	// Плагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
-	gFarMode.bFARuseASCIIsort = pFarSet->bFARuseASCIIsort;
+	gFarMode.bFarUseAsciiSort = pFarSet->bFARuseASCIIsort;
 	gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
 	gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
 	gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
-	gFarMode.OnCurDirChanged = CPluginBase::OnCurDirChanged;
+	gFarMode.onCurDirChanged = CPluginBase::OnCurDirChanged;
 
 	UpdateComspec(&pFarSet->ComSpec); // ComSpec, isAddConEmu2Path, ...
 

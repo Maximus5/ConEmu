@@ -98,10 +98,10 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 		if (ghConEmuWndDC)
 		{
 			if (gFarMode.cbSize
-				&& gFarMode.OnCurDirChanged
-				&& !IsBadCodePtr((FARPROC)gFarMode.OnCurDirChanged))
+				&& gFarMode.onCurDirChanged
+				&& !IsBadCodePtr((FARPROC)gFarMode.onCurDirChanged))
 			{
-				gFarMode.OnCurDirChanged();
+				gFarMode.onCurDirChanged();
 			}
 			else
 			{
@@ -178,8 +178,8 @@ COORD FixupReadStartCursorPos(DWORD nNumberOfCharsToRead, CONSOLE_SCREEN_BUFFER_
 // Helper function
 void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, MY_CONSOLE_READCONSOLE_CONTROL* pInputControl)
 {
-	if (gReadConsoleInfo.InReadConsoleTID)
-		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
+	if (gReadConsoleInfo.inReadConsoleTID)
+		gReadConsoleInfo.lastReadConsoleTID = gReadConsoleInfo.inReadConsoleTID;
 
 #ifdef _DEBUG
 	wchar_t szCurDir[MAX_PATH+1];
@@ -201,7 +201,7 @@ void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 			if ((nConIn & ENABLE_ECHO_INPUT) && (nConIn & ENABLE_LINE_INPUT))
 			{
 				bCatch = true;
-				gReadConsoleInfo.InReadConsoleTID = GetCurrentThreadId();
+				gReadConsoleInfo.inReadConsoleTID = GetCurrentThreadId();
 				gReadConsoleInfo.bIsUnicode = bUnicode;
 				gReadConsoleInfo.hConsoleInput = hConsoleInput;
 				// Support Tab-completion in cmd.exe and others
@@ -216,7 +216,7 @@ void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 
 	if (!bCatch)
 	{
-		gReadConsoleInfo.InReadConsoleTID = 0;
+		gReadConsoleInfo.inReadConsoleTID = 0;
 	}
 
 	PreReadConsoleInput(hConsoleInput, (bUnicode ? rcif_Unicode : rcif_Ansi));
@@ -228,10 +228,10 @@ void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVO
 	if (bSucceeded && !gbWasSucceededInRead && lpNumberOfCharsRead && *lpNumberOfCharsRead)
 		gbWasSucceededInRead = TRUE;
 
-	if (gReadConsoleInfo.InReadConsoleTID)
+	if (gReadConsoleInfo.inReadConsoleTID)
 	{
-		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
-		gReadConsoleInfo.InReadConsoleTID = 0;
+		gReadConsoleInfo.lastReadConsoleTID = gReadConsoleInfo.inReadConsoleTID;
+		gReadConsoleInfo.inReadConsoleTID = 0;
 
 		TODO("Отослать в ConEmu считанную строку?");
 	}
@@ -291,7 +291,7 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 
 	DWORD nCurrentTID = GetCurrentThreadId();
 
-	gReadConsoleInfo.LastReadConsoleInputTID = nCurrentTID;
+	gReadConsoleInfo.lastReadConsoleInputTID = nCurrentTID;
 	gReadConsoleInfo.hConsoleInput2 = hConsoleInput;
 
 	if (nRead)
