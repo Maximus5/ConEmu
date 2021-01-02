@@ -30,14 +30,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+// Wrapper for LoadLibrary and GetProcAddress.
+// Note that is used for declaring global variables, so the class
+// should stay exit-time-destructors compliant.
 class MModule
 {
 protected:
-	HMODULE mh_Module = nullptr;
+	// Warning!!! DON'T declare or use here any classes (e.g. CEStr) which utilizes heap!
+
+	// Result of GetModuleHandle or LoadLibrary
+	HMODULE moduleHandle_ = nullptr;
+	
 	#ifdef _DEBUG
-	wchar_t ms_Module[MAX_PATH] = L"";
+	// Module path for debugging purposes
+	wchar_t moduleName_[MAX_PATH] = L"";
 	#endif
-	bool    mb_Loaded = false;
+
+	// true if mh_Module is from GetModuleHandle so we don't need to call FreeLibrary
+	bool    selfLoaded_ = false;
+	
 public:
 	MModule();
 	explicit MModule(const wchar_t* asModule);
@@ -52,16 +63,17 @@ public:
 public:
 	void Free();
 	HMODULE Load(const wchar_t* asModule);
-	void SetHandle(HMODULE hModule);
+	bool SetHandle(HMODULE hModule);
 public:
 	template <typename FunctionType>
 	bool GetProcAddress(const char * const asFunction, FunctionType*& pfn) const
 	{
-		pfn = mh_Module ? reinterpret_cast<FunctionType*>(::GetProcAddress(mh_Module, asFunction)) : nullptr;
+		pfn = moduleHandle_ ? reinterpret_cast<FunctionType*>(::GetProcAddress(moduleHandle_, asFunction)) : nullptr;
 		return (pfn != nullptr);
 	};
 public:
 	explicit operator HMODULE() const;
 	bool operator!() const;
-	bool IsLoaded() const;
+	// Checks if module handle is not null
+	bool IsValid() const;
 };

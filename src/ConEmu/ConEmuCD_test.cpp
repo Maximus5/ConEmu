@@ -160,7 +160,7 @@ public:
 	{
 		ConEmuCD = LoadServerDll();
 		EXPECT_NE(nullptr, wcsstr(szConEmuCD, ConEmuCD_DLL_3264));
-		if (!ConEmuCD.IsLoaded())
+		if (!ConEmuCD.IsValid())
 		{
 			FAIL() << L"Failed to load " << ConEmuCD_DLL_3264;
 		}
@@ -212,7 +212,7 @@ protected:
 	static HWND GetRealConsoleWindow()
 	{
 		const MModule ConEmuHk(GetModuleHandle(ConEmuHk_DLL_3264));
-		if (ConEmuHk.IsLoaded())
+		if (ConEmuHk.IsValid())
 		{
 			HWND(WINAPI * getConsoleWindow)() = nullptr;
 			EXPECT_TRUE(ConEmuHk.GetProcAddress("GetRealConsoleWindow", getConsoleWindow));

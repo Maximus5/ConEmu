@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 
 	#ifdef _DEBUG
 	MModule hConEmuHk{ GetModuleHandle(ConEmuHk_DLL_3264) };
-	_ASSERTE(!hConEmuHk.IsLoaded() && "Hooks must not be loaded into ConEmuC[64].exe!");
+	_ASSERTE(!hConEmuHk.IsValid() && "Hooks must not be loaded into ConEmuC[64].exe!");
 	#endif
 
 	#if defined(SHOW_STARTED_MSGBOX)
