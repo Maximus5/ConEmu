@@ -35,8 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MStrDup.h"
 #include "MStrSafe.h"
 #include "RConStartArgsEx.h"
-#include "Common.h"
-#include "WObjects.h"
 #include "CmdLine.h"
 
 #define DEBUGSTRPARSE(s) DEBUGSTR(s)
@@ -70,9 +68,9 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 			return false;
 	}
 
-	// Директория запуска. В большинстве случаев совпадает с CurDir в conemu.exe,
-	// но может быть задана из консоли, если запуск идет через "-new_console"
-	_ASSERTE(this->pszStartupDir==NULL);
+	// Startup directory. In most cases it's the same as CurDir in ConEmu.exe,
+	// but it could be set from the console, if we run the command via "-new_console"
+	_ASSERTE(this->pszStartupDir==nullptr);
 
 	struct CopyValues { wchar_t** ppDst; LPCWSTR pSrc; } values[] =
 	{
@@ -83,19 +81,18 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 		{&this->pszWallpaper, args.pszWallpaper},
 		{&this->pszMntRoot, args.pszMntRoot},
 		{&this->pszAnsiLog, args.pszAnsiLog},
-		{NULL}
 	};
 
-	for (CopyValues* p = values; p->ppDst; p++)
+	for (auto& p : values)
 	{
-		if (abConcat && *p->ppDst && !p->pSrc)
+		if (abConcat && *p.ppDst && !p.pSrc)
 			continue;
 
-		SafeFree(*p->ppDst);
-		if (p->pSrc)
+		SafeFree(*p.ppDst);
+		if (p.pSrc)
 		{
-			*p->ppDst = lstrdup(p->pSrc);
-			if (!*p->ppDst)
+			*p.ppDst = lstrdup(p.pSrc);
+			if (!*p.ppDst)
 				return false;
 		}
 	}
@@ -148,8 +145,8 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 	this->cchEnvStrings = args.cchEnvStrings;
 	if (args.cchEnvStrings && args.pszEnvStrings)
 	{
-		size_t cbBytes = args.cchEnvStrings * sizeof(*this->pszEnvStrings);
-		this->pszEnvStrings = (wchar_t*)malloc(cbBytes);
+		const size_t cbBytes = args.cchEnvStrings * sizeof(*this->pszEnvStrings);
+		this->pszEnvStrings = static_cast<wchar_t*>(malloc(cbBytes));
 		if (this->pszEnvStrings)
 		{
 			memmove(this->pszEnvStrings, args.pszEnvStrings, cbBytes);
@@ -206,11 +203,11 @@ bool RConStartArgsEx::HasPermissionsArgs() const
 }
 
 
-wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
+wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks) const
 {
-	wchar_t* pszFull = NULL;
+	wchar_t* pszFull = nullptr;
 	size_t cchMaxLen =
-				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // только команда
+				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // the command
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
 	cchMaxLen += (pszWallpaper  ? (lstrlen(pszWallpaper) + 20) : 0); // "-new_console:W:..."
@@ -226,7 +223,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (RunAsNetOnly == crb_On) cchMaxLen++; // -new_console:e
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
 						+ (pszDomain ? lstrlen(pszDomain) : 0)
-						+ (szUserPassword ? lstrlen(szUserPassword) : 0)) : 0);
+						+ wcslen(szUserPassword)) : 0);
 	if (ForceUserDialog == crb_On) cchMaxLen++; // -new_console:u
 	if (BackgroundTab == crb_On) cchMaxLen++; // -new_console:b
 	if (ForegroungTab == crb_On) cchMaxLen++; // -new_console:f
@@ -242,17 +239,18 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
 	if (eSplit) cchMaxLen += 64; // -new_console:s[<SplitTab>T][<Percents>](H|V)
 
-	pszFull = (wchar_t*)malloc(cchMaxLen*sizeof(*pszFull));
+	pszFull = static_cast<wchar_t*>(malloc(cchMaxLen * sizeof(*pszFull)));
 	if (!pszFull)
 	{
-		_ASSERTE(pszFull!=NULL);
-		return NULL;
+		_ASSERTE(pszFull!=nullptr);
+		return nullptr;
 	}
 
 	if (pszSpecialCmd && (RunAsAdministrator == crb_On) && abForTasks)
 		_wcscpy_c(pszFull, cchMaxLen, L"* "); // `-new_console` will follow asterisk, so add a space to delimit
 	else
 		*pszFull = 0;
+
 
 	wchar_t szAdd[128] = L"";
 	if (RunAsAdministrator == crb_On)
@@ -342,7 +340,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 			msprintf(szAdd+lstrlen(szAdd), 16, L"%uT", nSplitPane);
 		if (nSplitValue > 0 && nSplitValue < 1000)
 		{
-			UINT iPercent = (1000-nSplitValue)/10;
+			const UINT iPercent = (1000 - nSplitValue) / 10;
 			msprintf(szAdd+lstrlen(szAdd), 16, L"%u", std::max<UINT>(1, std::min<UINT>(iPercent, 99)));
 		}
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
@@ -369,7 +367,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 		{L'W', false, this->pszWallpaper},
 		{L'm', false, this->pszMntRoot},
 		{L'L', false, this->pszAnsiLog},
-		{0}
+		{}
 	};
 
 	wchar_t szCat[32];
@@ -377,7 +375,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 	{
 		if (p->pVal)
 		{
-			bool bQuot = !*p->pVal || (wcspbrk(p->pVal, L" \"") != NULL);
+			const bool bQuot = !*p->pVal || (wcspbrk(p->pVal, L" \"") != nullptr);
 
 			if (bQuot)
 				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L"-new_console:%c:\"" : L"-cur_console:%c:\"", p->cOpt);
@@ -429,13 +427,15 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 		_wcscat_c(pszFull, cchMaxLen, L"\" ");
 	}
 
+	// See the note above, why we add the command after "-new_console" switches
+	// User may modify the command appropriately afterwards
 	if (pszSpecialCmd)
 	{
-		// Не окавычиваем. Этим должен озаботиться пользователь
+		// Don't quotate, the command is up to user
 		_wcscat_c(pszFull, cchMaxLen, pszSpecialCmd);
 	}
 
-	//131008 - лишние пробелы не нужны
+	// Trim trailing spaces
 	wchar_t* pS = pszFull + lstrlen(pszFull);
 	while ((pS > pszFull) && wcschr(L" \t\r\n", *(pS - 1)))
 		*(--pS) = 0;
@@ -449,7 +449,7 @@ bool RConStartArgsEx::CheckUserToken(HWND hPwd)
 	//SafeFree(pszUserProfile);
 	UseEmptyPassword = crb_Undefined;
 
-	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
+	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = nullptr; }
 	if (!pszUserName || !*pszUserName)
 		return FALSE;
 
@@ -476,7 +476,7 @@ bool RConStartArgsEx::CheckUserToken(HWND hPwd)
 	}
 
 	HANDLE hLogonToken = CheckUserToken();
-	bool bIsValid = (hLogonToken != NULL);
+	const bool bIsValid = (hLogonToken != nullptr);
 	// Token itself is not needed now
 	SafeCloseHandle(hLogonToken);
 
@@ -486,18 +486,18 @@ bool RConStartArgsEx::CheckUserToken(HWND hPwd)
 
 HANDLE RConStartArgsEx::CheckUserToken()
 {
-	HANDLE hLogonToken = NULL;
-	// Empty password? Really? Security hole? Are you sure?
+	HANDLE hLogonToken = nullptr;
 	// aka: code 1327 (ERROR_ACCOUNT_RESTRICTION)
+	// If user needs to use empty password (THINK TWICE! It's a security hole!)
 	// gpedit.msc - Конфигурация компьютера - Конфигурация Windows - Локальные политики - Параметры безопасности - Учетные записи
-	// Ограничить использование пустых паролей только для консольного входа -> "Отключить". 
-	LPWSTR pszPassword = (UseEmptyPassword == crb_On) ? NULL : szUserPassword;
-	DWORD nFlags = (RunAsNetOnly == crb_On) ? LOGON32_LOGON_NEW_CREDENTIALS : LOGON32_LOGON_INTERACTIVE;
-	BOOL lbRc = LogonUser(pszUserName, pszDomain, pszPassword, nFlags, LOGON32_PROVIDER_DEFAULT, &hLogonToken);
+	// Ограничить использование пустых паролей только для консольного входа -> "Отключить".
+	const auto* pszPassword = (UseEmptyPassword == crb_On) ? nullptr : szUserPassword;
+	const DWORD nFlags = (RunAsNetOnly == crb_On) ? LOGON32_LOGON_NEW_CREDENTIALS : LOGON32_LOGON_INTERACTIVE;
+	const BOOL lbRc = LogonUser(pszUserName, pszDomain, pszPassword, nFlags, LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 
 	if (!lbRc || !hLogonToken)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	return hLogonToken;

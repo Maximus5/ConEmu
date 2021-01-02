@@ -1462,7 +1462,7 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (nDlgRc == IDC_START)
 	{
-		wchar_t* pszCmd = args.CreateCommandLine();
+		wchar_t* pszCmd = args.CreateCommandLine(true);
 		if (!pszCmd || !*pszCmd)
 		{
 			DisplayLastError(L"Can't compile command line for new tab\nAll fields are empty?", -1);

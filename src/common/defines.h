@@ -193,7 +193,7 @@ using uint = uint32_t;
 #define isAlpha(c) (IsCharAlpha(c))
 #define isSpace(c) ((c)==L' ' || (c)==L'\xA0' || (c)==L'\t' || (c)==L'\r' || (c)==L'\n')
 
-#define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
+#define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffffULL))
 #define LOLONG(ull)  ((LONG)LODWORD(ull))
 #define HIDWORD(ull) ((DWORD)((ULONGLONG)(ull)>>32))
 #define LOSHORT(ll)  ((SHORT)LOWORD(ll))

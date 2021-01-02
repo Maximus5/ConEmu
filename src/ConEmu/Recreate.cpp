@@ -190,7 +190,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		SafeFree(tempArgs.pszSpecialCmd);
 		SafeFree(tempArgs.pszStartupDir);
 		tempArgs.NewConsole = pArgs->NewConsole;
-		lsAppend = tempArgs.CreateCommandLine();
+		lsAppend = tempArgs.CreateCommandLine(false);
 		if (!lsAppend.IsEmpty())
 		{
 			lsTempCmd = lstrmerge(pszSetCmd, ((lsAppend[0] == L' ') ? nullptr : L" "), lsAppend);
@@ -271,7 +271,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
 	EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), FALSE);
 	if ((pArgs->pszUserName && *pArgs->pszUserName)
-		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted)))
+		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(pszUser, pszDomain, bResticted)))
 	{
 		nChecked = rbAnotherUser;
 		CheckDlgButton(hDlg, cbRunAsNetOnly, (pArgs->RunAsNetOnly == crb_On) ? BST_CHECKED : BST_UNCHECKED);

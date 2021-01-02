@@ -567,7 +567,7 @@ class CRealConsole
 		LPCWSTR GetCmd(bool bThisOnly = false);
 		LPCWSTR GetStartupDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);
-		bool GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted);
+		bool GetUserPwd(const wchar_t*& rpszUser, const wchar_t*& rpszDomain, bool& rbRestricted) const;
 		short GetProgress(AnsiProgressStatus* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle = nullptr);
 		/// <summary>
 		/// Set progress state for the console

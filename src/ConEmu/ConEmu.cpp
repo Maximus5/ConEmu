@@ -6522,7 +6522,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* p
 					}
 					else
 					{
-						pszNewCmd = args.CreateCommandLine();
+						pszNewCmd = args.CreateCommandLine(false);
 					}
 					return pszNewCmd;
 				}

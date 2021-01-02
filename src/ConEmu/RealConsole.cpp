@@ -13639,7 +13639,7 @@ LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 		return L"";
 }
 
-wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
+wchar_t* CRealConsole::CreateCommandLine(const bool abForTasks /*= false*/)
 {
 	AssertThisRet(nullptr);
 
@@ -13653,7 +13653,7 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	CTab tab(__FILE__,__LINE__);
 	if (GetTab(0, tab) && (tab->Flags() & fwt_Renamed))
 	{
-		LPCWSTR pszRenamed = tab->Renamed.Ptr();
+		const auto* pszRenamed = tab->Renamed.Ptr();
 		if (pszRenamed && *pszRenamed)
 		{
 			m_Args.pszRenameTab = lstrdup(pszRenamed);
@@ -13667,22 +13667,21 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	return pszCmd;
 }
 
-bool CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted)
+bool CRealConsole::GetUserPwd(const wchar_t*& rpszUser, const wchar_t*& rpszDomain, bool& rbRestricted) const
 {
 	if (m_Args.RunAsRestricted == crb_On)
 	{
-		*pbRestricted = true;
-		*ppszUser = /**ppszPwd =*/ nullptr;
+		rbRestricted = true;
+		rpszDomain = nullptr;
+		rpszUser = nullptr;
 		return true;
 	}
 
 	if (m_Args.pszUserName /*&& m_Args.pszUserPassword*/)
 	{
-		*ppszUser = m_Args.pszUserName;
-		_ASSERTE(ppszDomain!=nullptr);
-		*ppszDomain = m_Args.pszDomain;
-		//*ppszPwd = m_Args.pszUserPassword;
-		*pbRestricted = false;
+		rpszUser = m_Args.pszUserName;
+		rpszDomain = m_Args.pszDomain;
+		rbRestricted = false;
 		return true;
 	}
 

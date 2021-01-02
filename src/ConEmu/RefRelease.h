@@ -222,9 +222,15 @@ public:
 		return mp_Ref;
 	};
 
-	// Validation, No Assers
+	// Validation, No Asserts
 	operator bool() const
 	{
 		return (mp_Ref != nullptr);
 	};
+
+	// Validation, No Asserts
+	bool IsValid() const
+	{
+		return (mp_Ref != nullptr);
+	}
 };

@@ -31,16 +31,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "RConStartArgs.h"
 
-struct RConStartArgsEx : public RConStartArgs
+// used in ConEmu GUI only
+struct RConStartArgsEx final : public RConStartArgs
 {
 public:
 	RConStartArgsEx();
-	virtual ~RConStartArgsEx();
+	~RConStartArgsEx() override;
 
-	// unused (in dll's) methods
+	RConStartArgsEx(const RConStartArgsEx&) = delete;
+	RConStartArgsEx(RConStartArgsEx&&) = delete;
+	RConStartArgsEx& operator=(const RConStartArgsEx&) = delete;
+	RConStartArgsEx& operator=(RConStartArgsEx&&) = delete;
+
 	bool CheckUserToken(HWND hPwd);
 	HANDLE CheckUserToken();
-	wchar_t* CreateCommandLine(bool abForTasks = false) const;
+	wchar_t* CreateCommandLine(bool abForTasks) const;
 	bool AssignFrom(const RConStartArgsEx& args, bool abConcat = false);
 	bool AssignPermissionsArgs(const RConStartArgsEx& args, bool abConcat = false);
 	bool HasPermissionsArgs() const;

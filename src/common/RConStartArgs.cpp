@@ -31,14 +31,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "CmdLine.h"
-#include "Common.h"
 #include "EnvVar.h"
 #include "MAssert.h"
 #include "MStrDup.h"
 #include "MStrSafe.h"
 #include "Memory.h"
 #include "RConStartArgs.h"
-#include "WObjects.h"
 
 #define DEBUGSTRPARSE(s) DEBUGSTR(s)
 
@@ -83,7 +81,7 @@ RConStartArgs::~RConStartArgs()
 }
 
 
-void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
+void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax) const
 {
 	switch (eConfirmation)
 	{
@@ -107,8 +105,7 @@ void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 // Returns ">0" - when changes was made
 //  0 - no changes
 // -1 - error
-// bForceCurConsole==true, если разбор параметров идет 
-//   при запуске Tasks из GUI
+// bForceCurConsole==true, if parsing is done during starting Tasks from GUI
 int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 {
 	NewConsole = crb_Undefined;
@@ -122,7 +119,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	int nChanges = 0;
 
 	// 140219 - Stop processing if found any of these: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
-	LPCWSTR pszStopAt = NULL;
+	LPCWSTR pszStopAt = nullptr;
 	{
 		LPCWSTR pszTemp = pszSpecialCmd;
 		LPCWSTR pszSave = pszSpecialCmd;
@@ -133,7 +130,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe",
 			L"ConEmuPortable.exe", L"ConEmuPortable",
 			L"DosKey", L"DosKey.exe",
-			NULL};
+			nullptr};
 		while (!pszStopAt && ((pszTemp = NextArg(pszTemp, szExe))))
 		{
 			if (szExe.ms_Val[0] != L'-')
@@ -158,7 +155,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	// 120108 - или "-cur_console:..." для уточнения параметров запуска команд (из фара например)
 	LPCWSTR pszCurCon = L"-cur_console";
 	int nNewConLen = lstrlen(pszNewCon);
-	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
+	_ASSERTE(lstrlen(pszCurCon) == nNewConLen);
 
 	wchar_t* pszFrom = pszSpecialCmd;
 
@@ -195,8 +192,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		}
 
 		// Continue checks
-		wchar_t* pszFindNew = NULL;
-		wchar_t* pszFind = NULL;
+		wchar_t* pszFindNew = nullptr;
+		wchar_t* pszFind = nullptr;
 		wchar_t szTest[12]; lstrcpyn(szTest, pszSwitch+1, countof(szTest));
 
 		if (lstrcmp(szTest, L"new_console") == 0)
@@ -308,14 +305,14 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					_ASSERTE(pszEnd <= pszArgEnd);
 					wchar_t cOpt = *(pszEnd++);
 
-					switch (cOpt)
+					switch (cOpt)  // NOLINT(hicpp-multiway-paths-covered)
 					{
 					case L'"':
 						// Assert was happened, for example, with: "/C \"ConEmu:run:Far.exe  -new_console:\""
 						if (!iQuotCount && (pszEnd < pszArgEnd))
 						{
 							// For example: ""C:\Windows\system32\cmd.exe" /C "sign "FileZilla server.exe" FzGSS.dll -new_console:a""
-							_ASSERTE(*(pszEnd-1)==L'"' && *(pszEnd)==L'"' && *(pszEnd+1)==0);
+							_ASSERTE(*(pszEnd - 1) == L'"' && *(pszEnd) == L'"' && *(pszEnd + 1) == 0);
 							pszEnd--;
 						}
 						else
@@ -327,7 +324,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						lbReady = true;
 						break;
 					case L' ':
-					case 0:
+					case L'\0':
 						lbReady = true;
 						break;
 
@@ -339,11 +336,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L'b':
-						// b - background, не активировать таб
+						// b - background, don't activate the starting console
 						BackgroundTab = crb_On; ForegroungTab = crb_Off;
 						break;
 					case L'f':
-						// f - foreground, активировать таб (аналог ">" в Tasks)
+						// f - foreground,  activate the tab (same as ">" in Tasks)
 						ForegroungTab = crb_On; BackgroundTab = crb_Off;
 						break;
 
@@ -401,7 +398,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'p':
 						if (isDigit(*pszEnd))
 						{
-							wchar_t* pszDigits = NULL;
+							wchar_t* pszDigits = nullptr;
 							nPTY = wcstoul(pszEnd, &pszDigits, 10);
 							if (pszDigits)
 								pszEnd = pszDigits;
@@ -433,7 +430,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							BufHeight = crb_On;
 							if (isDigit(*pszEnd))
 							{
-								wchar_t* pszDigits = NULL;
+								wchar_t* pszDigits = nullptr;
 								nBufHeight = wcstoul(pszEnd, &pszDigits, 10);
 								if (pszDigits)
 									pszEnd = pszDigits;
@@ -498,7 +495,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 								if (isDigit(*pszEnd))
 								{
-									wchar_t* pszDigits = NULL;
+									wchar_t* pszDigits = nullptr;
 									UINT n = wcstoul(pszEnd, &pszDigits, 10);
 									if (!pszDigits)
 										break;
@@ -554,7 +551,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								eSplit = newSplit ? newSplit : eSplitHorz;
 								// User set the size of NEW part
 								nSplitValue = 1000 - std::max<UINT>(1, std::min<UINT>(nValue*10, 999)); // percents
-								_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
+								_ASSERTE(nSplitValue >= 1 && nSplitValue < 1000);
 								nSplitPane = nTab;
 							}
 						} // L's'
@@ -610,9 +607,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							// we need to find end of argument
 							pszEnd = pszArgEnd;
 							// temp buffer
-							wchar_t* lpszTemp = NULL;
+							wchar_t* lpszTemp = nullptr;
 
-							wchar_t** pptr = NULL;
+							wchar_t** pptr = nullptr;
 							switch (cOpt)
 							{
 							case L'd': pptr = &pszStartupDir; break;
@@ -633,7 +630,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 								size_t cchLen = pszEnd - pszTab;
 								SafeFree(*pptr);
-								*pptr = (wchar_t*)malloc((cchLen+1)*sizeof(**pptr));
+								*pptr = static_cast<wchar_t*>(malloc((cchLen + 1) * sizeof(**pptr)));
 								if (*pptr)
 								{
 									// We need to process escape sequences ("^>" -> ">", "^&" -> "&", etc.)
@@ -666,13 +663,13 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 										{
 											if (((pS + 1) < pszEnd) && (*(pS+1) == L'"'))
 											{
-												pS++; // Skip qoubled qouble quote
+												pS++; // Skip doubled double quote
 											}
 											else if (lbLocalQuot)
 											{
 												++iQuotCount;
 												pszEnd = (pS+1);
-												_ASSERTE(*pszEnd==L':' || *pszEnd==L' ' || *pszEnd==0);
+												_ASSERTE(*pszEnd == L':' || *pszEnd == L' ' || *pszEnd == 0);
 												break; // End of local quoted argument: -new_console:d:"C:\User\super user":t:"My title"
 											}
 										}
@@ -680,19 +677,19 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 										*(pD++) = *(pS++);
 									}
 									// Terminate with '\0'
-									_ASSERTE(pD <= ((*pptr)+cchLen));
+									_ASSERTE(pD <= ((*pptr) + cchLen));
 									*pD = 0;
 								}
+
 								// Additional processing
-								switch (cOpt)
+								switch (cOpt)  // NOLINT(hicpp-multiway-paths-covered)
 								{
 								case L'd':
 									// For example, "%USERPROFILE%"
-									// TODO("А надо ли разворачивать их тут? Наверное при запуске под другим юзером некорректно? Хотя... все равно до переменных не доберемся");
 									if (wcschr(pszStartupDir, L'%'))
 									{
-										wchar_t* pszExpand = NULL;
-										if (((pszExpand = ExpandEnvStr(pszStartupDir)) != NULL))
+										wchar_t* pszExpand = nullptr;
+										if (((pszExpand = ExpandEnvStr(pszStartupDir)) != nullptr))
 										{
 											SafeFree(pszStartupDir);
 											pszStartupDir = pszExpand;

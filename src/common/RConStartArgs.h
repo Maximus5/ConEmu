@@ -60,11 +60,13 @@ public:
 	// Use AssignFrom instead
 	RConStartArgs(const RConStartArgs&) = delete;
 	RConStartArgs(RConStartArgs&&) = delete;
+	RConStartArgs& operator=(const RConStartArgs&) = delete;
+	RConStartArgs& operator=(RConStartArgs&&) = delete;
 
 	virtual ~RConStartArgs();
 
 	int  ProcessNewConArg(bool bForceCurConsole = false);
-	void AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax);
+	void AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax) const;
 
 public:
 	// internal use
