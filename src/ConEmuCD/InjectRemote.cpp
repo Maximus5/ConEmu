@@ -32,14 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MAssert.h"
 #include "../common/MProcessBits.h"
+#include "../common/MToolHelp.h"
 #include "../common/shlobj.h"
 #include "../common/WFiles.h"
 #include "../common/WObjects.h"
 #include "../common/WModuleCheck.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/Injects.h"
-
-#include <tlhelp32.h>
 
 // 0 - OK, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
@@ -300,6 +299,89 @@ wrap:
 	return iRc;
 }
 
+static bool EnumerateModules(const DWORD nRemotePID, const wchar_t* szKernelName, bool& bAlreadyHooked, HMODULE& ptrOuterKernel, DWORD& nErrCode, CINFILTRATE_EXIT_CODES& iRc)
+{
+	LogString(L"CreateToolhelp32Snapshot(TH32CS_SNAPMODULE)");
+
+	// EnumerateModules is called only for the same bitness of nRemotePID
+	MToolHelpModule modules(nRemotePID);
+	if (!modules.Open())
+	{
+		nErrCode = GetLastError();
+		iRc = CIR_SnapshotCantBeOpened/*-113*/;
+		return false;
+	}
+
+	LogString(L"looking for ConEmuHk/ConEmuHk64");
+
+	// 130829 - Let load newer(!) ConEmuHk.dll into target process.
+	// 141201 - Also we need to be sure in kernel32.dll|KernelBase.dll address
+
+	wchar_t szName[64] = L"";
+	const auto* pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
+	const size_t nDllNameLen = wcslen(pszConEmuHk);
+	// Out preferred module name
+	wchar_t szOurName[40] = L"";
+	wchar_t szMinor[8] = L"";
+	lstrcpyn(szMinor, _CRT_WIDE(MVV_4a), countof(szMinor));
+	swprintf_c(szOurName,
+		CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
+		WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
+	CharLowerBuff(szOurName, lstrlen(szOurName));
+
+	// Go to enumeration
+	size_t enumerated = 0;
+	MODULEENTRY32 mi = {};
+	while (modules.Next(mi))
+	{
+		++enumerated;
+		LogString(mi.szModule);
+		const auto* pszName = PointToName(mi.szModule);
+
+		// Name of ConEmuHk*.*.dll module may be changed (copied to %APPDATA%)
+		if (!pszName || !*pszName)
+			continue;
+
+		lstrcpyn(szName, pszName, countof(szName));
+		CharLowerBuff(szName, lstrlen(szName));
+
+		if (!ptrOuterKernel
+			&& (lstrcmp(szName, szKernelName) == 0))
+		{
+			ptrOuterKernel = mi.hModule;
+		}
+
+		// ConEmuHk*.*.dll?
+		if (!bAlreadyHooked
+			&& (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0)
+			&& (wmemcmp(szName + lstrlen(szName) - 4, L".dll", 4) == 0))
+		{
+			// Yes! ConEmuHk.dll already loaded into nRemotePID!
+			// But what is the version? Let don't downgrade loaded version!
+			if (lstrcmp(szName, szOurName) >= 0)
+			{
+				// OK, szName is newer or equal to our build
+				bAlreadyHooked = true;
+				LogString(L"Target process is already hooked");
+			}
+		}
+
+		// Stop enumeration?
+		if (bAlreadyHooked && ptrOuterKernel)
+			break;
+	}
+
+	if (!enumerated)
+	{
+		nErrCode = GetLastError();
+		iRc = CIR_SnapshotEnumFailed/*-115*/;
+		return false;
+	}
+
+	// Check done
+	return true;
+}
+
 // CIR_OK=0 - OK, CIR_AlreadyInjected=1 - Already injected, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
 CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */, LPDWORD pnErrCode /*= nullptr*/)
@@ -326,9 +408,6 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	HANDLE hEvent = nullptr;
 	HANDLE hDefTermReady = nullptr;
 	bool bAlreadyHooked = false;
-	HANDLE hSnap = NULL;
-	MODULEENTRY32 mi = {sizeof(mi)};
-	HMODULE ptrOuterKernel = NULL;
 	HMODULE ptrOuterKernel = nullptr;
 
 	{
@@ -479,77 +558,11 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	CharLowerBuff(szKernelName, static_cast<DWORD>(wcslen(szKernelName)));
 
 
-	LogString(L"CreateToolhelp32Snapshot(TH32CS_SNAPMODULE)");
-
 	// Hey, may be ConEmuHk.dll is already loaded?
-	//TODO: Reuse MToolHelp.h
-	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
-	if (!hSnap || (hSnap == INVALID_HANDLE_VALUE))
+	if (!EnumerateModules(nRemotePID, szKernelName, bAlreadyHooked, ptrOuterKernel, nErrCode, iRc))
 	{
-		nErrCode = GetLastError();
-		iRc = CIR_SnapshotCantBeOpened/*-113*/;
 		goto wrap;
 	}
-
-	LogString(L"looking for ConEmuHk/ConEmuHk64");
-
-	if (hSnap && Module32First(hSnap, &mi))
-	{
-		// 130829 - Let load newer(!) ConEmuHk.dll into target process.
-		// 141201 - Also we need to be sure in kernel32.dll|KernelBase.dll address
-
-		LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
-		size_t nDllNameLen = lstrlen(pszConEmuHk);
-		// Out preferred module name
-		wchar_t szOurName[40] = {};
-		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _CRT_WIDE(MVV_4a), countof(szMinor));
-		swprintf_c(szOurName,
-			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
-		CharLowerBuff(szOurName, lstrlen(szOurName));
-
-		// Go to enumeration
-		wchar_t szName[64];
-		do {
-			LogString(mi.szModule);
-			LPCWSTR pszName = PointToName(mi.szModule);
-
-			// Name of ConEmuHk*.*.dll module may be changed (copied to %APPDATA%)
-			if (!pszName || !*pszName)
-				continue;
-
-			lstrcpyn(szName, pszName, countof(szName));
-			CharLowerBuff(szName, lstrlen(szName));
-
-			if (!ptrOuterKernel
-				&& (lstrcmp(szName, szKernelName) == 0))
-			{
-				ptrOuterKernel = mi.hModule;
-			}
-
-			// ConEmuHk*.*.dll?
-			if (!bAlreadyHooked
-				&& (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0)
-				&& (wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0))
-			{
-				// Yes! ConEmuHk.dll already loaded into nRemotePID!
-				// But what is the version? Let don't downgrade loaded version!
-				if (lstrcmp(szName, szOurName) >= 0)
-				{
-					// OK, szName is newer or equal to our build
-					bAlreadyHooked = true;
-					LogString(L"Target process is already hooked");
-				}
-			}
-
-			// Stop enumeration?
-			if (bAlreadyHooked && ptrOuterKernel)
-				break;
-		} while (Module32Next(hSnap, &mi));
-
-		// Check done
-	}
-	SafeCloseHandle(hSnap);
 
 
 	// Already hooked?
