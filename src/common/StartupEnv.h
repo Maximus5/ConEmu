@@ -39,7 +39,7 @@ protected:
 
 	static CEStartupEnv* AllocEnv(size_t cchTotal)
 	{
-		return (CEStartupEnv*)calloc(cchTotal,1);
+		return static_cast<CEStartupEnv*>(calloc(cchTotal, 1));
 	}
 
 	static LPCWSTR GetReactOsName()
@@ -145,12 +145,12 @@ protected:
 			pEnv->nAnsiCP = GetACP();
 			pEnv->nOEMCP = GetOEMCP();
 
-			HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-			if (hKernel)
+			const MModule hKernel(GetModuleHandle(L"kernel32.dll"));
+			if (hKernel.IsValid())
 			{
-				// Функция есть только в Vista+
-				GetConsoleHistoryInfo_t _GetConsoleHistoryInfo = (GetConsoleHistoryInfo_t)GetProcAddress(hKernel, "GetConsoleHistoryInfo");
-				if (_GetConsoleHistoryInfo)
+				// Exists in Vista+
+				GetConsoleHistoryInfo_t _GetConsoleHistoryInfo = nullptr;
+				if (hKernel.GetProcAddress("GetConsoleHistoryInfo", _GetConsoleHistoryInfo))
 				{
 					pEnv->hi.cbSize = sizeof(pEnv->hi);
 					if (!_GetConsoleHistoryInfo(&pEnv->hi))

@@ -103,7 +103,7 @@ void CStartEnv::Alias(LPCWSTR asName, LPCWSTR asValue)
 
 void CStartEnv::ChCp(LPCWSTR asCP)
 {
-	UINT nCP = GetCpFromString(asCP);
+	const UINT nCP = GetCpFromString(asCP);
 	if (nCP > 0 && nCP <= 0xFFFF)
 	{
 		//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs

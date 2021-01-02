@@ -659,7 +659,7 @@ bool InitHooksCmdExe()
 		// Vista and below: AdvApi32.dll
 		// **NB** In WinXP this module is not linked statically
 		HOOK_ITEM_BY_NAME(RegQueryValueExW, IsWin7() ? kernel32 : advapi32),
-		{0, 0, 0}
+		{}
 	};
 
 	if (InitHooks(HooksCmdOnly) < 0)

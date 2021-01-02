@@ -58,7 +58,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	HRESULT hr = E_UNEXPECTED;
 	BOOL bShell = FALSE;
 
-	CEStr lsLog = lstrmerge(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
+	const CEStr lsLog = lstrmerge(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
 	DefTermLogString(lsLog);
 
 	// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
@@ -72,7 +72,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	else
 	{
 		// Failed
-		pszFile = pwszCommand; pszParm = NULL;
+		pszFile = pwszCommand; pszParm = nullptr;
 	}
 
 	if (!bForce)
@@ -80,13 +80,13 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 		DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0;
 		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1))
 		{
-			hr = (HRESULT)-1;
+			hr = static_cast<HRESULT>(-1);
 			DefTermLogString(L"OnShellExecCmdLine: FindImageSubsystem failed");
 			goto wrap;
 		}
 		if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		{
-			hr = (HRESULT)-1;
+			hr = static_cast<HRESULT>(-1);
 			DefTermLogString(L"OnShellExecCmdLine: !=IMAGE_SUBSYSTEM_WINDOWS_CUI");
 			goto wrap;
 		}
@@ -95,20 +95,22 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	// "Run as admin" was requested?
 	if (bRunAsAdmin)
 	{
-		SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, SW_SHOWNORMAL};
+		SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, SW_SHOWNORMAL, nullptr, nullptr, nullptr, nullptr, 0,
+			{static_cast<HANDLE>(nullptr)}, nullptr};
 		bShell = OnShellExecuteExW(&sei);
 	}
 	else
 	{
 		wchar_t* pwCommand = lstrdup(pwszCommand);
-		DWORD nCreateFlags = CREATE_NEW_CONSOLE|CREATE_UNICODE_ENVIRONMENT|CREATE_DEFAULT_ERROR_MODE;
-		STARTUPINFO si = {sizeof(si)};
+		const DWORD nCreateFlags = CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE;
+		STARTUPINFO si = {};
+		si.cb = sizeof(si);
 		PROCESS_INFORMATION pi = {};
-		bShell = OnCreateProcessW(NULL, pwCommand, NULL, NULL, FALSE, nCreateFlags, NULL, pwszStartDir, &si, &pi);
+		bShell = OnCreateProcessW(nullptr, pwCommand, nullptr, nullptr, FALSE, nCreateFlags, nullptr, pwszStartDir, &si, &pi);
 		if (bShell)
 		{
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
+			SafeCloseHandle(pi.hProcess);
+			SafeCloseHandle(pi.hThread);
 		}
 	}
 
@@ -136,16 +138,14 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 
 	#ifdef PRINT_ON_EXITPROCESS_CALLS
 	wchar_t szInfo[80]; swprintf_c(szInfo, L"\n\x1B[1;31;40m::ExitProcess(%u) called\x1B[m\n", uExitCode);
-	WriteProcessed2(szInfo, lstrlen(szInfo), NULL, wps_Error);
+	WriteProcessed2(szInfo, lstrlen(szInfo), nullptr, wps_Error);
 	#endif
 
 	// And terminate our threads
 	DoDllStop(false, ds_OnExitProcess);
 
-	bool bUseForceTerminate;
-
 	// Issue 1865: Due to possible dead locks in LdrpAcquireLoaderLock() call TerminateProcess
-	bUseForceTerminate = gbHookServerForcedTermination;
+	const bool bUseForceTerminate = gbHookServerForcedTermination;
 
 	#ifdef USE_GH_272_WORKAROUND
 	// gh#272: For unknown yet reason existance of nvd3d9wrap.dll (or nvd3d9wrapx.dll on 64-bit)
@@ -197,7 +197,7 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 	{
 		#ifdef PRINT_ON_EXITPROCESS_CALLS
 		wchar_t szInfo[80]; swprintf_c(szInfo, L"\n\x1B[1;31;40m::TerminateProcess(%u) called\x1B[m\n", uExitCode);
-		WriteProcessed2(szInfo, lstrlen(szInfo), NULL, wps_Error);
+		WriteProcessed2(szInfo, lstrlen(szInfo), nullptr, wps_Error);
 		#endif
 
 		gnDllState |= ds_OnTerminateProcess;
@@ -265,7 +265,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
+	if (!sp || !sp->OnCreateProcessA(&lpApplicationName, const_cast<LPCSTR*>(&lpCommandLine), &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -314,7 +314,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &ldwCreationFlags, lpStartupInfo))
+	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, const_cast<LPCWSTR*>(&lpCommandLine), &lpCurrentDirectory, &ldwCreationFlags, lpStartupInfo))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -346,7 +346,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 		STARTUPINFOW si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
 		DWORD dwOurFlags = (ldwCreationFlags & ~EXTENDED_STARTUPINFO_PRESENT);
-		lbRc = CreateProcessWithLogonW(pszName, pszDomain, (pszPassword && *pszPassword) ? pszPassword : NULL, LOGON_WITH_PROFILE,
+		lbRc = CreateProcessWithLogonW(pszName, pszDomain, (pszPassword && *pszPassword) ? pszPassword : nullptr, LOGON_WITH_PROFILE,
 			lpApplicationName, lpCommandLine, dwOurFlags, lpEnvironment, lpCurrentDirectory,
 			&si, &pi);
 		if (lbRc)
@@ -393,22 +393,23 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 		return 0;
 	}
 
-	STARTUPINFOA si = {sizeof(si)};
+	STARTUPINFOA si = {};
+	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.wShowWindow = uCmdShow;
-	DWORD nCreateFlags = NORMAL_PRIORITY_CLASS;
+	si.wShowWindow = static_cast<WORD>(uCmdShow);
+	const DWORD nCreateFlags = NORMAL_PRIORITY_CLASS;
 	PROCESS_INFORMATION pi = {};
 
-	int nLen = lstrlenA(lpCmdLine);
-	LPSTR pszCmd = (char*)malloc(nLen+1);
+	const int nLen = lstrlenA(lpCmdLine);
+	char* pszCmd = static_cast<char*>(malloc(nLen+1));
 	if (!pszCmd)
 	{
 		return 0; // out of memory
 	}
-	lstrcpynA(pszCmd, lpCmdLine, nLen+1);
+	lstrcpynA(pszCmd, lpCmdLine, nLen + 1);
 
 	UINT nRc = 0;
-	BOOL bRc = OnCreateProcessA(NULL, pszCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi);
+	const BOOL bRc = OnCreateProcessA(nullptr, pszCmd, nullptr, nullptr, FALSE, nCreateFlags, nullptr, nullptr, &si, &pi);
 
 	free(pszCmd);
 
@@ -433,7 +434,7 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 	DWORD dwErr = 0;
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessA(NULL, &lpCmdLine, NULL, &nCreateFlags, sa))
+	if (!sp || !sp->OnCreateProcessA(nullptr, &lpCmdLine, nullptr, &nCreateFlags, sa))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -524,11 +525,11 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 		return FALSE;
 	}
 
-	//LPSHELLEXECUTEINFOA lpNew = NULL;
+	//LPSHELLEXECUTEINFOA lpNew = nullptr;
 	//DWORD dwProcessID = 0;
-	//wchar_t* pszTempParm = NULL;
+	//wchar_t* pszTempParm = nullptr;
 	//wchar_t szComSpec[MAX_PATH+1], szConEmuC[MAX_PATH+1]; szComSpec[0] = szConEmuC[0] = 0;
-	//LPSTR pszTempApp = NULL, pszTempArg = NULL;
+	//LPSTR pszTempApp = nullptr, pszTempArg = nullptr;
 	//lpNew = (LPSHELLEXECUTEINFOA)malloc(lpExecInfo->cbSize);
 	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
 
@@ -546,7 +547,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//	if (!lpNew->hwnd || lpNew->hwnd == GetRealConsoleWindow())
 	//		lpNew->hwnd = ghConEmuWnd;
 
-	//	HANDLE hDummy = NULL;
+	//	HANDLE hDummy = nullptr;
 	//	DWORD nImageSubsystem = 0, nImageBits = 0;
 	//	if (PrepareExecuteParmsA(eShellExecute, lpNew->lpVerb, lpNew->fMask,
 	//			lpNew->lpFile, lpNew->lpParameters,
@@ -559,15 +560,13 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//	}
 	//}
 
-	BOOL lbRc;
-
 	//if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
 	//	lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
 
 	//gbInShellExecuteEx = TRUE;
 
-	lbRc = F(ShellExecuteExA)(lpExecInfo);
-	DWORD dwErr = GetLastError();
+	BOOL lbRc = F(ShellExecuteExA)(lpExecInfo);
+	const DWORD dwErr = GetLastError();
 
 	//if (lbRc && gfGetProcessId && lpNew->hProcess)
 	//{
@@ -630,7 +629,7 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	BOOL lbRc = FALSE;
 
 	lbRc = F(ShellExecuteExW)(lpExecInfo);
-	DWORD dwErr = GetLastError();
+	const DWORD dwErr = GetLastError();
 
 	sp->OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
 	delete sp;
@@ -695,7 +694,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
+	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, nullptr, (DWORD*)&nShowCmd))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -706,7 +705,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	DWORD dwErr = GetLastError();
 
-	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
+	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, nullptr); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;
@@ -733,7 +732,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
+	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, nullptr, (DWORD*)&nShowCmd))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -744,7 +743,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	DWORD dwErr = GetLastError();
 
-	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
+	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, nullptr); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;

@@ -282,7 +282,7 @@ static int startConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 	if (Parm.pszMntPrefix)
 	{
 		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, CECMD_STARTCONNECTOR,
-			lstrlenA(Parm.pszMntPrefix)+1, (LPBYTE)Parm.pszMntPrefix, ghConWnd);
+			lstrlenA(Parm.pszMntPrefix)+1, reinterpret_cast<LPCBYTE>(Parm.pszMntPrefix), ghConWnd);
 		ExecuteFreeResult(pOut);
 	}
 

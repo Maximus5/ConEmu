@@ -251,7 +251,7 @@ ConEmuInOutPipe *gpCEIO_In = nullptr, *gpCEIO_Out = nullptr, *gpCEIO_Err = nullp
 void StartPTY();
 void StopPTY();
 
-MModule ghSrvDll{};
+MModule ghSrvDll{};  // NOLINT(clang-diagnostic-exit-time-destructors)
 //typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
 RequestLocalServer_t gfRequestLocalServer = nullptr;
 TODO("AnnotationHeader* gpAnnotationHeader");
@@ -1059,7 +1059,8 @@ DWORD DllStart_Continue()
 		//}
 		#endif
 
-		// Если nullptr - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
+		// if nullptr - the it's "Detached" console process,
+		// no sense to send "Started" to server
 		if (ghConWnd != nullptr)
 		{
 			if (gbSelfIsRootConsoleProcess)
@@ -1070,15 +1071,6 @@ DWORD DllStart_Continue()
 				SendStarted();
 				DLOGEND();
 			}
-
-			//#ifdef _DEBUG
-			//// Здесь это приводит к обвалу _chkstk,
-			//// похоже из-за того, что dll-ка загружена НЕ из известных модулей,
-			//// а из специально сформированного блока памяти
-			// -- в одной из функций, под локальные переменные выделялось слишком много памяти
-			// -- переделал в malloc/free, все заработало
-			//TestShellProcessor();
-			//#endif
 		}
 	}
 

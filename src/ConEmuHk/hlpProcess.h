@@ -91,7 +91,7 @@ const ConEmuHkDllState
 	ds_DllDeinitializing       = 0x00000020,
 	ds_HeapInitialized         = 0x00000040,
 	ds_HeapDeinitialized       = 0x00000080,
-	ds_DllStoping              = 0x00000100,
+	ds_DllStopping             = 0x00000100,
 	ds_DllStopped              = 0x00000200,
 	ds_HooksStarting           = 0x00001000,
 	ds_HooksStopping           = 0x00002000,
@@ -112,7 +112,7 @@ const ConEmuHkDllState
 extern ConEmuHkDllState gnDllState;
 
 // Progress of DoDllStop, last one is ds_DllStopped
-#define DLL_STOP_STEP(n) { _ASSERTEX(n>0 && n<=15); gnDllState &= ~ds_DllStopSteps; gnDllState |= (((n) & 0xF) << 28); }
+#define DLL_STOP_STEP(n) { _ASSERTEX((n)>0 && (n)<=15); gnDllState &= ~ds_DllStopSteps; gnDllState |= (((n) & 0xF) << 28); }
 
 // xxxRaw is used internally, during hooks initialization and shutdown
 #define HooksWereSetRaw ((gnDllState & ds_HooksStarted) && !(gnDllState & ds_HooksStopped))

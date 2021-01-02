@@ -51,20 +51,20 @@ private:
 	UINT mn_CP; // = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
 	// Для конвертации параметров Ansi функций (работаем через Unicode для унификации)
-	LPWSTR mpwsz_TempAction = NULL; // = str2wcs(asAction, nCP);
-	LPWSTR mpwsz_TempFile = NULL; // = str2wcs(asFile, nCP);
-	LPWSTR mpwsz_TempParam = NULL; // = str2wcs(asParam, nCP);
+	LPWSTR mpwsz_TempAction = nullptr; // = str2wcs(asAction, nCP);
+	LPWSTR mpwsz_TempFile = nullptr; // = str2wcs(asFile, nCP);
+	LPWSTR mpwsz_TempParam = nullptr; // = str2wcs(asParam, nCP);
 
-	LPSTR  mpsz_TempRetFile = NULL;
-	LPSTR  mpsz_TempRetParam = NULL;
-	LPSTR  mpsz_TempRetDir = NULL;
-	LPWSTR mpwsz_TempRetFile = NULL;
-	LPWSTR mpwsz_TempRetParam = NULL;
-	LPWSTR mpwsz_TempRetDir = NULL;
+	LPSTR  mpsz_TempRetFile = nullptr;
+	LPSTR  mpsz_TempRetParam = nullptr;
+	LPSTR  mpsz_TempRetDir = nullptr;
+	LPWSTR mpwsz_TempRetFile = nullptr;
+	LPWSTR mpwsz_TempRetParam = nullptr;
+	LPWSTR mpwsz_TempRetDir = nullptr;
 
 	// Копии для ShellExecuteEx - менять мы можем только свою память
-	LPSHELLEXECUTEINFOA mlp_ExecInfoA = NULL, mlp_SaveExecInfoA = NULL;
-	LPSHELLEXECUTEINFOW mlp_ExecInfoW = NULL, mlp_SaveExecInfoW = NULL;
+	LPSHELLEXECUTEINFOA mlp_ExecInfoA = nullptr, mlp_SaveExecInfoA = nullptr;
+	LPSHELLEXECUTEINFOW mlp_ExecInfoW = nullptr, mlp_SaveExecInfoW = nullptr;
 
 	// Информация о запускаемом процессе
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
@@ -89,7 +89,7 @@ private:
 
 	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping = {};
 
-	HWND mh_PreConEmuWnd = NULL, mh_PreConEmuWndDC = NULL;
+	HWND mh_PreConEmuWnd = nullptr, mh_PreConEmuWndDC = nullptr;
 	BOOL mb_TempConEmuWnd = FALSE;
 
 private:
@@ -146,7 +146,7 @@ public:
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
 	// Used with DefTerm+VSDebugger
-	static bool OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI = NULL);
+	static bool OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI = nullptr);
 protected:
 	static PROCESS_INFORMATION m_WaitDebugVsThread;
 public:

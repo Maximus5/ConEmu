@@ -158,9 +158,9 @@ size_t GetPreloadModules(PreloadModules** ppModules)
 
 	PreloadModules Modules[] =
 	{
-		{gdi32,		gdi32_noext,	&ghGdi32},
-		{shell32,	shell32_noext,	&ghShell32},
-		{advapi32,	advapi32_noext,	&ghAdvapi32},
+		{gdi32,		gdi32_noext,	&ghGdi32, {}},
+		{shell32,	shell32_noext,	&ghShell32, {}},
+		{advapi32,	advapi32_noext,	&ghAdvapi32, {}},
 	};
 	snModulesCount = countof(Modules);
 	spModules = new PreloadModules[snModulesCount];
@@ -178,7 +178,7 @@ void CheckLoadedModule(LPCWSTR asModule)
 		return;
 
 	PreloadModules* Checks = nullptr;
-	size_t nChecks = GetPreloadModules(&Checks);
+	const size_t nChecks = GetPreloadModules(&Checks);
 
 	for (size_t m = 0; m < nChecks; m++)
 	{
@@ -194,7 +194,7 @@ void CheckLoadedModule(LPCWSTR asModule)
 
 				for (size_t f = 0; f < countof(Checks[m].Funcs) && Checks[m].Funcs[f].sFuncName; f++)
 				{
-					*Checks[m].Funcs[f].pFuncPtr = (void*)GetProcAddress(*Checks[m].pModulePtr, Checks[m].Funcs[f].sFuncName);
+					*Checks[m].Funcs[f].pFuncPtr = static_cast<void*>(GetProcAddress(*Checks[m].pModulePtr, Checks[m].Funcs[f].sFuncName));
 				}
 			}
 		}
@@ -207,7 +207,7 @@ void FreeLoadedModule(HMODULE hModule)
 		return;
 
 	PreloadModules* Checks = nullptr;
-	size_t nChecks = GetPreloadModules(&Checks);
+	const size_t nChecks = GetPreloadModules(&Checks);
 
 	for (size_t m = 0; m < nChecks; m++)
 	{
@@ -250,7 +250,7 @@ bool InitializeHookedModules()
 		//WARNING: runtime error R6030  - CRT not initialized
 		// -- gpHookedModules = new MArray<HkModuleInfo>;
 		// -- поэтому тупо через массив
-		HkModuleMap* pMap = (HkModuleMap*)calloc(sizeof(HkModuleMap),1);
+		HkModuleMap* pMap = static_cast<HkModuleMap*>(calloc(sizeof(HkModuleMap), 1));
 		if (!pMap)
 		{
 			_ASSERTE(pMap!=nullptr);
@@ -274,7 +274,7 @@ void FinalizeHookedModules()
 	if (gpHookedModules)
 	{
 		HkModuleInfo** pp = nullptr;
-		INT_PTR iCount = gpHookedModules->GetKeysValues(nullptr, &pp);
+		const INT_PTR iCount = gpHookedModules->GetKeysValues(nullptr, &pp);
 		if (iCount > 0)
 		{
 			for (INT_PTR i = 0; i < iCount; i++)
@@ -310,7 +310,7 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = nullptr, size_t c
 		// If we need to retrieve module name by its handle
 		if (pszName && cchNameMax)
 		{
-			lstrcpyn(pszName, p->sModuleName, (int)cchNameMax);
+			lstrcpyn(pszName, p->sModuleName, static_cast<int>(cchNameMax));
 		}
 	}
 
@@ -334,7 +334,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 
 	if (!p)
 	{
-		p = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
+		p = static_cast<HkModuleInfo*>(calloc(sizeof(HkModuleInfo), 1));
 		if (!p)
 		{
 			_ASSERTE(p!=nullptr);
@@ -404,7 +404,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= 0*/, void* A
 	// We must know function index in the gpHooks
 	if (nFnID && (nFnID <= gnHookedFuncs))
 	{
-		size_t nIdx = nFnID-1;
+		const size_t nIdx = nFnID - 1;
 		if (gpHooks[nIdx].NewAddress == OurFunction)
 		{
 			if (ph) *ph = &(gpHooks[nIdx]);
@@ -459,25 +459,25 @@ FARPROC WINAPI GetLoadLibraryW()
 	// KERNEL ADDRESS
 	LPVOID fnLoadLibraryW = nullptr; // Can't use (LPVOID)&LoadLibraryW anymore, our imports are changed
 	HookItem* p = nullptr;
-	if (GetOriginalAddress((LPVOID)OnLoadLibraryW, HOOK_FN_ID(LoadLibraryW), nullptr, &p, true))
+	if (GetOriginalAddress(static_cast<LPVOID>(OnLoadLibraryW), HOOK_FN_ID(LoadLibraryW), nullptr, &p, true))
 	{
 		fnLoadLibraryW = p->HookedAddress;
 		if (!fnLoadLibraryW)
 		{
 			_ASSERTEX(p->HookedAddress && "LoadLibraryW was not hooked?");
-			fnLoadLibraryW = (LPVOID)&LoadLibraryW;
+			fnLoadLibraryW = static_cast<LPVOID>(&LoadLibraryW);
 		}
 	}
 	else
 	{
 		_ASSERTEX(fnLoadLibraryW && "Failed to find function address in Kernel32");
 	}
-	return (FARPROC)fnLoadLibraryW;
+	return static_cast<FARPROC>(fnLoadLibraryW);
 }
 
 FARPROC WINAPI GetWriteConsoleW()
 {
-	return (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW));
+	return static_cast<FARPROC>(GetOriginalAddress(static_cast<LPVOID>(OnWriteConsoleW), HOOK_FN_ID(WriteConsoleW)));
 }
 
 // Our modules (ConEmuCD.dll, ConEmuDW.dll, ConEmu.dll and so on)
@@ -486,7 +486,7 @@ BOOL WINAPI RequestTrampolines(LPCWSTR asModule, HMODULE hModule)
 {
 	if (!gpHooks)
 		return FALSE;
-	bool bRc = SetImports(asModule, hModule, TRUE);
+	const bool bRc = SetImports(asModule, hModule, TRUE);
 	return bRc;
 }
 
@@ -544,7 +544,7 @@ DWORD CalculateNameCRC32(const char *apszName)
 	0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D };
 
 	DWORD dwRead = lstrlenA(apszName);
-	for (LPBYTE p = (LPBYTE)apszName; (dwRead--);)
+	for (LPCBYTE p = reinterpret_cast<LPCBYTE>(apszName); (dwRead--);)
 	{
 		nCRC32 = ( nCRC32 >> 8 ) ^ CRCtable[(unsigned char) ((unsigned char) nCRC32 ^ *p++ )];
 	}
@@ -587,7 +587,7 @@ int InitHooks(HookItem* apHooks)
 	if (gpHooks == nullptr)
 	{
 		// gh#250: Fight with CreateToolhelp32Snapshot lags
-		MH_INITIALIZE mhInit = {sizeof(mhInit)};
+		MH_INITIALIZE mhInit = {sizeof(mhInit), 0, nullptr, nullptr, nullptr, nullptr};
 		mhInit.Flags = MH_FLAGS_SKIP_EXEC_CHECK;
 		if (gbPrepareDefaultTerminal)
 		{
@@ -613,7 +613,7 @@ int InitHooks(HookItem* apHooks)
 			return -1;
 		}
 
-		gpHooks = (HookItem*)calloc(sizeof(HookItem),MAX_HOOKED_PROCS);
+		gpHooks = static_cast<HookItem*>(calloc(sizeof(HookItem), MAX_HOOKED_PROCS));
 		if (!gpHooks)
 		{
 			return -2;
@@ -642,7 +642,7 @@ int InitHooks(HookItem* apHooks)
 	{
 		for (i = 0; apHooks[i].NewAddress; i++)
 		{
-			DWORD NameCRC = CalculateNameCRC32(apHooks[i].Name);
+			const DWORD NameCRC = CalculateNameCRC32(apHooks[i].Name);
 
 			if (apHooks[i].Name==nullptr || apHooks[i].DllName==nullptr)
 			{

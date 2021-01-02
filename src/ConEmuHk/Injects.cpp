@@ -41,9 +41,9 @@ extern HMODULE ghOurModule;
 InjectsFnPtr gfLoadLibrary;
 InjectsFnPtr gfLdrGetDllHandleByName;
 
-HANDLE ghSkipSetThreadContextForThread = NULL;
+HANDLE ghSkipSetThreadContextForThread = nullptr;
 
-HANDLE ghInjectsInMainThread = NULL;
+HANDLE ghInjectsInMainThread = nullptr;
 
 // Проверить, что gfLoadLibrary лежит в пределах модуля hKernel!
 UINT_PTR GetLoadLibraryAddress()
@@ -53,7 +53,7 @@ UINT_PTR GetLoadLibraryAddress()
 
 	UINT_PTR fnLoadLibrary = 0;
 	HMODULE hKernel32 = ::GetModuleHandle(L"kernel32.dll");
-	HMODULE hKernelBase = IsWin8() ? ::GetModuleHandle(L"KernelBase.dll") : NULL;
+	HMODULE hKernelBase = IsWin8() ? ::GetModuleHandle(L"KernelBase.dll") : nullptr;
 	if (!hKernel32 || LDR_IS_RESOURCE(hKernel32))
 	{
 		_ASSERTE(hKernel32 && !LDR_IS_RESOURCE(hKernel32));
@@ -123,7 +123,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 {
 	CINJECTHK_EXIT_CODES iRc = CIH_OK/*0*/;
 	wchar_t szDllDir[MAX_PATH*2];
-	_ASSERTE(ghOurModule!=NULL);
+	_ASSERTE(ghOurModule!=nullptr);
 	BOOL is64bitOs = FALSE;
 	int  ImageBits = 32; //-V112
 #ifdef WIN64
@@ -195,14 +195,14 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 			// Теперь проверить запущенный процесс
 			bWow64 = FALSE;
 
-			if (is64bitOs && IsWow64Process_f(pi.hProcess, &bWow64) && !bWow64)
+			if (is64bitOs && isWow64ProcessFunc(pi.hProcess, &bWow64) && !bWow64)
 				ImageBits = 64;
 		}
 	}
 
 	//int iFindAddress = 0;
 	//bool lbInj = false;
-	////UINT_PTR fnLoadLibrary = NULL;
+	////UINT_PTR fnLoadLibrary = nullptr;
 	////DWORD fLoadLibrary = 0;
 	//DWORD nErrCode = 0;
 	//int SelfImageBits;
@@ -222,14 +222,14 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 	// Если битность не совпадает - нужен helper
 	if (ImageBits != SelfImageBits)
 	{
-		DWORD dwPidWait = WaitForSingleObject(pi.hProcess, 0);
+		const DWORD dwPidWait = WaitForSingleObject(pi.hProcess, 0);
 		if (dwPidWait == WAIT_OBJECT_0)
 		{
 			_ASSERTE(dwPidWait != WAIT_OBJECT_0);
 		}
 		// Требуется 64битный(32битный?) comspec для установки хука
 		DEBUGTEST(iFindAddress = -1);
-		HANDLE hProcess = NULL, hThread = NULL;
+		HANDLE hProcess = nullptr, hThread = nullptr;
 		DuplicateHandle(GetCurrentProcess(), pi.hProcess, GetCurrentProcess(), &hProcess, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		DuplicateHandle(GetCurrentProcess(), pi.hThread, GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		_ASSERTE(hProcess && hThread);
@@ -248,7 +248,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 		          szDllDir, (ImageBits==64) ? L"64" : L"",
 		          LODWORD(hProcess), pi.dwProcessId, LODWORD(hThread), pi.dwThreadId);
 		STARTUPINFO si = {sizeof(STARTUPINFO)};
-		PROCESS_INFORMATION pi64 = {NULL};
+		PROCESS_INFORMATION pi64 = {nullptr};
 		LPSECURITY_ATTRIBUTES lpNotInh = LocalSecurity();
 		SECURITY_ATTRIBUTES SecInh = {sizeof(SECURITY_ATTRIBUTES)};
 		SecInh.lpSecurityDescriptor = lpNotInh->lpSecurityDescriptor;
@@ -256,7 +256,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 
 		// Добавил DETACHED_PROCESS, чтобы helper не появлялся в списке процессов консоли,
 		// а то у сервера может крышу сорвать, когда helper исчезнет, а приложение еще не появится.
-		BOOL lbHelper = CreateProcess(NULL, sz64helper, &SecInh, &SecInh, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL, &si, &pi64);
+		BOOL lbHelper = CreateProcess(nullptr, sz64helper, &SecInh, &SecInh, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, nullptr, nullptr, &si, &pi64);
 
 		if (!lbHelper)
 		{
@@ -303,13 +303,13 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 		//fnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
 		if (!GetLoadLibraryAddress())
 		{
-			_ASSERTE(gfLoadLibrary.fnPtr!=NULL);
+			_ASSERTE(gfLoadLibrary.fnPtr != 0);
 			iRc = CIH_GetLoadLibraryAddress/*-503*/;
 			goto wrap;
 		}
-		else if (bOsWin7 && !GetLdrGetDllHandleByNameAddress() && !IsWine())
+		else if (IsWin7() && !GetLdrGetDllHandleByNameAddress() && !IsWine())
 		{
-			_ASSERTE(gfLdrGetDllHandleByName.fnPtr!=NULL);
+			_ASSERTE(gfLdrGetDllHandleByName.fnPtr != 0);
 			iRc = CIH_GetLdrHandleAddress/*-514*/;
 			goto wrap;
 		}
@@ -342,15 +342,15 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 
 			if (abLogProcess || (iRc != CIH_OK/*0*/))
 			{
-				int ImageSystem = 0;
+				const int imageSubsystem = 0; // is not loaded
 				wchar_t szInfo[128];
 				if (iRc != CIH_OK/*0*/)
 				{
-					DWORD nErr = GetLastError();
+					const DWORD nErr = GetLastError();
 					msprintf(szInfo, countof(szInfo), L"InjectHookDLL failed, code=%i:0x%08X", iRc, nErr);
 				}
 				#ifdef _WIN64
-				_ASSERTE(SelfImageBits == 64);
+				_ASSERTE(selfImageBits == 64);
 				if (iRc == CIH_OK/*0*/)
 				{
 					if ((DWORD)(ptrAllocated >> 32)) //-V112
@@ -373,9 +373,9 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 				#endif
 
 				CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(
-					NULL, hConWnd, eSrvLoaded,
-					L"", szInfo, L"", L"", NULL, NULL, NULL, NULL,
-					SelfImageBits, ImageSystem, NULL, NULL, NULL);
+					nullptr, hConWnd, eSrvLoaded,
+					L"", szInfo, L"", L"", nullptr, nullptr, nullptr, nullptr,
+					selfImageBits, imageSubsystem, nullptr, nullptr, nullptr);
 				if (pIn)
 				{
 					CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
@@ -401,7 +401,7 @@ wrap:
 		}
 		else
 		{
-			_ASSERTEX(ghInjectsInMainThread!=NULL);
+			_ASSERTEX(ghInjectsInMainThread!=nullptr);
 		}
 
 		// ReSharper disable once CppDeclaratorDisambiguatedAsFunction

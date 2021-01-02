@@ -82,9 +82,9 @@ typedef VOID (CALLBACK* PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG NotificationReason
 VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
 typedef NTSTATUS (NTAPI* LdrRegisterDllNotification_t)(ULONG Flags, PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction, PVOID Context, PVOID *Cookie);
 typedef NTSTATUS (NTAPI* LdrUnregisterDllNotification_t)(PVOID Cookie);
-static LdrRegisterDllNotification_t LdrRegisterDllNotification = NULL;
-static LdrUnregisterDllNotification_t LdrUnregisterDllNotification = NULL;
-static PVOID gpLdrDllNotificationCookie = NULL;
+static LdrRegisterDllNotification_t LdrRegisterDllNotification = nullptr;
+static LdrUnregisterDllNotification_t LdrUnregisterDllNotification = nullptr;
+static PVOID gpLdrDllNotificationCookie = nullptr;
 static NTSTATUS gnLdrDllNotificationState = (NTSTATUS)-1;
 LdrDllNotificationMode gnLdrDllNotificationUsed = ldr_Unchecked;
 
@@ -112,7 +112,7 @@ void CheckLdrNotificationAvailable()
 
 			if (LdrRegisterDllNotification && LdrUnregisterDllNotification)
 			{
-				gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, NULL, &gpLdrDllNotificationCookie);
+				gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, nullptr, &gpLdrDllNotificationCookie);
 				gnLdrDllNotificationUsed = (gnLdrDllNotificationState != 0/*STATUS_SUCCESS*/) ? ldr_Unavailable
 					: IsWin8() ? ldr_FullSupport : ldr_PartialSupport;
 			}
@@ -127,7 +127,7 @@ void UnregisterLdrNotification()
 	if ((gnLdrDllNotificationUsed == ldr_PartialSupport) || (gnLdrDllNotificationUsed == ldr_FullSupport))
 	{
 		gnLdrDllNotificationUsed = ldr_Unregistered;
-		_ASSERTEX(LdrUnregisterDllNotification!=NULL);
+		_ASSERTEX(LdrUnregisterDllNotification!=nullptr);
 		LdrUnregisterDllNotification(gpLdrDllNotificationCookie);
 	}
 }
@@ -181,10 +181,10 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 			break;
 		}
 
-		if (PrepareNewModule(hModule, NULL, szModule, TRUE, TRUE))
+		if (PrepareNewModule(hModule, nullptr, szModule, TRUE, TRUE))
 		{
-			HookItem* ph = NULL;
-			GetOriginalAddress((LPVOID)OnLoadLibraryW, HOOK_FN_ID(LoadLibraryW), NULL, &ph, true);
+			HookItem* ph = nullptr;
+			GetOriginalAddress((LPVOID)OnLoadLibraryW, HOOK_FN_ID(LoadLibraryW), nullptr, &ph, true);
 			if (ph && ph->PostCallBack)
 			{
 				SETARGS1(&hModule,szModule);
@@ -236,9 +236,9 @@ HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 	//typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
 	ORIGINAL_KRNL(LoadLibraryA);
 
-	OnLoadLibraryLog(lpFileName,NULL);
+	OnLoadLibraryLog(lpFileName,nullptr);
 
-	HMODULE module = NULL;
+	HMODULE module = nullptr;
 	if (F(LoadLibraryA))
 		module = F(LoadLibraryA)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
@@ -247,7 +247,7 @@ HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 	if (lstrcmpiA(lpFileName, "kernel32.dll") == 0)
 		return module;
 
-	if (PrepareNewModule(module, lpFileName, NULL))
+	if (PrepareNewModule(module, lpFileName, nullptr))
 	{
 		if (ph && ph->PostCallBack)
 		{
@@ -265,9 +265,9 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
 	ORIGINAL_KRNL(LoadLibraryW);
-	HMODULE module = NULL;
+	HMODULE module = nullptr;
 
-	OnLoadLibraryLog(NULL,lpFileName);
+	OnLoadLibraryLog(nullptr,lpFileName);
 
 	// ExtendedConsole.dll was moved to %ConEmuBaseDir%
 	// Also, there are two versions, ExtendedConsole64.dll for 64-bit Far
@@ -311,7 +311,7 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	if (lstrcmpi(lpFileName, L"kernel32.dll") == 0)
 		return module;
 
-	if (PrepareNewModule(module, NULL, lpFileName))
+	if (PrepareNewModule(module, nullptr, lpFileName))
 	{
 		if (ph && ph->PostCallBack)
 		{
@@ -330,14 +330,14 @@ HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFl
 	//typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
 	ORIGINAL_KRNL(LoadLibraryExA);
 
-	OnLoadLibraryLog(lpFileName,NULL);
+	OnLoadLibraryLog(lpFileName,nullptr);
 
-	HMODULE module = NULL;
+	HMODULE module = nullptr;
 	if (F(LoadLibraryExA))
 		module = F(LoadLibraryExA)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (PrepareNewModule(module, lpFileName, NULL))
+	if (PrepareNewModule(module, lpFileName, nullptr))
 	{
 		if (ph && ph->PostCallBack)
 		{
@@ -356,14 +356,14 @@ HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD d
 	//typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
 	ORIGINAL_KRNL(LoadLibraryExW);
 
-	OnLoadLibraryLog(NULL,lpFileName);
+	OnLoadLibraryLog(nullptr,lpFileName);
 
-	HMODULE module = NULL;
+	HMODULE module = nullptr;
 	if (F(LoadLibraryExW))
 		module = F(LoadLibraryExW)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (PrepareNewModule(module, NULL, lpFileName))
+	if (PrepareNewModule(module, nullptr, lpFileName))
 	{
 		if (ph && ph->PostCallBack)
 		{
@@ -385,7 +385,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
 	// lbResource получается TRUE например при вызовах из version.dll
 
-	UnprepareModule(hModule, NULL, 0);
+	UnprepareModule(hModule, nullptr, 0);
 
 #ifdef _DEBUG
 	BOOL lbModulePre = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
@@ -398,7 +398,7 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 
 	// Далее только если !LDR_IS_RESOURCE
 	if (lbRc && !lbResource)
-		UnprepareModule(hModule, NULL, 1);
+		UnprepareModule(hModule, nullptr, 1);
 
 	SetLastError(dwFreeErrCode);
 	return lbRc;

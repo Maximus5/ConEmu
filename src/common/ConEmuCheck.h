@@ -85,15 +85,15 @@ bool isConsoleWindow(HWND hWnd);
 //LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue);
 int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns);
 
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID = 0, DWORD nTimeout = 0, BOOL Overlapped = FALSE, HANDLE hStop = NULL, BOOL bIgnoreAbsence = FALSE);
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID = 0, DWORD nTimeout = 0, BOOL Overlapped = FALSE, HANDLE hStop = nullptr, BOOL bIgnoreAbsence = FALSE);
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize);
 bool ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_t nSize);
 void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, size_t cbSize);
 void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, size_t cbSize);
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult = FALSE);
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, DWORD nCmd, size_t cbDataSize, LPBYTE data, HWND hOwner, BOOL bAsyncNoResult = FALSE);
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, DWORD nCmd, size_t cbDataSize, const BYTE* data, HWND hOwner, BOOL bAsyncNoResult = FALSE);
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult = FALSE, DWORD nTimeout = 0, BOOL bIgnoreAbsence = FALSE);
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, DWORD nCmd, size_t cbDataSize, LPBYTE data, HWND hOwner, BOOL bAsyncNoResult = FALSE);
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, DWORD nCmd, size_t cbDataSize, const BYTE* data, HWND hOwner, BOOL bAsyncNoResult = FALSE);
 CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult = FALSE, BOOL bIgnoreAbsence = FALSE);
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult = FALSE, DWORD nServerPID = 0, BOOL bIgnoreAbsence = FALSE);
 void ExecuteFreeResult(CESERVER_REQ* &pOut);
@@ -154,8 +154,8 @@ protected:
 	const HWND hConWnd = nullptr;
 };
 
-bool AllocateSendCurrentDirectory(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory = NULL);
-void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory = NULL);
+bool AllocateSendCurrentDirectory(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory = nullptr);
+void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory = nullptr);
 
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping);
 BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping);

@@ -31,13 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	#define DebugString(x) //OutputDebugString(x)
 	#define DebugStringConSize(x) //OutputDebugString(x)
-	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
-	#define BsDelWordMsg(s) //MessageBox(NULL, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
+	#define DefTermMsg(s) //MessageBox(nullptr, s, L"ConEmuHk", MB_SYSTEMMODAL)
+	#define BsDelWordMsg(s) //MessageBox(nullptr, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
 #else
 	#define DebugString(x) //OutputDebugString(x)
 	#define DebugStringConSize(x) //OutputDebugString(x)
-	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
-	#define BsDelWordMsg(s) //MessageBox(NULL, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
+	#define DefTermMsg(s) //MessageBox(nullptr, s, L"ConEmuHk", MB_SYSTEMMODAL)
+	#define BsDelWordMsg(s) //MessageBox(nullptr, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
 #endif
 
 #include "../common/Common.h"
