@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/DefTermBase.h"
-#include "../common/CmdLine.h"
 
 class MFileLog;
 class CDefTermHk;

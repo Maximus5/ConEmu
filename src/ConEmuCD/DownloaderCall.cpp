@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MAssert.h"
 #include "../common/EnvVar.h"
 #include "../common/defines.h"
+#include "../common/WObjects.h"
 
 #undef _DOWNLOADER_ASSERT
 #define _DOWNLOADER_ASSERT(x) //_ASSERTE(x)

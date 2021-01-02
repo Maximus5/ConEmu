@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/shlobj.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
+#include "../common/WObjects.h"
 #include "../common/WThreads.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/hkWindow.h"
