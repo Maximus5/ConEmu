@@ -52,11 +52,13 @@ protected:
 		pEnv = NULL;
 		ptrEnd = NULL;
 
-		STARTUPINFOW si = {sizeof(si)};
+		STARTUPINFOW si = {};
+		si.cb = sizeof(si);
 		GetStartupInfoW(&si);
 
-		OSVERSIONINFOEXW os = {sizeof(os)};
-		GetOsVersionInformational((OSVERSIONINFOW*)&os);
+		OSVERSIONINFOEXW os = {};
+		os.dwOSVersionInfoSize = sizeof(os);
+		GetOsVersionInformational(reinterpret_cast<OSVERSIONINFOW*>(&os));
 
 		wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
 		if (pszEnvPathStore)

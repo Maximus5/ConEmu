@@ -1020,15 +1020,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 			DWORD samDesired = KEY_QUERY_VALUE;
 			DWORD RedirectionFlag = 0;
 			// App Paths key is shared in Windows 7 and above
-			static int sIsWindows7 = 0;
-			if (sIsWindows7 == 0)
-			{
-				_ASSERTE(_WIN32_WINNT_WIN7==0x601);
-				OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
-				DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-				sIsWindows7 = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;
-			}
-			if (sIsWindows7 != 1)
+			if (!IsWin7())
 			{
 				#ifdef _WIN64
 				RedirectionFlag = KEY_WOW64_32KEY;

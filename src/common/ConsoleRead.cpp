@@ -384,9 +384,10 @@ bool IsConsoleDoubleCellCP()
 		// gh-945: Perhaps it will be fixed in future Win10 builds?
 		if (!bDBCS && IsWin10())
 		{
-			OSVERSIONINFOEXW osvi = {sizeof(osvi), 10, 0, 14959};
+			OSVERSIONINFOEXW osVersion = MakeOsVersionEx(10, 0);
+			osVersion.dwBuildNumber = 14959;
 			DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL), VER_BUILDNUMBER, VER_GREATER_EQUAL);
-			BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
+			const BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osVersion, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
 			if (ibIsWinOrHigher)
 			{
 				bDBCS = true;

@@ -291,8 +291,9 @@ public:
 
 		#pragma warning(push)
 		#pragma warning(disable: 4996)
-		OSVERSIONINFOEXW osv = {sizeof(osv)};
-		GetVersionEx((OSVERSIONINFOW*)&osv);
+		OSVERSIONINFOEXW osv = {};
+		osv.dwOSVersionInfoSize = sizeof(osv);
+		GetOsVersionInformational(reinterpret_cast<OSVERSIONINFOW*>(&osv));
 		#pragma warning(pop)
 
 		// if you're running on ReactOS, Version.szCSDVersion will contain two strings.

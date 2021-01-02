@@ -2664,7 +2664,7 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 	// Включить флажок, чтобы Shell не задавал глупого вопроса "Хотите ли вы запустить этот файл"...
 	if (!(afMask & SEE_MASK_NOZONECHECKS) && gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
 	{
-		if (IsWinXPSP1())
+		if (IsWinXP(1))
 		{
 			(*pfMask) |= SEE_MASK_NOZONECHECKS;
 			lbRc = TRUE;

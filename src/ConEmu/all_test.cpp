@@ -287,17 +287,18 @@ void DebugVersionTest()
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
 
 	_ASSERTE(_WIN32_WINNT_WIN7==0x601);
-	OSVERSIONINFOEXW osvi7 = {sizeof(osvi7), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
-	bool bWin7 = _VerifyVersionInfo(&osvi7, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) != 0;
+	OSVERSIONINFOEXW osvi7 = MakeOsVersionEx(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7));
+	const bool bWin7 = _VerifyVersionInfo(&osvi7, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) != 0;
 
 	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
-	OSVERSIONINFOEXW osvi6 = {sizeof(osvi6), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
-	bool bWin6 = _VerifyVersionInfo(&osvi6, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) != 0;
+	OSVERSIONINFOEXW osvi6 = MakeOsVersionEx(HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA));
+	const bool bWin6 = _VerifyVersionInfo(&osvi6, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) != 0;
 
-	OSVERSIONINFOW osv = {sizeof(OSVERSIONINFOW)};
+	OSVERSIONINFOW osv = {};
+	osv.dwOSVersionInfoSize = sizeof(osv);
 	GetOsVersionInformational(&osv);
-	bool bVerWin7 = ((osv.dwMajorVersion > 6) || ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion >= 1)));
-	bool bVerWin6 = (osv.dwMajorVersion >= 6);
+	const bool bVerWin7 = ((osv.dwMajorVersion > 6) || ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion >= 1)));
+	const bool bVerWin6 = (osv.dwMajorVersion >= 6);
 
 	_ASSERTE(bWin7 == bVerWin7);
 	_ASSERTE(bWin6 == bVerWin6);

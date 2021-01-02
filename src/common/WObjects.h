@@ -84,19 +84,22 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
 DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName);
 
+OSVERSIONINFOEXW MakeOsVersionEx(DWORD dwMajorVersion, DWORD dwMinorVersion);
 bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMask, DWORDLONG dwlConditionMask);
 bool IsWinDBCS();
 bool IsHwFullScreenAvailable();
 bool GetOsVersionInformational(OSVERSIONINFO* pOsVer);
-bool IsWinVerOrHigher(WORD OsVer); // Ex: 0x0601, _WIN32_WINNT_WIN10, ...
+bool IsWinVerOrHigher(WORD osVerNum); // Ex: 0x0601, _WIN32_WINNT_WIN10, ...
+bool IsWinVerEqual(WORD osVerNum);
 bool IsWin2kEql();
 bool IsWin5family();
 bool IsWinXP();
-bool IsWinXPSP1();
+bool IsWinXP(WORD servicePack);
 bool IsWin6();
 bool IsWin7();
 bool IsWin7Eql();
 bool IsWin8();
+// ReSharper disable once CppInconsistentNaming
 bool IsWin8_1();
 bool IsWin10();
 bool IsWindows64();

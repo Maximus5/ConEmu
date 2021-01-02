@@ -657,9 +657,19 @@ bool GetOsVersionInformational(OSVERSIONINFO* pOsVer)
 {
 	#pragma warning(disable: 4996)
 	// #WINVER Support Rtl function like _VerifyVersionInfo does
-	BOOL result = GetVersionEx(pOsVer);
+	// ReSharper disable once CppDeprecatedEntity
+	const BOOL result = GetVersionExW(pOsVer);  // NOLINT(clang-diagnostic-deprecated-declarations)
 	#pragma warning(default: 4996)
 	return (result != FALSE);
+}
+
+OSVERSIONINFOEXW MakeOsVersionEx(const DWORD dwMajorVersion, const DWORD dwMinorVersion)
+{
+	OSVERSIONINFOEXW osVersion{};
+	osVersion.dwOSVersionInfoSize = sizeof(osVersion);
+	osVersion.dwMajorVersion = dwMajorVersion;
+	osVersion.dwMinorVersion = dwMinorVersion;
+	return osVersion;
 }
 
 bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMask, DWORDLONG dwlConditionMask)
@@ -683,19 +693,19 @@ bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMas
 	return rc;
 }
 
-bool IsWinVerOrHigher(WORD OsVer)
+bool IsWinVerOrHigher(const WORD osVerNum)
 {
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(OsVer), LOBYTE(OsVer)};
+	auto osVersion = MakeOsVersionEx(HIBYTE(osVerNum), LOBYTE(osVerNum));
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	const BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osVersion, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 	return (ibIsWinOrHigher != FALSE);
 }
 
-bool IsWinVerEqual(WORD OsVer)
+bool IsWinVerEqual(const WORD osVerNum)
 {
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(OsVer), LOBYTE(OsVer)};
+	auto osVersion = MakeOsVersionEx(HIBYTE(osVerNum), LOBYTE(osVerNum));
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL), VER_MINORVERSION, VER_EQUAL);
-	BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	const BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osVersion, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 	return (ibIsWinOrHigher != FALSE);
 }
 
@@ -717,9 +727,9 @@ bool IsWin5family()
 	if (!ibIsWin5fam)
 	{
 		// Don't use IsWinVerEqual here - we need to compare only major version!
-		OSVERSIONINFOEXW osvi = {sizeof(osvi), 5, 0};
+		auto osVersion = MakeOsVersionEx(HIBYTE(_WIN32_WINNT_WIN2K), LOBYTE(_WIN32_WINNT_WIN2K));
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL);
-		ibIsWin5fam = _VerifyVersionInfo(&osvi, VER_MAJORVERSION, dwlConditionMask) ? 1 : -1;
+		ibIsWin5fam = _VerifyVersionInfo(&osVersion, VER_MAJORVERSION, dwlConditionMask) ? 1 : -1;
 	}
 	return (ibIsWin5fam == 1);
 }
@@ -727,33 +737,33 @@ bool IsWin5family()
 // Windows XP or higher
 bool IsWinXP()
 {
-	static int ibIsWinXP = 0;
-	if (!ibIsWinXP)
+	static int ibIsWinXp = 0;
+	if (!ibIsWinXp)
 	{
-		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP)};
+		auto osVersion = MakeOsVersionEx(HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP));
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0,
 			VER_MAJORVERSION, VER_GREATER_EQUAL),
 			VER_MINORVERSION, VER_GREATER_EQUAL);
-		ibIsWinXP = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
+		ibIsWinXp = _VerifyVersionInfo(&osVersion, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
 	}
-	return (ibIsWinXP == 1);
+	return (ibIsWinXp == 1);
 }
 
 // WinXP SP1 or higher
-bool IsWinXPSP1()
+bool IsWinXP(const WORD servicePack)
 {
-	static int ibIsWinXPSP1 = 0;
-	if (!ibIsWinXPSP1)
+	static int ibIsWinXpSp1 = 0;
+	if (!ibIsWinXpSp1)
 	{
-		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP)};
-		osvi.wServicePackMajor = 1;
+		auto osVersion = MakeOsVersionEx(HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP));
+		osVersion.wServicePackMajor = servicePack;
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
 			VER_MAJORVERSION, VER_GREATER_EQUAL),
 			VER_MINORVERSION, VER_GREATER_EQUAL),
 			VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-		ibIsWinXPSP1 = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
+		ibIsWinXpSp1 = _VerifyVersionInfo(&osVersion, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
 	}
-	return (ibIsWinXPSP1 == 1);
+	return (ibIsWinXpSp1 == 1);
 }
 
 // Vista and higher
@@ -808,6 +818,7 @@ bool IsWin8()
 }
 
 // Windows 8.1 and higher
+// ReSharper disable once CppInconsistentNaming
 bool IsWin8_1()
 {
 	static int ibIsWin8_1 = 0;
@@ -926,9 +937,7 @@ bool IsHwFullScreenAvailable()
 
 	// HW FullScreen was available in Win2k & WinXP (32bit)
 	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
-	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	if (_VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
+	if (IsWin6())
 		return false; // Vista or higher - not available
 	else
 		return true;
@@ -937,9 +946,9 @@ bool IsHwFullScreenAvailable()
 bool IsVsNetHostExe(LPCWSTR asFilePatName)
 {
 	bool bVsNetHostRequested = false;
-	int iNameLen = asFilePatName ? lstrlen(asFilePatName) : 0;
-	LPCWSTR pszVsHostSuffix = L".vshost.exe";
-	int iVsHostSuffix = lstrlen(pszVsHostSuffix);
+	const int iNameLen = asFilePatName ? lstrlen(asFilePatName) : 0;
+	const wchar_t pszVsHostSuffix[] = L".vshost.exe";
+	const int iVsHostSuffix = lstrlen(pszVsHostSuffix);
 	if ((iNameLen >= iVsHostSuffix) && (lstrcmpi(asFilePatName+iNameLen-iVsHostSuffix, pszVsHostSuffix) == 0))
 	{
 		bVsNetHostRequested = true;

@@ -889,6 +889,9 @@ project "Tests"
     "src/ConEmu/conemu.gcc.manifest",
     -- server sources
     "src/ConEmuCD/StartEnv.cpp",
+    -- conemuhk sources
+    "src/ConEmuHk/DllOptions.cpp",
+    "src/ConEmuHk/ShellProcessor.cpp",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }

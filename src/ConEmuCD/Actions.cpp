@@ -70,7 +70,7 @@ int OsVerInfo()
 	UINT DBCS = IsWinDBCS();
 	UINT HWFS = IsHwFullScreenAvailable();
 	UINT W5fam = IsWin5family();
-	UINT WXPSP1 = IsWinXPSP1();
+	UINT WXPSP1 = IsWinXP(1);
 	UINT W6 = IsWin6();
 	UINT W7 = IsWin7();
 	UINT W10 = IsWin10();

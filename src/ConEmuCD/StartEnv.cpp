@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Actions.h"
 #include "StartEnv.h"
 
+
+#include "../common/WObjects.h"
 #include "../ConEmuHk/SetHook.h"
 
 wchar_t* gpszForcedTitle = nullptr;

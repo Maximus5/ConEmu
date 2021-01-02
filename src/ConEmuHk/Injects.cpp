@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "InjectsBootstrap.h"
 #include "hlpProcess.h"
+#include "../common/WObjects.h"
 
 extern HMODULE ghOurModule;
 
@@ -133,24 +134,14 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 	HMODULE hNtDll = NULL;
 	DEBUGTEST(int iFindAddress = 0);
 	DWORD nErrCode = 0, nWait = 0;
-	int SelfImageBits = WIN3264TEST(32,64);
-
-	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	_ASSERTE(_WIN32_WINNT_WIN7==0x601);
-	OSVERSIONINFOEXW osvi7 = {sizeof(osvi7), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
-	BOOL bOsWin7 = _VerifyVersionInfo(&osvi7, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	const int SelfImageBits = WIN3264TEST(32,64);
 
 	if (!hKernel)
 	{
 		iRc = CIH_KernelNotLoaded/*-510*/;
 		goto wrap;
 	}
-	//if (!nOsVer)
-	//{
-	//	iRc = CIH_OsVerFailed/*-511*/;
-	//	goto wrap;
-	//}
-	if (bOsWin7)
+	if (IsWin7())
 	{
 		hNtDll = GetModuleHandle(L"ntdll.dll");
 		// Windows7 +
