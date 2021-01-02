@@ -469,7 +469,7 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 			{
 				if (lstrcmpi(pszFunction, Functions[f].Alias[n]) == 0)
 				{
-					if ((bPostpone || (Functions[f].Flags & gmf_PostponeWhenActive)) && !pMacroRCon->isConsoleReady())
+					if ((bPostpone || (Functions[f].Flags & gmf_PostponeWhenActive)) && !(pMacroRCon && pMacroRCon->isConsoleReady()))
 					{
 						if (!pMacroRCon)
 						{
