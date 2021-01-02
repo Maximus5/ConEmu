@@ -51,6 +51,9 @@
     <ClInclude Include="ConEmuHk\DefTermHk.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuHk\DllOptions.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuHk\ExtConsole.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -162,6 +165,9 @@
       <Filter>Connector</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuHk\DefTermHk.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\DllOptions.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuHk\Entry.cpp">

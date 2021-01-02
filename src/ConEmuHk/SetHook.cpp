@@ -61,8 +61,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MainThread.h"
 #include "SetHook.h"
 #include "ShellProcessor.h"
+#include "DllOptions.h"
 #include "../modules/minhook/include/MinHook.h"
 #include "../common/HkFunc.h"
+#include "../common/WObjects.h"
 
 
 #ifdef _DEBUG
@@ -74,8 +76,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DebugStringA(x)
 #endif
 
-
-HMODULE ghOurModule = NULL; // Our dll library
 
 extern HWND    ghConWnd;      // RealConsole
 

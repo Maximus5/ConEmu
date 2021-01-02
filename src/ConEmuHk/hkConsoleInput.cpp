@@ -50,10 +50,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkConsoleInput.h"
 #include "MainThread.h"
 #include "hlpConsole.h"
+#include "DllOptions.h"
+#include "../common/ConEmuCheck.h"
+#include "../common/WObjects.h"
 
 /* **************** */
 
 BOOL gbWasSucceededInRead = FALSE;
+
+struct ReadConsoleInfo
+{
+	HANDLE hConsoleInput;
+	DWORD inReadConsoleTID;
+	DWORD lastReadConsoleTID;
+	HANDLE hConsoleInput2;
+	DWORD lastReadConsoleInputTID;
+	BOOL  bIsUnicode;
+	COORD crStartCursorPos;
+	DWORD nConInMode;
+	DWORD nConOutMode;
+};
+
+ReadConsoleInfo gReadConsoleInfo = {};
 
 /* **************** */
 

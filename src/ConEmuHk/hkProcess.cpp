@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkProcess.h"
 #include "MainThread.h"
 #include "ShellProcessor.h"
+#include "DllOptions.h"
 
 /* **************** */
 

@@ -45,6 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkConsoleOutput.h"
 #include "hlpConsole.h"
 #include "MainThread.h"
+#include "DllOptions.h"
+#include "../common/WObjects.h"
 
 /* **************** */
 

@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 #include "DefTermHk.h"
+
+#include "DllOptions.h"
 #include "SetHook.h"
 #include "../ConEmu/version.h"
 
@@ -54,20 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 	#define DefTermMsg(s) //MessageBox(nullptr, s, L"ConEmuHk", MB_SYSTEMMODAL)
 #endif
-
-extern HMODULE ghOurModule; // Our dll handle (don't set hooks here)
-
-/* ************ Globals for "Default terminal ************ */
-bool gbPrepareDefaultTerminal = false;
-bool gbIsNetVsHost = false;
-bool gbIsVStudio = false;
-bool gbIsVSDebug = false; // msvsmon.exe
-bool gbIsVsCode = false;
-int  gnVsHostStartConsole = 0;
-bool gbIsGdbHost = false;
-//ConEmuGuiMapping* gpDefaultTermParm = nullptr; -- // полный путь к ConEmu.exe (GUI), "/config", параметры для "confirm" и "no-injects"
-
-CDefTermHk* gpDefTerm = nullptr;
 
 // helper
 bool CDefTermHk::IsDefTermEnabled()

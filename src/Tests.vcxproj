@@ -699,6 +699,9 @@
     <ClCompile Include="ConEmu\helper.cpp" />
     <ClCompile Include="ConEmuCD\StartEnv.cpp" />
     <ClCompile Include="ConEmuCD\StartEnv_test.cpp" />
+    <ClCompile Include="ConEmuHk\DllOptions.cpp" />
+    <ClCompile Include="ConEmuHk\ShellProcessor.cpp" />
+    <ClCompile Include="ConEmuHk\ShellProcessor_test.cpp" />
     <ClCompile Include="UnitTests\main_test.cpp" />
     <ClCompile Include="UnitTests\test_mock_file.cpp" />
     <ClCompile Include="UnitTests\test_stubs.cpp" />

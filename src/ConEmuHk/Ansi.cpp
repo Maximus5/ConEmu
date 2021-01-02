@@ -59,6 +59,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ///* ***************** */
 #include "Ansi.h"
+
+#include "DllOptions.h"
+#include "../common/WObjects.h"
 ///* ***************** */
 
 #ifdef _DEBUG

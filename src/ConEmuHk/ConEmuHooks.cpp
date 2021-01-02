@@ -76,13 +76,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include <winnt.h>
 #include <tchar.h>
-#include <shlwapi.h>
+#include <Shlwapi.h>
 #include "../common/Common.h"
 #include "SetHook.h"
 #include "DefTermHk.h"
 #include "ShellProcessor.h"
 #include "../common/CmdLine.h"
 #include "../common/WConsole.h"
+#include "../common/WObjects.h"
 
 #include "hkCmdExe.h"
 #include "hkConsole.h"
@@ -128,88 +129,6 @@ BOOL IsVisibleRectLocked(COORD& crLocked);
 #define DebugString(x) //OutputDebugString(x)
 #endif
 
-
-/* ************ Globals for SetHook ************ */
-extern HWND    ghConWnd;      // RealConsole
-extern HWND    ghConEmuWnd;   // Root! ConEmu window
-extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern DWORD   gnGuiPID;
-/* ************ Globals for SetHook ************ */
-
-
-/* ************ Globals for Far Hooks ************ */
-HookModeFar gFarMode = {sizeof(HookModeFar)};
-bool    gbIsFarProcess = false;
-InQueue gInQueue = {};
-HANDLE  ghConsoleCursorChanged = NULL;
-SrvLogString_t gfnSrvLogString = nullptr;
-/* ************ Globals for Far Hooks ************ */
-
-/* ************ Globals for cmd.exe/clink ************ */
-bool     gbIsCmdProcess = false;
-static bool IsInteractive();
-//size_t   gcchLastWriteConsoleMax = 0;
-//wchar_t *gpszLastWriteConsole = NULL;
-//HMODULE  ghClinkDll = NULL;
-//call_readline_t gpfnClinkReadLine = NULL;
-int      gnCmdInitialized = 0; // 0 - Not already, 1 - OK, -1 - Fail
-bool     gbAllowClinkUsage = false;
-bool     gbClinkInjectRequested = false;
-bool     gbAllowUncPaths = false;
-bool     gbCurDirChanged = false;
-/* ************ Globals for cmd.exe/clink ************ */
-
-/* ************ Globals for powershell ************ */
-bool gbIsPowerShellProcess = false;
-bool gbPowerShellMonitorProgress = false;
-WORD gnConsolePopupColors = 0x003E;
-int  gnPowerShellProgressValue = -1;
-void CheckPowershellProgressPresence();
-void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
-/* ************ Globals for powershell ************ */
-
-/* ************ Globals for Node.JS ************ */
-bool     gbIsNodeJSProcess = false;
-/* ************ Globals for Node.JS ************ */
-
-/* ************ Globals for cygwin/msys ************ */
-bool gbIsBashProcess = false;
-bool gbIsSshProcess = false;
-bool gbIsLessProcess = false;
-/* ************ Globals for cygwin/msys ************ */
-
-/* ************ Globals for ViM ************ */
-bool gbIsVimProcess = false;
-bool gbIsVimAnsi = false;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for Plink ************ */
-bool gbIsPlinkProcess = false;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for MinTTY ************ */
-bool gbIsMinTtyProcess;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for HIEW32.EXE ************ */
-bool gbIsHiewProcess = false;
-/* ************ Globals for HIEW32.EXE ************ */
-
-/* ************ Globals for DosBox.EXE ************ */
-bool gbDosBoxProcess = false;
-/* ************ Globals for DosBox.EXE ************ */
-
-/* ************ Don't show VirtualAlloc errors ************ */
-bool gbSkipVirtualAllocErr = false;
-/* ************ Don't show VirtualAlloc errors ************ */
-
-/* ************ Hooking time functions ************ */
-DWORD gnTimeEnvVarLastCheck = 0;
-wchar_t gszTimeEnvVarSave[32] = L"";
-/* ************ Hooking time functions ************ */
-
-
-struct ReadConsoleInfo gReadConsoleInfo = {};
 
 // Service functions
 //typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);

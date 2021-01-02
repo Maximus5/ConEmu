@@ -57,6 +57,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "SetHook.h"
 #include "ShellProcessor.h"
+
+#include "DllOptions.h"
+#include "hlpConsole.h"
 #include "MainThread.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
@@ -71,61 +74,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 static const DWORD HIDDEN_SCREEN_POSITION = 32767;
-
-#ifdef _DEBUG
-#ifndef CONEMU_MINIMAL
-void TestShellProcessor()
-{
-	for (int i = 0; i < 10; i++)
-	{
-		MCHKHEAP;
-		CShellProc* sp = new CShellProc;
-		LPCWSTR pszFile = nullptr, pszParam = nullptr;
-		DWORD nCreateFlags = 0, nShowCmd = 0;
-		SHELLEXECUTEINFOW sei = {sizeof(SHELLEXECUTEINFOW)};
-		STARTUPINFOW si = {sizeof(STARTUPINFOW)};
-		switch (i)
-		{
-		case 0:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L"mingw32-make \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
-			break;
-		case 1:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L"\"mingw32-make.exe\" \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
-			break;
-		case 2:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L"\"C:\\GCC\\mingw\\bin\\mingw32-make.exe\" \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
-			break;
-		case 3:
-			pszFile = L"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE";
-			pszParam = L"prince megahit";
-			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
-			break;
-		case 4:
-			pszFile = nullptr;
-			pszParam = L" \"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE\"";
-			sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si);
-			break;
-		case 5:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L" \"1.cpp\" ";
-			sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, &nCreateFlags, &nShowCmd);
-			break;
-		default:
-			break;
-		}
-		MCHKHEAP;
-		delete sp;
-	}
-}
-#endif
-#endif
-
 
 //int CShellProc::mn_InShellExecuteEx = 0;
 int gnInShellExecuteEx = 0;
@@ -2223,6 +2171,8 @@ int CShellProc::PrepareExecuteParms(
 	{
 		// set up default terminal
 		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+		// #DefTermInside only for visual studio?
+		bConsoleMode = true;
 	}
 	else
 	{

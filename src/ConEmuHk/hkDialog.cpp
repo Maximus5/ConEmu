@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkDialog.h"
 #include "GuiAttach.h"
 #include "MainThread.h"
+#include "DllOptions.h"
 
 /* **************** */
 

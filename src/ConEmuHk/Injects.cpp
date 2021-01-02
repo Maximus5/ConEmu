@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "InjectsBootstrap.h"
 #include "hlpProcess.h"
+#include "../common/MModule.h"
 #include "../common/WObjects.h"
 
 extern HMODULE ghOurModule;
@@ -129,12 +130,12 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 #ifdef WIN64
 	is64bitOs = TRUE;
 #endif
-	// для проверки IsWow64Process
-	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-	HMODULE hNtDll = NULL;
+	// to check IsWow64Process
+	const MModule hKernel(GetModuleHandle(L"kernel32.dll"));
+	MModule hNtDll{};
 	DEBUGTEST(int iFindAddress = 0);
 	DWORD nErrCode = 0, nWait = 0;
-	const int SelfImageBits = WIN3264TEST(32,64);
+	const int selfImageBits = WIN3264TEST(32,64);
 
 	if (!hKernel)
 	{
@@ -143,7 +144,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 	}
 	if (IsWin7())
 	{
-		hNtDll = GetModuleHandle(L"ntdll.dll");
+		hNtDll.SetHandle(GetModuleHandle(L"ntdll.dll"));
 		// Windows7 +
 		if (!hNtDll)
 		{
@@ -175,18 +176,18 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 		goto wrap;
 	}
 
-	if (hKernel)
+	if (hKernel.IsValid())
 	{
 		typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE, PBOOL);
-		IsWow64Process_t IsWow64Process_f = (IsWow64Process_t)GetProcAddress(hKernel, "IsWow64Process");
+		IsWow64Process_t isWow64ProcessFunc = nullptr;
 
-		if (IsWow64Process_f)
+		if (hKernel.GetProcAddress("IsWow64Process", isWow64ProcessFunc))
 		{
 			BOOL bWow64 = FALSE;
 #ifndef WIN64
 
 			// Текущий процесс - 32-битный, (bWow64==TRUE) будет означать что OS - 64битная
-			if (IsWow64Process_f(GetCurrentProcess(), &bWow64) && bWow64)
+			if (isWow64ProcessFunc(GetCurrentProcess(), &bWow64) && bWow64)
 				is64bitOs = TRUE;
 
 #else
@@ -220,7 +221,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 
 	//#else
 	// Если битность не совпадает - нужен helper
-	if (ImageBits != SelfImageBits)
+	if (ImageBits != selfImageBits)
 	{
 		const DWORD dwPidWait = WaitForSingleObject(pi.hProcess, 0);
 		if (dwPidWait == WAIT_OBJECT_0)
@@ -365,7 +366,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 					}
 				}
 				#else
-				_ASSERTE(SelfImageBits == 32);
+				_ASSERTE(selfImageBits == 32);
 				if (iRc == CIH_OK/*0*/)
 				{
 					msprintf(szInfo, countof(szInfo), L"Alloc: 0x" WIN3264TEST(L"%08X",L"%X%08X") L", Size: %u", WIN3264WSPRINT(ptrAllocated), nAllocated);

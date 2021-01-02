@@ -101,6 +101,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // _CrtCheckMemory can't be used in DLL_PROCESS_ATTACH
 #undef MCHKHEAP
+#include "DllOptions.h"
 #include "../common/MArray.h"
 
 #include "hkCmdExe.h"
@@ -168,16 +169,6 @@ extern "C" {
 //DWORD gnVkWinFix = 0xF0;
 //HWND  ghKeyHookConEmuRoot = nullptr;
 
-extern HMODULE ghOurModule;
-wchar_t gsConEmuBaseDir[MAX_PATH + 1] = L"";
-//HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
-//UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
-//SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
-
-/* ************ Executable name ************ */
-wchar_t gsExeName[80] = L"";
-CEActiveAppFlags gnExeFlags = caf_Standard; // cygwin/msys/clink and so on...
-/* ************ Executable name ************ */
 
 //struct CpConv
 //{
@@ -215,31 +206,7 @@ struct DllMainCallInfo
 } gDllMainCallInfo[4] = {};
 
 
-#ifdef _DEBUG
-extern HHOOK ghGuiClientRetHook;
-//extern bool gbAllowAssertThread;
-#endif
 
-
-CEStartupEnv* gpStartEnv = NULL;
-bool    gbConEmuCProcess = false;
-bool    gbConEmuConnector = false;
-DWORD   gnSelfPID = 0;
-BOOL    gbSelfIsRootConsoleProcess = FALSE;
-BOOL    gbForceStartPipeServer = FALSE;
-DWORD   gnServerPID = 0;
-DWORD   gnPrevAltServerPID = 0;
-DWORD   gnGuiPID = 0;
-HWND    ghConWnd = NULL; // Console window
-HWND    ghConEmuWnd = NULL; // Root! window
-HWND    ghConEmuWndDC = NULL; // ConEmu DC window
-HWND    ghConEmuWndBack = NULL; // ConEmu Back window - holder for GUI client
-BOOL    gbWasBufferHeight = FALSE;
-BOOL    gbNonGuiMode = FALSE;
-DWORD   gnImageSubsystem = 0;
-DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
-wchar_t gsInitConTitle[512] = {};
-BOOL    gbTrueColorServerRequested = FALSE;
 
 struct ProcessEventFlags {
 	HANDLE hProcessFlag; // = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
@@ -400,17 +367,6 @@ void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes)
 #endif
 }
 #endif
-
-void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd)
-{
-	ghConEmuWndDC = hDcWnd;
-	ghConEmuWndBack = hBackWnd;
-}
-
-void SetServerPID(DWORD anMainSrvPID)
-{
-	gnServerPID = anMainSrvPID;
-}
 
 bool isSuppressBells()
 {

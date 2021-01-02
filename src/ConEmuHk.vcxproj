@@ -295,6 +295,7 @@
     <ClInclude Include="ConEmuHk\Connector.h" />
     <ClInclude Include="ConEmuHk\DbgHooks.h" />
     <ClInclude Include="ConEmuHk\DefTermHk.h" />
+    <ClInclude Include="ConEmuHk\DllOptions.h" />
     <ClInclude Include="ConEmuHk\ExtConsole.h" />
     <ClInclude Include="ConEmuHk\GuiAttach.h" />
     <ClInclude Include="ConEmuHk\Injects.h" />
@@ -334,6 +335,7 @@
     <ClCompile Include="ConEmuHk\ConEmuHooks.cpp" />
     <ClCompile Include="ConEmuHk\Connector.cpp" />
     <ClCompile Include="ConEmuHk\DefTermHk.cpp" />
+    <ClCompile Include="ConEmuHk\DllOptions.cpp" />
     <ClCompile Include="ConEmuHk\Entry.cpp" />
     <ClCompile Include="ConEmuHk\ExtConsole.cpp" />
     <ClCompile Include="ConEmuHk\GuiAttach.cpp" />

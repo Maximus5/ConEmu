@@ -42,6 +42,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkMessages.h"
 #include "hlpConsole.h"
 #include "MainThread.h"
+#include "DllOptions.h"
+#include "../common/ConEmuCheck.h"
+#include "../common/WObjects.h"
 
 #ifdef _DEBUG
 BOOL bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=false;

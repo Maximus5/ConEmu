@@ -48,7 +48,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Ansi.h"
 #include "hlpConsole.h"
+
+#include "DllOptions.h"
 #include "hlpProcess.h"
+#include "../common/ConEmuCheck.h"
 
 /* **************** */
 

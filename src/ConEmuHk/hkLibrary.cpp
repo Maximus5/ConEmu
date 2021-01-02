@@ -41,8 +41,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "hkLibrary.h"
-#include "hlpProcess.h"
 #include "MainThread.h"
+#include "DllOptions.h"
+#include "../common/ConEmuCheck.h"
+#include "../common/WObjects.h"
 
 /* **************** */
 

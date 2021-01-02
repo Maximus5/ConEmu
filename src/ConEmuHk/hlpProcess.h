@@ -30,30 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 
-#include <windows.h>
-#include <wincon.h>
-
-
-/*  Global  */
-extern bool    gbConEmuCProcess;
-extern DWORD   gnSelfPID;
-extern wchar_t gsConEmuBaseDir[MAX_PATH + 1]; // "%ConEmuBaseDir%"
-extern wchar_t gsExeName[80];       // Only exe name of current process
-extern CEActiveAppFlags gnExeFlags; // cygwin/msys/clink and so on...
-/*  ConEmu/Console */
-extern HWND    ghConWnd;
-extern HWND    ghConEmuWnd;   // Root! window
-extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern DWORD   gnGuiPID;
-extern DWORD   gnServerPID;   // ConEmuC server PID (initialized on startup, during Dll loading)
-extern DWORD   gnImageSubsystem;
-extern DWORD   gnImageBits;
+#include <Windows.h>
 
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
-#include "../common/WObjects.h"
 #include "../common/InQueue.h"
-#include "../common/MMap.h"
 #include "../common/MFileMapping.h"
 
 #include "DbgHooks.h"
@@ -61,15 +41,12 @@ extern DWORD   gnImageBits;
 bool isSuppressBells();
 #define LogBeepSkip(x) OutputDebugString(x)
 
-void SetServerPID(DWORD anMainSrvPID);
-
 extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
 CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsoleInputFlags*/);
 CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapRows(LONG anLastConsoleRow, bool abForce);
 void OnConWndChanged(HWND ahNewConWnd);
-bool AttachServerConsole();
 void CheckAnsiConVar(LPCWSTR asName);
 
 enum CEReadConsoleInputFlags
@@ -124,20 +101,6 @@ struct AnnotationHeader;
 extern AnnotationHeader* gpAnnotationHeader;
 extern HANDLE ghCurrentOutBuffer;
 
-struct ReadConsoleInfo
-{
-	HANDLE hConsoleInput;
-	DWORD InReadConsoleTID;
-	DWORD LastReadConsoleTID;
-	HANDLE hConsoleInput2;
-	DWORD LastReadConsoleInputTID;
-	BOOL  bIsUnicode;
-	COORD crStartCursorPos;
-	DWORD nConInMode;
-	DWORD nConOutMode;
-};
-extern struct ReadConsoleInfo gReadConsoleInfo;
-
 void CheckHookServer();
 extern bool gbHookServerForcedTermination;
 
@@ -174,7 +137,7 @@ extern int  gnPowerShellProgressValue;
 /* ************ Globals for powershell ************ */
 
 /* ************ Globals for Node.JS ************ */
-extern bool gbIsNodeJSProcess;
+extern bool gbIsNodeJsProcess;
 /* ************ Globals for Node.JS ************ */
 
 /* ************ Globals for cygwin/msys ************ */

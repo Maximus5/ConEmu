@@ -37,11 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "GuiAttach.h"
 #include "MainThread.h"
+#include "DllOptions.h"
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/Keyboard.h"
-#include "../common/WObjects.h"
 
 extern HMODULE ghOurModule;
 extern HWND    ghConEmuWnd;     // Root! ConEmu window

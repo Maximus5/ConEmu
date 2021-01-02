@@ -40,9 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Ansi.h"
 #include "hkConsoleInput.h"
-#include "hkConsoleOutput.h"
 #include "hkStdIO.h"
 #include "MainThread.h"
+#include "DllOptions.h"
 
 /* **************** */
 

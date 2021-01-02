@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/ExitCodes.h"
 #include "Connector.h"
 #include "hkConsole.h"
+#include "DllOptions.h"
 #include <deque>
 
 namespace Connector

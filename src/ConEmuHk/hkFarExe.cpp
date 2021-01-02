@@ -56,7 +56,7 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 	ORIGINAL_KRNL_EX(CompareStringW);
 	int nCmp = -1;
 
-	if (gFarMode.bFarHookMode && gFarMode.bFARuseASCIIsort)
+	if (gFarMode.bFarHookMode && gFarMode.bFarUseAsciiSort)
 	{
 		if (dwCmpFlags == (NORM_IGNORECASE|NORM_STOP_ON_NULL|SORT_STRINGSORT))
 		{

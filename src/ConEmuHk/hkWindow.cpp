@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkWindow.h"
 #include "MainThread.h"
 #include "hlpConsole.h"
+#include "DllOptions.h"
+#include "../common/ConEmuCheck.h"
 
 /* **************** */
 

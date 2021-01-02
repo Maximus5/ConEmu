@@ -7,6 +7,9 @@
     <Filter Include="ConEmuCD">
       <UniqueIdentifier>{732824B7-5FF5-7EC2-880E-6D6A743AB450}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ConEmuHk">
+      <UniqueIdentifier>{3F2924B7-2BF6-7EC2-540F-6D6A403BB450}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resources">
       <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
     </Filter>
@@ -1206,6 +1209,15 @@
       <Filter>ConEmuCD</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\StartEnv_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\DllOptions.cpp">
+      <Filter>ConEmuHk</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\ShellProcessor.cpp">
+      <Filter>ConEmuHk</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\ShellProcessor_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">

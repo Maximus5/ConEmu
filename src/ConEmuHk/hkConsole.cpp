@@ -49,7 +49,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefTermHk.h"
 #include "GuiAttach.h"
 #include "hkConsole.h"
+
+#include "DllOptions.h"
+#include "hlpConsole.h"
 #include "MainThread.h"
+#include "../common/WObjects.h"
 #include "../ConEmuCD/ExportedFunctions.h"
 
 #define SETCONCP_READYTIMEOUT 5000

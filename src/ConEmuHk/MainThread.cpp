@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DbgHooks.h"
 #include "hlpProcess.h"
 #include "MainThread.h"
+#include "DllOptions.h"
 
 #ifdef FORCE_GETMAINTHREAD_PRINTF
 #include "Ansi.h"

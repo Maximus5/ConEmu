@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hkGDI.h"
 #include "MainThread.h"
+#include "DllOptions.h"
+#include "../common/ConEmuCheck.h"
 
 /* **************** */
 

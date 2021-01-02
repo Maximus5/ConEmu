@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hkCmdExe.h"
 #include "hlpProcess.h"
+#include "../common/WObjects.h"
 
 /* **************** */
 

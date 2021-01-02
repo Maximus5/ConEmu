@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "../common/RConStartArgs.h"
 
@@ -38,6 +39,8 @@ const ChangeExecFlags
 	CEF_NEWCON_SWITCH   = 1, // If command line has "-new_console"
 	CEF_NEWCON_PREPEND  = 2, // If we need to prepend command with "-new_console" to ensure that "start cmd" will be processed properly
 	CEF_DEFAULT = 0;
+
+enum CmdOnCreateType;
 
 class CShellProc
 {
@@ -78,6 +81,17 @@ private:
 	bool mb_Opt_DontInject = false; // ConEmuHooks=OFF
 	bool mb_Opt_SkipNewConsole = false; // ConEmuHooks=NOARG
 	bool mb_Opt_SkipCmdStart = false; // ConEmuHooks=NOSTART
+
+	enum class WorkOptions : uint32_t
+	{
+		None = 0,
+		DebugWasRequested = 0x0001,
+		GuiApp = 0x0002,
+		VsNetHostRequested = 0x0004,
+		VsDebugConsole = 0x0008,
+	};
+	WorkOptions workOptions_ = WorkOptions::None;
+
 	void CheckHooksDisabled();
 	static bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp);
 
@@ -154,19 +168,13 @@ public:
 	bool GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArgs, CEStr& rsWorkDir);
 	bool InitOle32();
 protected:
-	HMODULE hOle32 = NULL;
+	HMODULE hOle32 = nullptr;
 	typedef HRESULT (WINAPI* CoInitializeEx_t)(LPVOID pvReserved, DWORD dwCoInit);
 	typedef HRESULT (WINAPI* CoCreateInstance_t)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
-	CoInitializeEx_t CoInitializeEx_f = NULL;
-	CoCreateInstance_t CoCreateInstance_f = NULL;
+	CoInitializeEx_t CoInitializeEx_f = nullptr;
+	CoCreateInstance_t CoCreateInstance_f = nullptr;
 };
 
 // Service functions
 typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
 extern GetProcessId_t gfGetProcessId;
-
-#ifdef _DEBUG
-#ifndef CONEMU_MINIMAL
-void TestShellProcessor();
-#endif
-#endif
