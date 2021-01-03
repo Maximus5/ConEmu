@@ -289,7 +289,7 @@ void CShellProc::LogExitLine(const int rc, const int line) const
 {
 	wchar_t szInfo[200];
 	msprintf(szInfo, countof(szInfo),
-		L"PrepareExecuteParms rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i",
+		L"PrepareExecuteParams rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i",
 		/*rc*/(rc), /*T:*/gbPrepareDefaultTerminal ? 1 : 0,
 		(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient,
 		/*W:*/(UINT)mb_WasSuspended,
@@ -1463,7 +1463,7 @@ bool CShellProc::PrepareNewConsoleInFile(
 #define LogExit(frc) LogExitLine(frc, __LINE__)
 
 bool CShellProc::CheckForDefaultTerminal(
-	CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags, const DWORD* anShowCmd,
+	const CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags, const DWORD* anShowCmd,
 	bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode)
 {
 	if (!gbPrepareDefaultTerminal)
@@ -1657,10 +1657,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 #endif
 }
 
-// -1: if need to block execution
-//  0: continue
-//  1: continue, changes was made
-int CShellProc::PrepareExecuteParms(
+CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			enum CmdOnCreateType aCmd,
 			LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 			DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
@@ -1673,13 +1670,13 @@ int CShellProc::PrepareExecuteParms(
 	if (!IsInterceptionEnabled())
 	{
 		LogShellString(L"PrepareExecuteParams skipped");
-		return 0; // In ConEmu only
+		return PrepareExecuteResult::Bypass; // In ConEmu only
 	}
 
 	if (!asFile && !asParam)
 	{
 		LogShellString(L"PrepareExecuteParams skipped (null params)");
-		return 0; // That is most probably asAction="OpenNewWindow"
+		return PrepareExecuteResult::Bypass; // That is most probably asAction="OpenNewWindow"
 	}
 
 	// Just in case of unexpected LastError changes
@@ -1728,7 +1725,7 @@ int CShellProc::PrepareExecuteParms(
 
 	if (IsAnsiConLoader(asFile, asParam))
 	{
-		return -1;
+		return PrepareExecuteResult::Restrict;
 	}
 
 	ms_ExeTmp.Clear();
@@ -1744,7 +1741,7 @@ int CShellProc::PrepareExecuteParms(
 	// DefTerm logging
 	wchar_t szInfo[200];
 
-	{ // Log PrepareExecuteParms function call -begin
+	{ // Log PrepareExecuteParams function call -begin
 	lstrcpyn(szInfo, asAction ? asAction : L"-exec-", countof(szInfo));
 	struct ParmsStr { LPDWORD pVal; LPCWSTR pName; }
 	Parms[] = {
@@ -1761,10 +1758,10 @@ int CShellProc::PrepareExecuteParms(
 		msprintf(szInfo+iLen, countof(szInfo)-iLen, L" %s:x%X", Parms[i].pName, *Parms[i].pVal);
 	}
 	CEStr lsLog = lstrmerge(
-		(aCmd == eShellExecute) ? L"PrepareExecuteParms Shell " : L"PrepareExecuteParms Create ",
+		(aCmd == eShellExecute) ? L"PrepareExecuteParams Shell " : L"PrepareExecuteParams Create ",
 		szInfo, asFile, asParam);
 	LogShellString(lsLog);
-	} // Log PrepareExecuteParms function call -end
+	} // Log PrepareExecuteParams function call -end
 
 	// Для логирования - запомним сразу
 	HANDLE hIn  = lphStdIn  ? *lphStdIn  : nullptr;
@@ -1873,7 +1870,7 @@ int CShellProc::PrepareExecuteParms(
 		if (!bLongConsoleOutput)
 		{
 			LogExit(0);
-			return 0;
+			return PrepareExecuteResult::Bypass;
 		}
 	}
 
@@ -1893,7 +1890,9 @@ int CShellProc::PrepareExecuteParms(
 	bForceCutNewConsole |= PrepareNewConsoleInFile(aCmd, asFile, asParam, lsReplaceFile, lsReplaceParm, ms_ExeTmp);
 
 	if (ms_ExeTmp.IsEmpty())
+	{
 		GetStartingExeName(asFile, asParam, ms_ExeTmp);
+	}
 
 	bool lbGnuDebugger = false;
 
@@ -1901,7 +1900,9 @@ int CShellProc::PrepareExecuteParms(
 	if (!CheckForDefaultTerminal(
 		aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd,
 		bIgnoreSuspended, bDebugWasRequested, lbGnuDebugger, bConsoleMode))
-		return 0;
+	{
+		return PrepareExecuteResult::Bypass;
+	}
 
 	// #HOOKS try to process *.lnk files?
 
@@ -2286,7 +2287,9 @@ int CShellProc::PrepareExecuteParms(
 			if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
 			{
 				if (anShowCmd)
+				{
 					*anShowCmd = SW_HIDE;
+				}
 
 				if (anShellFlags && hConWnd)
 				{
@@ -2428,8 +2431,8 @@ wrap:
 	}
 
 	LogExit(lbChanged ? 1 : 0);
-	return lbChanged ? 1 : 0;
-} // PrepareExecuteParms
+	return lbChanged ? PrepareExecuteResult::Modified : PrepareExecuteResult::Bypass;
+} // PrepareExecuteParams
 
 bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp)
 {
@@ -2498,37 +2501,44 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 	mpwsz_TempAction = str2wcs(asAction ? *asAction : nullptr, mn_CP);
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : nullptr, mn_CP);
 	mpwsz_TempParam = str2wcs(asParam ? *asParam : nullptr, mn_CP);
-	CEStr lsDir(str2wcs(asDir ? *asDir : nullptr, mn_CP));
+	const CEStr lsDir(str2wcs(asDir ? *asDir : nullptr, mn_CP));
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	int liRc = PrepareExecuteParms(eShellExecute,
+	const auto prepareResult = PrepareExecuteParams(eShellExecute,
 					mpwsz_TempAction, mpwsz_TempFile, mpwsz_TempParam, lsDir,
 					anFlags, nullptr, nullptr, anShowCmd,
 					nullptr, nullptr, nullptr, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
-	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+	if (prepareResult == PrepareExecuteResult::Restrict)
+		return false;
 
-	BOOL lbRc = (liRc != 0);
+	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
 	if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
 	{
 		mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
-		*asFile = mpsz_TempRetFile;
+		if (asFile)
+			*asFile = mpsz_TempRetFile;
+		else if (mpsz_TempRetFile && *mpsz_TempRetFile)
+			return false; // something went wrong
 	}
-	else if (lbRc)
+	else if (changed)
 	{
-		*asFile = nullptr;
+		if (asFile)
+			*asFile = nullptr;
 	}
 
-	if (lbRc || mpwsz_TempRetParam)
+	if (changed || mpwsz_TempRetParam)
 	{
 		mpsz_TempRetParam = wcs2str(mpwsz_TempRetParam, mn_CP);
-		*asParam = mpsz_TempRetParam;
+		if (asParam)
+			*asParam = mpsz_TempRetParam;
+		else if (mpsz_TempRetParam && *mpsz_TempRetParam)
+			return false; // something went wrong
 	}
 
-	if (mpwsz_TempRetDir)
+	if (mpwsz_TempRetDir && asDir)
 	{
 		mpsz_TempRetDir = wcs2str(mpwsz_TempRetDir, mn_CP);
 		*asDir = mpsz_TempRetDir;
@@ -2561,7 +2571,7 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	int liRc = PrepareExecuteParms(eShellExecute,
+	const auto prepareResult = PrepareExecuteParams(eShellExecute,
 					asAction ? *asAction : nullptr,
 					asFile ? *asFile : nullptr,
 					asParam ? *asParam : nullptr,
@@ -2569,22 +2579,28 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 					anFlags, nullptr, nullptr, anShowCmd,
 					nullptr, nullptr, nullptr, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
-	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+	if (prepareResult == PrepareExecuteResult::Restrict)
+		return false;
 
-	BOOL lbRc = (liRc != 0);
+	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
-	if (lbRc || mpwsz_TempRetFile)
+	if (changed || mpwsz_TempRetFile)
 	{
-		*asFile = mpwsz_TempRetFile;
+		if (asFile)
+			*asFile = mpwsz_TempRetFile;
+		else if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
+			return false; // something went wrong
 	}
 
-	if (lbRc || mpwsz_TempRetParam)
+	if (changed || mpwsz_TempRetParam)
 	{
-		*asParam = mpwsz_TempRetParam;
+		if (asParam)
+			*asParam = mpwsz_TempRetParam;
+		else if (mpwsz_TempRetParam && *mpwsz_TempRetParam)
+			return false; // something went wrong
 	}
 
-	if (mpwsz_TempRetDir)
+	if (mpwsz_TempRetDir && asDir)
 	{
 		*asDir = mpwsz_TempRetDir;
 	}
@@ -2606,7 +2622,7 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 		}
 	}
 
-	// Set correct window to let any GUI dialogs appear in front of ConEmu instead of beeing invisible
+	// Set correct window to let any GUI dialogs appear in front of ConEmu instead of being invisible
 	// and inaccessible under ConEmu window.
 	if ((!ahWnd || (ahWnd == ghConWnd)) && ghConEmuWnd)
 	{
@@ -2644,7 +2660,7 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 	}
 
 	mlp_SaveExecInfoA = *lpExecInfo;
-	mlp_ExecInfoA = (LPSHELLEXECUTEINFOA)malloc((*lpExecInfo)->cbSize);
+	mlp_ExecInfoA = static_cast<LPSHELLEXECUTEINFOA>(malloc((*lpExecInfo)->cbSize));
 	if (!mlp_ExecInfoA)
 	{
 		_ASSERTE(mlp_ExecInfoA!=nullptr);
@@ -2654,7 +2670,9 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 
 	FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoA->fMask), &(mlp_ExecInfoA->hwnd));
 
-	BOOL lbRc = OnShellExecuteA(&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->lpDirectory, &mlp_ExecInfoA->fMask, (DWORD*)&mlp_ExecInfoA->nShow);
+	const BOOL lbRc = OnShellExecuteA(
+		&mlp_ExecInfoA->lpVerb, &mlp_ExecInfoA->lpFile, &mlp_ExecInfoA->lpParameters, &mlp_ExecInfoA->lpDirectory,
+		&mlp_ExecInfoA->fMask, reinterpret_cast<DWORD*>(&mlp_ExecInfoA->nShow));
 
 	if (lbRc)
 		*lpExecInfo = mlp_ExecInfoA;
@@ -2672,7 +2690,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 	}
 
 	mlp_SaveExecInfoW = *lpExecInfo;
-	mlp_ExecInfoW = (LPSHELLEXECUTEINFOW)malloc((*lpExecInfo)->cbSize);
+	mlp_ExecInfoW = static_cast<LPSHELLEXECUTEINFOW>(malloc((*lpExecInfo)->cbSize));
 	if (!mlp_ExecInfoW)
 	{
 		_ASSERTE(mlp_ExecInfoW!=nullptr);
@@ -2682,7 +2700,9 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 
 	FixShellArgs((*lpExecInfo)->fMask, (*lpExecInfo)->hwnd, &(mlp_ExecInfoW->fMask), &(mlp_ExecInfoW->hwnd));
 
-	BOOL lbRc = OnShellExecuteW(&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->lpDirectory, &mlp_ExecInfoW->fMask, (DWORD*)&mlp_ExecInfoW->nShow);
+	const BOOL lbRc = OnShellExecuteW(
+		&mlp_ExecInfoW->lpVerb, &mlp_ExecInfoW->lpFile, &mlp_ExecInfoW->lpParameters, &mlp_ExecInfoW->lpDirectory,
+		&mlp_ExecInfoW->fMask, reinterpret_cast<DWORD*>(&mlp_ExecInfoW->nShow));
 
 	if (lbRc)
 		*lpExecInfo = mlp_ExecInfoW;
@@ -2703,51 +2723,61 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : nullptr, mn_CP);
 	DWORD nShowCmd = lpSI->wShowWindow;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
-	CEStr lsDir(str2wcs(asDir ? *asDir : nullptr, mn_CP));
+	const CEStr lsDir(str2wcs(asDir ? *asDir : nullptr, mn_CP));
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	int liRc = PrepareExecuteParms(eCreateProcess,
+	const auto prepareResult = PrepareExecuteParams(eCreateProcess,
 					nullptr, mpwsz_TempFile, mpwsz_TempParam, lsDir,
 					nullptr, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
-	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+	if (prepareResult == PrepareExecuteResult::Restrict)
+		return false;
 
-	BOOL lbRc = (liRc != 0);
+	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
-	// возвращает TRUE только если были изменены СТРОКИ,
-	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
 		(*anCreationFlags) |= CREATE_SUSPENDED;
 
-	if (lbRc && (lpSI->wShowWindow != nShowCmd))
+	if (changed && (lpSI->wShowWindow != nShowCmd))
 		lpSI->wShowWindow = (WORD)nShowCmd;
+
+
+	// Patch modified strings (wide to ansi/oem)
 
 	if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
 	{
 		mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
-		*asFile = mpsz_TempRetFile;
+		if (asFile)
+			*asFile = mpsz_TempRetFile;
+		else if (mpsz_TempRetFile && *mpsz_TempRetFile)
+			return false; // something went wrong
 	}
-	else if (lbRc)
+	else if (changed)
 	{
-		*asFile = nullptr;
+		if (asFile)
+			*asFile = nullptr;
 	}
 
-	if (lbRc || mpwsz_TempRetParam)
+	if (changed || mpwsz_TempRetParam)
 	{
 		if (mpwsz_TempRetParam)
 		{
 			mpsz_TempRetParam = wcs2str(mpwsz_TempRetParam, mn_CP);
-			*asCmdLine = mpsz_TempRetParam;
+			if (asCmdLine)
+				*asCmdLine = mpsz_TempRetParam;
+			else if (mpsz_TempRetParam && *mpsz_TempRetParam)
+				return false; // something went wrong
 		}
 		else
 		{
-			*asCmdLine = nullptr;
+			if (asCmdLine)
+				*asCmdLine = nullptr;
 		}
 	}
-	if (mpwsz_TempRetDir)
+
+	if (mpwsz_TempRetDir && asDir)
 	{
 		mpsz_TempRetDir = wcs2str(mpwsz_TempRetDir, mn_CP);
 		*asDir = mpsz_TempRetDir;
@@ -2766,7 +2796,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 
 	// For example, mintty starts root using pipe redirection
-	bool bConsoleNoWindow = (lpSI->dwFlags & STARTF_USESTDHANDLES)
+	const bool bConsoleNoWindow = (lpSI->dwFlags & STARTF_USESTDHANDLES)
 		// or the caller need to run some process as "detached"
 		|| ((*anCreationFlags) & (DETACHED_PROCESS|CREATE_NO_WINDOW));
 
@@ -2784,7 +2814,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
-	int liRc = PrepareExecuteParms(eCreateProcess,
+	const auto prepareResult = PrepareExecuteParams(eCreateProcess,
 					nullptr,
 					asFile ? *asFile : nullptr,
 					asCmdLine ? *asCmdLine : nullptr,
@@ -2792,13 +2822,11 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 					nullptr, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
-	if (liRc == -1)
-		return FALSE; // Запретить выполнение файла
+	if (prepareResult == PrepareExecuteResult::Restrict)
+		return false;
 
-	BOOL lbRc = (liRc != 0);
+	bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
-	// возвращает TRUE только если были изменены СТРОКИ,
-	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
 	{
 		// In DefTerm (gbPrepareDefaultTerminal) mb_NeedInjects is allowed too in some cases...
@@ -2806,7 +2834,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		(*anCreationFlags) |= CREATE_SUSPENDED;
 	}
 
-	if (lbRc)
+	if (changed)
 	{
 		if (gbPrepareDefaultTerminal)
 		{
@@ -2814,14 +2842,14 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 
 			if (mb_PostInjectWasRequested)
 			{
-				lbRc = FALSE; // Stop other changes?
+				changed = FALSE; // Stop other changes?
 			}
 			else
 			{
 				if (mb_DebugWasRequested)
 				{
 					lpSI->wShowWindow = LOWORD(nShowCmd); // this is SW_HIDE, disable flickering
-					lbRc = FALSE; // Stop other changes?
+					changed = FALSE; // Stop other changes?
 				}
 				else
 				{
@@ -2837,7 +2865,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
 		}
 
-		if (lbRc)
+		if (changed)
 		{
 			*asFile = mpwsz_TempRetFile;
 		}
@@ -2892,17 +2920,23 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 	}
 
-	if (lbRc || mpwsz_TempRetFile)
+	if (changed || mpwsz_TempRetFile)
 	{
-		*asFile = mpwsz_TempRetFile;
+		if (asFile)
+			*asFile = mpwsz_TempRetFile;
+		else if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
+			return false; // something went wrong
 	}
 
-	if (lbRc || mpwsz_TempRetParam)
+	if (changed || mpwsz_TempRetParam)
 	{
-		*asCmdLine = mpwsz_TempRetParam;
+		if (asCmdLine)
+			*asCmdLine = mpwsz_TempRetParam;
+		else if (mpwsz_TempRetParam && *mpwsz_TempRetParam)
+			return false; // something went wrong
 	}
 
-	if (mpwsz_TempRetDir)
+	if (mpwsz_TempRetDir && asDir)
 	{
 		*asDir = mpwsz_TempRetDir;
 	}

@@ -106,6 +106,16 @@ private:
 	HWND mh_PreConEmuWnd = nullptr, mh_PreConEmuWndDC = nullptr;
 	BOOL mb_TempConEmuWnd = FALSE;
 
+	enum class PrepareExecuteResult
+	{
+		// Restrict execution, leads to ERROR_FILE_NOT_FOUND
+		Restrict = -1,
+		// Bypass to WinAPI without modifications
+		Bypass = 0,
+		// Strings or flags were modified
+		Modified = 1,
+	};
+
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
 	char* wcs2str(const wchar_t* pwsz, UINT anCP);
@@ -114,12 +124,12 @@ private:
 				CmdOnCreateType aCmd, LPCWSTR& asFile, LPCWSTR& asParam,
 				CEStr& lsReplaceFile, CEStr& lsReplaceParm, CEStr& exeName);
 	bool CheckForDefaultTerminal(
-				enum CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
+				CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
 				const DWORD* anShowCmd,
 				bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode);
 	void CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags, bool lbGnuDebugger,
 		bool& bDebugWasRequested, bool& lbGuiApp, bool& bVsNetHostRequested);
-	int PrepareExecuteParms(
+	PrepareExecuteResult PrepareExecuteParams(
 				enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
