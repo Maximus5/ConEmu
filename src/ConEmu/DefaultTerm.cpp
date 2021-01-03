@@ -263,6 +263,10 @@ bool CDefaultTerminal::NotifyHookingStatus(const DWORD processId, LPCWSTR sName)
 
 bool CDefaultTerminal::IsAppAllowed(HWND hFore, DWORD processId)
 {
+	if (!gpConEmu->mp_Inside)
+		return true;
+	if (gpConEmu->mp_Inside->GetParentInfo().ParentPID == processId)
+		return true;
 	return false;
 }
 

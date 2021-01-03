@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/DefTermBase.h"
+#include "../common/MFileMapping.h"
 
 class MFileLog;
 class CDefTermHk;
@@ -53,6 +54,8 @@ public:
 	static void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = nullptr);
 	static bool LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping);
 	static size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
+	static bool IsInsideMode();
+
 	// Start the server and attach to its console
 	static HWND AllocHiddenConsole(bool bTempForVS);
 
@@ -65,31 +68,29 @@ public:
 	// Called from hooks after successful AllocConsole
 	void OnAllocConsoleFinished(HWND hNewConWnd);
 
-	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
-	virtual void StopHookers() override;
-	virtual void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
+	bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	void StopHookers() override;
+	void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
 
 protected:
-	HANDLE  mh_StopEvent = nullptr;
-	wchar_t ms_ExeName[MAX_PATH] = L"";
-	DWORD   mn_LastCheck = 0;
+	bool FindConEmuInside(DWORD& guiPid, HWND& guiHwnd) const;
+	bool LoadInsideSettings();
 
 	DWORD   StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE phSrvProcess);
 
-	static bool FindConEmuInside(DWORD& guiPid, HWND& guiHwnd);
+	CDefTermBase* GetInterface() override;
+	int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) override;
+	void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
+	void PostCreateThreadFinished() override;
 
-protected:
-	virtual CDefTermBase* GetInterface() override;
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) override;
-	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
-	virtual void PostCreateThreadFinished() override;
-
-protected:
-	MFileLog* mp_FileLog = nullptr;
 	void LogInit();
-	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
-protected:
-	friend bool InitDefTerm();
-	friend void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= nullptr*/);
-	friend void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= nullptr*/);
+	void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
+
+private:
+	HANDLE  mh_StopEvent = nullptr;
+	wchar_t ms_ExeName[MAX_PATH] = L"";
+	DWORD   mn_LastCheck = 0;
+	MFileLog* mp_FileLog = nullptr;
+	MFileMapping<CESERVER_INSIDE_MAPPING_HDR>* mp_InsideMapping = nullptr;
+	CESERVER_INSIDE_MAPPING_HDR* mp_InsideMapInfo = nullptr;
 };

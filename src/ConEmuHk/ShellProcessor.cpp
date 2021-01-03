@@ -2171,8 +2171,11 @@ int CShellProc::PrepareExecuteParms(
 	{
 		// set up default terminal
 		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
-		// #DefTermInside only for visual studio?
-		bConsoleMode = true;
+		// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
+		if (!bConsoleMode && CDefTermHk::IsInsideMode())
+		{
+			bConsoleMode = true;
+		}
 	}
 	else
 	{

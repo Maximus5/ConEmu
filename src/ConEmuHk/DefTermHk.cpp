@@ -370,11 +370,29 @@ CDefTermHk::CDefTermHk()
 CDefTermHk::~CDefTermHk()
 {
 	SafeDelete(mp_FileLog);
+	SafeDelete(mp_InsideMapping);
 	CDefTermHk::StopHookers();
+	SafeDelete(mp_InsideMapInfo);
 }
 
 void CDefTermHk::StartDefTerm()
 {
+	if (!mp_InsideMapping)
+	{
+		mp_InsideMapping = new MFileMapping<CESERVER_INSIDE_MAPPING_HDR>();
+		mp_InsideMapping->InitName(CEINSIDEMAPNAME, GetCurrentProcessId());
+		bool loaded = false;
+		if (mp_InsideMapping->Open())
+		{
+			mp_InsideMapInfo = static_cast<CESERVER_INSIDE_MAPPING_HDR*>(calloc(sizeof(CESERVER_INSIDE_MAPPING_HDR), 1));
+			loaded = LoadInsideSettings();
+		}
+		if (!loaded)
+		{
+			SafeDelete(mp_InsideMapping);
+		}
+	}
+
 	Initialize(false, false, false);
 }
 
@@ -449,7 +467,8 @@ void CDefTermHk::ReloadSettings()
 	MSectionLockSimple CS;
 	CS.Lock(mcs);
 
-	m_Opt.Serialize();
+	if (!LoadInsideSettings())
+		m_Opt.Serialize();
 	mn_LastCheck = GetTickCount();
 
 	if (m_Opt.bDebugLog)
@@ -460,6 +479,63 @@ void CDefTermHk::ReloadSettings()
 	{
 		SafeDelete(mp_FileLog);
 	}
+}
+
+bool CDefTermHk::IsInsideMode()
+{
+	if (!gpDefTerm || !gpDefTerm->mp_InsideMapInfo)
+		return false;
+	return gpDefTerm->mp_InsideMapInfo->bUseDefaultTerminal;
+}
+
+bool CDefTermHk::LoadInsideSettings()
+{
+	if (!mp_InsideMapping || !mp_InsideMapInfo)
+		return false;
+
+	if (!mp_InsideMapping->GetTo(mp_InsideMapInfo, sizeof(*mp_InsideMapInfo)))
+		return false;
+
+	auto setString = [this](wchar_t*& var, wchar_t* str)
+	{
+		if (var && var != str && !m_Opt.bExternalPointers)
+			SafeFree(var);
+		var = str;
+	};
+
+	auto setMszString = [this](wchar_t*& var, wchar_t* str, const size_t cchMax)
+	{
+		if (var && var != str && !m_Opt.bExternalPointers)
+			SafeFree(var);
+		const size_t cchLen = std::min(wcslen(str), cchMax - 2);
+		str[cchLen + 1] = L'\0';
+		wchar_t* bar = wcschr(str, L'|');
+		while (bar)
+		{
+			*bar = L'\0';
+			bar = wcschr(bar + 1, L'|');
+		}
+		var = str;
+	};
+
+	static wchar_t emptyStr[2] = L"";
+
+	auto& info = *mp_InsideMapInfo;
+	m_Opt.bUseDefaultTerminal = info.bUseDefaultTerminal;
+	m_Opt.bAggressive = false;
+	m_Opt.bNoInjects = info.isDefaultTerminalNoInjects;
+	m_Opt.bNewWindow = false;
+	m_Opt.bDebugLog = info.isDefaultTerminalDebugLog;
+	m_Opt.nDefaultTerminalConfirmClose = info.nDefaultTerminalConfirmClose;
+	m_Opt.nConsoleFlags = info.flags;
+	setString(m_Opt.pszConEmuExe, info.sConEmuExe);
+	setString(m_Opt.pszConEmuBaseDir, info.sConEmuBaseDir);
+	setString(m_Opt.pszCfgFile, emptyStr);
+	setString(m_Opt.pszConfigName, emptyStr);
+	setMszString(m_Opt.pszzHookedApps, info.defaultTerminalApps, std::size(info.defaultTerminalApps));
+	m_Opt.bExternalPointers = true;
+
+	return true;
 }
 
 void CDefTermHk::LogInit()
@@ -686,9 +762,16 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 	return pi.dwProcessId;
 }
 
-bool CDefTermHk::FindConEmuInside(DWORD& guiPid, HWND& guiHwnd)
+bool CDefTermHk::FindConEmuInside(DWORD& guiPid, HWND& guiHwnd) const
 {
-	return false;
+	if (!mp_InsideMapInfo)
+		return false;
+	if (!mp_InsideMapInfo->hConEmuRoot || !IsWindow(mp_InsideMapInfo->hConEmuRoot))
+		return false;
+
+	guiPid = mp_InsideMapInfo->nGuiPID;
+	guiHwnd = mp_InsideMapInfo->hConEmuRoot;
+	return true;
 }
 
 void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
@@ -790,7 +873,7 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 		_wcscat_c(psz, cchMax, L" /GHWND=NEW");
 	else if (opt.bNewWindow)
 		_wcscat_c(psz, cchMax, L" /NOSINGLE");
-	else if (!opt.bNewWindow && !bGuiArgs && FindConEmuInside(guiPid, guiHwnd))
+	else if (!opt.bNewWindow && !bGuiArgs && gpDefTerm->FindConEmuInside(guiPid, guiHwnd))
 		msprintf(psz + wcslen(psz), cchMax - wcslen(psz), L" /GID=%u /GHWND=%08X", guiPid, LODWORD(guiHwnd));
 	else if (bGuiArgs)
 		_wcscat_c(psz, cchMax, L" /REUSE");

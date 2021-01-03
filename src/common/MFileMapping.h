@@ -147,6 +147,7 @@ public:
 			return false;
 		}
 	}
+#endif
 
 	bool GetTo(typename std::remove_const<T>::type* pDst, const int nSize = -1)
 	{
@@ -173,7 +174,7 @@ public:
 			return false;
 		}
 	}
-#endif
+
 public:
 	LPCWSTR InitName(const wchar_t* aszTemplate, DWORD Parm1 = 0, DWORD Parm2 = 0)
 	{

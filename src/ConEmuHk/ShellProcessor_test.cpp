@@ -160,6 +160,11 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 	return 0;
 }
 
+bool CDefTermHk::IsInsideMode()
+{
+	return false;
+}
+
 HWND WINAPI GetRealConsoleWindow()
 {
 	const MModule ConEmuHk(GetModuleHandle(ConEmuHk_DLL_3264));
