@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DllOptions.h"
 #include <deque>
 #include <chrono>
+#include <thread>
 
 #include "Ansi.h"
 
@@ -80,7 +81,17 @@ public:
 			const auto add = GetInputBlock(pir + read, nCount - read);
 			if (!add)
 				break;
+
+			#ifdef _DEBUG
+			wchar_t dbgInfo[80] = L"";
+			msprintf(dbgInfo, std::size(dbgInfo), L"==== ReadInput: read %u add %u %s\n",
+				read, add, IsSequenceEnd(pir[read + add - 1]) ? L"end" : L"");
+			OutputDebugStringW(dbgInfo);
+			#endif
+
 			read += add;
+			if (IsSequenceEnd(pir[read - 1]))
+				break;
 		}
 
 		*pRead = read;
@@ -92,7 +103,7 @@ public:
 		return result;
 	}
 
-	static void DumpReadInput(const INPUT_RECORD* pir, const DWORD read, const ReadInputResult result)
+	void DumpReadInput(const INPUT_RECORD* pir, const DWORD read, const ReadInputResult result) const
 	{
 		#ifdef _DEBUG
 		static std::chrono::high_resolution_clock::time_point prev = {};
@@ -108,7 +119,7 @@ public:
 		if (prev != std::chrono::high_resolution_clock::time_point())
 			delay = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prev);
 
-		wchar_t dbgInfo[120] = L"";
+		wchar_t dbgInfo[256] = L"";
 		msprintf(dbgInfo, countof(dbgInfo), L"termReadInput: delay=%u count=%u down=%u%s",
 			static_cast<unsigned>(delay.count()), read, down, result == rir_Ready_More ? L" (more)" : L" (none)");
 		wchar_t* ptr = dbgInfo + wcslen(dbgInfo);
@@ -128,7 +139,7 @@ public:
 					: (!ke.uChar.UnicodeChar && ke.bKeyDown) ? L" %u"
 					: L" (%u)";
 				msprintf(chr, countof(chr) - 1, format, ke.uChar.UnicodeChar ? static_cast<UINT>(ke.uChar.UnicodeChar) : ke.wVirtualKeyCode);
-				if (ke.wVirtualScanCode == 255)
+				if (ke.wVirtualScanCode == sequenceMark_)
 				{
 					wcscat_s(chr, L" <X>");
 				}
@@ -153,32 +164,89 @@ public:
 
 protected:
 	std::deque<INPUT_RECORD, MArrayAllocator<INPUT_RECORD>> buffer_;
+	const WORD sequenceMark_{ 255 };
+	const std::chrono::milliseconds readToDelay_{ 250 };
+	bool inSequence_ = false;
 
-	DWORD GetInputBlock(PINPUT_RECORD pir, DWORD nCount)
+	bool IsSequenceNew(const INPUT_RECORD& ir) const
 	{
+		return (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown
+			&& ir.Event.KeyEvent.uChar.UnicodeChar == 0x1B && ir.Event.KeyEvent.wVirtualScanCode == sequenceMark_);
+	}
+
+	bool IsSequenceEnd(const INPUT_RECORD& ir) const
+	{
+		return (ir.EventType == KEY_EVENT && !ir.Event.KeyEvent.bKeyDown && ir.Event.KeyEvent.wVirtualScanCode == sequenceMark_);
+	}
+
+	DWORD GetInputBlock(PINPUT_RECORD pir, const DWORD nCount)
+	{
+		if (buffer_.empty())
+			return 0;
+
+		if (IsSequenceNew(buffer_.front()))
+			inSequence_ = true;
+
 		DWORD read = 0;
+		const auto start = std::chrono::high_resolution_clock::now();
 		for (DWORD i = 0; i < nCount && !buffer_.empty(); ++i)
 		{
-			pir[i] = buffer_.front();
+			const auto& ir = buffer_.front();
+
+			// beginning of the new ESC sequence?
+			if (i > 0 && IsSequenceNew(ir))
+			{
+				// we already collected in `pir` previous sequence or some text, return it first
+				break;
+			}
+
+			pir[i] = ir;
 			buffer_.pop_front();
 			++read;
+
+			if (inSequence_)
+			{
+				if (IsSequenceEnd(pir[i]))
+				{
+					inSequence_ = false;
+					break;
+				}
+				// if we still are waiting for the sequence tail
+				if (buffer_.empty())
+				{
+					// try to wait for a while and read input
+					auto now = std::chrono::high_resolution_clock::now();
+					while (now - start < readToDelay_)
+					{
+						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						if (LoadBuffer())
+							break; // success
+						now = std::chrono::high_resolution_clock::now();
+					}
+					if (now - start >= readToDelay_)
+					{
+						inSequence_ = false;
+					}
+				}
+			}
 		}
 		return read;
 	}
 
-	void LoadBuffer()
+	bool LoadBuffer()
 	{
 		INPUT_RECORD buffer[64] = {};
 		DWORD peek = 0;
 		if (!PeekConsoleInputW(ghTermInput, buffer, static_cast<DWORD>(std::size(buffer)), &peek) || !peek)
-			return;
+			return false;
 		DWORD read = 0;
 		if (!ReadConsoleInputW(ghTermInput, buffer, peek, &read) || !read)
-			return;
+			return false;
 		for (size_t i = 0; i < read; ++i)
 		{
 			buffer_.push_back(buffer[i]);
 		}
+		return true;
 	}
 };
 

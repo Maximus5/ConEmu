@@ -1791,6 +1791,20 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, PostStringFlag
 			r[1].Event.KeyEvent.wVirtualKeyCode = VK_PROCESSKEY;
 		}
 
+		// To simplify buffering of escape sequences on connector side
+		if (encodeXterm && (r->EventType == KEY_EVENT))
+		{
+			const WORD sequenceMark{ 255 };
+			if (pch == pszChars)
+			{
+				r[0].Event.KeyEvent.wVirtualScanCode = sequenceMark;
+			}
+			else if (pch + 1 == pszEnd)
+			{
+				r[1].Event.KeyEvent.wVirtualScanCode = sequenceMark;
+			}
+		}
+
 		PackInputRecord(r, pir);
 		PackInputRecord(r+1, pir+1);
 		cchSucceeded += 2;
