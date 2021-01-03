@@ -266,7 +266,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessA(&lpApplicationName, const_cast<LPCSTR*>(&lpCommandLine), &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
+	if (!sp || !sp->OnCreateProcessA(&lpApplicationName, const_cast<LPCSTR*>(&lpCommandLine), &lpCurrentDirectory, &dwCreationFlags, &lpStartupInfo))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -315,7 +315,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, const_cast<LPCWSTR*>(&lpCommandLine), &lpCurrentDirectory, &ldwCreationFlags, lpStartupInfo))
+	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, const_cast<LPCWSTR*>(&lpCommandLine), &lpCurrentDirectory, &ldwCreationFlags, &lpStartupInfo))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);

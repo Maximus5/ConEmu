@@ -111,6 +111,7 @@ void LogFarExecCommand(
 }
 }
 
+#define LogExit(frc) LogExitLine(frc, __LINE__)
 
 CShellProc::CShellProc()
 {
@@ -397,111 +398,24 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
-				int mn_ImageBits, int mn_ImageSubsystem,
+				const int nImageBits, const int nImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
 				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/)
 {
-	//szBaseDir[0] = 0;
-
-	// Проверим, а надо ли?
 	if (!LoadSrvMapping())
 		return nullptr;
 
-	//	bDosBoxAllowed = pInfo->bDosBox;
-	//	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-	//	wcscat_c(szBaseDir, L"\\");
 	if (m_SrvMapping.nLoggingType != glt_Processes)
 		return nullptr;
 
-	CEStr lsDir;
+	CEStr tempCurDir;
 
 	return ExecuteNewCmdOnCreate(&m_SrvMapping, ghConWnd, aCmd,
 				asAction, asFile, asParam,
-				(asDir && *asDir) ? asDir : GetDirectory(lsDir),
+				(asDir && *asDir) ? asDir : GetDirectory(tempCurDir),
 				anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
-				mn_ImageBits, mn_ImageSubsystem,
+				nImageBits, nImageSubsystem,
 				hStdIn, hStdOut, hStdErr);
-
-	////DWORD dwGuiProcessId = 0;
-	////if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
-	////	return nullptr;
-	//
-	////MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-	////GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-	////const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
-	////if (!pInfo)
-	////	return nullptr;
-	////else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-	////	return nullptr;
-	////else
-	////{
-	////	bDosBoxAllowed = pInfo->bDosBox;
-	////	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-	////	wcscat_c(szBaseDir, L"\\");
-	////	if (pInfo->nLoggingType != glt_Processes)
-	////		return nullptr;
-	////}
-	////GuiInfoMapping.CloseMap();
-	//
-	//
-	//CESERVER_REQ *pIn = nullptr;
-	//
-	//int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
-	//int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
-	//int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
-	//
-	//pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
-	//	+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
-	//
-	//#ifdef _WIN64
-	//pIn->OnCreateProc.nSourceBits = 64;
-	//#else
-	//pIn->OnCreateProc.nSourceBits = 32;
-	//#endif
-	////pIn->OnCreateProc.bUnicode = TRUE;
-	//pIn->OnCreateProc.nImageSubsystem = mn_ImageSubsystem;
-	//pIn->OnCreateProc.nImageBits = mn_ImageBits;
-	//pIn->OnCreateProc.hStdIn = (unsigned __int64)hStdIn;
-	//pIn->OnCreateProc.hStdOut = (unsigned __int64)hStdOut;
-	//pIn->OnCreateProc.hStdErr = (unsigned __int64)hStdErr;
-	//
-	//if (aCmd == eShellExecute)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"Shell");
-	//else if (aCmd == eCreateProcess)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"Create");
-	//else if (aCmd == eInjectingHooks)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"Hooks");
-	//else if (aCmd == eHooksLoaded)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"Loaded");
-	//else if (aCmd == eParmsChanged)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"Changed");
-	//else if (aCmd == eLoadLibrary)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"LdLib");
-	//else if (aCmd == eFreeLibrary)
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"FrLib");
-	//else
-	//	wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
-	//
-	//pIn->OnCreateProc.nShellFlags = anShellFlags ? *anShellFlags : 0;
-	//pIn->OnCreateProc.nCreateFlags = anCreateFlags ? *anCreateFlags : 0;
-	//pIn->OnCreateProc.nStartFlags = anStartFlags ? *anStartFlags : 0;
-	//pIn->OnCreateProc.nShowCmd = anShowCmd ? *anShowCmd : 0;
-	//pIn->OnCreateProc.nActionLen = nActionLen;
-	//pIn->OnCreateProc.nFileLen = nFileLen;
-	//pIn->OnCreateProc.nParamLen = nParamLen;
-	//
-	//wchar_t* psz = pIn->OnCreateProc.wsValue;
-	//if (nActionLen > 1)
-	//	_wcscpy_c(psz, nActionLen, asAction);
-	//psz += nActionLen;
-	//if (nFileLen > 1)
-	//	_wcscpy_c(psz, nFileLen, asFile);
-	//psz += nFileLen;
-	//if (nParamLen > 1)
-	//	_wcscpy_c(psz, nParamLen, asParam);
-	//psz += nParamLen;
-	//
-	//return pIn;
 }
 
 void CShellProc::CheckHooksDisabled()
@@ -538,7 +452,7 @@ void CShellProc::CheckHooksDisabled()
 	mb_Opt_SkipCmdStart = bHooksSkipCmdStart;
 }
 
-BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode,
+BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMode,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
 				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
@@ -1460,8 +1374,6 @@ bool CShellProc::PrepareNewConsoleInFile(
 	return isNewConsoleArg;
 }
 
-#define LogExit(frc) LogExitLine(frc, __LINE__)
-
 bool CShellProc::CheckForDefaultTerminal(
 	const CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags, const DWORD* anShowCmd,
 	bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode)
@@ -1633,9 +1545,15 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 				bDebugWasRequested = true;
 				mb_PostInjectWasRequested = true;
 			} // end of check "starting new gnu debugger"
-			else if (lstrcmpi(gsExeName, exeName))
+			else if (!CompareProcessNames(gsExeName, exeName))
 			{
 				// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
+				//
+				// > C:\tools\Python27\pythonw.exe C:\tools\Python27\Lib\idlelib\idle.pyw
+				// and in the pytonw window
+				// > import subprocess
+				// > subprocess.call([r'C:\tools\Python27\python.exe'])
+				//
 				// -- bVsNetHostRequested = true;
 				const CEStr lsMsg(L"Forcing mb_NeedInjects for `", exeName, L"` started from `", gsExeName, L"`");
 				LogShellString(lsMsg);
@@ -1921,8 +1839,6 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	}
 
 	BOOL lbChanged = FALSE;
-	SetNeedInjects(FALSE);
-	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = nullptr;
 	pIn = NewCmdOnCreate(aCmd,
 			asAction, asFile, asParam, asDir,
@@ -2268,7 +2184,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			goto wrap;
 		}
 
-		lbChanged = ChangeExecuteParms(aCmd, bConsoleMode, asFile, asParam, ms_ExeTmp,
+		lbChanged = ChangeExecuteParams(aCmd, bConsoleMode, asFile, asParam, ms_ExeTmp,
 			NewConsoleFlags, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 
 		if (!lbChanged)
@@ -2710,42 +2626,168 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 	return lbRc;
 }
 
-// returns FALSE if need to block execution
-BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
+CShellProc::CreatePrepareData CShellProc::OnCreateProcessPrepare(
+	const DWORD* anCreationFlags, const DWORD dwFlags, const WORD wShowWindow, const DWORD dwX, const DWORD dwY)
 {
-	if (!lpSI || !IsInterceptionEnabled())
+	CreatePrepareData result{};
+
+	// For example, mintty starts root using pipe redirection
+	result.consoleNoWindow = (dwFlags & STARTF_USESTDHANDLES)
+		// or the caller need to run some process as "detached"
+		|| ((*anCreationFlags) & (DETACHED_PROCESS|CREATE_NO_WINDOW));
+
+	// Some "heuristics" - when created process may show its window? (Console or GUI)
+	result.showCmd = (dwFlags & STARTF_USESHOWWINDOW)
+		? wShowWindow
+		: ((gbAttachGuiClient || gbGuiClientAttached) && result.consoleNoWindow) ? 0
+		: SW_SHOWNORMAL;
+
+	// Console.exe starts cmd.exe with STARTF_USEPOSITION flag
+	if ((dwFlags & STARTF_USEPOSITION) && (dwX == HIDDEN_SCREEN_POSITION) && (dwY == HIDDEN_SCREEN_POSITION))
+		result.showCmd = SW_HIDE; // Let's think it is starting hidden
+
+	result.defaultShowCmd = result.showCmd;
+
+	mb_WasSuspended = anCreationFlags && (((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED);
+
+	return result;
+}
+
+void CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags)
+{
+	if (mb_NeedInjects)
+	{
+		// In DefTerm (gbPrepareDefaultTerminal) mb_NeedInjects is allowed too in some cases...
+		// code.exe -> "cmd /c start /wait" -> cmd.exe
+		(*anCreationFlags) |= CREATE_SUSPENDED;
+	}
+
+	if (prepareResult == PrepareExecuteResult::Modified)
+	{
+		if (gbPrepareDefaultTerminal)
+		{
+			_ASSERTE(m_Args.NoDefaultTerm != crb_On);
+
+			if (mb_PostInjectWasRequested)
+			{
+				// Stop other changes?
+			}
+			else
+			{
+				const WORD newShowCmd = mb_DebugWasRequested
+					? LOWORD(state.showCmd) // this is SW_HIDE, disable flickering
+					: SW_SHOWNORMAL; // ConEmu itself must starts normally?
+				if (state.defaultShowCmd != newShowCmd)
+				{
+					siShowWindow = newShowCmd;
+					siFlags |= STARTF_USESHOWWINDOW;
+				}
+				// Stop other changes?
+			}
+		}
+		else if (state.defaultShowCmd != state.showCmd)
+		{
+			siShowWindow = LOWORD(state.showCmd);
+			siFlags |= STARTF_USESHOWWINDOW;
+		}
+	}
+	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
+	else if (CDefTermHk::IsDefTermEnabled() && !state.consoleNoWindow && state.showCmd && anCreationFlags)
+	{
+		switch (mn_ImageSubsystem)
+		{
+		case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+			if (((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
+				&& ((*anCreationFlags) & CREATE_NEW_CONSOLE))
+			{
+				// e.g. debugger start of Win32 app from VisualStudio
+				// trick to avoid RealConsole window flickering
+				// ReSharper disable once CppLocalVariableMayBeConst
+				HWND hConWnd = GetRealConsoleWindow();
+				if (hConWnd == nullptr)
+				{
+					_ASSERTE(gnServerPID==0);
+					// Alloc hidden console and attach it to our VS GUI window
+					if (CDefTermHk::AllocHiddenConsole(true))
+					{
+						_ASSERTE(gnServerPID!=0);
+						// We managed to create hidden console window, run application there
+						mb_HiddenConsoleDetachNeed = TRUE;
+						// Do not need to "Show" it
+						siShowWindow = SW_HIDE;
+						siFlags |= STARTF_USESHOWWINDOW;
+						// Reuse existing console
+						(*anCreationFlags) &= ~CREATE_NEW_CONSOLE;
+					}
+				}
+			}
+			break; // IMAGE_SUBSYSTEM_WINDOWS_CUI
+
+		case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+			if (!((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
+				&& !((*anCreationFlags) & CREATE_NEW_CONSOLE))
+			{
+				// Start of msvsmon.exe?
+				const auto* pszExeName = PointToName(ms_ExeTmp);
+				if (pszExeName && (lstrcmpi(pszExeName, L"msvsmon.exe") == 0))
+				{
+					// Would be nice to hook only those instances which are started to work with *local* processes
+					// e.g.: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
+					mb_PostInjectWasRequested = TRUE;
+					if (!mb_WasSuspended)
+						(*anCreationFlags) |= CREATE_SUSPENDED;
+				}
+			}
+			break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
+		}
+	}
+}
+
+// returns FALSE if need to block execution
+BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA* ppStartupInfo)
+{
+	if (!ppStartupInfo || !*ppStartupInfo || !IsInterceptionEnabled())
 	{
 		LogShellString(L"OnCreateProcessA skipped");
 		return TRUE; // don't intercept, pass to kernel
 	}
 
+	const size_t cbLocalStartupInfoSize = std::max<size_t>(sizeof(STARTUPINFOA), (*ppStartupInfo)->cb);
+	m_lpStartupInfoA.reset(static_cast<LPSTARTUPINFOA>(calloc(1, cbLocalStartupInfoSize)));
+	if (!m_lpStartupInfoA)
+	{
+		LogShellString(L"OnCreateProcessW failed");
+		return TRUE; // don't intercept, pass to kernel
+	}
+	auto* lpSi = m_lpStartupInfoA.get();
+	memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : nullptr, mn_CP);
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : nullptr, mn_CP);
-	DWORD nShowCmd = lpSI->wShowWindow;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 	const CEStr lsDir(str2wcs(asDir ? *asDir : nullptr, mn_CP));
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
+	// Preprocess flags and options
+	auto state = OnCreateProcessPrepare(anCreationFlags, lpSi->dwFlags, lpSi->wShowWindow, lpSi->dwX, lpSi->dwY);
+
 	const auto prepareResult = PrepareExecuteParams(eCreateProcess,
-					nullptr, mpwsz_TempFile, mpwsz_TempParam, lsDir,
-					nullptr, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
-					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
-					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
+		nullptr, mpwsz_TempFile, mpwsz_TempParam, lsDir,
+		nullptr, anCreationFlags, &lpSi->dwFlags, &state.showCmd,
+		&lpSi->hStdInput, &lpSi->hStdOutput, &lpSi->hStdError,
+		&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
 	if (prepareResult == PrepareExecuteResult::Restrict)
 		return false;
 
 	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
-	if (mb_NeedInjects)
-		(*anCreationFlags) |= CREATE_SUSPENDED;
-
-	if (changed && (lpSI->wShowWindow != nShowCmd))
-		lpSI->wShowWindow = (WORD)nShowCmd;
+	// patch flags and variables based on decision
+	OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags);
 
 
 	// Patch modified strings (wide to ansi/oem)
-
+	
 	if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
 	{
 		mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
@@ -2787,138 +2829,49 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 }
 
 // returns FALSE if need to block execution
-BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI)
+BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW* ppStartupInfo)
 {
-	if (!lpSI || !IsInterceptionEnabled())
+	if (!ppStartupInfo || !*ppStartupInfo || !IsInterceptionEnabled())
 	{
 		LogShellString(L"OnCreateProcessW skipped");
 		return TRUE; // don't intercept, pass to kernel
 	}
 
-	// For example, mintty starts root using pipe redirection
-	const bool bConsoleNoWindow = (lpSI->dwFlags & STARTF_USESTDHANDLES)
-		// or the caller need to run some process as "detached"
-		|| ((*anCreationFlags) & (DETACHED_PROCESS|CREATE_NO_WINDOW));
+	const size_t cbLocalStartupInfoSize = std::max<size_t>(sizeof(STARTUPINFOW), (*ppStartupInfo)->cb);
+	m_lpStartupInfoW.reset(static_cast<LPSTARTUPINFOW>(calloc(1, cbLocalStartupInfoSize)));
+	if (!m_lpStartupInfoW)
+	{
+		LogShellString(L"OnCreateProcessW failed");
+		return TRUE; // don't intercept, pass to kernel
+	}
 
-	// Some "heuristics" - when created process may show its window? (Console or GUI)
-	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW)
-		? lpSI->wShowWindow
-		: ((gbAttachGuiClient || gbGuiClientAttached) && bConsoleNoWindow) ? 0
-		: SW_SHOWNORMAL;
+	auto* lpSi = m_lpStartupInfoW.get();
+	memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
 
-	// Console.exe starts cmd.exe with STARTF_USEPOSITION flag
-	if ((lpSI->dwFlags & STARTF_USEPOSITION) && (lpSI->dwX == HIDDEN_SCREEN_POSITION) && (lpSI->dwY == HIDDEN_SCREEN_POSITION))
-		nShowCmd = SW_HIDE; // Lets thing it is stating hidden
-
-	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
+	// Preprocess flags and options
+	auto state = OnCreateProcessPrepare(anCreationFlags, lpSi->dwFlags, lpSi->wShowWindow, lpSi->dwX, lpSi->dwY);
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
+	// Main logic
 	const auto prepareResult = PrepareExecuteParams(eCreateProcess,
 					nullptr,
 					asFile ? *asFile : nullptr,
 					asCmdLine ? *asCmdLine : nullptr,
 					asDir ? *asDir : nullptr,
-					nullptr, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
-					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
+					nullptr, anCreationFlags, &lpSi->dwFlags, &state.showCmd,
+					&lpSi->hStdInput, &lpSi->hStdOutput, &lpSi->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
 	if (prepareResult == PrepareExecuteResult::Restrict)
 		return false;
 
-	bool changed = (prepareResult == PrepareExecuteResult::Modified);
+	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
-	if (mb_NeedInjects)
-	{
-		// In DefTerm (gbPrepareDefaultTerminal) mb_NeedInjects is allowed too in some cases...
-		// code.exe -> "cmd /c start /wait" -> cmd.exe
-		(*anCreationFlags) |= CREATE_SUSPENDED;
-	}
+	// patch flags and variables based on decision
+	OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags);
 
-	if (changed)
-	{
-		if (gbPrepareDefaultTerminal)
-		{
-			_ASSERTE(m_Args.NoDefaultTerm != crb_On);
-
-			if (mb_PostInjectWasRequested)
-			{
-				changed = FALSE; // Stop other changes?
-			}
-			else
-			{
-				if (mb_DebugWasRequested)
-				{
-					lpSI->wShowWindow = LOWORD(nShowCmd); // this is SW_HIDE, disable flickering
-					changed = FALSE; // Stop other changes?
-				}
-				else
-				{
-					lpSI->wShowWindow = SW_SHOWNORMAL; // ConEmu itself must starts normally?
-				}
-				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
-			}
-		}
-		else if (lpSI->wShowWindow != nShowCmd)
-		{
-			lpSI->wShowWindow = (WORD)nShowCmd;
-			if (!(lpSI->dwFlags & STARTF_USESHOWWINDOW))
-				lpSI->dwFlags |= STARTF_USESHOWWINDOW;
-		}
-
-		if (changed)
-		{
-			*asFile = mpwsz_TempRetFile;
-		}
-	}
-	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
-	else if (CDefTermHk::IsDefTermEnabled() && !bConsoleNoWindow && nShowCmd && anCreationFlags && lpSI)
-	{
-		switch (mn_ImageSubsystem)
-		{
-		case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-			if (((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
-				&& ((*anCreationFlags) & CREATE_NEW_CONSOLE))
-			{
-				// Запуск отладчика Win32 приложения из VisualStudio (например)
-				// Финт ушами для избежания мелькания RealConsole window
-				HWND hConWnd = GetRealConsoleWindow();
-				if (hConWnd == nullptr)
-				{
-					_ASSERTE(gnServerPID==0);
-					// Alloc hidden console and attach it to our VS GUI window
-					if (CDefTermHk::AllocHiddenConsole(true))
-					{
-						_ASSERTE(gnServerPID!=0);
-						// Удалось создать скрытое консольное окно, приложение можно запустить в нем
-						mb_HiddenConsoleDetachNeed = TRUE;
-						// Do not need to "Show" it
-						lpSI->wShowWindow = SW_HIDE;
-						lpSI->dwFlags |= STARTF_USESHOWWINDOW;
-						// Reuse existing console
-						(*anCreationFlags) &= ~CREATE_NEW_CONSOLE;
-					}
-				}
-			}
-			break; // IMAGE_SUBSYSTEM_WINDOWS_CUI
-
-		case IMAGE_SUBSYSTEM_WINDOWS_GUI:
-			if (!((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
-				&& !((*anCreationFlags) & CREATE_NEW_CONSOLE))
-			{
-				// Запуск msvsmon.exe?
-				LPCWSTR pszExeName = PointToName(ms_ExeTmp);
-				if (pszExeName && (lstrcmpi(pszExeName, L"msvsmon.exe") == 0))
-				{
-					// Теоретически, хорошо бы хукать только те отладчики, которые запускаются
-					// для работы с локальными процессами: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
-					mb_PostInjectWasRequested = TRUE;
-					if (!mb_WasSuspended)
-						(*anCreationFlags) |= CREATE_SUSPENDED;
-				}
-			}
-			break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
-		}
-	}
+	
+	// Patch modified strings (wide to ansi/oem)
 
 	if (changed || mpwsz_TempRetFile)
 	{

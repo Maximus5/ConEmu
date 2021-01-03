@@ -64,33 +64,34 @@ TEST(ShellProcessor, Test)
 		LPCWSTR pszFile = nullptr, pszParam = nullptr;
 		DWORD nCreateFlags = 0, nShowCmd = 0;
 		STARTUPINFOW si = {};
+		auto* psi = &si;
 		si.cb = sizeof(si);
 		switch (i)
 		{
 		case 0:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"mingw32-make \"1.cpp\" ";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si));
+			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			break;
 		case 1:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"\"mingw32-make.exe\" \"1.cpp\" ";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si));
+			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			break;
 		case 2:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"\"C:\\GCC\\mingw\\bin\\mingw32-make.exe\" \"1.cpp\" ";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si));
+			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			break;
 		case 3:
 			pszFile = L"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE";
 			pszParam = L"prince megahit";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si));
+			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			break;
 		case 4:
 			pszFile = nullptr;
 			pszParam = L" \"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE\"";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &si));
+			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			break;
 		case 5:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";

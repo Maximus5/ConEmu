@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "../common/RConStartArgs.h"
+#include <memory>
 
 struct RConStartArgs;
 
@@ -65,19 +66,29 @@ private:
 	LPWSTR mpwsz_TempRetParam = nullptr;
 	LPWSTR mpwsz_TempRetDir = nullptr;
 
-	// Копии для ShellExecuteEx - менять мы можем только свою память
+	template<typename T>
+	struct StructDeleter { // deleter
+		void operator()(T* p) const
+		{
+			SafeFree(p);
+		}
+	};
+
+	// Copies for ShellExecuteEx - we may change only our memory
 	LPSHELLEXECUTEINFOA mlp_ExecInfoA = nullptr, mlp_SaveExecInfoA = nullptr;
 	LPSHELLEXECUTEINFOW mlp_ExecInfoW = nullptr, mlp_SaveExecInfoW = nullptr;
+	// Copies for CreateProcess
+	std::unique_ptr<STARTUPINFOA, StructDeleter<STARTUPINFOA>> m_lpStartupInfoA;
+	std::unique_ptr<STARTUPINFOW, StructDeleter<STARTUPINFOW>> m_lpStartupInfoW;
 
-	// Информация о запускаемом процессе
+	// Information about starting process
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
 	CmdArg ms_ExeTmp;
-	BOOL mb_WasSuspended = FALSE; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
+	BOOL mb_WasSuspended = FALSE; // if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
 	BOOL mb_NeedInjects = FALSE;
 	BOOL mb_DebugWasRequested = FALSE;
 	BOOL mb_HiddenConsoleDetachNeed = FALSE;
 	BOOL mb_PostInjectWasRequested = FALSE;
-	//BOOL mb_DosBoxAllowed;
 	bool mb_Opt_DontInject = false; // ConEmuHooks=OFF
 	bool mb_Opt_SkipNewConsole = false; // ConEmuHooks=NOARG
 	bool mb_Opt_SkipCmdStart = false; // ConEmuHooks=NOSTART
@@ -116,6 +127,13 @@ private:
 		Modified = 1,
 	};
 
+	struct CreatePrepareData
+	{
+		bool consoleNoWindow;
+		DWORD showCmd;
+		DWORD defaultShowCmd;
+	};
+
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
 	char* wcs2str(const wchar_t* pwsz, UINT anCP);
@@ -135,7 +153,7 @@ private:
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
-	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode,
+	BOOL ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMode,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
 				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
@@ -147,8 +165,10 @@ private:
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI);
 	void SetNeedInjects(bool value);
 	static bool IsInterceptionEnabled();
+	CreatePrepareData OnCreateProcessPrepare(const DWORD* anCreationFlags, DWORD dwFlags, WORD wShowWindow, DWORD dwX, DWORD dwY);
+	void OnCreateProcessResult(PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags);
 public:
-	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
+	CESERVER_REQ* NewCmdOnCreate(CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int nImageBits, int nImageSubsystem,
@@ -166,8 +186,8 @@ public:
 	BOOL OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asDir, LPCWSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
 	BOOL OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo);
 	BOOL OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo);
-	BOOL OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI);
-	BOOL OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI);
+	BOOL OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA* ppStartupInfo);
+	BOOL OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW* ppStartupInfo);
 	// Вызывается после успешного создания процесса
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
