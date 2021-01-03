@@ -1637,7 +1637,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 			{
 				// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
 				// -- bVsNetHostRequested = true;
-				CEStr lsMsg(L"Forcing mb_NeedInjects for `", gsExeName, L"` started from `", gsExeName, L"`");
+				const CEStr lsMsg(L"Forcing mb_NeedInjects for `", exeName, L"` started from `", gsExeName, L"`");
 				LogShellString(lsMsg);
 				SetNeedInjects(true);
 			} // end of check "<starting exe> == <current exe>"
@@ -1948,15 +1948,14 @@ int CShellProc::PrepareExecuteParms(
 	// logging
 	{
 		int cchLen = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 128;
-		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
-		if (pszDbgMsg)
+		CEStr dbgMsg;
+		if (dbgMsg.GetBuffer(cchLen))
 		{
-			msprintf(pszDbgMsg, cchLen, L"Run(ParentPID=%u): %s <%s> <%s>",
+			msprintf(dbgMsg.data(), cchLen, L"Run(ParentPID=%u): %s <%s> <%s>",
 				GetCurrentProcessId(),
 				(aCmd == eShellExecute) ? L"Shell" : (aCmd == eCreateProcess) ? L"Create" : L"???",
 				asFile ? asFile : L"", asParam ? asParam : L"");
-			LogShellString(pszDbgMsg);
-			free(pszDbgMsg);
+			LogShellString(dbgMsg);
 		}
 	}
 
