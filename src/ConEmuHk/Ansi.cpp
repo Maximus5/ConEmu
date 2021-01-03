@@ -213,7 +213,7 @@ void DebugStringUtf8(LPCWSTR asMessage)
 		return;
 	// Only ConEmuC debugger is able to show Utf-8 encoded debug strings
 	// So, set bUseUtf8 to false if VS debugger is required
-	static bool bUseUtf8 = true;
+	static bool bUseUtf8 = false;
 	if (!bUseUtf8)
 	{
 		DebugString(asMessage);

@@ -31,6 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "SetHook.h"
 
+#include <Windows.h>
+
+struct MY_CONSOLE_SCREEN_BUFFER_INFOEX;
+struct MY_CONSOLE_FONT_INFOEX;
+
 /* *************************** */
 
 #if __GNUC__

@@ -51,7 +51,9 @@ enum WriteProcessedStream
 	wps_Input  = 4, // Reserved for StdInput
 	wps_Ansi   = 8, // Reserved as a Flag for IsAnsiCapable
 };
+#ifndef WRITE_PROCESSED_STREAM_DEFINED
 #define WRITE_PROCESSED_STREAM_DEFINED
+#endif
 
 #if defined(__GNUC__)
 extern "C" {

@@ -34,9 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "Ansi.h"
-
-
+#define WRITE_PROCESSED_STREAM_DEFINED
 // enum RequestTermConnectorMode
 // enum WriteProcessedStream
 // struct RequestTermConnectorParm
