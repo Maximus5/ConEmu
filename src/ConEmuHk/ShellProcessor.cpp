@@ -1670,11 +1670,17 @@ int CShellProc::PrepareExecuteParms(
 	// !!! anFlags может быть nullptr;
 	// !!! asAction может быть nullptr;
 	_ASSERTE(*psFile==nullptr && *psParam==nullptr);
-	if (!ghConEmuWndDC && !CDefTermHk::IsDefTermEnabled())
-		return 0; // Перехватывать только под ConEmu
+	if (!IsInterceptionEnabled())
+	{
+		LogShellString(L"PrepareExecuteParams skipped");
+		return 0; // In ConEmu only
+	}
 
 	if (!asFile && !asParam)
+	{
+		LogShellString(L"PrepareExecuteParams skipped (null params)");
 		return 0; // That is most probably asAction="OpenNewWindow"
+	}
 
 	// Just in case of unexpected LastError changes
 	ScopedObject(CLastErrorGuard);
@@ -2477,10 +2483,10 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsEx
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
+	if (!IsInterceptionEnabled())
 	{
 		LogShellString(L"OnShellExecuteA skipped");
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // don't intercept, pass to kernel
 	}
 
 	if (GetCurrentThreadId() == gnHookMainThreadId)
@@ -2534,10 +2540,10 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
+	if (!IsInterceptionEnabled())
 	{
 		LogShellString(L"OnShellExecuteW skipped");
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // don't intercept, pass to kernel
 	}
 
 	// We do not hook lpIDList
@@ -2611,16 +2617,30 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 	return lbRc;
 }
 
+bool CShellProc::IsInterceptionEnabled()
+{
+	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
+	{
+		if (CDefTermHk::IsDefTermEnabled())
+		{
+			// OK, continue to "Default terminal" feature (console applications and batch files only)
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 {
-	if (!lpExecInfo)
-		return TRUE;
-
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
+	if (!lpExecInfo || !IsInterceptionEnabled())
 	{
 		LogShellString(L"OnShellExecuteExA skipped");
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // don't intercept, pass to kernel
 	}
 
 	mlp_SaveExecInfoA = *lpExecInfo;
@@ -2645,13 +2665,10 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 {
-	if (!lpExecInfo)
-		return TRUE;
-
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !CDefTermHk::IsDefTermEnabled())
+	if (!lpExecInfo || !IsInterceptionEnabled())
 	{
 		LogShellString(L"OnShellExecuteExW skipped");
-		return TRUE; // Перехватывать только под ConEmu или в DefTerm
+		return TRUE; // don't intercept, pass to kernel
 	}
 
 	mlp_SaveExecInfoW = *lpExecInfo;
@@ -2676,10 +2693,10 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 // returns FALSE if need to block execution
 BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
 {
-	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
+	if (!lpSI || !IsInterceptionEnabled())
 	{
 		LogShellString(L"OnCreateProcessA skipped");
-		return TRUE; // Перехватывать только под ConEmu
+		return TRUE; // don't intercept, pass to kernel
 	}
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : nullptr, mn_CP);
@@ -2742,17 +2759,10 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 // returns FALSE if need to block execution
 BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI)
 {
-	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
+	if (!lpSI || !IsInterceptionEnabled())
 	{
-		if (CDefTermHk::IsDefTermEnabled())
-		{
-			// OK, continue to "Default terminal" feature (console applications and batch files only)
-		}
-		else
-		{
-			LogShellString(L"OnCreateProcessW skipped");
-			return TRUE; // Перехватывать только под ConEmu
-		}
+		LogShellString(L"OnCreateProcessW skipped");
+		return TRUE; // don't intercept, pass to kernel
 	}
 
 	// For example, mintty starts root using pipe redirection

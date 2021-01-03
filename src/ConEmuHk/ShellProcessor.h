@@ -136,6 +136,7 @@ private:
 	void LogShellString(LPCWSTR asMessage) const;
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI);
 	void SetNeedInjects(bool value);
+	static bool IsInterceptionEnabled();
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
