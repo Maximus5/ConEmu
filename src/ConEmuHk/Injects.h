@@ -16,6 +16,6 @@ extern InjectsFnPtr gfLdrGetDllHandleByName;
 
 #include "../ConEmuCD/ExitCodes.h"
 
-CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCWSTR asConEmuHkDir, HWND hConWnd);
+CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, DWORD imageBits, BOOL abLogProcess, LPCWSTR asConEmuHkDir, HWND hConWnd);
 UINT_PTR GetLoadLibraryAddress();
 UINT_PTR GetLdrGetDllHandleByNameAddress();

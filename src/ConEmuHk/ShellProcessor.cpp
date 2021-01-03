@@ -3068,7 +3068,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 	else
 		pszDllDir = gsConEmuBaseDir;
 
-	const CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI,
+	const CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI, mn_ImageBits,
 		(m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)),
 		pszDllDir, ghConWnd);
 

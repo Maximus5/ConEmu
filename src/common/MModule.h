@@ -48,6 +48,9 @@ protected:
 
 	// true if mh_Module is from GetModuleHandle so we don't need to call FreeLibrary
 	bool    selfLoaded_ = false;
+
+	// last error on API call
+	mutable DWORD lastError_ = 0;
 	
 public:
 	MModule();
@@ -69,6 +72,7 @@ public:
 	bool GetProcAddress(const char * const asFunction, FunctionType*& pfn) const
 	{
 		pfn = moduleHandle_ ? reinterpret_cast<FunctionType*>(::GetProcAddress(moduleHandle_, asFunction)) : nullptr;
+		lastError_ = pfn ? 0 : GetLastError();
 		return (pfn != nullptr);
 	};
 public:

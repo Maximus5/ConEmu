@@ -100,6 +100,7 @@ HMODULE MModule::Load(const wchar_t* asModule)
 
 	moduleHandle_ = LoadLibraryW(asModule);
 	selfLoaded_ = (moduleHandle_ != nullptr);
+	lastError_ = selfLoaded_ ? 0 : GetLastError();
 	return moduleHandle_;
 }
 
@@ -123,6 +124,7 @@ void MModule::Free()
 		HMODULE hLib = moduleHandle_;
 		moduleHandle_ = nullptr;
 		FreeLibrary(hLib);
+		lastError_ = GetLastError();
 	}
 
 	moduleHandle_ = nullptr;

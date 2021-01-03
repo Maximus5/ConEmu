@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpProcess.h"
 #include "../common/MModule.h"
 #include "../common/WObjects.h"
+#include <tuple>
 
 extern HMODULE ghOurModule;
 
@@ -120,13 +121,14 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
 // The function may start appropriate bitness of ConEmuC.exe with "/SETHOOKS=..." switch
 // If bitness matches, use WriteProcessMemory and SetThreadContext immediately
-CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCWSTR asConEmuHkDir, HWND hConWnd)
+CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, const DWORD imageBits, BOOL abLogProcess, LPCWSTR asConEmuHkDir, HWND hConWnd)
 {
 	CINJECTHK_EXIT_CODES iRc = CIH_OK/*0*/;
 	wchar_t szDllDir[MAX_PATH*2];
 	_ASSERTE(ghOurModule!=nullptr);
 	BOOL is64bitOs = FALSE;
-	int  ImageBits = 32; //-V112
+	DWORD loadedImageBits = (imageBits == 32 || imageBits == 64) ? imageBits : 32; //-V112
+	DWORD imageBitsLastError = 0;
 #ifdef WIN64
 	is64bitOs = TRUE;
 #endif
@@ -183,21 +185,25 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 
 		if (hKernel.GetProcAddress("IsWow64Process", isWow64ProcessFunc))
 		{
-			BOOL bWow64 = FALSE;
-#ifndef WIN64
-
-			// Текущий процесс - 32-битный, (bWow64==TRUE) будет означать что OS - 64битная
+			BOOL bWow64;
+			#ifndef WIN64
+			// current process is 32-bit, (bWow64==TRUE) means the OS is 64-bit
+			bWow64 = FALSE;
 			if (isWow64ProcessFunc(GetCurrentProcess(), &bWow64) && bWow64)
 				is64bitOs = TRUE;
-
-#else
+			#else
 			_ASSERTE(is64bitOs);
-#endif
-			// Теперь проверить запущенный процесс
+			#endif
+			
+			// Check the started process now
 			bWow64 = FALSE;
-
-			if (is64bitOs && isWow64ProcessFunc(pi.hProcess, &bWow64) && !bWow64)
-				ImageBits = 64;
+			if (is64bitOs)
+			{
+				if (isWow64ProcessFunc(pi.hProcess, &bWow64))
+					loadedImageBits = bWow64 ? 32 : 64;
+				else
+					imageBitsLastError = GetLastError();
+			}
 		}
 	}
 
@@ -221,7 +227,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 
 	//#else
 	// Если битность не совпадает - нужен helper
-	if (ImageBits != selfImageBits)
+	if (loadedImageBits != selfImageBits)
 	{
 		const DWORD dwPidWait = WaitForSingleObject(pi.hProcess, 0);
 		if (dwPidWait == WAIT_OBJECT_0)
@@ -246,7 +252,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 		wchar_t sz64helper[MAX_PATH*2];
 		msprintf(sz64helper, countof(sz64helper),
 		          L"\"%s\\ConEmuC%s.exe\" /SETHOOKS=%X,%u,%X,%u",
-		          szDllDir, (ImageBits==64) ? L"64" : L"",
+		          szDllDir, (loadedImageBits==64) ? L"64" : L"",
 		          LODWORD(hProcess), pi.dwProcessId, LODWORD(hThread), pi.dwThreadId);
 		STARTUPINFO si = {sizeof(STARTUPINFO)};
 		PROCESS_INFORMATION pi64 = {nullptr};
@@ -339,7 +345,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 
 			DWORD_PTR ptrAllocated = 0; DWORD nAllocated = 0;
 			InjectHookFunctions fnArg = {gfLoadLibrary.module, gfLoadLibrary.fnPtr, gfLoadLibrary.szModule, gfLdrGetDllHandleByName.module, gfLdrGetDllHandleByName.fnPtr};
-			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szDllDir, &ptrAllocated, &nAllocated);
+			iRc = InjectHookDLL(pi, &fnArg, loadedImageBits, szDllDir, &ptrAllocated, &nAllocated);
 
 			if (abLogProcess || (iRc != CIH_OK/*0*/))
 			{
@@ -413,5 +419,6 @@ wrap:
 			pAppMap->HookedPids.AddValue(pi.dwProcessId);
 		}
 	}
+	std::ignore = imageBitsLastError;
 	return iRc;
 }

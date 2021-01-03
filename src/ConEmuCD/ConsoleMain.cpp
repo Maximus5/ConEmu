@@ -1336,8 +1336,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 						_ASSERTE(ghRootProcessFlag!=nullptr);
 					}
 
-					// Теперь ставим хуки
-					iHookRc = InjectHooks(pi, gbLogProcess, gsSelfPath, gState.realConWnd_);
+					// Inject ConEmuHk.dll into started process space
+					iHookRc = InjectHooks(pi, gnImageBits, gbLogProcess, gsSelfPath, gState.realConWnd_);
 				}
 
 				if (iHookRc != CIH_OK/*0*/)
