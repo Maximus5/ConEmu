@@ -1484,7 +1484,7 @@ bool CShellProc::CheckForDefaultTerminal(
 				// :: have to hook both cmd to get second in ConEmu tab
 				// :: first cmd is started with CREATE_NO_WINDOW flag!
 				LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisuaStudio Code");
-				mb_NeedInjects = true;
+				SetNeedInjects(true);
 				bConsoleMode = true;
 			}
 
@@ -1639,7 +1639,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 				// -- bVsNetHostRequested = true;
 				CEStr lsMsg(L"Forcing mb_NeedInjects for `", gsExeName, L"` started from `", gsExeName, L"`");
 				LogShellString(lsMsg);
-				mb_NeedInjects = true;
+				SetNeedInjects(true);
 			} // end of check "<starting exe> == <current exe>"
 		}
 	}
@@ -1914,7 +1914,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	BOOL lbChanged = FALSE;
-	mb_NeedInjects = FALSE;
+	SetNeedInjects(FALSE);
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = nullptr;
 	pIn = NewCmdOnCreate(aCmd,
@@ -1941,7 +1941,7 @@ int CShellProc::PrepareExecuteParms(
 		// so unconditional unhooking of "ssh-agent.exe" was removed.
 		)
 	{
-		mb_NeedInjects = FALSE;
+		SetNeedInjects(FALSE);
 		goto wrap;
 	}
 
@@ -2014,7 +2014,7 @@ int CShellProc::PrepareExecuteParms(
 			{
 				_ASSERTE(gnAttachPortableGuiCui==0);
 				gnAttachPortableGuiCui = static_cast<GuiCui>(IMAGE_SUBSYSTEM_WINDOWS_CUI);
-				mb_NeedInjects = TRUE;
+				SetNeedInjects(TRUE);
 				bForceNewConsole = false;
 				if (anCreateFlags)
 				{
@@ -2116,7 +2116,7 @@ int CShellProc::PrepareExecuteParms(
 		const wchar_t* pszExeName = PointToName(ms_ExeTmp);
 		if (pszExeName && (!lstrcmpi(pszExeName, L"ConEmuC.exe") || !lstrcmpi(pszExeName, L"ConEmuC64.exe")))
 		{
-			mb_NeedInjects = FALSE;
+			SetNeedInjects(FALSE);
 			goto wrap;
 		}
 	}
@@ -2139,7 +2139,7 @@ int CShellProc::PrepareExecuteParms(
 		{
 			_ASSERTE(gnAttachPortableGuiCui==0);
 			gnAttachPortableGuiCui = (GuiCui)IMAGE_SUBSYSTEM_WINDOWS_GUI;
-			mb_NeedInjects = TRUE;
+			SetNeedInjects(TRUE);
 		}
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
 	}
@@ -2236,7 +2236,7 @@ int CShellProc::PrepareExecuteParms(
 	{
 		if (bDebugWasRequested && gbPrepareDefaultTerminal)
 		{
-			mb_NeedInjects = FALSE;
+			SetNeedInjects(FALSE);
 			// We need to post attach ConEmu GUI to started console
 			if (bVsNetHostRequested)
 				mb_PostInjectWasRequested = TRUE;
@@ -2269,7 +2269,7 @@ int CShellProc::PrepareExecuteParms(
 		{
 			// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 			// И если просили не ставить хуки (-new_console:i) - тоже
-			mb_NeedInjects = (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On);
+			SetNeedInjects((mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On));
 		}
 		else
 		{
@@ -2326,9 +2326,9 @@ int CShellProc::PrepareExecuteParms(
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
-		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16)
+		SetNeedInjects((aCmd == eCreateProcess) && (mn_ImageBits != 16)
 			&& (m_Args.InjectsDisable != crb_On) && !gbPrepareDefaultTerminal
-			&& !bDontForceInjects;
+			&& !bDontForceInjects);
 
 		// Параметр -cur_console / -new_console нужно вырезать
 		if (NewConsoleFlags || bCurConsoleArg)
@@ -3090,6 +3090,11 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 	{
 		ResumeThread(lpPI->hThread);
 	}
+}
+
+void CShellProc::SetNeedInjects(const bool value)
+{
+	mb_NeedInjects = value;
 }
 
 bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= nullptr*/)
