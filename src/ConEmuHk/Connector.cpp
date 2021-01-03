@@ -48,21 +48,142 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Connector
 {
 
-static bool gbWasStarted = false;
-static bool gbTermVerbose = false;
-static bool gbTerminateReadInput = false;
-static HANDLE ghTermInput = nullptr;
-static DWORD gnTermPrevMode = 0;
-static UINT gnPrevConsoleCP = 0;
-static std::atomic_int gnInTermInputReading;
-static struct {
+namespace {
+bool gbWasStarted = false;
+bool gbTermVerbose = false;
+bool gbTerminateReadInput = false;
+HANDLE ghTermInput = nullptr;
+DWORD gnTermPrevMode = 0;
+UINT gnPrevConsoleCP = 0;
+std::atomic_int gnInTermInputReading;
+struct BlockInputProcess
+{
 	HANDLE handle;
 	DWORD pid;
-} gBlockInputProcess = {};
+};
+BlockInputProcess gBlockInputProcess = {};
 /// Pipe handles for reading keyboard input and writing application output
-static MPipeDual* gInOut = nullptr;
+MPipeDual* gInOut = nullptr;
 /// Input queue for keyboard/mouse events
-static std::deque<INPUT_RECORD, MArrayAllocator<INPUT_RECORD>> gInputEvents;  // NOLINT(clang-diagnostic-exit-time-destructors)
+std::deque<INPUT_RECORD, MArrayAllocator<INPUT_RECORD>>* gInputEvents = nullptr;
+
+class InputBuffer
+{
+public:
+	ReadInputResult ReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
+	{
+		LoadBuffer();
+
+		DWORD read = 0;
+		while (read < nCount)
+		{
+			const auto add = GetInputBlock(pir + read, nCount - read);
+			if (!add)
+				break;
+			read += add;
+		}
+
+		*pRead = read;
+		const ReadInputResult result = (read == 0) ? rir_None
+			: buffer_.empty() ? rir_Ready
+			: rir_Ready_More;
+		if (read)
+			DumpReadInput(pir, read, result);
+		return result;
+	}
+
+	static void DumpReadInput(const INPUT_RECORD* pir, const DWORD read, const ReadInputResult result)
+	{
+		#ifdef _DEBUG
+		static std::chrono::high_resolution_clock::time_point prev = {};
+
+		DWORD down = 0;
+		for (DWORD i = 0; i < read; ++i)
+		{
+			if (pir[i].EventType == KEY_EVENT && pir[i].Event.KeyEvent.bKeyDown)
+				++down;
+		}
+
+		std::chrono::milliseconds delay = {};
+		if (prev != std::chrono::high_resolution_clock::time_point())
+			delay = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prev);
+
+		wchar_t dbgInfo[120] = L"";
+		msprintf(dbgInfo, countof(dbgInfo), L"termReadInput: delay=%u count=%u down=%u%s",
+			static_cast<unsigned>(delay.count()), read, down, result == rir_Ready_More ? L" (more)" : L" (none)");
+		wchar_t* ptr = dbgInfo + wcslen(dbgInfo);
+		const wchar_t* ptrEnd = dbgInfo + countof(dbgInfo) - 8;
+		for (DWORD i = 0; i < read; ++i)
+		{
+			wchar_t chr[32] = L"";
+			if (pir[i].EventType != KEY_EVENT)
+			{
+				msprintf(chr, countof(chr) - 1, L" type=%u", pir[i].EventType);
+			}
+			else
+			{
+				const auto& ke = pir[i].Event.KeyEvent;
+				const auto* format = (ke.uChar.UnicodeChar && ke.bKeyDown) ? L" x%02X"
+					: (ke.uChar.UnicodeChar && !ke.bKeyDown) ? L" (x%02X)"
+					: (!ke.uChar.UnicodeChar && ke.bKeyDown) ? L" %u"
+					: L" (%u)";
+				msprintf(chr, countof(chr) - 1, format, ke.uChar.UnicodeChar ? static_cast<UINT>(ke.uChar.UnicodeChar) : ke.wVirtualKeyCode);
+				if (ke.wVirtualScanCode == 255)
+				{
+					wcscat_s(chr, L" <X>");
+				}
+			}
+			const auto addLen = wcslen(chr);
+			if (ptr + addLen >= ptrEnd)
+			{
+				wcscpy_s(ptr, 8, L" ...");
+				ptr += 4;
+				break;
+			}
+			wcscpy_s(ptr, addLen + 1, chr);
+			ptr += addLen;
+		}
+		*(ptr++) = L'\n';
+		*ptr = L'\0';
+		OutputDebugStringW(dbgInfo);
+
+		prev = std::chrono::high_resolution_clock::now();
+		#endif
+	}
+
+protected:
+	std::deque<INPUT_RECORD, MArrayAllocator<INPUT_RECORD>> buffer_;
+
+	DWORD GetInputBlock(PINPUT_RECORD pir, DWORD nCount)
+	{
+		DWORD read = 0;
+		for (DWORD i = 0; i < nCount && !buffer_.empty(); ++i)
+		{
+			pir[i] = buffer_.front();
+			buffer_.pop_front();
+			++read;
+		}
+		return read;
+	}
+
+	void LoadBuffer()
+	{
+		INPUT_RECORD buffer[64] = {};
+		DWORD peek = 0;
+		if (!PeekConsoleInputW(ghTermInput, buffer, static_cast<DWORD>(std::size(buffer)), &peek) || !peek)
+			return;
+		DWORD read = 0;
+		if (!ReadConsoleInputW(ghTermInput, buffer, peek, &read) || !read)
+			return;
+		for (size_t i = 0; i < read; ++i)
+		{
+			buffer_.push_back(buffer[i]);
+		}
+	}
+};
+
+InputBuffer* gInputBuffer = nullptr;
+}
 
 static BOOL WINAPI writeTermOutput(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream);
 
@@ -141,61 +262,6 @@ static bool mayReadInput()
 	return true;
 }
 
-static void DumpReadInput(PINPUT_RECORD pir, DWORD read, ReadInputResult result)
-{
-#ifdef _DEBUG
-	static std::chrono::high_resolution_clock::time_point prev = {};
-
-	DWORD down = 0;
-	for (DWORD i = 0; i < read; ++i)
-	{
-		if (pir[i].EventType == KEY_EVENT && pir[i].Event.KeyEvent.bKeyDown)
-			++down;
-	}
-
-	std::chrono::milliseconds delay = {};
-	if (prev != std::chrono::high_resolution_clock::time_point())
-		delay = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - prev);
-
-	wchar_t dbgInfo[120] = L"";
-	msprintf(dbgInfo, countof(dbgInfo), L"termReadInput: delay=%u count=%u down=%u%s",
-		static_cast<unsigned>(delay.count()), read, down, result == rir_Ready_More ? L" (more)" : L" (none)");
-	wchar_t* ptr = dbgInfo + wcslen(dbgInfo);
-	const wchar_t* ptrEnd = dbgInfo + countof(dbgInfo) - 8;
-	for (DWORD i = 0; i < read; ++i)
-	{
-		wchar_t chr[20] = L"";
-		if (pir[i].EventType != KEY_EVENT)
-		{
-			msprintf(chr, countof(chr) - 1, L" type=%u", pir[i].EventType);
-		}
-		else
-		{
-			const auto& ke = pir[i].Event.KeyEvent;
-			const auto* format = (ke.uChar.UnicodeChar && ke.bKeyDown) ? L" x%02X"
-				: (ke.uChar.UnicodeChar && !ke.bKeyDown) ? L" (x%02X)"
-				: (!ke.uChar.UnicodeChar && ke.bKeyDown) ? L" %u"
-				: L" (%u)";
-			msprintf(chr, countof(chr) - 1, format, ke.uChar.UnicodeChar ? static_cast<UINT>(ke.uChar.UnicodeChar) : ke.wVirtualKeyCode);
-		}
-		const auto addLen = wcslen(chr);
-		if (ptr + addLen >= ptrEnd)
-		{
-			wcscpy_s(ptr, 8, L" ...");
-			ptr += 4;
-			break;
-		}
-		wcscpy_s(ptr, addLen + 1, chr);
-		ptr += addLen;
-	}
-	*(ptr++) = L'\n';
-	*ptr = L'\0';
-	OutputDebugStringW(dbgInfo);
-
-	prev = std::chrono::high_resolution_clock::now();
-#endif
-}
-
 /// Called from connector binary
 static ReadInputResult WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
 {
@@ -212,23 +278,10 @@ static ReadInputResult WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDW
 	BOOL bRc = FALSE;
 	ReadInputResult result = rir_None;
 	++gnInTermInputReading;
-	if (!gInOut)
+	if (!gInOut || !gInputEvents)
 	{
-		DWORD peek = 0, read = 0;
-		bRc = (PeekConsoleInputW(ghTermInput, pir, nCount, &peek) && peek)
-			? ReadConsoleInputW(ghTermInput, pir, peek, &read)
-			: FALSE;
-		if (bRc && read)
-		{
-			INPUT_RECORD temp = {};
-			if (PeekConsoleInputW(ghTermInput, &temp, 1, &peek) && peek)
-				result = rir_Ready_More;
-			else
-				result = rir_Ready;
-			*pRead = read;
-
-			DumpReadInput(pir, read, result);
-		}
+		result = gInputBuffer->ReadInput(pir, nCount, pRead);
+		bRc = (result != rir_None);
 	}
 	else
 	{
@@ -239,31 +292,31 @@ static ReadInputResult WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDW
 			const INPUT_RECORD* const pEnd = reinterpret_cast<const INPUT_RECORD*>(static_cast<char*>(events.first) + events.second);
 			for (; p + 1 <= pEnd; ++p)
 			{
-				gInputEvents.push_back(*p);
+				gInputEvents->push_back(*p);
 			}
 			if (p != pEnd)
 			{
 				_ASSERTE(p == pEnd); // broken format of block?
-				DumpReadInput(pir, 0, result);
+				gInputBuffer->DumpReadInput(pir, 0, result);
 				return rir_None;
 			}
 		}
-		if (!gInputEvents.empty())
+		if (!gInputEvents->empty())
 		{
 			bRc = TRUE;
 			DWORD i = 0;
-			for (; i < nCount && !gInputEvents.empty(); ++i)
+			for (; i < nCount && !gInputEvents->empty(); ++i)
 			{
-				pir[i] = gInputEvents.front();
-				gInputEvents.pop_front();
+				pir[i] = gInputEvents->front();
+				gInputEvents->pop_front();
 			}
 			*pRead = i;
-			if (!gInputEvents.empty())
+			if (!gInputEvents->empty())
 				result = rir_Ready_More;
 			else
 				result = rir_Ready;
 
-			DumpReadInput(pir, i, result);
+			gInputBuffer->DumpReadInput(pir, i, result);
 		}
 	}
 	--gnInTermInputReading;
@@ -322,14 +375,24 @@ static int startConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 			delete gInOut;
 		}
 		gInOut = new MPipeDual(HANDLE(pOut->qwData[0]), HANDLE(pOut->qwData[1]));
+		gInputEvents = new std::deque<INPUT_RECORD, MArrayAllocator<INPUT_RECORD>>();
 		ExecuteFreeResult(pOut);
 	}
 	else
 	{
+		SafeDelete(gInOut);
+		SafeDelete(gInputEvents);
 		Parm.pszError = "CECMD_STARTPTYSRV failed";
 		return -1;
 	}
 	#endif
+
+	if (gInputBuffer)
+	{
+		_ASSERTE(gInputBuffer != nullptr);
+		SafeDelete(gInputBuffer);
+	}
+	gInputBuffer = new InputBuffer;
 
 	ghTermInput = GetStdHandle(STD_INPUT_HANDLE);
 	gnTermPrevMode = protectCtrlBreakTrap(ghTermInput);
@@ -401,7 +464,12 @@ int stopConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 	{
 		ExecuteFreeResult(pOut);
 	}
+
+	SafeDelete(gInOut);
+	SafeDelete(gInputEvents);
 	#endif
+
+	SafeDelete(gInputBuffer);
 
 	SafeCloseHandle(gBlockInputProcess.handle);
 

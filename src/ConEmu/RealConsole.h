@@ -331,9 +331,17 @@ class CRealConsole
 		void ShowKeyBarHint(WORD nID);
 		bool PostPromptCmd(bool CD, LPCWSTR asCmd);
 		void OnKeysSending();
+
+	public:
+		enum class PostStringFlags
+		{
+			None = 1,
+			AllowGroup = 2,
+			XTermSequence = 4,
+		};
 	protected:
 		friend class CAltNumpad;
-		bool PostString(wchar_t* pszChars, size_t cchCount, bool allow_group);
+		bool PostString(wchar_t* pszChars, size_t cchCount, PostStringFlags flags);
 	private:
 		bool ChangePromptPosition(const AppSettings* pApp, COORD crMouse);
 		bool IsPromptActionAllowed(bool bFromMouse, const AppSettings* pApp);

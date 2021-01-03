@@ -56,7 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -178,6 +177,17 @@ static BOOL gbInSendConEvent = FALSE;
 
 #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
 #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
+namespace {
+CRealConsole::PostStringFlags operator|(const CRealConsole::PostStringFlags e1, const CRealConsole::PostStringFlags e2)
+{
+	return static_cast<CRealConsole::PostStringFlags>(static_cast<uint32_t>(e1) | static_cast<uint32_t>(e2));
+}
+bool operator&(const CRealConsole::PostStringFlags e1, const CRealConsole::PostStringFlags e2)
+{
+	return (static_cast<uint32_t>(e1) & static_cast<uint32_t>(e2)) != 0;
+}
+}
 
 //static bool gbInTransparentAssert = false;
 
@@ -1628,7 +1638,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					swprintf_c(pszData.data(), pszData.GetMaxCount(), L"%s%s%c", clearPrompt, asCmd, L'\n');
 				}
 
-				PostString(pszData.data(), pszData.GetLen(), false);
+				PostString(pszData.data(), pszData.GetLen(), PostStringFlags::None);
 			}
 		}
 	}
@@ -1645,7 +1655,7 @@ void CRealConsole::OnKeysSending()
 }
 
 // !!! Функция может менять буфер pszChars! !!! Private !!!
-bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_group)
+bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, PostStringFlags flags)
 {
 	if (!pszChars || !cchCount)
 	{
@@ -1661,7 +1671,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 	}
 
 	// If user want to type simultaneously into visible or all consoles
-	const EnumVConFlags isGrouped = allow_group ? mp_VCon->isGroupedInput() : evf_None;
+	const EnumVConFlags isGrouped = (flags & PostStringFlags::AllowGroup) ? mp_VCon->isGroupedInput() : evf_None;
 
 	// Call OnKeysSending to reset top-left in the buffer if was locked (after scroll)
 	if (isGrouped)
@@ -1741,8 +1751,8 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_gro
 	}
 
 	bool lbRc = false;
-	bool lbIsFar = isFar();
-	//wchar_t szMsg[128];
+	const bool lbIsFar = isFar();
+	const bool encodeXterm = (flags & PostStringFlags::XTermSequence) && (pszChars[0] == 0x1B) && (cchCount > 1);
 
 	size_t cchSucceeded = 0;
 	MSG64::MsgStr* pir = pirChars->msg;
@@ -6993,7 +7003,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 			for (WORD n = 0; n < nRepeatCount; ++n)
 			{
 				// Don't use group-input here - it's already processed by ProcessXtermSubst caller
-				if (!PostString(szSubstKeys.ms_Val, szSubstKeys.GetLen(), false))
+				if (!PostString(szSubstKeys.ms_Val, szSubstKeys.GetLen(), PostStringFlags::XTermSequence))
 					break;
 			}
 		}
@@ -12470,7 +12480,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	// Send to the console all symbols from buffer
 	if (nBufLen)
 	{
-		PostString(buffer.data(), nBufLen, true);
+		PostString(buffer.data(), nBufLen, PostStringFlags::AllowGroup);
 	}
 	else
 	{

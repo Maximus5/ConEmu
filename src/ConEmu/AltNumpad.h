@@ -66,7 +66,7 @@ public:
 
 protected:
 	void ClearAltNumber(bool bFull);
-	void DumpChars(wchar_t* asChars);
+	void DumpChars(wchar_t* asChars) const;
 	AltCharAction DumpAltNumber();
 	bool isAltNumpad();
 	bool isUseAltGrayPlus();
