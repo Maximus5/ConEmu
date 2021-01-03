@@ -62,6 +62,9 @@ bool IsConsoleHelper(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsSshAgentHelper(LPCWSTR pszProcessName);
+bool IsVsNetHostExe(LPCWSTR processName);
+bool IsVsDebugConsoleExe(LPCWSTR processName);
+bool IsGDB(LPCWSTR processName);
 
 /// <summary>
 /// Try to extract valid file-path-name of starting executable from space-delimited string with lack of double quotes

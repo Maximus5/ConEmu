@@ -1018,8 +1018,8 @@ bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
 	if (!pszName1 || !*pszName1 || !pszName2 || !*pszName2)
 		return false;
 
-	LPCWSTR pszExt1 = wcsrchr(pszName1, L'.');
-	LPCWSTR pszExt2 = wcsrchr(pszName2, L'.');
+	const auto* pszExt1 = wcsrchr(pszName1, L'.');
+	const auto* pszExt2 = wcsrchr(pszName2, L'.');
 
 	CEStr lsName1, lsName2;
 	if (!pszExt1)
@@ -1047,7 +1047,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 	if (!pszName1 || !*pszName1 || !lsNames)
 		return false;
 
-	LPCWSTR pszExt1 = wcsrchr(pszName1, L'.');
+	const auto* pszExt1 = wcsrchr(pszName1, L'.');
 
 	CEStr lsName1;
 	if (!pszExt1)
@@ -1060,7 +1060,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 
 	for (size_t i = 0; lsNames[i]; i++)
 	{
-		LPCWSTR pszName2 = lsNames[i];
+		const auto* pszName2 = lsNames[i];
 
 		_ASSERTE(wcsrchr(pszName2, L'.') != nullptr);
 		#if 0
@@ -1142,6 +1142,29 @@ bool IsCmdProcessor(LPCWSTR asModuleName)
 	return CheckProcessName(asModuleName, lsNameExt);
 }
 
+bool IsVsNetHostExe(LPCWSTR processName)
+{
+	bool bVsNetHostRequested = false;
+	const int iNameLen = processName ? lstrlen(processName) : 0;
+	const wchar_t pszVsHostSuffix[] = L".vshost.exe";
+	const int iVsHostSuffix = lstrlen(pszVsHostSuffix);
+	if ((iNameLen >= iVsHostSuffix) && (lstrcmpi(processName+iNameLen-iVsHostSuffix, pszVsHostSuffix) == 0))
+	{
+		bVsNetHostRequested = true;
+	}
+	return bVsNetHostRequested;
+}
+
+bool IsVsDebugConsoleExe(LPCWSTR processName)
+{
+	return CompareProcessNames(L"VsDebugConsole.exe", processName);
+}
+
+bool IsGDB(LPCWSTR processName)
+{
+	return CompareProcessNames(L"gdb.exe", processName);
+}
+
 bool IsQuotationNeeded(LPCWSTR pszPath)
 {
 	bool bNeeded = false;
@@ -1154,7 +1177,7 @@ bool IsQuotationNeeded(LPCWSTR pszPath)
 
 wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 {
-	bool bNeedQuot = IsQuotationNeeded(asExe);
+	const bool bNeedQuot = IsQuotationNeeded(asExe);
 	if (asParams && !*asParams)
 		asParams = nullptr;
 

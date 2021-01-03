@@ -70,10 +70,6 @@ bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize = nullptr);
 
 bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound);
 
-bool IsVsNetHostExe(LPCWSTR asFilePatName);
-
-bool IsGDB(LPCWSTR asFilePatName);
-
 class CEnvRestorer;
 typedef bool (*SearchAppPaths_t)(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore /*= NULL*/);
 extern SearchAppPaths_t gfnSearchAppPaths /*= NULL*/;

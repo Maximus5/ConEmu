@@ -943,27 +943,6 @@ bool IsHwFullScreenAvailable()
 		return true;
 }
 
-bool IsVsNetHostExe(LPCWSTR asFilePatName)
-{
-	bool bVsNetHostRequested = false;
-	const int iNameLen = asFilePatName ? lstrlen(asFilePatName) : 0;
-	const wchar_t pszVsHostSuffix[] = L".vshost.exe";
-	const int iVsHostSuffix = lstrlen(pszVsHostSuffix);
-	if ((iNameLen >= iVsHostSuffix) && (lstrcmpi(asFilePatName+iNameLen-iVsHostSuffix, pszVsHostSuffix) == 0))
-	{
-		bVsNetHostRequested = true;
-	}
-	return bVsNetHostRequested;
-}
-
-bool IsGDB(LPCWSTR asFilePatName)
-{
-	// "gdb.exe"
-	LPCWSTR pszName = PointToName(asFilePatName);
-	bool bIsGdb = pszName ? (lstrcmpi(pszName, L"gdb.exe") == 0) : false;
-	return bIsGdb;
-}
-
 /// Substitute in the pszFormat macros '%1' ... '%9' with pszValues[0] .. pszValues[8]
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)
 {
