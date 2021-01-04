@@ -671,13 +671,13 @@ HWND CDefTermHk::AllocHiddenConsole(const bool bTempForVS)
 
 DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE phSrvProcess)
 {
-	// Options must be loaded already
-	const CEDefTermOpt* pOpt = GetOpt();
-	if (!pOpt || !IsDefTermEnabled())
+	if (!IsDefTermEnabled())
 	{
 		LogHookingStatus(GetCurrentProcessId(), L"Application skipped by settings");
 		return 0;
 	}
+	// Options must be loaded already
+	const CEDefTermOpt& opt = GetOpt();
 
 	// ReSharper disable once CppEntityAssignedButNoRead
 	bool bAttachCreated = false;
@@ -701,7 +701,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 		_ASSERTE(nAttachPid || bNewConWnd);
 
 		msprintf(pszCmdLine.data(), cchMax, L"\"%s\\%s\" /ATTACH %s/TRMPID=%u",
-			pOpt->pszConEmuBaseDir,
+			opt.pszConEmuBaseDir,
 			ConEmuC_EXE_3264,
 			bNewConWnd ? L"/CREATECON " : L"",
 			nAttachPid);
@@ -728,7 +728,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 		LogHookingStatus(GetCurrentProcessId(), pszCmdLine);
 
 		if (CreateProcess(nullptr, pszCmdLine.data(), nullptr, nullptr,
-			FALSE, nCreateFlags, nullptr, pOpt->pszConEmuBaseDir, &si, &pi))
+			FALSE, nCreateFlags, nullptr, opt.pszConEmuBaseDir, &si, &pi))
 		{
 			LogHookingStatus(GetCurrentProcessId(), L"Console server was successfully created");
 			bAttachCreated = true;

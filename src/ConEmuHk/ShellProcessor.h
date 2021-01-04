@@ -170,7 +170,7 @@ private:
 	HWND FindCheckConEmuWindow();
 	void LogExitLine(int rc, int line) const;
 	void LogShellString(LPCWSTR asMessage) const;
-	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI);
+	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const;
 	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe)
 	void SetNeedInjects(bool value);
 	// Controls if we have to inject ConEmuHk regardless of DefTerm settings

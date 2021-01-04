@@ -914,7 +914,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		// "runas" (Shell) - start server
 		// CreateProcess - start GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
-		nCchSize += gpDefTerm->GetSrvAddArgs(!mb_ConsoleMode, mb_ForceInjectOriginal, szDefTermArg, szDefTermArg2);
+		nCchSize += CDefTermHk::GetSrvAddArgs(!mb_ConsoleMode, mb_ForceInjectOriginal, szDefTermArg, szDefTermArg2);
 	}
 
 	if (Flags & CEF_NEWCON_PREPEND)
@@ -2985,7 +2985,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				// to attach it to the existing or new ConEmu window.
 				size_t cchMax = MAX_PATH + 80;
 				CEStr szSrvArgs, szNewCon;
-				cchMax += gpDefTerm->GetSrvAddArgs(false, false, szSrvArgs, szNewCon);
+				cchMax += CDefTermHk::GetSrvAddArgs(false, false, szSrvArgs, szNewCon);
 				_ASSERTE(szNewCon.IsEmpty());
 
 				CEStr cmdLine;
@@ -3002,8 +3002,8 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 					bAttachCreated = CreateProcess(nullptr, cmdLine.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
 					if (bAttachCreated)
 					{
-						CloseHandle(pi.hProcess);
-						CloseHandle(pi.hThread);
+						SafeCloseHandle(pi.hProcess);
+						SafeCloseHandle(pi.hThread);
 					}
 					else
 					{
@@ -3036,7 +3036,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 	}
 }
 
-void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
+void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const
 {
 	wchar_t szDbgMsg[255];
 	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: InjectHooks(x%u), ParentPID=%u (%s), ChildPID=%u",
@@ -3045,7 +3045,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 
 	LPCWSTR pszDllDir = nullptr;
 	if (CDefTermHk::IsDefTermEnabled() && gpDefTerm)
-		pszDllDir = gpDefTerm->GetOpt()->pszConEmuBaseDir;
+		pszDllDir = gpDefTerm->GetOpt().pszConEmuBaseDir;
 	else
 		pszDllDir = gsConEmuBaseDir;
 

@@ -347,9 +347,9 @@ protected:
 protected:
 	CEDefTermOpt m_Opt;
 public:
-	const CEDefTermOpt* GetOpt() const
+	const CEDefTermOpt& GetOpt() const
 	{
-		return &m_Opt;
+		return m_Opt;
 	};
 
 protected:
