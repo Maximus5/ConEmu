@@ -543,16 +543,14 @@ int WorkerBase::PostProcessCanAttach() const
 		&& ((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AutoAttach))
 		&& (gState.conemuPid_ == 0))
 	{
-		//-- ассерт не нужен вроде
-		//_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
+		_ASSERTE(FALSE && "Continue to attach!");
 
 		_ASSERTE(!gpConsoleArgs->debugPidList_.exists);
 
 		BOOL lbIsWindowVisible = FALSE;
-		// Добавим проверку на telnet
 		if (!gState.realConWnd_
-			|| !(lbIsWindowVisible = gpConsoleArgs->IsAutoAttachAllowed())
-			|| isTerminalMode())
+			|| !((lbIsWindowVisible = gpConsoleArgs->IsAutoAttachAllowed()))
+			|| isTerminalMode() /*telnet*/)
 		{
 			if (gpLogSize)
 			{

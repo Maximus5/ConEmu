@@ -676,6 +676,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			{
 				gState.runMode_ = RunMode::Server;
 				gState.attachMode_ |= am_DefTerm;
+				defTermCall_.SetBool(true);
 			}
 
 			// Below is also "/GHWND=NEW". There would be "requestNewGuiWnd_" set to "true"

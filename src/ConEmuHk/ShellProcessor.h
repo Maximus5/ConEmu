@@ -179,7 +179,7 @@ private:
 	void SetConsoleMode(bool value);
 	static bool IsInterceptionEnabled();
 	CreatePrepareData OnCreateProcessPrepare(const DWORD* anCreationFlags, DWORD dwFlags, WORD wShowWindow, DWORD dwX, DWORD dwY);
-	void OnCreateProcessResult(PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags);
+	bool OnCreateProcessResult(PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags);
 public:
 	CESERVER_REQ* NewCmdOnCreate(CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,

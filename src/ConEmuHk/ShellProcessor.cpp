@@ -789,10 +789,16 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	}
 	else if ((ImageBits == 32) || (ImageBits == 64)) //-V112
 	{
+		if (!mb_ConsoleMode)
+			SetConsoleMode(true);
+
 		pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 	}
 	else if (ImageBits == 16)
 	{
+		if (!mb_ConsoleMode)
+			SetConsoleMode(true);
+
 		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & ConEmu::ConsoleFlags::DosBox))
 		{
 			szDosBoxExe.Attach(JoinPath(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\DosBox\\DosBox.exe"));
@@ -2089,10 +2095,28 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	{
 		// set up default terminal
 		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
-		// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
-		if (!mb_ConsoleMode && CDefTermHk::IsInsideMode())
+		if (bGoChangeParm)
 		{
-			SetConsoleMode(true);
+			// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
+			if (!mb_ConsoleMode && CDefTermHk::IsInsideMode())
+			{
+				SetConsoleMode(true);
+			}
+			// if hooks were requested by DefTerm options
+			if (gpDefTerm)
+			{
+				if (gpDefTerm->GetOpt().bNoInjects)
+				{
+					// injects were disabled in DefTerm options
+					SetNeedInjects(false);
+					SetForceInjectOriginal(false);
+				}
+				else
+				{
+					// allow ConEmuHk to be injected into debugged process
+					SetForceInjectOriginal(true);
+				}
+			}
 		}
 	}
 	else
@@ -2152,20 +2176,31 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 
 	if (bGoChangeParm)
 	{
-		if (bDebugWasRequested && gbPrepareDefaultTerminal)
+		if (gbPrepareDefaultTerminal)
 		{
-			SetNeedInjects(FALSE);
-			// We need to post attach ConEmu GUI to started console
-			if (bVsNetHostRequested)
-				mb_PostInjectWasRequested = TRUE;
-			else
-				mb_DebugWasRequested = TRUE;
-			// Пока что не будем убирать "мелькание" окошка.
-			// На факт "видимости" консольного окна ориентируется ConEmuC
-			// при аттаче. Если окошко НЕ видимое - считаем, что оно было
-			// запущено процессом для служебных целей, и не трогаем его...
-			// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
-			goto wrap;
+			if (bDebugWasRequested)
+			{
+				// We need to post attach ConEmu GUI to started console
+				if (bVsNetHostRequested)
+					mb_PostInjectWasRequested = TRUE;
+				else
+					mb_DebugWasRequested = TRUE;
+				// Пока что не будем убирать "мелькание" окошка.
+				// На факт "видимости" консольного окна ориентируется ConEmuC
+				// при аттаче. Если окошко НЕ видимое - считаем, что оно было
+				// запущено процессом для служебных целей, и не трогаем его...
+				// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
+				goto wrap;
+			}
+
+			// normal DefTerm feature
+			if (mb_ConsoleMode)
+			{
+				if (anShowCmd)
+				{
+					*anShowCmd = SW_HIDE;
+				}
+			}
 		}
 
 		_ASSERTE(lbChanged == false);
@@ -2186,7 +2221,15 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 
 			HWND hConWnd = GetRealConsoleWindow();
 
-			if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
+			if (!mb_ConsoleMode)
+			{
+				// If we start ConEmu.exe (our GUI) application, we need to show it
+				if (anShowCmd && *anShowCmd == SW_HIDE)
+				{
+					*anShowCmd = SW_SHOWNORMAL;
+				}
+			}
+			else if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
 			{
 				if (anShowCmd)
 				{
@@ -2639,8 +2682,10 @@ CShellProc::CreatePrepareData CShellProc::OnCreateProcessPrepare(
 	return result;
 }
 
-void CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags)
+bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags)
 {
+	bool siChanged = false;
+
 	if (mb_NeedInjects)
 	{
 		// In DefTerm (gbPrepareDefaultTerminal) mb_NeedInjects is allowed too in some cases...
@@ -2650,31 +2695,23 @@ void CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 
 	if (prepareResult == PrepareExecuteResult::Modified)
 	{
+		WORD newShowCmd = LOWORD(state.showCmd);
+
 		if (gbPrepareDefaultTerminal)
 		{
 			_ASSERTE(m_Args.NoDefaultTerm != crb_On);
 
-			if (mb_PostInjectWasRequested)
+			if (!mb_PostInjectWasRequested)
 			{
-				// Stop other changes?
-			}
-			else
-			{
-				const WORD newShowCmd = mb_DebugWasRequested
-					? LOWORD(state.showCmd) // this is SW_HIDE, disable flickering
-					: SW_SHOWNORMAL; // ConEmu itself must starts normally?
-				if (state.defaultShowCmd != newShowCmd)
-				{
-					siShowWindow = newShowCmd;
-					siFlags |= STARTF_USESHOWWINDOW;
-				}
-				// Stop other changes?
+				if (!mb_DebugWasRequested && !mb_ConsoleMode)
+					newShowCmd = SW_SHOWNORMAL; // ConEmu itself must starts normally
 			}
 		}
-		else if (state.defaultShowCmd != state.showCmd)
+		if (state.defaultShowCmd != newShowCmd)
 		{
-			siShowWindow = LOWORD(state.showCmd);
+			siShowWindow = newShowCmd;
 			siFlags |= STARTF_USESHOWWINDOW;
+			siChanged = true;
 		}
 	}
 	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
@@ -2702,6 +2739,7 @@ void CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 						// Do not need to "Show" it
 						siShowWindow = SW_HIDE;
 						siFlags |= STARTF_USESHOWWINDOW;
+						siChanged = true;
 						// Reuse existing console
 						(*anCreationFlags) &= ~CREATE_NEW_CONSOLE;
 					}
@@ -2727,6 +2765,8 @@ void CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 			break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
 		}
 	}
+
+	return siChanged;
 }
 
 // returns FALSE if need to block execution
@@ -2746,7 +2786,10 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 		return TRUE; // don't intercept, pass to kernel
 	}
 	auto* lpSi = m_lpStartupInfoA.get();
-	memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+	if ((*ppStartupInfo)->cb)
+		memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+	else
+		lpSi->cb = sizeof(*lpSi);
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : nullptr, mn_CP);
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : nullptr, mn_CP);
@@ -2769,8 +2812,8 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
 	// patch flags and variables based on decision
-	OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags);
-
+	if (OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags))
+		*ppStartupInfo = lpSi;
 
 	// Patch modified strings (wide to ansi/oem)
 
@@ -2832,7 +2875,10 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 
 	auto* lpSi = m_lpStartupInfoW.get();
-	memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+	if ((*ppStartupInfo)->cb)
+		memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+	else
+		lpSi->cb = sizeof(*lpSi);
 
 	// Preprocess flags and options
 	auto state = OnCreateProcessPrepare(anCreationFlags, lpSi->dwFlags, lpSi->wShowWindow, lpSi->dwX, lpSi->dwY);
@@ -2854,7 +2900,8 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
 	// patch flags and variables based on decision
-	OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags);
+	if (OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags))
+		*ppStartupInfo = lpSi;
 
 
 	// Patch modified strings (wide to ansi/oem)
