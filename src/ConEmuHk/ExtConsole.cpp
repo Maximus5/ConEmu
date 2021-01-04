@@ -30,20 +30,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
 #include "../common/MRect.h"
-#include "../common/MStrDup.h"
-#include "../common/UnicodeChars.h"
-#include "../ConEmu/version.h"
 #include "ExtConsole.h"
 #include "../common/ConEmuColors3.h"
-#include "../common/WObjects.h"
 
 #include "Ansi.h"
 #include "SetHook.h"
 #include "hkConsoleOutput.h"
 #include "hkWindow.h"
 #include "hlpConsole.h"
+
+#include <tuple>
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
@@ -988,12 +985,13 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 
 	#ifdef _DEBUG
-	extern FARPROC CallWriteConsoleW;
+	// extern FARPROC CallWriteConsoleW;
 	_ASSERTE((CallWriteConsoleW!=NULL) || !HooksWereSet);
-	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)CallWriteConsoleW) || (!HooksWereSet && (Info->Private==(void*)WriteConsoleW)));
+	// ReSharper disable twice CppCStyleCast
+	_ASSERTE((Info->Private == NULL) || (Info->Private == (void*)CallWriteConsoleW) || (!HooksWereSet && (Info->Private == (void*)WriteConsoleW)));
 	#endif
 
-	// Проверка аргументов
+	// Arguments validation
 	if (!Info->ConsoleOutput || !Info->Buffer || !Info->NumberOfCharsToWrite)
 	{
 		_ASSERTE(Info->ConsoleOutput && Info->Buffer && Info->NumberOfCharsToWrite);
@@ -1019,22 +1017,22 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	DWORD Mode = 0;
 
 	// "Working lines" may be defined (Vim and others)
-	LONG  ScrollTop, ScrollBottom;
+	LONG  scrollTop = 0, scrollBottom = 0;
 	bool  bScrollRegion = !!(Info->Flags & ewtf_Region);
 	RECT  rcScrollRegion = Info->Region;
-	COORD crScrollCursor;
+	COORD crScrollCursor = {};
 	if (bScrollRegion)
 	{
 		_ASSERTEX(Info->Region.left==-1 && Info->Region.right==-1); // Not used yet
 		rcScrollRegion.left = 0; rcScrollRegion.right = (csbi.dwSize.X - 1);
 		_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top);
-		ScrollTop = Info->Region.top;
-		ScrollBottom = Info->Region.bottom+1;
+		scrollTop = Info->Region.top;
+		scrollBottom = Info->Region.bottom+1;
 	}
 	else
 	{
-		ScrollTop = 0;
-		ScrollBottom = csbi.dwSize.Y;
+		scrollTop = 0;
+		scrollBottom = csbi.dwSize.Y;
 	}
 
 	GetConsoleModeCached(h, &Mode);
@@ -1139,8 +1137,21 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		}
 		*/
 
+		enum class ControlChars
+		{
+			None = 0,
+			Backspace = 1,
+			Return = 2,
+			NewLine = 4,
+			Tab = 8,
+		};
+		ControlChars controlChars = ControlChars::None;
+		auto setCtrlChar = [&controlChars](const ControlChars c)
+		{
+			controlChars = static_cast<ControlChars>(static_cast<int>(controlChars) | static_cast<int>(c));
+		};
+
 		SHORT ForceDumpX = 0;
-		bool BSRN = false;
 		bool bForceDumpScroll = false;
 		bool bSkipBELL = false;
 		bool bAdvanceCur = false;
@@ -1153,15 +1164,16 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		case L'\t':
 			if (x2>x)
 				ForceDumpX = x2;
-			x2 = ((x2 + 8) >> 3) << 3;
-			BSRN = true; bIntCursorOp = true;
+			x2 = static_cast<SHORT>(((x2 + 8) >> 3) << 3);
+			setCtrlChar(ControlChars::Tab);
+			bIntCursorOp = true;
 			break;
 		case L'\r':
 			if (x2 > 0)
 				ForceDumpX = x2-1;
 			x2 = 0;
 			bIntCursorOp = false;
-			BSRN = true;
+			setCtrlChar(ControlChars::Return);
 			// "\r\n"? Do not break in two physical writes
 			if (((pCur+1) < pEnd) && (*(pCur+1) == L'\n'))
 				pCur++; // continue to L'\n' section
@@ -1175,10 +1187,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			else if (x2)
 				bIntCursorOp = true;
 			y2++;
-			if (y2 >= ScrollBottom)
+			if (y2 >= scrollBottom)
 				bForceDumpScroll = true;
 			_ASSERTE(bWrap);
-			BSRN = true;
+			setCtrlChar(ControlChars::NewLine);
 			CEAnsi::StorePromptReset();
 			break;
 		case 7:
@@ -1200,7 +1212,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				ForceDumpX = x2;
 			if (x2>0)
 				x2--;
-			BSRN = true;
+			setCtrlChar(ControlChars::Backspace);
 			bIntCursorOp = true;
 			// Don't pass '\b' to WriteText (problem in Win10 build)
 			bAdvanceCur = true; --pCur;
@@ -1252,15 +1264,14 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 		}
 
-		// После BS - сменить "начальную" координату
-		if (BSRN)
+		if (controlChars != ControlChars::None)
 			x = x2;
 
 		// При смене строки
 		if (y2 > y)
 		{
 			//_ASSERTE(bWrap && L"для !Wrap - доделать");
-			if (y2 >= ScrollBottom/*csbi.dwSize.Y*/)
+			if (y2 >= scrollBottom/*csbi.dwSize.Y*/)
 			{
 				// Экран прокрутился на одну строку вверх
 
@@ -1272,7 +1283,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 					Shift.Flags |= essf_Region;
 					Shift.Region = rcScrollRegion;
 					//Shift.Region.top += (y2-y);
-					if (ScrollBottom >= csbi.dwSize.Y)
+					if (scrollBottom >= csbi.dwSize.Y)
 						Shift.Flags |= essf_ExtOnly;
 				}
 				else
@@ -1284,10 +1295,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				Info->ScrolledRowsUp++;
 
 				// координату - "отмотать" (она как бы не изменилась)
-				if (bScrollRegion && (ScrollBottom < csbi.dwSize.Y))
+				if (bScrollRegion && (scrollBottom < csbi.dwSize.Y))
 				{
-					y2 = LOSHORT(ScrollBottom) - 1;
-					_ASSERTEX((int)y2 == (int)(ScrollBottom - 1));
+					y2 = LOSHORT(scrollBottom) - 1;
+					_ASSERTEX((int)y2 == (int)(scrollBottom - 1));
 
 					crScrollCursor.X = x2;
 					crScrollCursor.Y = y2;
@@ -1316,7 +1327,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		// '\b': move cursor backward by one cell, don't erase cell, don't move cursor upward
 		if (bIntCursorOp)
 		{
-			_ASSERTE(x2>0);
+			_ASSERTE(x2 > 0 || (static_cast<int>(controlChars) & static_cast<int>(ControlChars::Backspace)));
 			_ASSERTE(pCur < pEnd && (*pCur == L'\n' || *pCur == L'\t' || *pCur == L'\b') && (pFrom == pCur || pFrom == pCur+1));
 			bIntCursorOp = false;
 			crScrollCursor.X = x2;
@@ -1377,6 +1388,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	if (lbRc)
 		Info->NumberOfCharsWritten = Info->NumberOfCharsToWrite;
 
+	std::ignore = scrollTop;
+	std::ignore = bVirtualWrap;
 	return lbRc;
 }
 
