@@ -84,11 +84,12 @@ private:
 	// Information about starting process
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
 	CmdArg ms_ExeTmp;
-	BOOL mb_WasSuspended = FALSE; // if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
-	BOOL mb_NeedInjects = FALSE;
-	BOOL mb_DebugWasRequested = FALSE;
-	BOOL mb_HiddenConsoleDetachNeed = FALSE;
-	BOOL mb_PostInjectWasRequested = FALSE;
+	bool mb_WasSuspended = false; // if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
+	bool mb_NeedInjects = false;
+	bool mb_ConsoleMode = false;
+	bool mb_DebugWasRequested = false;
+	bool mb_HiddenConsoleDetachNeed = false;
+	bool mb_PostInjectWasRequested = false;
 	bool mb_Opt_DontInject = false; // ConEmuHooks=OFF
 	bool mb_Opt_SkipNewConsole = false; // ConEmuHooks=NOARG
 	bool mb_Opt_SkipCmdStart = false; // ConEmuHooks=NOSTART
@@ -143,8 +144,7 @@ private:
 				CEStr& lsReplaceFile, CEStr& lsReplaceParm, CEStr& exeName);
 	bool CheckForDefaultTerminal(
 				CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
-				const DWORD* anShowCmd,
-				bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode);
+				const DWORD* anShowCmd, bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger);
 	void CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags, bool lbGnuDebugger,
 		bool& bDebugWasRequested, bool& lbGuiApp, bool& bVsNetHostRequested);
 	PrepareExecuteResult PrepareExecuteParams(
@@ -164,6 +164,7 @@ private:
 	void LogShellString(LPCWSTR asMessage) const;
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI);
 	void SetNeedInjects(bool value);
+	void SetConsoleMode(bool value);
 	static bool IsInterceptionEnabled();
 	CreatePrepareData OnCreateProcessPrepare(const DWORD* anCreationFlags, DWORD dwFlags, WORD wShowWindow, DWORD dwX, DWORD dwY);
 	void OnCreateProcessResult(PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags);

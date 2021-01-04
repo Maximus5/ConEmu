@@ -789,11 +789,11 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 		lbUseDosBox = FALSE; // Don't set now
 		if (bConsoleMode)
 		{
-			// Тут предполагается запуск как "runas", запускаемся через "ConEmuC.exe"
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
 		}
 		else
 		{
+			SetNeedInjects(false);
 			pszOurExe = lstrdup(m_SrvMapping.sConEmuExe);
 		}
 	}
@@ -810,13 +810,12 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 
 			if (!FileExists(szDosBoxExe) || !FileExists(szDosBoxCfg))
 			{
-				// DoxBox не установлен!
+				// DoxBox is not installed
 				lbRc = FALSE;
-				//return FALSE;
 				goto wrap;
 			}
 
-			// DosBox.exe - 32-битный
+			// DosBox.exe - 32-bit process
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", L"ConEmuC.exe");
 			lbUseDosBox = TRUE;
 		}
@@ -880,7 +879,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 	}
 	else
 	{
-		nCchSize += lstrlen(pszOurExe)+1;
+		nCchSize += wcslen(pszOurExe) + 1;
 		*psFile = nullptr;
 	}
 
@@ -895,32 +894,32 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 	#if 0
 	if (lbNewGuiConsole)
 	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		// add /ATTACH /GID=%i, etc.
 		nCchSize += 128;
 	}
 	#endif
 	if (lbNewConsoleFromGui)
 	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
+		// add /ATTACH /GID=%i, etc.
 		nCchSize += 128;
 	}
 	if (args.InjectsDisable == crb_On)
 	{
-		// добавить " /NOINJECT"
+		// add " /NOINJECT"
 		nCchSize += 12;
 	}
 
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
-		// Добавить /PARENTFARPID=%u
+		// add /PARENTFARPID=%u
 		nCchSize += 32;
 	}
 
 	if (gbPrepareDefaultTerminal)
 	{
 		// reserve space for Default terminal arguments (server additional)
-		// "runas" (Shell) - запуск сервера
-		// CreateProcess - запуск через GUI (ConEmu.exe)
+		// "runas" (Shell) - start server
+		// CreateProcess - start GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
 		nCchSize += gpDefTerm->GetSrvAddArgs(!bConsoleMode, szDefTermArg, szDefTermArg2);
 	}
@@ -1375,8 +1374,8 @@ bool CShellProc::PrepareNewConsoleInFile(
 }
 
 bool CShellProc::CheckForDefaultTerminal(
-	const CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags, const DWORD* anShowCmd,
-	bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode)
+	const CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
+	const DWORD* anShowCmd, bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger)
 {
 	if (!gbPrepareDefaultTerminal)
 		return true; // nothing to do
@@ -1395,9 +1394,9 @@ bool CShellProc::CheckForDefaultTerminal(
 				// :: Code.exe >> "cmd /c start /wait" >> "cmd.exe"
 				// :: have to hook both cmd to get second in ConEmu tab
 				// :: first cmd is started with CREATE_NO_WINDOW flag!
-				LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisuaStudio Code");
+				LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisualStudio Code");
 				SetNeedInjects(true);
-				bConsoleMode = true;
+				SetConsoleMode(true);
 			}
 
 			// Creating process without console window, not our case
@@ -1649,11 +1648,11 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	ms_ExeTmp.Clear();
 
 	BOOL bGoChangeParm = FALSE;
-	bool bConsoleMode = false;
+	SetConsoleMode(false);
 	if ((aCmd == eShellExecute) && (asAction && (lstrcmpi(asAction, L"runas") == 0)))
 	{
 		// Always run ConEmuC instead of GUI
-		bConsoleMode = true;
+		SetConsoleMode(true);
 	}
 
 	// DefTerm logging
@@ -1700,7 +1699,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		if ((anStartFlags && ((*anStartFlags) & STARTF_USESTDHANDLES))
 			&& (hIn || hOut || hErr))
 		{
-			bConsoleMode = true;
+			SetConsoleMode(true);
 		}
 
 		// Creating hidden
@@ -1817,7 +1816,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	// Some additional checks for "Default terminal" mode
 	if (!CheckForDefaultTerminal(
 		aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd,
-		bIgnoreSuspended, bDebugWasRequested, lbGnuDebugger, bConsoleMode))
+		bIgnoreSuspended, bDebugWasRequested, lbGnuDebugger))
 	{
 		return PrepareExecuteResult::Bypass;
 	}
@@ -2094,9 +2093,9 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		// set up default terminal
 		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
 		// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
-		if (!bConsoleMode && CDefTermHk::IsInsideMode())
+		if (!mb_ConsoleMode && CDefTermHk::IsInsideMode())
 		{
-			bConsoleMode = true;
+			SetConsoleMode(true);
 		}
 	}
 	else
@@ -2184,7 +2183,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			goto wrap;
 		}
 
-		lbChanged = ChangeExecuteParams(aCmd, bConsoleMode, asFile, asParam, ms_ExeTmp,
+		lbChanged = ChangeExecuteParams(aCmd, mb_ConsoleMode, asFile, asParam, ms_ExeTmp,
 			NewConsoleFlags, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 
 		if (!lbChanged)
@@ -3091,6 +3090,11 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 void CShellProc::SetNeedInjects(const bool value)
 {
 	mb_NeedInjects = value;
+}
+
+void CShellProc::SetConsoleMode(const bool value)
+{
+	mb_ConsoleMode = value;
 }
 
 bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= nullptr*/)
