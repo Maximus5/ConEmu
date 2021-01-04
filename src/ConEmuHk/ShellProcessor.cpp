@@ -452,8 +452,8 @@ void CShellProc::CheckHooksDisabled()
 	mb_Opt_SkipCmdStart = bHooksSkipCmdStart;
 }
 
-BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMode,
-				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
+BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
+				LPCWSTR asFile, LPCWSTR asParam,
 				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
@@ -461,7 +461,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 	if (!LoadSrvMapping())
 		return FALSE;
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	wchar_t *szComspec = nullptr;
 	wchar_t *pszOurExe = nullptr; // ConEmuC64.exe или ConEmu64.exe (для DefTerm)
 	BOOL lbUseDosBox = FALSE;
@@ -482,8 +482,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
 	}
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
-
-	LPCWSTR pszConEmuBaseDir = m_SrvMapping.ComSpec.ConEmuBaseDir;
 
 	if (aCmd == eCreateProcess)
 	{
@@ -515,17 +513,16 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 				//}
 				int nLen = lstrlen(asFile)+1;
 				int cchMax = std::max(nLen,(MAX_PATH+1));
-				wchar_t* pszTest = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-				_ASSERTE(pszTest);
-				if (pszTest)
+				CEStr testBuffer;
+				if (testBuffer.GetBuffer(cchMax))
 				{
 					// Сначала пробуем на полное соответствие
 					if (asFile)
 					{
-						_wcscpyn_c(pszTest, nLen, (*pszParam == L'"') ? (pszParam+1) : pszParam, nLen); //-V501
-						pszTest[nLen-1] = 0;
+						_wcscpyn_c(testBuffer.data(), nLen, (*pszParam == L'"') ? (pszParam+1) : pszParam, nLen); //-V501
+						testBuffer.SetAt(nLen - 1, 0);
 						// Сравнить asFile с первым аргументом в asParam
-						if (lstrcmpi(pszTest, asFile) == 0)
+						if (lstrcmpi(testBuffer.c_str(), asFile) == 0)
 						{
 							// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
 							asFile = nullptr;
@@ -544,7 +541,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 						{
 							LPCWSTR pszCopy = pszParam;
 							CmdArg  szFirst;
-							if (!(pszCopy = NextArg(pszCopy, szFirst)))
+							if (!((pszCopy = NextArg(pszCopy, szFirst))))
 							{
 								_ASSERTE(FALSE && "NextArg failed?");
 							}
@@ -590,8 +587,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 							}
 						}
 					}
-
-					free(pszTest);
 				}
 			}
 		}
@@ -660,16 +655,15 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 				// "c:\windows\system32\cmd.exe" /c dir
 				// "c:\windows\system32\cmd.exe /c dir"
 				// Второй - пока проигнорируем, как маловероятный
-				INT_PTR nLen = lstrlen(szComspec)+1;
-				wchar_t* pszTest = (wchar_t*)malloc(nLen*sizeof(wchar_t));
-				_ASSERTE(pszTest);
-				if (pszTest)
+				INT_PTR nLen = lstrlen(szComspec) + 1;
+				CEStr testBuffer;
+				if (testBuffer.GetBuffer(nLen))
 				{
-					_wcscpyn_c(pszTest, nLen, (*psz == L'"') ? (psz+1) : psz, nLen); //-V501
-					pszTest[nLen-1] = 0;
+					_wcscpyn_c(testBuffer.data(), nLen, (*psz == L'"') ? (psz+1) : psz, nLen); //-V501
+					testBuffer.SetAt(nLen - 1, 0);
 					// Сравнить первый аргумент в asParam с %COMSPEC%
 					const wchar_t* pszCmdLeft = nullptr;
-					if (lstrcmpi(pszTest, szComspec) == 0)
+					if (lstrcmpi(testBuffer.c_str(), szComspec) == 0)
 					{
 						if (*psz == L'"')
 						{
@@ -696,7 +690,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 							lbComSpec = TRUE;
 						}
 					}
-					free(pszTest);
 				}
 			}
 		}
@@ -721,7 +714,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 				if (lstrcmpi(pszExeName, L"cmd.exe") == 0)
 				{
 					ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-					switch (m_SrvMapping.ComSpec.csBits)
+					switch (m_SrvMapping.ComSpec.csBits)  // NOLINT(clang-diagnostic-switch-enum)
 					{
 					case csb_SameOS:
 						ImageBits = IsWindows64() ? 64 : 32;
@@ -756,9 +749,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 
 	if ((ImageBits != 16) && lbComSpec && asParam && *asParam)
 	{
-		int nLen = lstrlen(asParam);
-
-		// Может это запускается Dos-приложение через "cmd /c ..."?
+		// Could it be Dos-application starting with "cmd /c ..."?
 		if (ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 		{
 			LPCWSTR pszCmdLine = asParam;
@@ -787,7 +778,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 	if (gbPrepareDefaultTerminal)
 	{
 		lbUseDosBox = FALSE; // Don't set now
-		if (bConsoleMode)
+		if (mb_ConsoleMode)
 		{
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
 		}
@@ -921,7 +912,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 		// "runas" (Shell) - start server
 		// CreateProcess - start GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
-		nCchSize += gpDefTerm->GetSrvAddArgs(!bConsoleMode, szDefTermArg, szDefTermArg2);
+		nCchSize += gpDefTerm->GetSrvAddArgs(!mb_ConsoleMode, szDefTermArg, szDefTermArg2);
 	}
 
 	if (Flags & CEF_NEWCON_PREPEND)
@@ -932,7 +923,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
 	_ASSERTE(lbEndQuote == FALSE); // Must not be set yet
-	*psParam = (wchar_t*)malloc(nCchSize*sizeof(wchar_t));
+	*psParam = static_cast<wchar_t*>(malloc(nCchSize*sizeof(wchar_t)));
 	(*psParam)[0] = 0;
 	if (aCmd == eCreateProcess)
 	{
@@ -985,7 +976,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 			_wcscat_c((*psParam), nCchSize, szDefTermArg);
 		}
 
-		if (bConsoleMode)
+		if (mb_ConsoleMode)
 		{
 			// Здесь предполагается "runas", поэтому запускается сервер (ConEmuC.exe)
 			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
@@ -1223,15 +1214,14 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMod
 	// logging
 	{
 		int cchLen = (*psFile ? lstrlen(*psFile) : 0) + (*psParam ? lstrlen(*psParam) : 0) + 128;
-		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
-		if (pszDbgMsg)
+		CEStr dbgMsg;
+		if (dbgMsg.GetBuffer(cchLen))
 		{
-			msprintf(pszDbgMsg, cchLen, L"RunChanged(ParentPID=%u): %s <%s> <%s>",
+			msprintf(dbgMsg.data(), cchLen, L"RunChanged(ParentPID=%u): %s <%s> <%s>",
 				GetCurrentProcessId(),
 				(aCmd == eShellExecute) ? L"Shell" : (aCmd == eCreateProcess) ? L"Create" : L"???",
 				*psFile ? *psFile : L"", *psParam ? *psParam : L"");
-			LogShellString(pszDbgMsg);
-			free(pszDbgMsg);
+			LogShellString(dbgMsg);
 		}
 	}
 
@@ -1241,7 +1231,7 @@ wrap:
 		free(szComspec);
 	if (pszOurExe)
 		free(pszOurExe);
-	return TRUE;
+	return lbRc;
 }
 
 void CShellProc::CheckIsCurrentGuiClient()
@@ -2168,22 +2158,12 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			// при аттаче. Если окошко НЕ видимое - считаем, что оно было
 			// запущено процессом для служебных целей, и не трогаем его...
 			// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
-			#if 0
-			// Remove flickering?
-			if (anShowCmd)
-			{
-				*anShowCmd = SW_HIDE;
-				lbChanged = TRUE;
-			}
-			else
-			#endif
-			{
-				lbChanged = FALSE;
-			}
 			goto wrap;
 		}
 
-		lbChanged = ChangeExecuteParams(aCmd, mb_ConsoleMode, asFile, asParam, ms_ExeTmp,
+		_ASSERTE(lbChanged == false);
+
+		lbChanged = ChangeExecuteParams(aCmd, asFile, asParam,
 			NewConsoleFlags, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 
 		if (!lbChanged)

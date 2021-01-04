@@ -153,8 +153,8 @@ private:
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
-	BOOL ChangeExecuteParams(enum CmdOnCreateType aCmd, bool bConsoleMode,
-				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
+	BOOL ChangeExecuteParams(enum CmdOnCreateType aCmd,
+				LPCWSTR asFile, LPCWSTR asParam,
 				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
