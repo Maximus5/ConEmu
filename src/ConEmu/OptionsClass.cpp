@@ -3466,7 +3466,8 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= nullptr*/)
 		wcscat_c(szCmd, L"\" /CheckUnicode");
 
 		PROCESS_INFORMATION pi = {};
-		STARTUPINFO si = {sizeof(si)};
+		STARTUPINFO si = {};
+		si.cb = sizeof(si);
 		si.dwFlags = STARTF_USESHOWWINDOW;
 		si.wShowWindow = SW_HIDE; //RELEASEDEBUGTEST(SW_HIDE,SW_SHOW);
 

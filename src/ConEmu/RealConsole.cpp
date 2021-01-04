@@ -4063,8 +4063,9 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 
 	WCHAR  szExe[MAX_PATH*3] = L"";
 	bool lbRc = false;
-	PROCESS_INFORMATION pi = {nullptr};
-	STARTUPINFO si = {sizeof(si)};
+	PROCESS_INFORMATION pi = {};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 
 	int nBits = GetProcessBits(dwPID);
 	LPCWSTR pszServer = (nBits == 64) ? mp_ConEmu->ms_ConEmuC64Full : mp_ConEmu->ms_ConEmuC32Full;
@@ -16376,7 +16377,8 @@ void CRealConsole::Unfasten()
 		pszConEmuStartArgs, (pszConEmuStartArgs ? L" " : nullptr),
 		szMacro);
 
-	STARTUPINFO si = {sizeof(si)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	PROCESS_INFORMATION pi = {};
 	BOOL bStarted = CreateProcess(nullptr, lsRunArgs.ms_Val, nullptr, nullptr, FALSE, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
 	if (!bStarted)

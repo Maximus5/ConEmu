@@ -819,7 +819,8 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					GetStartupInfo(&siOur);
 					#endif
 
-					STARTUPINFO si = {sizeof(si)};
+					STARTUPINFO si = {};
+					si.cb = sizeof(si);
 					PROCESS_INFORMATION pi = {};
 					si.dwFlags = STARTF_USESHOWWINDOW;
 					// Only `-demote` and `-apparent` switches were implemented to start application visible

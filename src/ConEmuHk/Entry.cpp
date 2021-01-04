@@ -2470,7 +2470,8 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 								szSelf, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
 								gnGuiPID, (DWORD)(DWORD_PTR)ghConEmuWnd, (DWORD)(DWORD_PTR)hCreatedWnd, nCreatedPID);
 
-							STARTUPINFO si = {sizeof(si)};
+							STARTUPINFO si = {};
+							si.cb = sizeof(si);
 							si.wShowWindow = SW_HIDE;
 							si.dwFlags = STARTF_USESHOWWINDOW;
 							PROCESS_INFORMATION pi = {};
@@ -2516,7 +2517,8 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 
 	int iRc = -10;
 	// go
-	STARTUPINFO si = {sizeof(si)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	wchar_t szInitConTitle[] = CEC_INITTITLE;
 	si.lpTitle = szInitConTitle;
 	PROCESS_INFORMATION pi = {};
@@ -2706,9 +2708,10 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			int nErrCode = -1;
 			wchar_t szSrvPathName[MAX_PATH+16], *pszNamePtr, szCmdLine[MAX_PATH+140];
 			PROCESS_INFORMATION pi = {};
-			STARTUPINFO si = {sizeof(si)};
+			STARTUPINFO si = {};
+			si.cb = sizeof(si);
 
-			if (GetModuleFileName(ghOurModule, szSrvPathName, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSrvPathName)) != nullptr))
+			if (GetModuleFileName(ghOurModule, szSrvPathName, MAX_PATH) && ((pszNamePtr = const_cast<wchar_t*>(PointToName(szSrvPathName))) != nullptr))
 			{
 				// Запускаем сервер той же битности, что и текущий процесс
 				_wcscpy_c(pszNamePtr, 16, ConEmuC_EXE_3264);

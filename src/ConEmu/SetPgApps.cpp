@@ -268,7 +268,8 @@ INT_PTR CSetPgApps::pageOpProc_AppsChild(HWND hDlg, UINT messg, WPARAM wParam, L
 		{
 			int dx = 0, dy = 0;
 
-			SCROLLINFO si = {sizeof(si)};
+			SCROLLINFO si = {};
+			si.cbSize = sizeof(si);
 			si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE;
 			GetScrollInfo(hDlg, SB_VERT, &si);
 
@@ -703,7 +704,9 @@ bool CSetPgApps::CreateChildDlg()
 		MapWindowPoints(hEnd, mh_Child, &ptScroll, 1);
 		ShowWindow(hEnd, SW_HIDE);
 
-		SCROLLINFO si = {sizeof(si), SIF_ALL};
+		SCROLLINFO si = {};
+		si.cbSize = sizeof(si);
+		si.fMask = SIF_ALL;
 		si.nMax = ptScroll.y - (rcPos.bottom - rcPos.top);
 		RECT rcChild = {}; GetWindowRect(GetDlgItem(mh_Child, DistinctControls[1].nOverrideID), &rcChild);
 		si.nPage = rcChild.bottom - rcChild.top;

@@ -3001,15 +3001,16 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				cchMax += gpDefTerm->GetSrvAddArgs(false, szSrvArgs, szNewCon);
 				_ASSERTE(szNewCon.IsEmpty());
 
-				wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
+				wchar_t* pszCmdLine = static_cast<wchar_t*>(malloc(cchMax*sizeof(*pszCmdLine)));
 				if (pszCmdLine)
 				{
 					_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
 					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u%s",
 						m_SrvMapping.ComSpec.ConEmuBaseDir, ConEmuC_EXE_3264,
 						lpPI->dwProcessId,
-						(LPCWSTR)szSrvArgs);
-					STARTUPINFO si = {sizeof(si)};
+						static_cast<LPCWSTR>(szSrvArgs));
+					STARTUPINFO si = {};
+					si.cb = sizeof(si);
 					PROCESS_INFORMATION pi = {};
 					bAttachCreated = CreateProcess(nullptr, pszCmdLine, nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
 					if (bAttachCreated)

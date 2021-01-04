@@ -3189,7 +3189,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 											DWORD dwLastError = 0;
 											LPCWSTR pszDir = args.pszStartupDir;
-											STARTUPINFO si = {sizeof(si)};
+											STARTUPINFO si = {};
+											si.cb = sizeof(si);
 											si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_SHOWNORMAL;
 											PROCESS_INFORMATION pi = {};
 

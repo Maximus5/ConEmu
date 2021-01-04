@@ -859,10 +859,11 @@ void SrvAnsiImpl::DoProcess(LPCWSTR asCmd, ssize_t cchLen)
 
 		if (IsAnsiExecAllowed(pszCmdLine))
 		{
-			STARTUPINFO si = {sizeof(si)};
+			STARTUPINFO si = {};
+			si.cb = sizeof(si);
 			PROCESS_INFORMATION pi = {};
 
-			bool bCreated = CreateProcessW(nullptr, pszCmdLine, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
+			const bool bCreated = CreateProcessW(nullptr, pszCmdLine, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
 			if (bCreated)
 			{
 				WaitForSingleObject(pi.hProcess, INFINITE);

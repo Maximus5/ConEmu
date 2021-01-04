@@ -344,7 +344,8 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 		LPCWSTR pszName = sp->GetArgs()->pszUserName;
 		LPCWSTR pszDomain = sp->GetArgs()->pszDomain;
 		LPCWSTR pszPassword = sp->GetArgs()->szUserPassword;
-		STARTUPINFOW si = {sizeof(si)};
+		STARTUPINFOW si = {};
+		si.cb = sizeof(si);
 		PROCESS_INFORMATION pi = {};
 		DWORD dwOurFlags = (ldwCreationFlags & ~EXTENDED_STARTUPINFO_PRESENT);
 		lbRc = CreateProcessWithLogonW(pszName, pszDomain, (pszPassword && *pszPassword) ? pszPassword : nullptr, LOGON_WITH_PROFILE,

@@ -725,8 +725,10 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	bool lbRc = false;
 	wchar_t szPipe[MAX_PATH];
 	PROCESS_INFORMATION pi = {};
-	STARTUPINFO si = {sizeof(si)};
-	SHELLEXECUTEINFO sei = {sizeof(sei)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
+	SHELLEXECUTEINFO sei = {};
+	sei.cbSize = sizeof(sei);
 	CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
 	HANDLE hPipeTest = nullptr;
 	HANDLE hPluginTest = nullptr;

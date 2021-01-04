@@ -1728,38 +1728,6 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	// Но это не то... Похоже, чтобы добавить такой "путь" в Recent/Frequent list
 	// нужно создавать физический файл (например, с расширением ".conemu"),
 	// и (!) регистрировать для него обработчиком conemu.exe
-	#if 0
-	//SHAddToRecentDocs(SHARD_PATHW, pszTemp);
-
-	//HRESULT hres;
-	//IShellLink* phsl = nullptr;
-	//// Get a pointer to the IShellLink interface.
-	//hres = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-	//					   IID_IShellLink, (LPVOID*)&phsl);
-	//if (SUCCEEDED(hres))
-	//{
-	//	STARTUPINFO si = {sizeof(si)};
-	//	GetStartupInfo(&si);
-	//	if (!si.wShowWindow)
-	//		si.wShowWindow = SW_SHOWNORMAL;
-
-	//	phsl->SetPath(gpConEmu->ms_ConEmuExe);
-	//	phsl->SetDescription(pszTemp);
-	//	phsl->SetArguments(pszTemp);
-	//	phsl->SetShowCmd(si.wShowWindow);
-
-	//	DWORD n = GetCurrentDirectory(countof(szExe), szExe);
-	//	if (n && (n < countof(szExe)))
-	//		phsl->SetWorkingDirectory(szExe);
-	//}
-
-	//if (phsl)
-	//{
-	//	//_ASSERTE(SHARD_SHELLITEM == 0x00000008L);
-	//	SHAddToRecentDocs(0x00000008L/*SHARD_SHELLITEM*/, phsl);
-	//	phsl->Release();
-	//}
-	#endif
 
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 #endif // __GNUC__

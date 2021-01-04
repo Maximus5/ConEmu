@@ -1901,14 +1901,14 @@ void CConEmuChild::ShowScroll(bool abImmediate)
 		{
 			// Прокрутка всегда показывается! Скрывать нельзя!
 			//m_si.nMax = (gpSet->isAlwaysShowScrollbar == 1) ? 1 : 0;
-			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
+			SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1, 0, 0};
 			SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
 		}
 
 		mb_ScrollVisible = TRUE; mb_Scroll2Visible = TRUE;
 
 		#ifdef _DEBUG
-		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE, 0, 0, 0, 0, 0};
 		GetScrollInfo(mh_WndBack, SB_VERT, &si);
 		#endif
 
@@ -1983,7 +1983,7 @@ void CConEmuChild::HideScroll(bool abImmediate)
 	if ((gpSet->isAlwaysShowScrollbar == 1) && !pVCon->GuiWnd())
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
-		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1, 0, 0};
 		SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);
 		if (!mb_ScrollDisabled)
 		{
@@ -1997,7 +1997,7 @@ void CConEmuChild::HideScroll(bool abImmediate)
 		mb_ScrollVisible = FALSE;
 		mb_Scroll2Visible = FALSE;
 
-		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE};
+		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE, 0, 0, 0, 0, 0};
 		int nCurPos = SetScrollInfo(mh_WndBack, SB_VERT, &si, TRUE);  UNREFERENCED_PARAMETER(nCurPos);
 
 		TODO("Scroll: Horizontal");

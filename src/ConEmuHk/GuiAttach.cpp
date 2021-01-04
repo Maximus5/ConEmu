@@ -212,7 +212,8 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 #ifdef _DEBUG
 	// "!dwStyle" добавил для shell32.dll!CExecuteApplication::_CreateHiddenDDEWindow()
 	_ASSERTE(hWndParent==nullptr || ghConEmuWnd == nullptr || hWndParent!=ghConEmuWnd || !dwStyle);
-	STARTUPINFO si = {sizeof(si)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	GetStartupInfo(&si);
 
 	bool lbAfxFrameOrView90 = false;
@@ -756,7 +757,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rbInactive)
 {
 #ifdef _DEBUG
-	STARTUPINFO si = {sizeof(si)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	GetStartupInfo(&si);
 #endif
 

@@ -37,24 +37,29 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // have clicked our icon (shortcut on the desktop or TaskBar)
 HMONITOR GetStartupMonitor()
 {
-	STARTUPINFO si = {sizeof(si)};
-	MONITORINFO mi = {sizeof(mi)};
-	POINT ptCur = {}, ptOut = {-32000,-32000};
-	HMONITOR hStartupMonitor = nullptr, hMouseMonitor, hPrimaryMonitor;
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
+	MONITORINFO mi = {};
+	mi.cbSize = sizeof(mi);
+	POINT ptCur = {};
+	const POINT ptOut = {-32000,-32000};
+	HMONITOR hStartupMonitor = nullptr;
 
 	GetStartupInfo(&si);
 	GetCursorPos(&ptCur);
 
 	// Get primary monitor, it's expected to be started at 0x0, but we can't be sure
-	hPrimaryMonitor = MonitorFromPoint(ptOut, MONITOR_DEFAULTTOPRIMARY);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HMONITOR hPrimaryMonitor = MonitorFromPoint(ptOut, MONITOR_DEFAULTTOPRIMARY);
 
 	// Get the monitor where mouse cursor is located
-	hMouseMonitor = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HMONITOR hMouseMonitor = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
 
 	// si.hStdOutput may have a handle of monitor with shortcut or used taskbar
-	if (si.hStdOutput && GetMonitorInfo((HMONITOR)si.hStdOutput, &mi))
+	if (si.hStdOutput && GetMonitorInfo(static_cast<HMONITOR>(si.hStdOutput), &mi))
 	{
-		hStartupMonitor = (HMONITOR)si.hStdOutput;
+		hStartupMonitor = static_cast<HMONITOR>(si.hStdOutput);
 	}
 
 	// Now, due to MS Windows bugs or just an inconsistence,

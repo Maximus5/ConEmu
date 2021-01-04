@@ -3123,7 +3123,8 @@ bool CConEmuMain::CreateWnd(RConStartArgsEx& args)
 	LPCWSTR pszAddArgs = MakeConEmuStartArgs(szAddArgs);
 
 	// Start new ConEmu.exe process with chosen arguments...
-	STARTUPINFO si = {sizeof(si)};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	PROCESS_INFORMATION pi = {};
 	wchar_t* pszCmdLine = nullptr;
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
@@ -4506,8 +4507,9 @@ bool CConEmuMain::StartDebugLogConsole()
 	WCHAR  szExe[MAX_PATH*2] = {0};
 	bool lbRc = false;
 	//DWORD nLen = 0;
-	PROCESS_INFORMATION pi = {nullptr};
-	STARTUPINFO si = {sizeof(si)};
+	PROCESS_INFORMATION pi = {};
+	STARTUPINFO si = {};
+	si.cb = sizeof(si);
 	DWORD dwSelfPID = GetCurrentProcessId();
 	// "/ATTACH" - низя, а то заблокируемся при попытке подключения к "отлаживаемому" GUI
 	swprintf_c(szExe, L"\"%s\" /DEBUGPID=%u /BW=80 /BH=25 /BZ=%u",
