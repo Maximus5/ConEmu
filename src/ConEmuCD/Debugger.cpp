@@ -376,7 +376,8 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 	// "/DEBUGEXE" or "/DEBUGTREE"
 	if (!dbgInfo.szDebuggingCmdLine.IsEmpty())
 	{
-		STARTUPINFO si = {sizeof(si)};  // NOLINT(clang-diagnostic-missing-field-initializers)
+		STARTUPINFO si = {};
+		si.cb = sizeof(si);
 		PROCESS_INFORMATION pi = {};
 
 		if (dbgInfo.bDebugProcessTree)
@@ -392,7 +393,7 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 			const DWORD dwErr = GetLastError();
 
 			wchar_t szProc[64] = L"";
-			PROCESSENTRY32 info = {};  // NOLINT(clang-diagnostic-missing-field-initializers)
+			PROCESSENTRY32 info = {};
 			if (GetProcessInfo(gpWorker->RootProcessId(), info))
 				_wcscpyn_c(szProc, countof(szProc), info.szExeFile, countof(szProc));
 
@@ -479,7 +480,7 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 				DWORD dwErr = GetLastError();
 
 				wchar_t szProc[64]; szProc[0] = 0;
-				PROCESSENTRY32 info = {};  // NOLINT(clang-diagnostic-missing-field-initializers)
+				PROCESSENTRY32 info = {};
 				if (GetProcessInfo(nDbgProcessID, info))
 					_wcscpyn_c(szProc, countof(szProc), info.szExeFile, countof(szProc));
 
@@ -529,11 +530,15 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 				(dbgInfo.debugDumpProcess == DumpProcessType::MiniDump) ? L" /MINIDUMP" :
 				(dbgInfo.debugDumpProcess == DumpProcessType::FullDump) ? L" /FULLDUMP" : L""));
 
-			STARTUPINFO si = {sizeof(si)};  // NOLINT(clang-diagnostic-missing-field-initializers)
+			STARTUPINFO si = {};
+			si.cb = sizeof(si);
 			PROCESS_INFORMATION pi = {};
-			if (CreateProcess(nullptr, szOtherDebugCmd.ms_Val, nullptr, nullptr, TRUE, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi))
+			if (CreateProcessW(nullptr, szOtherDebugCmd.ms_Val, nullptr, nullptr, TRUE,
+				NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi))
 			{
-				// Ждать не будем
+				// Don't wait
+				SafeCloseHandle(pi.hProcess);
+				SafeCloseHandle(pi.hThread);
 			}
 			else
 			{
@@ -791,16 +796,20 @@ void DebuggerInfo::WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_
 
 		if (MiniDumpWriteDump_f)
 		{
-			MINIDUMP_EXCEPTION_INFORMATION mei = {dwThreadId};  // NOLINT(clang-diagnostic-missing-field-initializers)
-			EXCEPTION_POINTERS ep = {pExceptionRecord};  // NOLINT(clang-diagnostic-missing-field-initializers)
-			ep.ContextRecord = nullptr; // Непонятно, откуда его можно взять
+			#if 0
+			MINIDUMP_EXCEPTION_INFORMATION mei = {};
+			mei.ThreadId = dwThreadId;
+			EXCEPTION_POINTERS ep = {};
+			ep.ExceptionRecord = pExceptionRecord;
+			ep.ContextRecord = nullptr; // no way to get it here
 			// ReSharper disable once CppAssignedValueIsNeverUsed
 			mei.ExceptionPointers = &ep;
 			// ReSharper disable once CppAssignedValueIsNeverUsed
 			mei.ClientPointers = FALSE;
 			// ReSharper disable once CppLocalVariableMayBeConst
 			// ReSharper disable once IdentifierTypo
-			PMINIDUMP_EXCEPTION_INFORMATION pmei = nullptr; // #TODO use mei properly?
+			#endif
+			MINIDUMP_EXCEPTION_INFORMATION* pmei = nullptr; // #TODO use mei properly?
 			_printf("Creating minidump: ");
 			_wprintf(dmpFile);
 			_printf("...");

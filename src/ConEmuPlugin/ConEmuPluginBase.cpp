@@ -1400,8 +1400,9 @@ bool CPluginBase::RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, b
 	}
 	else
 	{
-		STARTUPINFO cif= {sizeof(STARTUPINFO)};
-		PROCESS_INFORMATION pri= {0};
+		STARTUPINFO cif = {};
+		cif.cb = sizeof(cif);
+		PROCESS_INFORMATION pri = {};
 		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
 		DWORD oldConsoleMode;
 		DWORD nErr = 0;

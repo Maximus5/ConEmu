@@ -254,16 +254,19 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, const DWORD imageBits, 
 		          L"\"%s\\ConEmuC%s.exe\" /SETHOOKS=%X,%u,%X,%u",
 		          szDllDir, (loadedImageBits==64) ? L"64" : L"",
 		          LODWORD(hProcess), pi.dwProcessId, LODWORD(hThread), pi.dwThreadId);
-		STARTUPINFO si = {sizeof(STARTUPINFO)};
-		PROCESS_INFORMATION pi64 = {nullptr};
+		STARTUPINFO si = {};
+		si.cb = sizeof(si);
+		PROCESS_INFORMATION pi64 = {};
 		LPSECURITY_ATTRIBUTES lpNotInh = LocalSecurity();
-		SECURITY_ATTRIBUTES SecInh = {sizeof(SECURITY_ATTRIBUTES)};
-		SecInh.lpSecurityDescriptor = lpNotInh->lpSecurityDescriptor;
-		SecInh.bInheritHandle = TRUE;
+		SECURITY_ATTRIBUTES secInh = {};
+		secInh.nLength = sizeof(secInh);
+		secInh.lpSecurityDescriptor = lpNotInh->lpSecurityDescriptor;
+		secInh.bInheritHandle = TRUE;
 
 		// Добавил DETACHED_PROCESS, чтобы helper не появлялся в списке процессов консоли,
 		// а то у сервера может крышу сорвать, когда helper исчезнет, а приложение еще не появится.
-		BOOL lbHelper = CreateProcess(nullptr, sz64helper, &SecInh, &SecInh, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, nullptr, nullptr, &si, &pi64);
+		BOOL lbHelper = CreateProcess(nullptr, sz64helper, &secInh, &secInh,
+			TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, nullptr, nullptr, &si, &pi64);
 
 		if (!lbHelper)
 		{

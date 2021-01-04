@@ -46,14 +46,16 @@ namespace
 {
 STARTUPINFOW LoadStartupInfo()
 {
-	STARTUPINFOW si = {sizeof(STARTUPINFOW)};  // NOLINT(clang-diagnostic-missing-field-initializers)
+	STARTUPINFOW si = {};
+	si.cb = sizeof(STARTUPINFOW);
 	GetStartupInfoW(&si);
 	return si;
 }
 
 OSVERSIONINFOW LoadOsVersionInfo()
 {
-	OSVERSIONINFOW osv = { sizeof(OSVERSIONINFOW)};  // NOLINT(clang-diagnostic-missing-field-initializers)
+	OSVERSIONINFOW osv = {};
+	osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
 	GetOsVersionInformational(&osv);
 	return osv;
 }

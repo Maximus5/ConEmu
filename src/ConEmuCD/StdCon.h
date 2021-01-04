@@ -56,15 +56,15 @@ namespace StdCon {
 		bool Reopen(STARTUPINFO* si);
 
 		struct {
-			DWORD channel_ = 0;
-			const wchar_t* name_ = nullptr;
-			MConHandle* handle_ = nullptr;
-			HANDLE prevHandle_ = nullptr;
+			DWORD channel_;
+			const wchar_t* name_;
+			MConHandle* handle_;
+			HANDLE prevHandle_;
 		} handles_[3] = {
-			{ STD_INPUT_HANDLE, L"CONIN$" },  // NOLINT(clang-diagnostic-missing-field-initializers)
-			{ STD_OUTPUT_HANDLE, L"CONOUT$" },  // NOLINT(clang-diagnostic-missing-field-initializers)
+			{ STD_INPUT_HANDLE, L"CONIN$", nullptr, nullptr },
+			{ STD_OUTPUT_HANDLE, L"CONOUT$", nullptr, nullptr },
 			// "CONERR$" does not exist, so we use "CONOUT$" for STD_ERROR_HANDLE
-			{ STD_ERROR_HANDLE, L"CONOUT$" },  // NOLINT(clang-diagnostic-missing-field-initializers)
+			{ STD_ERROR_HANDLE, L"CONOUT$", nullptr, nullptr },
 		};
 		bool reopened_ = false;
 	};

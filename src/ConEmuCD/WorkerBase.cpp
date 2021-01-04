@@ -720,7 +720,8 @@ int WorkerBase::ParamColorIndexes() const
 
 			if (gnDefPopupColors && IsWin6())
 			{
-				MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = { sizeof(csbi) };  // NOLINT(clang-diagnostic-missing-field-initializers)
+				MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {};
+				csbi.cbSize = sizeof(csbi);
 				if (apiGetConsoleScreenBufferInfoEx(hConOut, &csbi))
 				{
 					// Microsoft bug? When console is started elevated - it does NOT show
