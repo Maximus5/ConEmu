@@ -1836,7 +1836,7 @@ int WorkerServer::ProcessCommandLineArgs()
 
 	if (gState.runMode_ == RunMode::Server)
 	{
-		_ASSERTE(!gState.noCreateProcess_);
+		// _ASSERTE(!gState.noCreateProcess_); valid, e.g. attaching running console into ConEmu
 		SetConEmuWorkEnvVar(ghOurModule);
 	}
 
