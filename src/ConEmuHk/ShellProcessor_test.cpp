@@ -156,7 +156,7 @@ HWND CDefTermHk::AllocHiddenConsole(const bool /*bTempForVS*/)
 	return nullptr;
 }
 
-size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
+size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, bool forceInjects, CEStr& rsArgs, CEStr& rsNewCon)
 {
 	return 0;
 }

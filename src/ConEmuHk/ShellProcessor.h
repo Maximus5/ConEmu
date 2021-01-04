@@ -84,8 +84,16 @@ private:
 	// Information about starting process
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
 	CmdArg ms_ExeTmp;
-	bool mb_WasSuspended = false; // if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
+	// if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
+	bool mb_WasSuspended = false;
+	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe).
+	// Modified via SetNeedInjects.
 	bool mb_NeedInjects = false;
+	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
+	// Modified via SetForceInjectOriginal.
+	bool mb_ForceInjectOriginal = false;
+	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed.
+	// Modified via SetConsoleMode.
 	bool mb_ConsoleMode = false;
 	bool mb_DebugWasRequested = false;
 	bool mb_HiddenConsoleDetachNeed = false;
@@ -163,7 +171,11 @@ private:
 	void LogExitLine(int rc, int line) const;
 	void LogShellString(LPCWSTR asMessage) const;
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI);
+	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe)
 	void SetNeedInjects(bool value);
+	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
+	void SetForceInjectOriginal(bool value);
+	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed
 	void SetConsoleMode(bool value);
 	static bool IsInterceptionEnabled();
 	CreatePrepareData OnCreateProcessPrepare(const DWORD* anCreationFlags, DWORD dwFlags, WORD wShowWindow, DWORD dwX, DWORD dwY);

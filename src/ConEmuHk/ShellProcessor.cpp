@@ -784,7 +784,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		}
 		else
 		{
-			SetNeedInjects(false);
 			pszOurExe = lstrdup(m_SrvMapping.sConEmuExe);
 		}
 	}
@@ -840,6 +839,9 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		lbRc = FALSE;
 		goto wrap;
 	}
+
+	// We change application to our executable (GUI or ConEmuC), so don't inject ConEmuHk there
+	SetNeedInjects(false);
 
 	nCchSize = (asFile ? wcslen(asFile) : 0) + (asParam ? wcslen(asParam) : 0) + 64;
 	if (lbUseDosBox)
@@ -912,7 +914,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		// "runas" (Shell) - start server
 		// CreateProcess - start GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
-		nCchSize += gpDefTerm->GetSrvAddArgs(!mb_ConsoleMode, szDefTermArg, szDefTermArg2);
+		nCchSize += gpDefTerm->GetSrvAddArgs(!mb_ConsoleMode, mb_ForceInjectOriginal, szDefTermArg, szDefTermArg2);
 	}
 
 	if (Flags & CEF_NEWCON_PREPEND)
@@ -1371,6 +1373,11 @@ bool CShellProc::CheckForDefaultTerminal(
 		return true; // nothing to do
 
 	lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
+
+	if (CompareProcessNames(ms_ExeTmp, L"VsDebugConsole.exe"))
+	{
+		SetForceInjectOriginal(true);
+	}
 
 	if (aCmd == eCreateProcess)
 	{
@@ -2766,7 +2773,7 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 
 
 	// Patch modified strings (wide to ansi/oem)
-	
+
 	if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
 	{
 		mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
@@ -2849,7 +2856,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	// patch flags and variables based on decision
 	OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags);
 
-	
+
 	// Patch modified strings (wide to ansi/oem)
 
 	if (changed || mpwsz_TempRetFile)
@@ -2976,23 +2983,23 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			{
 				// We need to start console app directly, but it will be nice
 				// to attach it to the existing or new ConEmu window.
-				size_t cchMax = MAX_PATH+80;
+				size_t cchMax = MAX_PATH + 80;
 				CEStr szSrvArgs, szNewCon;
-				cchMax += gpDefTerm->GetSrvAddArgs(false, szSrvArgs, szNewCon);
+				cchMax += gpDefTerm->GetSrvAddArgs(false, false, szSrvArgs, szNewCon);
 				_ASSERTE(szNewCon.IsEmpty());
 
-				wchar_t* pszCmdLine = static_cast<wchar_t*>(malloc(cchMax*sizeof(*pszCmdLine)));
-				if (pszCmdLine)
+				CEStr cmdLine;
+				if (cmdLine.GetBuffer(cchMax))
 				{
 					_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u%s",
+					msprintf(cmdLine.data(), cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u%s",
 						m_SrvMapping.ComSpec.ConEmuBaseDir, ConEmuC_EXE_3264,
 						lpPI->dwProcessId,
 						static_cast<LPCWSTR>(szSrvArgs));
 					STARTUPINFO si = {};
 					si.cb = sizeof(si);
 					PROCESS_INFORMATION pi = {};
-					bAttachCreated = CreateProcess(nullptr, pszCmdLine, nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
+					bAttachCreated = CreateProcess(nullptr, cmdLine.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
 					if (bAttachCreated)
 					{
 						CloseHandle(pi.hProcess);
@@ -3000,16 +3007,14 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 					}
 					else
 					{
-						DWORD nErr = GetLastError();
-						wchar_t* pszDbg = (wchar_t*)malloc(MAX_PATH*3*sizeof(*pszDbg));
-						if (pszDbg)
+						const DWORD nErr = GetLastError();
+						CEStr dbgMsg;
+						if (dbgMsg.GetBuffer(MAX_PATH * 3))
 						{
-							msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s", nErr, pszCmdLine);
-							LogShellString(pszDbg);
-							free(pszDbg);
+							msprintf(dbgMsg.data(), dbgMsg.GetMaxCount(), L"ConEmuHk: Failed to start attach server, Err=%u! %s", nErr, cmdLine.c_str());
+							LogShellString(dbgMsg);
 						}
 					}
-					free(pszCmdLine);
 				}
 			}
 			else if (mb_NeedInjects)
@@ -3071,6 +3076,11 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 void CShellProc::SetNeedInjects(const bool value)
 {
 	mb_NeedInjects = value;
+}
+
+void CShellProc::SetForceInjectOriginal(const bool value)
+{
+	mb_ForceInjectOriginal = value;
 }
 
 void CShellProc::SetConsoleMode(const bool value)

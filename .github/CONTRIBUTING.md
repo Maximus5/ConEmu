@@ -14,7 +14,6 @@ But please, be sure you are following some easy rules described below.
   * [Use latest branch](#use-latest-branch)
   * [Use separate commits](#use-separate-commits)
   * [Use descriptive commit messages](#use-descriptive-commit-messages)
-  * [Don't use C++11 and C++14 features](#dont-use-c11-and-c14-features)
 
 
 
@@ -220,8 +219,3 @@ Look at proper example below.
 * f326d76 fix warning: there is possible null pointer dereference: pszNewTarget.
 * 0408700 fix warning: there is possible null pointer dereference: pszValue.
 ~~~
-
-#### Don't use C++11 and C++14 features
-
-ConEmu is supposed to be easily compiled with Visual Studio 2008,
-to support OS Windows 2000 and ‘legacy’ computers.

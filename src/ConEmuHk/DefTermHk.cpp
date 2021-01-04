@@ -689,7 +689,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 	si.cb = sizeof(si);
 	PROCESS_INFORMATION pi = {};
 
-	size_t cchAddArgLen = GetSrvAddArgs(false, szAddArgs, szAddArgs2);
+	size_t cchAddArgLen = GetSrvAddArgs(false, false, szAddArgs, szAddArgs2);
 
 	wchar_t szExeName[MAX_PATH] = L"";
 	if (GetModuleFileName(nullptr, szExeName, countof(szExeName)) && szExeName[0])
@@ -830,7 +830,7 @@ void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
 	OnConWndChanged(hNewConWnd);
 }
 
-size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
+size_t CDefTermHk::GetSrvAddArgs(const bool bGuiArgs, const bool forceInjects, CEStr& rsArgs, CEStr& rsNewCon)
 {
 	if (!gpDefTerm)
 	{
@@ -863,10 +863,13 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 	HWND guiHwnd = nullptr;
 
 	// Do not inject ConEmuHk in the target process?
-	if (opt.bNoInjects && !bGuiArgs)
-		_wcscat_c(psz, cchMax, L" /NOINJECT");
-	else if (opt.bNoInjects)
-		wcscat_c(szNewConSw, L"i");
+	if (!forceInjects)
+	{
+		if (opt.bNoInjects && !bGuiArgs)
+			_wcscat_c(psz, cchMax, L" /NOINJECT");
+		else if (opt.bNoInjects)
+			wcscat_c(szNewConSw, L"i");
+	}
 
 	// New or existing window we shall use?
 	if (opt.bNewWindow && !bGuiArgs)

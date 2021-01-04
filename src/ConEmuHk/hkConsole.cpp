@@ -557,6 +557,35 @@ HWND WINAPI OnGetConsoleWindow(void)
 }
 
 
+DWORD WINAPI OnGetConsoleProcessList(LPDWORD lpdwProcessList, DWORD dwProcessCount)
+{
+	ORIGINAL_KRNL_EX(GetConsoleProcessList);
+	DWORD result = 0;
+
+	if (F(GetConsoleProcessList))
+		result = F(GetConsoleProcessList)(lpdwProcessList, dwProcessCount);
+
+	if (result && lpdwProcessList)
+	{
+		for (DWORD i = 0; i < result; ++i)
+		{
+			if (lpdwProcessList[i] == gnServerPID)
+			{
+				if (i + 1 < result)
+				{
+					const size_t tailLen = result - i - 1;
+					memmove(lpdwProcessList + i, lpdwProcessList + i + 1, tailLen * sizeof(*lpdwProcessList));
+				}
+				--result;
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
+
 // Undocumented function
 BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1)
 {

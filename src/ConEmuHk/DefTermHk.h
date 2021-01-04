@@ -53,7 +53,7 @@ public:
 	static void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel = nullptr);
 	static void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = nullptr);
 	static bool LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping);
-	static size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
+	static size_t GetSrvAddArgs(bool bGuiArgs, bool forceInjects, CEStr& rsArgs, CEStr& rsNewCon);
 	static bool IsInsideMode();
 
 	// Start the server and attach to its console

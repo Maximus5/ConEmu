@@ -56,6 +56,7 @@ HOOK_PROTOTYPE(FreeConsole,BOOL,WINAPI,(void));
 HOOK_PROTOTYPE(GetConsoleAliasesW,DWORD,WINAPI,(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName));
 HOOK_PROTOTYPE(GetConsoleFontSize,COORD,WINAPI,(HANDLE hConsoleOutput, DWORD nFont));
 HOOK_PROTOTYPE(GetConsoleWindow,HWND,WINAPI,(void));
+HOOK_PROTOTYPE(GetConsoleProcessList,DWORD,WINAPI,(LPDWORD lpdwProcessList, DWORD dwProcessCount));
 HOOK_PROTOTYPE(GetCurrentConsoleFont,BOOL,WINAPI,(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont));
 HOOK_PROTOTYPE(GetLargestConsoleWindowSize,COORD,WINAPI,(HANDLE hConsoleOutput));
 HOOK_PROTOTYPE(SetConsoleActiveScreenBuffer,BOOL,WINAPI,(HANDLE hConsoleOutput));

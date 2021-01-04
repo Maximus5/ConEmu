@@ -329,6 +329,7 @@ bool InitHooksConsole()
 		HOOK_ITEM_BY_NAME(SetStdHandle,			kernel32),
 		/* ************************ */
 		HOOK_ITEM_BY_NAME(GetConsoleWindow,     kernel32),
+		HOOK_ITEM_BY_NAME(GetConsoleProcessList,kernel32),
 		HOOK_ITEM_BY_NAME(GetConsoleMode,		kernel32),
 		HOOK_ITEM_BY_NAME(SetConsoleMode,  		kernel32),
 		HOOK_ITEM_BY_NAME(SetConsoleTitleA,		kernel32),
