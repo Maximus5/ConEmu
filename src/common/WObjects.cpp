@@ -535,6 +535,22 @@ DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName)
 	return nRc;
 }
 
+#ifndef __GNUC__
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+#endif
+
+DWORD GetCurrentModulePathName(CEStr& lsPathName)
+{
+	auto* module =
+#ifndef __GNUC__
+		reinterpret_cast<HMODULE>(&__ImageBase)
+#else
+		static_cast<HMODULE>(nullptr)
+#endif
+		;
+	return GetModulePathName(module, lsPathName);
+}
+
 //wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=FALSE)
 //{
 //	TODO("хорошо бы и сетевые диски обрабатывать");

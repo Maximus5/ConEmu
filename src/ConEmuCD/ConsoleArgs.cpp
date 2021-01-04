@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_LOADCFGFILE_MSGBOX
 //#define SHOW_SERVER_STARTED_MSGBOX
 //#define SHOW_COMSPEC_STARTED_MSGBOX
-#define SHOW_INJECTS_MSGBOX
+//#define SHOW_INJECTS_MSGBOX
 #endif
 
 #include "ConsoleArgs.h"
@@ -48,6 +48,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/MStrDup.h"
 #include "../common/RConStartArgs.h"
+#ifdef SHOW_INJECTS_MSGBOX
+#include "../common/MToolHelp.h"
+#endif
 
 #include <tuple>
 
@@ -305,13 +308,20 @@ void ConsoleArgs::ShowComspecStartedMsgBox(LPCWSTR asCmdLine)
 #endif
 }
 
-void ConsoleArgs::ShowInjectsMsgBox(const ConEmuExecAction mode, const wchar_t* asCmdLine)
+void ConsoleArgs::ShowInjectsMsgBox(const ConEmuExecAction mode, const wchar_t* asCmdLine, const wchar_t* param)
 {
 #ifdef SHOW_INJECTS_MSGBOX
 	wchar_t szTitle[100] = L"";
-	swprintf_c(szTitle, L"ConEmuC [%s] started (PID=%i)",
-		mode == ConEmuExecAction::InjectDefTrm ? L"InjectDefTerm" : L"InjectRemote", gnSelfPID);
-	MessageBox(nullptr, asCmdLine, szTitle, 0);
+	const DWORD hookPid = wcstoul(param, nullptr, 10);
+	MToolHelpModule modules(hookPid);
+	MODULEENTRY32W exeInfo{};
+	modules.Next(exeInfo);
+	swprintf_c(szTitle, ConEmuC_EXE_3264 L" [%s] started (PID=%i)",
+		mode == ConEmuExecAction::InjectDefTrm ? L"InjectDefTerm"
+		: mode == ConEmuExecAction::InjectHooks ? L"InjectHooks"
+		: L"InjectRemote", gnSelfPID);
+	const CEStr msg(L"Command:\n", asCmdLine, L"\n\n", L"Target process:\n", exeInfo.szExePath);
+	MessageBoxW(nullptr, msg, szTitle, 0);
 #endif
 }
 
@@ -512,10 +522,10 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		}
 		else if (szArg.IsSwitch(L"/SetHooks="))
 		{
-			// _ASSERTE(FALSE && "Continue to InjectHooks");
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectHooks;
 			command_.Set(szArg.GetExtra());
+			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""), command_.c_str(L"0"));
 			break;
 		}
 		else if (szArg.IsSwitch(L"/INJECT="))
@@ -523,7 +533,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectRemote;
 			command_.Set(szArg.GetExtra());
-			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""));
+			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""), command_.c_str(L"0"));
 			break;
 		}
 		else if (szArg.IsSwitch(L"/DEFTRM="))
@@ -531,7 +541,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectDefTrm;
 			command_.Set(szArg.GetExtra());
-			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""));
+			ShowInjectsMsgBox(eExecAction_, fullCmdLine_.c_str(L""), command_.c_str(L"0"));
 			break;
 		}
 		else if (szArg.OneOfSwitches(L"/STRUCT", L"/DumpStruct"))

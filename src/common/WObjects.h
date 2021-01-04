@@ -79,6 +79,7 @@ bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
 DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName);
+DWORD GetCurrentModulePathName(CEStr& lsPathName);
 
 OSVERSIONINFOEXW MakeOsVersionEx(DWORD dwMajorVersion, DWORD dwMinorVersion);
 bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMask, DWORDLONG dwlConditionMask);

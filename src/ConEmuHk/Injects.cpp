@@ -28,6 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 
+#ifdef _DEBUG
+//#define SHOW_INJECTS_MSGBOX
+#else
+#undef SHOW_INJECTS_MSGBOX
+#endif
+
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/WModuleCheck.h"
@@ -37,6 +43,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MModule.h"
 #include "../common/WObjects.h"
 #include <tuple>
+
+#ifdef SHOW_INJECTS_MSGBOX
+#include "../common/MToolHelp.h"
+#include "../common/ProcessData.h"
+#endif
 
 extern HMODULE ghOurModule;
 
@@ -116,6 +127,45 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 
 	gfLdrGetDllHandleByName = InjectsFnPtr(hNtDll, fnLdrGetDllHandleByName, L"ntdll.dll");
 	return fnLdrGetDllHandleByName;
+}
+
+static void ShowInjectsMsgBox(PROCESS_INFORMATION pi, const DWORD imageBits)
+{
+#ifdef SHOW_INJECTS_MSGBOX
+	wchar_t szTitle[64] = L"", pidStr[16] = L"", pidBits[16] = L"";
+	swprintf_c(szTitle, L"ConEmu [%u] Injects (PID=%i)", WIN3264TEST(32, 64), GetCurrentProcessId());
+
+	wchar_t targetProcessName[MAX_PATH] = L"";
+	if (!targetProcessName[0])
+	{
+		MToolHelpModule modules(pi.dwProcessId);
+		MODULEENTRY32W exeInfo{};
+		if (modules.Next(exeInfo) && exeInfo.szExePath[0])
+			std::ignore = lstrcpyn(targetProcessName, exeInfo.szExePath, countof(targetProcessName));
+	}
+	if (!targetProcessName[0])
+	{
+		CProcessData process;
+		wchar_t name[MAX_PATH];
+		process.GetProcessName(pi.dwProcessId, name, countof(name), targetProcessName, countof(targetProcessName), nullptr);
+	}
+
+	CEStr moduleName;
+	GetCurrentModulePathName(moduleName);
+	CEStr exeName;
+	GetModulePathName(nullptr, exeName);
+
+	DWORD uType = MB_SYSTEMMODAL;
+	const auto* targetExeName = PointToName(targetProcessName);
+	if (targetExeName && (IsConEmuGui(targetExeName) || IsConsoleServer(targetExeName)))
+		uType |= MB_ICONSTOP;
+
+	const CEStr pidInfo(L"\n\n" L"Target PID: ", ltow_s(pi.dwProcessId, pidStr, 10),
+		L", Bitness: ", ltow_s(imageBits, pidBits, 10));
+	const CEStr msg(L"Source exe:\n", exeName, L"\n\n" L"Source module:\n", moduleName,
+		pidInfo, L"\n", targetProcessName);
+	MessageBox(nullptr, msg, szTitle, uType);
+#endif
 }
 
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
@@ -206,6 +256,8 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, const DWORD imageBits, 
 			}
 		}
 	}
+
+	ShowInjectsMsgBox(pi, loadedImageBits);
 
 	//int iFindAddress = 0;
 	//bool lbInj = false;
