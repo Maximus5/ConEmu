@@ -193,15 +193,20 @@ public:
 public:
 	CShellProc();
 	~CShellProc();
+
+	CShellProc(const CShellProc&) = delete;
+	CShellProc(CShellProc&&) = delete;
+	CShellProc& operator=(const CShellProc&) = delete;
+	CShellProc& operator=(CShellProc&&) = delete;
 public:
-	// Эти функции возвращают TRUE, если команда обрабатывается (нужно будет делать Inject)
-	BOOL OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asDir, LPCSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
-	BOOL OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asDir, LPCWSTR* asParam, DWORD* anFlags, DWORD* anShowCmd);
+	// Functions return TRUE when the command is allowed to be executed
+	BOOL OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd);
+	BOOL OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd);
 	BOOL OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo);
 	BOOL OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo);
 	BOOL OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA* ppStartupInfo);
 	BOOL OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW* ppStartupInfo);
-	// Вызывается после успешного создания процесса
+	// Called after successful process creation
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
 	// Used with DefTerm+VSDebugger

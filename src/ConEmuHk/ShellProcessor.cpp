@@ -395,7 +395,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 	return TRUE;
 }
 
-CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
+CESERVER_REQ* CShellProc::NewCmdOnCreate(CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				const int nImageBits, const int nImageSubsystem,
@@ -3135,13 +3135,18 @@ void CShellProc::SetConsoleMode(const bool value)
 	mb_ConsoleMode = value;
 }
 
+void CShellProc::SetPostInjectWasRequested(const bool value)
+{
+	mb_PostInjectWasRequested = value;
+}
+
 bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= nullptr*/)
 {
 	if ((!hThread || (m_WaitDebugVsThread.hThread != hThread)) && !lpPI)
 		return false;
 
 	int iHookRc = -1;
-	DWORD nPreError = GetLastError();
+	CLastErrorGuard errGuard;
 	DWORD nResumeRC = -1;
 
 	DWORD nPID = lpPI ? lpPI->dwProcessId : m_WaitDebugVsThread.dwProcessId;
@@ -3196,9 +3201,6 @@ bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATIO
 	// Resume thread if it was done by us
 	if (lpPI)
 		ResumeThread(hThread);
-
-	// Restore ErrCode
-	SetLastError(nPreError);
 
 	return (iHookRc == 0);
 }

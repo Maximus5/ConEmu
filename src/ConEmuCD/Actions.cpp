@@ -180,11 +180,11 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 }
 
 
-int DoInjectHooks(LPWSTR asCmdArg)
+int DoInjectHooks(const CEStr& asCmdArg)
 {
-	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
+	gbInShutdown = TRUE; // avoid confirmation on exit
 	gState.runMode_ = RunMode::SetHook64;
-	LPWSTR pszNext = asCmdArg;
+	LPWSTR pszNext = asCmdArg.data();
 	LPWSTR pszEnd = nullptr;
 	BOOL lbForceGui = FALSE;
 	PROCESS_INFORMATION pi = {};
@@ -266,13 +266,13 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	return CERR_HOOKS_FAILED;
 }
 
-int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
+int DoInjectRemote(const CEStr& asCmdArg, bool abDefTermOnly)
 {
-	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
+	gbInShutdown = TRUE; // avoid confirmations on exit
 	gState.runMode_ = RunMode::SetHook64;
-	LPWSTR pszNext = asCmdArg;
+	auto* pszNext = asCmdArg.data();
 	LPWSTR pszEnd = nullptr;
-	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
+	const DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
 	wchar_t szStr[16];
 	wchar_t szTitle[128];
 	wchar_t szInfo[120];
@@ -1104,14 +1104,14 @@ int DoExecAction(const ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of
 	case ConEmuExecAction::InjectHooks:
 		{
 			LogString(L"DoExecAction: DoInjectHooks");
-			iRc = DoInjectHooks((LPWSTR)asCmdArg);
+			iRc = DoInjectHooks(asCmdArg);
 			break;
 		}
 	case ConEmuExecAction::InjectRemote:
 	case ConEmuExecAction::InjectDefTrm:
 		{
 			LogString(L"DoExecAction: DoInjectRemote");
-			iRc = DoInjectRemote((LPWSTR)asCmdArg, (eExecAction == ConEmuExecAction::InjectDefTrm));
+			iRc = DoInjectRemote(asCmdArg, (eExecAction == ConEmuExecAction::InjectDefTrm));
 			break;
 		}
 	case ConEmuExecAction::GuiMacro: // ConEmuC -GuiMacro

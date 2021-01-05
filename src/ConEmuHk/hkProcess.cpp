@@ -685,7 +685,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 	if (!F(ShellExecuteA))
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
-		return FALSE;
+		return reinterpret_cast<HINSTANCE>(ERROR_INVALID_FUNCTION);
 	}
 
 	if (ghConEmuWndDC)
@@ -696,18 +696,17 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, nullptr, (DWORD*)&nShowCmd))
+	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, nullptr, reinterpret_cast<DWORD*>(&nShowCmd)))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
-		return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+		return reinterpret_cast<HINSTANCE>(ERROR_FILE_NOT_FOUND);
 	}
 
-	HINSTANCE lhRc;
-	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
-	DWORD dwErr = GetLastError();
+	HINSTANCE lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+	const DWORD dwErr = GetLastError();
 
-	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, nullptr); //-V112
+	sp->OnShellFinished((reinterpret_cast<INT_PTR>(lhRc) > 32), lhRc, nullptr); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;
@@ -723,7 +722,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 	if (!F(ShellExecuteW))
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
-		return FALSE;
+		return reinterpret_cast<HINSTANCE>(ERROR_INVALID_FUNCTION);
 	}
 
 	if (ghConEmuWndDC)
@@ -734,18 +733,17 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, nullptr, (DWORD*)&nShowCmd))
+	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, nullptr, reinterpret_cast<DWORD*>(&nShowCmd)))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
-		return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+		return reinterpret_cast<HINSTANCE>(ERROR_FILE_NOT_FOUND);
 	}
 
-	HINSTANCE lhRc;
-	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
-	DWORD dwErr = GetLastError();
+	HINSTANCE lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+	const DWORD dwErr = GetLastError();
 
-	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, nullptr); //-V112
+	sp->OnShellFinished((reinterpret_cast<INT_PTR>(lhRc) > 32), lhRc, nullptr); //-V112
 	delete sp;
 
 	//gbInShellExecuteEx = FALSE;

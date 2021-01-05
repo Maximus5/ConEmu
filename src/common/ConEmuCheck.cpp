@@ -29,11 +29,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
-#include "Memory.h"
 #include "ConEmuCheck.h"
 #include "ConEmuPipeMode.h"
 #include "MFileMapping.h"
 #include "HkFunc.h"
+#include "MModule.h"
 
 #ifdef _DEBUG
 #include "CmdLine.h"
@@ -42,8 +42,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 #define DEBUGSTRCMD(s) //OutputDebugString(s)
+//#define DEBUG_RETRY_PIPE_OPEN_DLG
 #else
 #define DEBUGSTRCMD(s)
+#undef DEBUG_RETRY_PIPE_OPEN_DLG
 #endif
 
 // !!! Использовать только через функцию: LocalSecurity() !!!
@@ -196,14 +198,14 @@ BOOL IsProcessDebugged(DWORD nPID)
 {
 	BOOL lbServerIsDebugged = FALSE;
 
-	// WinXP SP1 и выше
+	// WinXP SP1 and above
 	typedef BOOL (WINAPI* CheckRemoteDebuggerPresent_t)(HANDLE hProcess, PBOOL pbDebuggerPresent);
 	static CheckRemoteDebuggerPresent_t _CheckRemoteDebuggerPresent = nullptr;
 
 	if (!_CheckRemoteDebuggerPresent)
 	{
-		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-		_CheckRemoteDebuggerPresent = hKernel ? (CheckRemoteDebuggerPresent_t)GetProcAddress(hKernel, "CheckRemoteDebuggerPresent") : nullptr;
+		const MModule hKernel(GetModuleHandle(L"kernel32.dll"));
+		hKernel.GetProcAddress("CheckRemoteDebuggerPresent", _CheckRemoteDebuggerPresent);
 	}
 	
 	if (_CheckRemoteDebuggerPresent)
@@ -274,18 +276,18 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		// Break if the pipe handle is valid.
 		if (hPipe && (hPipe != INVALID_HANDLE_VALUE))
 		{
-			break; // OK, открыли
+			break; // OK, opened
 		}
 		_ASSERTE(hPipe);
 
-		#ifdef _DEBUG
+		#ifdef DEBUG_RETRY_PIPE_OPEN_DLG
 		if (gbPipeDebugBoxes)
 		{
 			szDbgMsg[0] = 0;
 			GetModuleFileName(nullptr, szDbgMsg, countof(szDbgMsg));
 			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), GetCurrentProcessId());
 			msprintf(szDbgMsg, countof(szDbgMsg), L"Can't open pipe, ErrCode=%u\n%s\nWait: %u,%u,%u", dwErr, szPipeName, bWaitCalled, bWaitPipeRc, nWaitPipeErr);
-			int nBtn = ::MessageBox(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			const int nBtn = MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL|MB_RETRYCANCEL);
 			if (nBtn == IDCANCEL)
 				return nullptr;
 		}
@@ -295,7 +297,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 
 		if (hStop)
 		{
-			// Затребовано завершение приложения или еще что-то
+			// Was requested application stop or so
 			nStopWaitRc = WaitForSingleObject(hStop, 0);
 			if (nStopWaitRc == WAIT_OBJECT_0)
 			{
@@ -326,13 +328,13 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
 		if ((nTries <= 0) || (nDuration > nOpenPipeTimeout))
 		{
-			#ifdef _DEBUG
+			#ifdef DEBUG_RETRY_PIPE_OPEN_DLG
 			msprintf(szErr, countof(szErr), L"%s.%u\nCreateFile(%s) failed\ncode=%u%s%s",
 			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr,
 			          (nTries <= 0) ? L", Tries" : L"", (nDuration > nOpenPipeTimeout) ? L", Duration" : L"");
 			//_ASSERTEX(FALSE && "Pipe open failed with timeout!");
-			int iBtn = bIgnoreAbsence ? IDCANCEL
-				: MessageBox(nullptr, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			const int iBtn = bIgnoreAbsence ? IDCANCEL
+				: MessageBoxW(nullptr, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 			if (iBtn == IDRETRY)
 			{
 				nTries = nDefaultTries;
@@ -394,36 +396,6 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	               &dwMode,  // new pipe mode
 	               nullptr,     // don't set maximum bytes
 	               nullptr);    // don't set maximum time
-
-#if 0
-	if (!fSuccess)
-	{
-		dwErr = GetLastError();
-		_ASSERTE(fSuccess);
-		//if (pszErr)
-		{
-			msprintf(szErr, countof(szErr), L"%s.%u: SetNamedPipeHandleState(%s) failed, code=0x%08X",
-			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr);
-			#ifdef _DEBUG
-			int nCurLen = lstrlen(szErr);
-			msprintf(szErr+nCurLen, countof(szErr)-nCurLen, L"\nCurState: %u,x%08X,%u", bCurState, nCurState, nCurInstances);
-			#endif
-		}
-		CloseHandle(hPipe);
-
-#ifdef _DEBUG
-		if (gbPipeDebugBoxes)
-		{
-			szDbgMsg[0] = 0;
-			GetModuleFileName(nullptr, szDbgMsg, countof(szDbgMsg));
-			msprintf(szTitle, countof(szTitle), L"%s: PID=%u", PointToName(szDbgMsg), GetCurrentProcessId());
-			::MessageBox(nullptr, szErr, szTitle, MB_SYSTEMMODAL);
-		}
-#endif
-
-		return nullptr;
-	}
-#endif
 
 	UNREFERENCED_PARAMETER(bWaitCalled);
 	UNREFERENCED_PARAMETER(fSuccess);
