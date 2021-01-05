@@ -1547,7 +1547,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 				bDebugWasRequested = true;
 				mb_PostInjectWasRequested = true;
 			} // end of check "starting new gnu debugger"
-			else if (!CompareProcessNames(gsExeName, exeName))
+			else if (CompareProcessNames(gsExeName, exeName))
 			{
 				// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
 				//
