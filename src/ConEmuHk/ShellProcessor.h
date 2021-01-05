@@ -84,23 +84,45 @@ private:
 	// Information about starting process
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
 	CmdArg ms_ExeTmp;
+
 	// if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
 	bool mb_WasSuspended = false;
+
 	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe).
 	// Modified via SetNeedInjects.
 	bool mb_NeedInjects = false;
+	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe)
+	void SetNeedInjects(bool value);
+
 	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
 	// Modified via SetForceInjectOriginal.
 	bool mb_ForceInjectOriginal = false;
+	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
+	void SetForceInjectOriginal(bool value);
+
 	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed.
 	// Modified via SetConsoleMode.
 	bool mb_ConsoleMode = false;
+	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed
+	void SetConsoleMode(bool value);
+
+	// If process is starting for debugging
 	bool mb_DebugWasRequested = false;
+
+	// 
 	bool mb_HiddenConsoleDetachNeed = false;
+
+	// Special case of injecting ConEmuHk during debugging.
+	// The process is started, thread is resumed until modules are initialized,
+	// after that thread is suspended again and StartDefTermHooker is called.
 	bool mb_PostInjectWasRequested = false;
-	bool mb_Opt_DontInject = false; // ConEmuHooks=OFF
-	bool mb_Opt_SkipNewConsole = false; // ConEmuHooks=NOARG
-	bool mb_Opt_SkipCmdStart = false; // ConEmuHooks=NOSTART
+
+	// ConEmuHooks=OFF
+	bool mb_Opt_DontInject = false;
+	// ConEmuHooks=NOARG
+	bool mb_Opt_SkipNewConsole = false;
+	// ConEmuHooks=NOSTART
+	bool mb_Opt_SkipCmdStart = false;
 
 	enum class WorkOptions : uint32_t
 	{
@@ -171,15 +193,12 @@ private:
 	void LogExitLine(int rc, int line) const;
 	void LogShellString(LPCWSTR asMessage) const;
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const;
-	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe)
-	void SetNeedInjects(bool value);
-	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
-	void SetForceInjectOriginal(bool value);
-	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed
-	void SetConsoleMode(bool value);
-	static bool IsInterceptionEnabled();
 	CreatePrepareData OnCreateProcessPrepare(const DWORD* anCreationFlags, DWORD dwFlags, WORD wShowWindow, DWORD dwX, DWORD dwY);
 	bool OnCreateProcessResult(PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags);
+
+	// Validates either ghConEmuWndDC or IsDefTermEnabled
+	static bool IsInterceptionEnabled();
+
 public:
 	CESERVER_REQ* NewCmdOnCreate(CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
@@ -210,6 +229,8 @@ public:
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
 	// Used with DefTerm+VSDebugger
+	// The hThread is resumed until modules are initialized,
+	// that hThread is suspended again, StartDefTermHooker is called and finally hThread is resumed again.
 	static bool OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI = nullptr);
 protected:
 	static PROCESS_INFORMATION m_WaitDebugVsThread;

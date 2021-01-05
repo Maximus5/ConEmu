@@ -299,6 +299,7 @@ extern void _DEBUGSTR(LPCWSTR s);
 #endif
 
 #include "MStrSafe.h"
+// ReSharper disable once CppUnusedIncludeDirective
 #include "Memory.h"
 
 // Compares the *pv value with the cmp value. If the *pv value is equal to the cmp value,

@@ -1545,7 +1545,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 			else if (lbGnuDebugger)
 			{
 				bDebugWasRequested = true;
-				mb_PostInjectWasRequested = true;
+				SetPostInjectWasRequested(true);
 			} // end of check "starting new gnu debugger"
 			else if (CompareProcessNames(gsExeName, exeName))
 			{
@@ -1759,8 +1759,8 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	bool bDebugWasRequested = false;
 	bool bVsNetHostRequested = false;
 	bool bIgnoreSuspended = false;
-	mb_DebugWasRequested = FALSE;
-	mb_PostInjectWasRequested = FALSE;
+	_ASSERTE(mb_DebugWasRequested == FALSE);
+	_ASSERTE(mb_PostInjectWasRequested == FALSE);
 
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
@@ -2178,11 +2178,17 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	{
 		if (gbPrepareDefaultTerminal)
 		{
+			// normal DefTerm feature
+			if (mb_ConsoleMode && anShowCmd)
+			{
+				*anShowCmd = SW_HIDE;
+			}
+
 			if (bDebugWasRequested)
 			{
 				// We need to post attach ConEmu GUI to started console
 				if (bVsNetHostRequested)
-					mb_PostInjectWasRequested = TRUE;
+					SetPostInjectWasRequested(true);
 				else
 					mb_DebugWasRequested = TRUE;
 				// Пока что не будем убирать "мелькание" окошка.
@@ -2191,15 +2197,6 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				// запущено процессом для служебных целей, и не трогаем его...
 				// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
 				goto wrap;
-			}
-
-			// normal DefTerm feature
-			if (mb_ConsoleMode)
-			{
-				if (anShowCmd)
-				{
-					*anShowCmd = SW_HIDE;
-				}
 			}
 		}
 
@@ -2715,54 +2712,63 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 		}
 	}
 	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
-	else if (CDefTermHk::IsDefTermEnabled() && !state.consoleNoWindow && state.showCmd && anCreationFlags)
+	else if (CDefTermHk::IsDefTermEnabled())
 	{
-		switch (mn_ImageSubsystem)
+		if (!state.consoleNoWindow && state.showCmd && anCreationFlags)
 		{
-		case IMAGE_SUBSYSTEM_WINDOWS_CUI:
-			if (((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
-				&& ((*anCreationFlags) & CREATE_NEW_CONSOLE))
+			switch (mn_ImageSubsystem)
 			{
-				// e.g. debugger start of Win32 app from VisualStudio
-				// trick to avoid RealConsole window flickering
-				// ReSharper disable once CppLocalVariableMayBeConst
-				HWND hConWnd = GetRealConsoleWindow();
-				if (hConWnd == nullptr)
+			case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+				if (((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS | DEBUG_PROCESS))
+					&& ((*anCreationFlags) & CREATE_NEW_CONSOLE))
 				{
-					_ASSERTE(gnServerPID==0);
-					// Alloc hidden console and attach it to our VS GUI window
-					if (CDefTermHk::AllocHiddenConsole(true))
+					// e.g. debugger start of Win32 app from VisualStudio
+					// trick to avoid RealConsole window flickering
+					// ReSharper disable once CppLocalVariableMayBeConst
+					HWND hConWnd = GetRealConsoleWindow();
+					if (hConWnd == nullptr)
 					{
-						_ASSERTE(gnServerPID!=0);
-						// We managed to create hidden console window, run application there
-						mb_HiddenConsoleDetachNeed = TRUE;
-						// Do not need to "Show" it
-						siShowWindow = SW_HIDE;
-						siFlags |= STARTF_USESHOWWINDOW;
-						siChanged = true;
-						// Reuse existing console
-						(*anCreationFlags) &= ~CREATE_NEW_CONSOLE;
+						_ASSERTE(gnServerPID == 0);
+						// Alloc hidden console and attach it to our VS GUI window
+						if (CDefTermHk::AllocHiddenConsole(true))
+						{
+							_ASSERTE(gnServerPID != 0);
+							// We managed to create hidden console window, run application there
+							mb_HiddenConsoleDetachNeed = TRUE;
+							// Do not need to "Show" it
+							siShowWindow = SW_HIDE;
+							siFlags |= STARTF_USESHOWWINDOW;
+							siChanged = true;
+							// Reuse existing console
+							(*anCreationFlags) &= ~CREATE_NEW_CONSOLE;
+						}
 					}
 				}
-			}
-			break; // IMAGE_SUBSYSTEM_WINDOWS_CUI
+				break; // IMAGE_SUBSYSTEM_WINDOWS_CUI
 
-		case IMAGE_SUBSYSTEM_WINDOWS_GUI:
-			if (!((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
-				&& !((*anCreationFlags) & CREATE_NEW_CONSOLE))
-			{
-				// Start of msvsmon.exe?
-				const auto* pszExeName = PointToName(ms_ExeTmp);
-				if (pszExeName && (lstrcmpi(pszExeName, L"msvsmon.exe") == 0))
+			case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+				if (!((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS | DEBUG_PROCESS))
+					&& !((*anCreationFlags) & CREATE_NEW_CONSOLE))
 				{
-					// Would be nice to hook only those instances which are started to work with *local* processes
-					// e.g.: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
-					mb_PostInjectWasRequested = TRUE;
-					if (!mb_WasSuspended)
-						(*anCreationFlags) |= CREATE_SUSPENDED;
+					// Start of msvsmon.exe?
+					const auto* pszExeName = PointToName(ms_ExeTmp);
+					if (pszExeName && (lstrcmpi(pszExeName, L"msvsmon.exe") == 0))
+					{
+						// Would be nice to hook only those instances which are started to work with *local* processes
+						// e.g.: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
+						SetPostInjectWasRequested(true);
+						if (!mb_WasSuspended)
+							(*anCreationFlags) |= CREATE_SUSPENDED;
+					}
 				}
+				break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
 			}
-			break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
+		}
+		else if (state.defaultShowCmd != state.showCmd)
+		{
+			siShowWindow = LOWORD(state.showCmd);
+			siFlags |= STARTF_USESHOWWINDOW;
+			siChanged = true;
 		}
 	}
 
@@ -2878,7 +2884,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	if ((*ppStartupInfo)->cb)
 		memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
 	else
-		lpSi->cb = sizeof(*lpSi);
+		lpSi->cb = sizeof(*lpSi); // VS 2019 passes cb==0 while starting console applications (run & debug)
 
 	// Preprocess flags and options
 	auto state = OnCreateProcessPrepare(anCreationFlags, lpSi->dwFlags, lpSi->wShowWindow, lpSi->dwX, lpSi->dwY);
@@ -3028,6 +3034,12 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			// Starting debugging session from VS (for example)?
 			else if (mb_DebugWasRequested && !mb_HiddenConsoleDetachNeed)
 			{
+				if (mb_ForceInjectOriginal)
+				{
+					// If user choose to inject ConEmuHk into debugging process (to have ANSI support, etc.)
+					RunInjectHooks(WIN3264TEST(L"DefTerm",L"DefTerm64"), lpPI);
+				}
+
 				// We need to start console app directly, but it will be nice
 				// to attach it to the existing or new ConEmu window.
 				size_t cchMax = MAX_PATH + 80;

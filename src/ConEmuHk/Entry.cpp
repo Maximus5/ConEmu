@@ -1778,6 +1778,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			// Caller may wait when we are ready
 			if (gbPrepareDefaultTerminal)
 			{
+				// CDefTermHk::InitDefTerm() will be called in DllStart
 				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
 				gEvtDefTermOk.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
 				if (gEvtDefTermOk.hProcessFlag)
