@@ -126,9 +126,6 @@
     <ClInclude Include="ConEmuCD\WorkerBase.h">
       <Filter>Server</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmuCD\crc32.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmuCD\resource.h">
       <Filter>Headers</Filter>
     </ClInclude>

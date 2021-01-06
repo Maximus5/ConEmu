@@ -484,6 +484,7 @@
     <ClInclude Include="common\MFileMapping.h" />
     <ClInclude Include="common\MGlobal.h" />
     <ClInclude Include="common\MGuiMacro.h" />
+    <ClInclude Include="common\MHandle.h" />
     <ClInclude Include="common\MJsonReader.h" />
     <ClInclude Include="common\MMap.h" />
     <ClInclude Include="common\MModule.h" />
@@ -503,6 +504,7 @@
     <ClInclude Include="common\MTimer.h" />
     <ClInclude Include="common\MToolHelp.h" />
     <ClInclude Include="common\MToolTip.h" />
+    <ClInclude Include="common\MWnd.h" />
     <ClInclude Include="common\MWow64Disable.h" />
     <ClInclude Include="common\Memory.h" />
     <ClInclude Include="common\Monitors.h" />
@@ -534,6 +536,7 @@
     <ClInclude Include="common\WThreads.h" />
     <ClInclude Include="common\WUser.h" />
     <ClInclude Include="common\clink.h" />
+    <ClInclude Include="common\crc32.h" />
     <ClInclude Include="common\defines.h" />
     <ClInclude Include="common\execute.h" />
     <ClInclude Include="common\md5.h" />

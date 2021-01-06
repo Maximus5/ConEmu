@@ -75,6 +75,9 @@
     <ClInclude Include="common\MGuiMacro.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\MHandle.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\MJsonReader.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -103,6 +106,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\MToolTip.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MWnd.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\MWow64Disable.h">
@@ -175,6 +181,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\clink.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\crc32.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\defines.h">

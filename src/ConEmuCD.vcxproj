@@ -315,7 +315,6 @@
     <ClInclude Include="ConEmuCD\UnicodeTest.h" />
     <ClInclude Include="ConEmuCD\WinConExports.h" />
     <ClInclude Include="ConEmuCD\WorkerBase.h" />
-    <ClInclude Include="ConEmuCD\crc32.h" />
     <ClInclude Include="ConEmuCD\resource.h" />
     <ClInclude Include="ConEmuHk\Injects.h" />
     <ClInclude Include="common\Common.h" />

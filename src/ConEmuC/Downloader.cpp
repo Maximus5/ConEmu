@@ -34,8 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/EnvVar.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MStrDup.h"
-#include "../common/WObjects.h"
-#include "../ConEmuCD/crc32.h"
+#include "../common/crc32.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "Downloader.h"
 
