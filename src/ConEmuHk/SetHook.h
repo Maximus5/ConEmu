@@ -76,11 +76,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define shell32  L"shell32.dll"
 //extern HMODULE ghKernel32, ghUser32, ghShell32;
 
-extern const wchar_t *kernel32;// = L"kernel32.dll";
-extern const wchar_t *user32  ;// = L"user32.dll";
-extern const wchar_t *gdi32  ;// = L"gdi32.dll";
-extern const wchar_t *shell32 ;// = L"shell32.dll";
-extern const wchar_t *advapi32;// = L"Advapi32.dll";
+extern const wchar_t KERNEL32[];// = L"kernel32.dll";
+extern const wchar_t USER32[];// = L"user32.dll";
+extern const wchar_t GDI32[];// = L"gdi32.dll";
+extern const wchar_t SHELL32[];// = L"shell32.dll";
+extern const wchar_t ADVAPI32[];// = L"Advapi32.dll";
 extern HMODULE ghKernel32, ghUser32, ghGdi32, ghShell32, ghAdvapi32;
 
 // Used by SETARGSx macros in ConEmuHooks.h
@@ -145,6 +145,12 @@ struct HookItem
 	HookItemCallback_t  ExceptCallBack;
 };
 
+enum class HkModuleState : int
+{
+	NotProcessed = 0,
+	ImportsChanged = 1,
+	ImportsReverted = 2,
+};
 
 // We can't use GetModuleFileName or CreateToolhelp32Snapshot during dll loading
 // Also, we need to know which dll-s were processed already
@@ -155,8 +161,8 @@ struct HkModuleInfo
 
 	// For our modules we change imports to ease use of trampolines
 	// 0-not yet, 1-imports were changed, 2-imports were reverted
-	int     Hooked;
-	UINT    nAdrUsed;
+	HkModuleState Hooked;
+	UINT nAdrUsed;
 	// And the changed pointers
 	struct ChangedFunctions {
 		DWORD_PTR* ppAdr;
@@ -257,12 +263,12 @@ namespace HookLogger
 		DWORD nTID;
 	};
 	extern FnCall g_calls[HOOK_LOG_MAX];
-	extern LONG   g_callsidx;
+	extern LONG   g_callsIdx;
 
 	inline void Log(DWORD index)
 	{
 		// Get next index
-		LONG i = _InterlockedIncrement(&g_callsidx);
+		LONG i = _InterlockedIncrement(&g_callsIdx);
 		// Prepare values
 		FnCall FN = {index, GetCurrentThreadId()};
 		// Write at this index, Wrap to buffer size

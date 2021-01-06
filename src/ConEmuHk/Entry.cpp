@@ -146,48 +146,9 @@ void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)
 }
 #endif
 
-
-#if 0
-// Current MinGW GCC doesn't require that anymore
-#if defined(__GNUC__)
-extern "C" {
-	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
-#endif
-	//__declspec(dllexport) HHOOK ghKeyHook = 0;
-	//__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
-	//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = nullptr;
-#if defined(__GNUC__)
-};
-#endif
-#endif
-
-//__declspec(dllexport) HHOOK ghKeyHook = 0;
-//__declspec(dllexport) DWORD gnVkWinFix = 0xF0;
-//__declspec(dllexport) HWND  ghKeyHookConEmuRoot = nullptr;
-
-//HHOOK ghKeyHook = 0;
-//DWORD gnVkWinFix = 0xF0;
-//HWND  ghKeyHookConEmuRoot = nullptr;
-
-
-//struct CpConv
-//{
-//	// for example, "git add -p" uses codepage 1252 while printing thunks to be staged
-//	// that forces the printed text to be converted to nToCP before printing (OnWriteConsoleW)
-//	DWORD nFromCP, nToCP;
-//	// that parm may be used for overriding default console CP
-//	DWORD nDefaultCP;
-//}
 struct CpConv gCpConv = {};
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-
-extern HMODULE ghUser32;
-//extern const wchar_t *kernel32;// = L"kernel32.dll";
-extern const wchar_t *user32  ;// = L"user32.dll";
-//extern const wchar_t *shell32 ;// = L"shell32.dll";
-//extern const wchar_t *advapi32;// = L"Advapi32.dll";
-//extern DWORD gnAllowClinkUsage;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
 
@@ -702,8 +663,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 
 
-	ghUser32 = GetModuleHandle(user32);
-	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
+	ghUser32 = GetModuleHandle(USER32);
+	if (ghUser32) ghUser32 = LoadLibrary(USER32); // если подлинкован - увеличить счетчик
 
 	WARNING("Попробовать не создавать LocalSecurity при старте");
 
