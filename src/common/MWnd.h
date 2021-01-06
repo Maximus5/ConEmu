@@ -43,6 +43,10 @@ public:
 	{
 	}
 
+	MWnd()
+	{
+	}
+
 	~MWnd() = default;
 
 	// copyable

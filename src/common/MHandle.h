@@ -51,6 +51,10 @@ public:
 	{
 	}
 
+	MHandle()
+	{
+	}
+
 	~MHandle()
 	{
 		Close();

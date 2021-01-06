@@ -32,12 +32,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MFileLog.h"
 #include "../common/MStrDup.h"
 #include "../common/MToolHelp.h"
+#include "../common/MFileMapping.h"
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 #include "DefTermHk.h"
 
 #include "DllOptions.h"
 #include "SetHook.h"
+#include "../common/MWnd.h"
 #include "../ConEmu/version.h"
 
 #define FOREGROUND_CHECK_DELAY  1000
@@ -370,28 +372,13 @@ CDefTermHk::CDefTermHk()
 CDefTermHk::~CDefTermHk()
 {
 	SafeDelete(mp_FileLog);
-	SafeDelete(mp_InsideMapping);
 	CDefTermHk::StopHookers();
-	SafeDelete(mp_InsideMapInfo);
+	insideMapInfo_.reset();
 }
 
 void CDefTermHk::StartDefTerm()
 {
-	if (!mp_InsideMapping)
-	{
-		mp_InsideMapping = new MFileMapping<CESERVER_INSIDE_MAPPING_HDR>();
-		mp_InsideMapping->InitName(CEINSIDEMAPNAME, GetCurrentProcessId());
-		bool loaded = false;
-		if (mp_InsideMapping->Open())
-		{
-			mp_InsideMapInfo = static_cast<CESERVER_INSIDE_MAPPING_HDR*>(calloc(sizeof(CESERVER_INSIDE_MAPPING_HDR), 1));
-			loaded = LoadInsideSettings();
-		}
-		if (!loaded)
-		{
-			SafeDelete(mp_InsideMapping);
-		}
-	}
+	LoadInsideSettings();
 
 	Initialize(false, false, false);
 }
@@ -483,18 +470,71 @@ void CDefTermHk::ReloadSettings()
 
 bool CDefTermHk::IsInsideMode()
 {
-	if (!gpDefTerm || !gpDefTerm->mp_InsideMapInfo)
+	if (!gpDefTerm)
 		return false;
-	return gpDefTerm->mp_InsideMapInfo->bUseDefaultTerminal;
+	const auto insideOpt = gpDefTerm->LoadInsideSettings();
+	if (!insideOpt)
+		return false;
+	if (!insideOpt->bUseDefaultTerminal)
+		return false;
+	if (!insideOpt->hConEmuRoot || !IsWindow(insideOpt->hConEmuRoot))
+		return false;
+	// ConEmu inside is ready for DefTerm
+	return true;
 }
 
-bool CDefTermHk::LoadInsideSettings()
+/// @brief Try to find appropriate mapping with DefTerm options (Inside mode)
+/// @return returns smart pointer to loaded DefTerm settings from ConEmu's mappings (even if DefTerm is disabled there)
+std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 {
-	if (!mp_InsideMapping || !mp_InsideMapInfo)
-		return false;
+	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo = insideMapInfo_;
+	
+	const auto now = std::chrono::steady_clock::now();
+	const auto delay = now - insideMapLastCheck_;
+	if (delay < insideMapCheckDelay_)
+	{
+		return insideMapInfo;
+	}
+	insideMapLastCheck_ = now;
+	
+	DWORD conemuGuiPid = FindInsideParentConEmuPid();
+	if (conemuGuiPid == 0)
+	{
+		conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEP, GetCurrentProcessId());
+	}
 
-	if (!mp_InsideMapping->GetTo(mp_InsideMapInfo, sizeof(*mp_InsideMapInfo)))
-		return false;
+	if (conemuGuiPid == 0)
+	{
+		if (insideMapInfo_)
+			m_Opt.bUseDefaultTerminal = false;
+		insideMapInfo_.reset();
+		return {};
+	}
+
+	MFileMapping<CONEMU_INSIDE_DEFTERM_MAPPING> mapping;
+	mapping.InitName(CEDEFTERMMAPNAME, conemuGuiPid);
+	if (mapping.Open())
+	{
+		if (!insideMapInfo)
+		{
+			insideMapInfo = std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING>(
+				static_cast<CONEMU_INSIDE_DEFTERM_MAPPING*>(calloc(1, sizeof(CONEMU_INSIDE_DEFTERM_MAPPING))),
+				StructDeleter<CONEMU_INSIDE_DEFTERM_MAPPING>{});
+		}
+		if (insideMapInfo)
+		{
+			if (!mapping.GetTo(insideMapInfo.get()))
+				insideMapInfo.reset();
+		}
+	}
+
+	if (!insideMapInfo)
+	{
+		if (insideMapInfo_)
+			m_Opt.bUseDefaultTerminal = false;
+		insideMapInfo_.reset();
+		return {};
+	}
 
 	auto setString = [this](wchar_t*& var, wchar_t* str)
 	{
@@ -520,7 +560,7 @@ bool CDefTermHk::LoadInsideSettings()
 
 	static wchar_t emptyStr[2] = L"";
 
-	auto& info = *mp_InsideMapInfo;
+	auto& info = *insideMapInfo;
 	m_Opt.bUseDefaultTerminal = info.bUseDefaultTerminal;
 	m_Opt.bAggressive = false;
 	m_Opt.bNoInjects = info.isDefaultTerminalNoInjects;
@@ -532,10 +572,61 @@ bool CDefTermHk::LoadInsideSettings()
 	setString(m_Opt.pszConEmuBaseDir, info.sConEmuBaseDir);
 	setString(m_Opt.pszCfgFile, emptyStr);
 	setString(m_Opt.pszConfigName, emptyStr);
-	setMszString(m_Opt.pszzHookedApps, info.defaultTerminalApps, std::size(info.defaultTerminalApps));
+	setMszString(m_Opt.pszzHookedApps, info.defaultTerminalApps, countof(info.defaultTerminalApps));
 	m_Opt.bExternalPointers = true;
 
-	return true;
+	insideMapInfo_ = insideMapInfo;
+	return insideMapInfo;
+}
+
+/// @brief Try to detect root window, where ConEmu could be integrated into (Inside mode)
+/// @return PID of the ConEmu instance, integrated into our window (Inside mode)
+DWORD CDefTermHk::FindInsideParentConEmuPid()
+{
+	const DWORD curPid = GetCurrentProcessId();
+	
+	const MWnd hFore = GetForegroundWindow();
+	
+	if (hFore)
+	{
+		DWORD pid = 0;
+		if (GetWindowThreadProcessId(hFore, &pid) && pid == curPid)
+		{
+			const DWORD conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEW, hFore.GetDword());
+			if (conemuGuiPid)
+				return conemuGuiPid;
+		}
+	}
+
+	MWnd hTop = FindWindowExW(nullptr, nullptr, nullptr, nullptr);
+	while (hTop)
+	{
+		if (hTop != hFore && IsWindowVisible(hTop))
+		{
+			DWORD pid = 0;
+			if (GetWindowThreadProcessId(hTop, &pid) && pid == curPid)
+			{
+				const DWORD conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEW, hTop.GetDword());
+				if (conemuGuiPid)
+					return conemuGuiPid;
+			}
+		}
+		hTop = FindWindowExW(nullptr, hTop, nullptr, nullptr);
+	}
+
+	return 0;
+}
+
+DWORD CDefTermHk::LoadInsideConEmuPid(const wchar_t* mapNameFormat, DWORD param)
+{
+	MFileMapping<CONEMU_INSIDE_MAPPING> mapping;
+	mapping.InitName(mapNameFormat, param);
+	if (!mapping.Open())
+		return 0;
+	CONEMU_INSIDE_MAPPING info{};
+	if (!mapping.GetTo(&info))
+		return 0;
+	return info.nGuiPID;
 }
 
 void CDefTermHk::LogInit()
@@ -762,15 +853,16 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE 
 	return pi.dwProcessId;
 }
 
-bool CDefTermHk::FindConEmuInside(DWORD& guiPid, HWND& guiHwnd) const
+bool CDefTermHk::FindConEmuInside(DWORD& guiPid, HWND& guiHwnd)
 {
-	if (!mp_InsideMapInfo)
+	const auto insideMapping = LoadInsideSettings();
+	if (!insideMapping)
 		return false;
-	if (!mp_InsideMapInfo->hConEmuRoot || !IsWindow(mp_InsideMapInfo->hConEmuRoot))
+	if (!insideMapping->nGuiPID || !insideMapping->hConEmuRoot || !IsWindow(insideMapping->hConEmuRoot))
 		return false;
 
-	guiPid = mp_InsideMapInfo->nGuiPID;
-	guiHwnd = mp_InsideMapInfo->hConEmuRoot;
+	guiPid = insideMapping->nGuiPID;
+	guiHwnd = insideMapping->hConEmuRoot;
 	return true;
 }
 

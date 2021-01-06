@@ -30,7 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/DefTermBase.h"
-#include "../common/MFileMapping.h"
+#include <memory>
+#include <chrono>
 
 class MFileLog;
 class CDefTermHk;
@@ -73,8 +74,10 @@ public:
 	void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
 
 protected:
-	bool FindConEmuInside(DWORD& guiPid, HWND& guiHwnd) const;
-	bool LoadInsideSettings();
+	bool FindConEmuInside(DWORD& guiPid, HWND& guiHwnd);
+	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> LoadInsideSettings();
+	static DWORD FindInsideParentConEmuPid();
+	static DWORD LoadInsideConEmuPid(const wchar_t* mapNameFormat, DWORD param);
 
 	DWORD   StartConsoleServer(DWORD nAttachPid, bool bNewConWnd, PHANDLE phSrvProcess);
 
@@ -91,6 +94,16 @@ private:
 	wchar_t ms_ExeName[MAX_PATH] = L"";
 	DWORD   mn_LastCheck = 0;
 	MFileLog* mp_FileLog = nullptr;
-	MFileMapping<CESERVER_INSIDE_MAPPING_HDR>* mp_InsideMapping = nullptr;
-	CESERVER_INSIDE_MAPPING_HDR* mp_InsideMapInfo = nullptr;
+
+	template<typename T>
+	struct StructDeleter { // insideMapInfo_ deleter
+		void operator()(T* p) const
+		{
+			SafeFree(p);
+		}
+	};
+	
+	std::chrono::steady_clock::time_point insideMapLastCheck_{};
+	std::chrono::milliseconds insideMapCheckDelay_{ 1000 };
+	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo_{};
 };
