@@ -233,13 +233,13 @@
       "id": 2278 }
     ,
     "cbClinkWebPage": {
-      "en": "Open clink's web page https://mridgers.github.io/clink/ in your browser",
-      "ru": "Открыть веб-страницу ‘Clink’ https://mridgers.github.io/clink/ в браузере",
-      "zh": "在浏览器中打开clink项目的主页 https://mridgers.github.io/clink/",
-      "de": "Öffnet clinks Website https://mridgers.github.io/clink/ im Browser",
-      "ja": "あなたのブラウザで clinkのウェブページ https://mridgers.github.io/clink/ を開きます",
-      "es": "Abrir página web de clink https://mridgers.github.io/clink/ en el navegador",
-      "pl": "Otwórz stronę internetową \"Clink\" https://mridgers.github.io/clink/ w przeglądarce",
+      "en": "Open clink's web page https://chrisant996.github.io/clink/ in your browser",
+      "ru": "Открыть веб-страницу ‘Clink’ https://chrisant996.github.io/clink/ в браузере",
+      "zh": "在浏览器中打开clink项目的主页 https://chrisant996.github.io/clink/",
+      "de": "Öffnet clinks Website https://chrisant996.github.io/clink/ im Browser",
+      "ja": "あなたのブラウザで clinkのウェブページ https://chrisant996.github.io/clink/ を開きます",
+      "es": "Abrir página web de clink https://chrisant996.github.io/clink/ en el navegador",
+      "pl": "Otwórz stronę internetową \"Clink\" https://chrisant996.github.io/clink/ w przeglądarce",
       "id": 2614 }
     ,
     "cbCloseConsoleConfirm": {
@@ -1874,19 +1874,19 @@
     ,
     "cbUseClink": {
       "en": [ "Use clink to extend command prompt (cmd.exe)\r\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "ru": [ "Используйте clink для расширения командной строки (cmd.exe)\r\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "zh": [ "使用clink扩展 command prompt （cmd.exe）\r\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "de": [ "Verwende clink um Befehls-Prompt (cmd.exe) zu erweitern\r\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "ja": [ "clinkを使用してコマンドプロンプトを拡張する(cmd.exe)\r\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "es": [ "Usar clink para extender el intérprete de comandos (cmd.exe)\r\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "pl": [ "Użyj klinknięcia, aby rozszerzyć wiersz polecenia (cmd.exe)\n"
-            , "https://mridgers.github.io/clink/" ],
+            , "https://chrisant996.github.io/clink/" ],
       "id": 2418 }
     ,
     "cbUseInjects": {
