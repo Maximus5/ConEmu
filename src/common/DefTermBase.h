@@ -36,11 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define USEDEBUGSTRDEFTERM
 #endif
 
-#include <cstdint>
-#include <chrono>
-#include <tuple>
-#include <Windows.h>
 #include "Common.h"
+#include "Memory.h"
 #include "CEStr.h"
 #include "MArray.h"
 #include "MSectionSimple.h"
@@ -50,6 +47,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MProcessBits.h"
 #include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
+
+#include <cstdint>
+#include <chrono>
+#include <tuple>
+#include <Windows.h>
 
 
 #define DEF_TERM_ALIVE_CHECK_TIMEOUT 750
@@ -202,6 +204,7 @@ public:
 
 		if (mode == SerializeMode::Load)
 		{
+			const bool wasExternalPointers = this->bExternalPointers;
 			// Load
 			for (auto& opt : optionList)
 			{
@@ -242,11 +245,15 @@ public:
 					}
 
 					*static_cast<wchar_t**>(opt.ptr) = pszNew;
-					SafeFree(pszOld);
+					if (!wasExternalPointers)
+					{
+						SafeFree(pszOld);
+					}
 					std::ignore = lRc;
 				}
 			}
 
+			this->bExternalPointers = false;
 			bRc = (bUseDefaultTerminal != 0);
 		}
 		#ifndef CONEMU_MINIMAL
