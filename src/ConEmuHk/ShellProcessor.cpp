@@ -1415,7 +1415,7 @@ bool CShellProc::CheckForDefaultTerminal(
 			{
 				if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 				{
-					mb_DebugWasRequested = TRUE;
+					SetDebugWasRequested(true);
 					LogExit(0);
 					return false;
 				}
@@ -2190,7 +2190,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				if (bVsNetHostRequested)
 					SetPostInjectWasRequested(true);
 				else
-					mb_DebugWasRequested = TRUE;
+					SetDebugWasRequested(true);
 				// Пока что не будем убирать "мелькание" окошка.
 				// На факт "видимости" консольного окна ориентируется ConEmuC
 				// при аттаче. Если окошко НЕ видимое - считаем, что оно было
@@ -2734,7 +2734,7 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 						{
 							_ASSERTE(gnServerPID != 0);
 							// We managed to create hidden console window, run application there
-							mb_HiddenConsoleDetachNeed = TRUE;
+							SetHiddenConsoleDetachNeed(true);
 							// Do not need to "Show" it
 							siShowWindow = SW_HIDE;
 							siFlags |= STARTF_USESHOWWINDOW;
@@ -3145,6 +3145,16 @@ void CShellProc::SetForceInjectOriginal(const bool value)
 void CShellProc::SetConsoleMode(const bool value)
 {
 	mb_ConsoleMode = value;
+}
+
+void CShellProc::SetDebugWasRequested(const bool value)
+{
+	mb_DebugWasRequested = value;
+}
+
+void CShellProc::SetHiddenConsoleDetachNeed(const bool value)
+{
+	mb_HiddenConsoleDetachNeed = value;
 }
 
 void CShellProc::SetPostInjectWasRequested(const bool value)

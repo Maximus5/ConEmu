@@ -108,14 +108,21 @@ private:
 
 	// If process is starting for debugging
 	bool mb_DebugWasRequested = false;
+	// Controls mb_DebugWasRequested
+	void SetDebugWasRequested(bool value);
 
-	// 
+	// Special case to remove RealConsole flickering. E.g. in VisualStudio we attached to the console
+	// created by ConEmuC.exe server and later we have to call FreeConsole to avoid unexpected output to ConOut.
 	bool mb_HiddenConsoleDetachNeed = false;
+	// Controls if we need to call FreeConsole after process creation
+	void SetHiddenConsoleDetachNeed(bool value);
 
 	// Special case of injecting ConEmuHk during debugging.
 	// The process is started, thread is resumed until modules are initialized,
 	// after that thread is suspended again and StartDefTermHooker is called.
 	bool mb_PostInjectWasRequested = false;
+	// Controls if we need to call StartDefTermHooker after resuming started process
+	void SetPostInjectWasRequested(bool value);
 
 	// ConEmuHooks=OFF
 	bool mb_Opt_DontInject = false;
