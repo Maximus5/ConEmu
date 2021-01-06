@@ -112,7 +112,6 @@ private:
 	HWND  mh_InitialRoot = nullptr;
 	HWND  mh_InsideParentRel = nullptr;  // Может быть nullptr (ii_Simple). HWND относительно которого нужно позиционироваться
 	HWND  mh_InsideParentPath = nullptr; // Win7 Text = "Address: D:\MYDOC"
-	HWND  mh_InsideParentCD = nullptr;   // Edit для смены текущей папки, например -> "C:\USERS"
 	RECT  mrc_InsideParent = {};
 	RECT  mrc_InsideParentRel = {}; // для сравнения, чтоб знать, что подвинуться нада
 	HWND  mh_TipPaneWndPost = nullptr;
