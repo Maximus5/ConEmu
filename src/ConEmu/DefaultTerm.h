@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRDEFTERM(s) DEBUGSTR(s)
 
 #include "../common/DefTermBase.h"
+#include "../common/MFileMapping.h"
 
 class CDefaultTerminal final : public CDefTermBase
 {
@@ -53,28 +54,34 @@ public:
 	void ApplyAndSave(bool bApply, bool bSaveToReg);
 	static bool IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA);
 
-	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+
+	void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
+	bool isLogging() override;
+
+	/// @brief Create/update CONEMU_INSIDE_DEFTERM_MAPPING
+	void UpdateDefTermMapping();
 
 protected:
-	virtual CDefTermBase* GetInterface() override;
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) override;
-	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
-	virtual void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
-	virtual void PreCreateThread() override;
-	virtual void PostCreateThreadFinished() override;
-	virtual void AutoClearThreads() override;
-	virtual void ConhostLocker(bool bLock, bool& bWasLocked) override;
+	CDefTermBase* GetInterface() override;
+	int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=nullptr, HWND hParent=nullptr) override;
+	void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
+	void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
+	void PreCreateThread() override;
+	void PostCreateThreadFinished() override;
+	void AutoClearThreads() override;
+	void ConhostLocker(bool bLock, bool& bWasLocked) override;
 	/// @brief Overrided by ConEmu GUI descendant to show action in the StatusBar
 	/// @param processId 0 when hooking is done (remove status bar notification)
 	/// @param sName is executable name or window class name
 	/// @return true if StatusBar was updated (so need to reset it later)
-	virtual bool NotifyHookingStatus(DWORD processId, LPCWSTR sName) override;
+	bool NotifyHookingStatus(DWORD processId, LPCWSTR sName) override;
 	/// @brief In the Inside mode we set hooks only to our parent window which we have integrated in
 	/// @param hFore GetForegroundWindow
 	/// @param processId PID
 	/// @return true if we may proceed with the process
 	bool IsAppAllowed(HWND hFore, DWORD processId) override;
-public:
-	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
-	virtual bool isLogging() override;
+
+private:
+	MFileMapping<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapping_;
 };

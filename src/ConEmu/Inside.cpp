@@ -312,7 +312,8 @@ void CConEmuInside::SetInsideParentWnd(HWND hParent)
 	{
 		mh_InsideParentRel = nullptr;
 
-		insideMapping_.CloseMap();
+		insideMappingPid_.CloseMap();
+		insideMappingWnd_.CloseMap();
 	}
 	else
 	{
@@ -1098,7 +1099,7 @@ HWND CConEmuInside::CheckInsideFocus() const
 
 void CConEmuInside::UpdateDefTermMapping()
 {
-	if (!insideMapping_.IsValid())
+	if (!insideMappingPid_.IsValid() || !insideMappingWnd_.IsValid())
 	{
 		if (!mh_InitialRoot)
 		{
@@ -1107,11 +1108,16 @@ void CConEmuInside::UpdateDefTermMapping()
 		DWORD nRootPid = 0;
 		if (GetWindowThreadProcessId(mh_InitialRoot, &nRootPid))
 		{
-			insideMapping_.InitName(CEINSIDEMAPNAME, nRootPid);
-			if (!insideMapping_.Create())
+			insideMappingPid_.InitName(CEINSIDEMAPNAMEP, nRootPid);
+			if (!insideMappingPid_.Create())
 			{
-				DisplayLastError(insideMapping_.GetErrorText(), insideMapping_.GetLastErrorCode());
-				return;
+				DisplayLastError(insideMappingPid_.GetErrorText(), insideMappingPid_.GetLastErrorCode());
+			}
+			
+			insideMappingWnd_.InitName(CEINSIDEMAPNAMEW, LODWORD(mh_InitialRoot));
+			if (!insideMappingWnd_.Create())
+			{
+				DisplayLastError(insideMappingWnd_.GetErrorText(), insideMappingWnd_.GetLastErrorCode());
 			}
 		}
 		else
@@ -1121,22 +1127,18 @@ void CConEmuInside::UpdateDefTermMapping()
 		}
 	}
 
-	CESERVER_INSIDE_MAPPING_HDR info{};
+	CONEMU_INSIDE_MAPPING info{};
 	info.cbSize = sizeof(info);
 	info.nProtocolVersion = CESERVER_REQ_VER;
-	wcscpy_c(info.sConEmuExe, gpConEmu->ms_ConEmuExe);
-	wcscpy_c(info.sConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
 	info.nGuiPID = GetCurrentProcessId();
-	info.hConEmuRoot = ghWnd;
-	info.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
-	info.isDefaultTerminalNoInjects = gpSet->isDefaultTerminalNoInjects;
-	info.isDefaultTerminalDebugLog = gpSet->isDefaultTerminalDebugLog;
-	info.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
-	const CEStr apps(gpSet->GetDefaultTerminalApps());
-	lstrcpyn(info.defaultTerminalApps, apps.c_str(L""), countof(info.defaultTerminalApps));
 
-	const auto& guiInfo = gpConEmu->GetGuiInfo();
-	info.flags = guiInfo.Flags;
+	if (insideMappingPid_.IsValid())
+	{
+		insideMappingPid_.SetFrom(&info);
+	}
 
-	insideMapping_.SetFrom(&info);
+	if (insideMappingWnd_.IsValid())
+	{
+		insideMappingWnd_.SetFrom(&info);
+	}
 }

@@ -77,7 +77,8 @@ protected:
 	DWORD mn_InsideParentPID = 0;  // PID "родительского" процесса режима интеграции
 	HWND  mh_InsideParentWND = nullptr; // Это окно используется как родительское в режиме интеграции
 
-	MFileMapping<CESERVER_INSIDE_MAPPING_HDR> insideMapping_;
+	MFileMapping<CONEMU_INSIDE_MAPPING> insideMappingPid_;
+	MFileMapping<CONEMU_INSIDE_MAPPING> insideMappingWnd_;
 
 public:
 	bool  IsInsideWndSet() const;

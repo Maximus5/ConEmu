@@ -2361,6 +2361,10 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	}
 	#endif
 
+	if (mp_DefTrm)
+	{
+		mp_DefTrm->UpdateDefTermMapping();
+	}
 }
 
 void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= true*/)

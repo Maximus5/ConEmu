@@ -216,6 +216,7 @@ void CDefaultTerminal::ReloadSettings()
 
 	if (gpConEmu->mp_Inside)
 	{
+		UpdateDefTermMapping();
 		gpConEmu->mp_Inside->UpdateDefTermMapping();
 	}
 }
@@ -268,6 +269,38 @@ bool CDefaultTerminal::IsAppAllowed(HWND hFore, DWORD processId)
 	if (gpConEmu->mp_Inside->GetParentInfo().ParentPID == processId)
 		return true;
 	return false;
+}
+
+void CDefaultTerminal::UpdateDefTermMapping()
+{
+	if (!insideMapping_.IsValid())
+	{
+		insideMapping_.InitName(CEDEFTERMMAPNAME, GetCurrentProcessId());
+		if (!insideMapping_.Create())
+		{
+			DisplayLastError(insideMapping_.GetErrorText(), insideMapping_.GetLastErrorCode());
+			return;
+		}
+	}
+
+	CONEMU_INSIDE_DEFTERM_MAPPING info{};
+	info.cbSize = sizeof(info);
+	info.nProtocolVersion = CESERVER_REQ_VER;
+	wcscpy_c(info.sConEmuExe, gpConEmu->ms_ConEmuExe);
+	wcscpy_c(info.sConEmuBaseDir, gpConEmu->ms_ConEmuBaseDir);
+	info.nGuiPID = GetCurrentProcessId();
+	info.hConEmuRoot = ghWnd;
+	info.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
+	info.isDefaultTerminalNoInjects = gpSet->isDefaultTerminalNoInjects;
+	info.isDefaultTerminalDebugLog = gpSet->isDefaultTerminalDebugLog;
+	info.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
+	const CEStr apps(gpSet->GetDefaultTerminalApps());
+	lstrcpyn(info.defaultTerminalApps, apps.c_str(L""), countof(info.defaultTerminalApps));
+
+	const auto& guiInfo = gpConEmu->GetGuiInfo();
+	info.flags = guiInfo.Flags;
+
+	insideMapping_.SetFrom(&info);
 }
 
 void CDefaultTerminal::LogHookingStatus(const DWORD nForePID, LPCWSTR sMessage)

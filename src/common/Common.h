@@ -264,7 +264,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd )
 #define CECONMAPNAME_A       "ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
 #define CECONAPPMAPNAME     L"ConEmuAppMapping.%08X"   // --> CESERVER_CONSOLE_APP_MAPPING ( % == (DWORD)ghConWnd )
-#define CEINSIDEMAPNAME     L"ConEmuDefTermInside.%u"  // -->CESERVER_INSIDE_MAPPING_HDR ( % == PID of the root window ConEmu is integrated into )
+#define CEDEFTERMMAPNAME    L"ConEmuDefTermInside.%u"  // --> CONEMU_INSIDE_DEFTERM_MAPPING ( % == PID of ConEmu process which is integrated into some app )
+#define CEINSIDEMAPNAMEP    L"ConEmuDefTermInside.%u"  // --> CONEMU_INSIDE_MAPPING ( % == PID of the root window, where ConEmu is integrated into )
+#define CEINSIDEMAPNAMEW    L"ConEmuDefTermInside.%08X"// --> CONEMU_INSIDE_MAPPING ( % == the root window, where ConEmu is integrated into )
 #define CEFARMAPNAME        L"ConEmuFarMapping.%u"     // --> CEFAR_INFO_MAPPING               ( % == nFarPID )
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u" // --> PanelViewSetMapping
 //#ifdef _DEBUG
@@ -1689,10 +1691,22 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 
 enum class TerminalConfirmClose : uint32_t;
 
-// CEINSIDEMAPNAME L"ConEmuDefTermInside.%u" ( % == PID of the root window ConEmu is integrated into )
-struct CESERVER_INSIDE_MAPPING_HDR
+// CEINSIDEMAPNAMEP L"ConEmuDefTermInside.%u"   ( % == PID of the root window, where ConEmu is integrated into )
+// CEINSIDEMAPNAMEW L"ConEmuDefTermInside.%08X" ( % == the root window, where ConEmu is integrated into )
+struct CONEMU_INSIDE_MAPPING
 {
-	/// CESERVER_INSIDE_MAPPING_HDR size
+	/// CONEMU_INSIDE_MAPPING size
+	DWORD cbSize;
+	/// CESERVER_REQ_VER, changed on each struct modification
+	DWORD nProtocolVersion;
+	/// PID of ConEmu.exe
+	DWORD nGuiPID;
+};
+
+// CEDEFTERMMAPNAME L"ConEmuDefTermInside.%u" ( % == PID of ConEmu process which is integrated into some app )
+struct CONEMU_INSIDE_DEFTERM_MAPPING
+{
+	/// CONEMU_INSIDE_DEFTERM_MAPPING size
 	DWORD cbSize;
 	/// CESERVER_REQ_VER, changed on each struct modification
 	DWORD nProtocolVersion;
@@ -1700,7 +1714,7 @@ struct CESERVER_INSIDE_MAPPING_HDR
 	wchar_t  sConEmuExe[MAX_PATH+1];
 	/// NO trailing slash. Contains ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuBaseDir[MAX_PATH];
-	/// PID of ConEmu.exe
+	/// PID of ConEmu.exe (same as used in CEDEFTERMMAPNAME)
 	DWORD nGuiPID;
 	/// Root(!) ConEmu window
 	HWND2 hConEmuRoot;
