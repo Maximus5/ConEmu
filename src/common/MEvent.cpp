@@ -38,137 +38,130 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MEvent::MEvent()
 {
-	ms_EventName[0] = 0;
-	mh_Event = NULL;
-	mn_LastError = 0;
-	mb_NameIsNull = false;
-	#if defined(_DEBUG)
-	mb_DebugNotify = false;
-	#endif
 }
 
 MEvent::~MEvent()
 {
-	if (mh_Event)
+	if (handle_)
 		Close();
 }
 
 void MEvent::Close()
 {
 	#if defined(_DEBUG)
-	if (mb_DebugNotify && mh_Event)
-		OnDebugNotify(evn_Close);
+	if (debugNotify_ && handle_)
+		OnDebugNotify(MEventNotification::Close);
 	#endif
 
-	mn_LastError = 0;
-	ms_EventName[0] = 0;
-	mb_NameIsNull = false;
+	lastError_ = 0;
+	eventName_[0] = 0;
+	nameIsNull_ = false;
 
-	if (mh_Event)
+	if (handle_)
 	{
-		::CloseHandle(mh_Event);
-		mh_Event = NULL;
+		::CloseHandle(handle_);
+		handle_ = nullptr;
 	}
 }
 
-void MEvent::InitName(const wchar_t *aszTemplate, DWORD Parm1)
+void MEvent::InitName(const wchar_t *aszTemplate, const DWORD parm1)
 {
-	if (mh_Event)
+	if (handle_)
 		Close();
 
-	mb_NameIsNull = (aszTemplate == NULL);
-	if (!mb_NameIsNull)
-		swprintf_c(ms_EventName, aszTemplate, Parm1);
-	mn_LastError = 0;
+	nameIsNull_ = (aszTemplate == nullptr);
+	if (!nameIsNull_)
+		swprintf_c(eventName_, aszTemplate, parm1);
+	lastError_ = 0;
 }
 
-HANDLE MEvent::Create(LPSECURITY_ATTRIBUTES pSec, bool bManualReset, bool bInitialState, LPCWSTR lpName)
+HANDLE MEvent::Create(SECURITY_ATTRIBUTES* pSec, const bool bManualReset, const bool bInitialState, const wchar_t* lpName)
 {
-	if (mh_Event)  // Если уже открыто - сразу вернуть!
-		return mh_Event;
+	if (handle_)  // if was already opened - return the value!
+		return handle_;
 
 	if (lpName)
 	{
-		_ASSERTE(_tcslen(lpName) < countof(ms_EventName));
-		mb_NameIsNull = false;
-		lstrcpyn(ms_EventName, lpName, countof(ms_EventName));
+		_ASSERTE(_tcslen(lpName) < countof(eventName_));
+		nameIsNull_ = false;
+		lstrcpyn(eventName_, lpName, countof(eventName_));
 	}
 	else
 	{
-		mb_NameIsNull = true;
-		ms_EventName[0] = 0;
+		nameIsNull_ = true;
+		eventName_[0] = 0;
 	}
 
 	return Open(true, pSec, bManualReset, bInitialState);
 }
 
-HANDLE MEvent::Open(bool bCreate /*= false*/, LPSECURITY_ATTRIBUTES pSec /*= NULL*/, bool bManualReset /*= false*/, bool bInitialState /*= false*/)
+HANDLE MEvent::Open(const bool bCreate /*= false*/, SECURITY_ATTRIBUTES* pSec /*= nullptr*/, const bool bManualReset /*= false*/, const bool bInitialState /*= false*/)
 {
-	if (mh_Event)  // Если уже открыто - сразу вернуть!
-		return mh_Event;
+	if (handle_)  // if was already opened - return the value!
+		return handle_;
 
-	if ((ms_EventName[0] == 0) && !mb_NameIsNull)
+	if ((eventName_[0] == 0) && !nameIsNull_)
 	{
-		_ASSERTE(ms_EventName[0]!=0);
-		mn_LastError = ERROR_BAD_ARGUMENTS;
-		return NULL;
+		_ASSERTE(eventName_[0]!=0);
+		lastError_ = ERROR_BAD_ARGUMENTS;
+		return nullptr;
 	}
 
-	if (mb_NameIsNull && !bCreate)
+	if (nameIsNull_ && !bCreate)
 	{
 		_ASSERTE(bCreate);
-		mn_LastError = ERROR_BAD_ARGUMENTS;
-		return NULL;
+		lastError_ = ERROR_BAD_ARGUMENTS;
+		return nullptr;
 	}
 
-	mn_LastError = 0;
+	lastError_ = 0;
 
 	if (bCreate)
 	{
-		mh_Event = ::CreateEvent(pSec, bManualReset, FALSE, mb_NameIsNull ? NULL : ms_EventName);
+		handle_ = ::CreateEvent(pSec, bManualReset, FALSE, nameIsNull_ ? nullptr : eventName_);
 		// Ensure that Event has proper state
-		if (mh_Event)
+		if (handle_)
 		{
 			if (bInitialState)
-				::SetEvent(mh_Event);
+				::SetEvent(handle_);
 			else
-				::ResetEvent(mh_Event);
+				::ResetEvent(handle_);
 		}
 	}
 	else
 	{
-		mh_Event = ::OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, ms_EventName);
+		handle_ = ::OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, eventName_);
 	}
 
-	if (!mh_Event)
-		mn_LastError = ::GetLastError();
+	if (!handle_)
+		lastError_ = ::GetLastError();
 
 	#if defined(_DEBUG)
-	if (mb_DebugNotify)
-		OnDebugNotify(bCreate ? evn_Create : evn_Open);
+	if (debugNotify_)
+		OnDebugNotify(bCreate ? MEventNotification::Create : MEventNotification::Open);
 	#endif
 
-	return mh_Event;
+	return handle_;
 }
 
 bool MEvent::Set()
 {
-	if (!mh_Event)
+	if (!handle_)
 	{
-		_ASSERTE(mh_Event != NULL);
-		mn_LastError = ERROR_BAD_ARGUMENTS;
+		_ASSERTE(handle_ != nullptr);
+		lastError_ = ERROR_BAD_ARGUMENTS;
 		return false;
 	}
 
 	#if defined(_DEBUG)
-	if (mb_DebugNotify)
-		OnDebugNotify(evn_Set);
+	if (debugNotify_)
+		OnDebugNotify(MEventNotification::Set);
 	#endif
 
-	BOOL b = ::SetEvent(mh_Event);
+	const BOOL b = ::SetEvent(handle_);
 
 	#if defined(_DEBUG)
-	mn_LastError = ::GetLastError();
+	lastError_ = ::GetLastError();
 	#endif
 
 	return (b != FALSE);
@@ -176,79 +169,79 @@ bool MEvent::Set()
 
 bool MEvent::Reset()
 {
-	if (!mh_Event)
+	if (!handle_)
 	{
-		_ASSERTE(mh_Event != NULL);
-		mn_LastError = ERROR_BAD_ARGUMENTS;
+		_ASSERTE(handle_ != nullptr);
+		lastError_ = ERROR_BAD_ARGUMENTS;
 		return false;
 	}
 
 	#if defined(_DEBUG)
-	if (mb_DebugNotify)
-		OnDebugNotify(evn_Reset);
+	if (debugNotify_)
+		OnDebugNotify(MEventNotification::Reset);
 	#endif
 
-	BOOL b = ::ResetEvent(mh_Event);
+	const BOOL b = ::ResetEvent(handle_);
 
 	#if defined(_DEBUG)
-	mn_LastError = ::GetLastError();
+	lastError_ = ::GetLastError();
 	#endif
 
 	return (b != FALSE);
 }
 
-DWORD MEvent::Wait(DWORD dwMilliseconds, BOOL abAutoOpen/*=TRUE*/)
+DWORD MEvent::Wait(const DWORD dwMilliseconds, const bool abAutoOpen/*=TRUE*/)
 {
-	if (!mh_Event && abAutoOpen)
+	if (!handle_ && abAutoOpen)
 		Open();
 
-	if (!mh_Event)
+	if (!handle_)
 		return WAIT_ABANDONED;
 
-	DWORD dwWait = ::WaitForSingleObject(mh_Event, dwMilliseconds);
+	const DWORD dwWait = ::WaitForSingleObject(handle_, dwMilliseconds);
 
 	#if defined(_DEBUG)
-	mn_LastError = ::GetLastError();
+	lastError_ = ::GetLastError();
 	#endif
 
 	return dwWait;
 }
 
-HANDLE MEvent::GetHandle()
+HANDLE MEvent::GetHandle() const
 {
-	return mh_Event;
+	return handle_;
 }
 
-LPCWSTR MEvent::GetName()
+LPCWSTR MEvent::GetName() const
 {
-	return mb_NameIsNull ? NULL : ms_EventName;
+	return nameIsNull_ ? nullptr : eventName_;
 }
 
 #if defined(_DEBUG)
-void MEvent::OnDebugNotify(MEventNotification Action)
+void MEvent::OnDebugNotify(const MEventNotification action) const
 {
-	wchar_t szInfo[MAX_PATH];
+	wchar_t szInfo[MAX_PATH] = L"";
 	wcscpy_c(szInfo, L"MEvent: ");
-	switch (Action)
+	switch (action)
 	{
-	case evn_Create:
+	case MEventNotification::Create:
 		wcscat_c(szInfo, L"Create"); break;
-	case evn_Open:
+	case MEventNotification::Open:
 		wcscat_c(szInfo, L"Open"); break;
-	case evn_Set:
+	case MEventNotification::Set:
 		wcscat_c(szInfo, L"Set"); break;
-	case evn_Reset:
+	case MEventNotification::Reset:
 		wcscat_c(szInfo, L"Reset"); break;
-	case evn_Close:
+	case MEventNotification::Close:
 		wcscat_c(szInfo, L"Close"); break;
 	default:
 		wcscat_c(szInfo, L"???");
 	}
 	wcscat_c(szInfo, L": ");
-	if (mb_NameIsNull)
-		swprintf_c(szInfo + _tcslen(szInfo), countof(szInfo) - _tcslen(szInfo)/*#SECURELEN*/, L"Handle=0x%p", mh_Event);
+	if (nameIsNull_)
+		swprintf_c(szInfo + _tcslen(szInfo), countof(szInfo) - _tcslen(szInfo)/*#SECURELEN*/, L"Handle=0x%p", handle_);
 	else
-		wcscat_c(szInfo, ms_EventName);
+		wcscat_c(szInfo, eventName_);
 	DEBUGSTREVT(szInfo);
 	szInfo[0] = 0;
 }

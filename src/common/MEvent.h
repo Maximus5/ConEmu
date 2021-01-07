@@ -32,39 +32,43 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 
 #if defined(_DEBUG)
-enum MEventNotification
+enum class MEventNotification
 {
-	evn_Create,
-	evn_Open,
-	evn_Set,
-	evn_Reset,
-	evn_Close,
+	Create,
+	Open,
+	Set,
+	Reset,
+	Close,
 };
 #endif
 
-class MEvent
+class MEvent final
 {
 protected:
-	WCHAR   ms_EventName[MAX_PATH];
-	HANDLE  mh_Event;
-	DWORD   mn_LastError;
-	bool    mb_NameIsNull;
+	WCHAR   eventName_[MAX_PATH] = L"";
+	HANDLE  handle_ = nullptr;
+	DWORD   lastError_ = 0;
+	bool    nameIsNull_ = false;
 	#if defined(_DEBUG)
-	bool    mb_DebugNotify;
-	void    OnDebugNotify(MEventNotification Action);
+	bool    debugNotify_ = false;
+	void    OnDebugNotify(MEventNotification action) const;
 	#endif
 public:
 	MEvent();
 	~MEvent();
+	MEvent(const MEvent&) = delete;
+	MEvent& operator=(const MEvent&) = delete;
+	MEvent(MEvent&&) = default;
+	MEvent& operator=(MEvent&&) = default;
 public:
-	void    InitName(const wchar_t *aszTemplate, DWORD Parm1=0);
+	void    InitName(const wchar_t* aszTemplate, DWORD parm1 = 0);
 public:
 	void    Close();
-	HANDLE  Create(LPSECURITY_ATTRIBUTES pSec, bool bManualReset, bool bInitialState, LPCWSTR lpName);
-	HANDLE  Open(bool bCreate = false, LPSECURITY_ATTRIBUTES pSec = NULL, bool bManualReset = false, bool bInitialState = false);
+	HANDLE  Create(SECURITY_ATTRIBUTES* pSec, bool bManualReset, bool bInitialState, const wchar_t* lpName);
+	HANDLE  Open(bool bCreate = false, SECURITY_ATTRIBUTES* pSec = nullptr, bool bManualReset = false, bool bInitialState = false);
 	bool    Set();
 	bool    Reset();
-	DWORD   Wait(DWORD dwMilliseconds, BOOL abAutoOpen=TRUE);
-	HANDLE  GetHandle();
-	LPCWSTR GetName();
+	DWORD   Wait(DWORD dwMilliseconds, bool abAutoOpen = true);
+	HANDLE  GetHandle() const;
+	LPCWSTR GetName() const;
 };
