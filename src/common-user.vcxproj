@@ -251,12 +251,10 @@
     <ClInclude Include="common\MArray.h" />
     <ClInclude Include="common\MBSTR.h" />
     <ClInclude Include="common\MCircular.h" />
-    <ClInclude Include="common\MEvent.h" />
     <ClInclude Include="common\MFileLogEx.h" />
     <ClInclude Include="common\MFileMapping.h" />
     <ClInclude Include="common\MGlobal.h" />
     <ClInclude Include="common\MGuiMacro.h" />
-    <ClInclude Include="common\MHandle.h" />
     <ClInclude Include="common\MJsonReader.h" />
     <ClInclude Include="common\MMap.h" />
     <ClInclude Include="common\MPerfCounter.h" />
@@ -267,7 +265,6 @@
     <ClInclude Include="common\MTimer.h" />
     <ClInclude Include="common\MToolHelp.h" />
     <ClInclude Include="common\MToolTip.h" />
-    <ClInclude Include="common\MWnd.h" />
     <ClInclude Include="common\MWow64Disable.h" />
     <ClInclude Include="common\Monitors.h" />
     <ClInclude Include="common\PaletteColors.h" />
@@ -306,7 +303,6 @@
     <ClCompile Include="common\ConEmuCheckEx.cpp" />
     <ClCompile Include="common\EmergencyShow.cpp" />
     <ClCompile Include="common\MBSTR.cpp" />
-    <ClCompile Include="common\MEvent.cpp" />
     <ClCompile Include="common\MFileLogEx.cpp" />
     <ClCompile Include="common\MGlobal.cpp" />
     <ClCompile Include="common\MGuiMacro.cpp" />

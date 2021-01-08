@@ -1503,7 +1503,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 		return;
 
 	const auto nLen = exeName.GetLen();
-	// Длина больше 0 и не заканчивается слешом
+	// Non empty string which does not end with backslash - may be a file
 	const BOOL lbMayBeFile = (nLen > 0) && (exeName[nLen - 1] != L'\\') && (exeName[nLen - 1] != L'/');
 
 	mn_ImageBits = 0;
@@ -3016,6 +3016,13 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 		if (CDefTermHk::IsDefTermEnabled())
 		{
+			// #DefTerm: add special flag to auto hooked apps (msvsmon, VsConsoleDebugger, etc)
+			if (gpDefTerm->IsAppNameMonitored(ms_ExeTmp))
+			{
+				// #DefTerm: conemuInsidePid should be in m_SrvMapping already
+				gpDefTerm->CreateChildMapping(lpPI->dwProcessId, lpPI->hProcess, 0/*conemuInsidePid*/);
+			}
+
 			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
 			if (mb_PostInjectWasRequested)
 			{

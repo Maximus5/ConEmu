@@ -323,6 +323,8 @@ bool CDefTermHk::LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping)
 
 	srvMapping.cbSize = sizeof(srvMapping);
 
+	// #DefTerm: nGuiPID & hConEmuRoot should be in m_SrvMapping already (LoadInsideSettings)
+
 	srvMapping.nProtocolVersion = CESERVER_REQ_VER;
 	srvMapping.nGuiPID = 0; //nGuiPID;
 	srvMapping.hConEmuRoot = nullptr; //ghConEmuWnd;
@@ -483,12 +485,56 @@ bool CDefTermHk::IsInsideMode()
 	return true;
 }
 
+void CDefTermHk::CreateChildMapping(const DWORD childPid, const MHandle& childHandle, const DWORD conemuInsidePid)
+{
+	if (!gpDefTerm)
+		return;
+
+	auto data = std::make_unique<DefTermChildData>();
+
+	data->defTermMark.InitName(CEDEFAULTTERMHOOK, childPid);
+	if (data->defTermMark.Open(true))
+	{
+		data->defTermMark.Set();
+	}
+
+	data->hProcess = childHandle.Duplicate(SYNCHRONIZE);
+
+	if (conemuInsidePid)
+	{
+		data->insideMapping.InitName(CEINSIDEMAPNAMEP, childPid);
+		if (data->insideMapping.Create())
+		{
+			CONEMU_INSIDE_MAPPING info{};
+			info.cbSize = sizeof(info);
+			info.nProtocolVersion = CESERVER_REQ_VER;
+			info.nGuiPID = conemuInsidePid;
+			data->insideMapping.SetFrom(&info);
+		}
+	}
+
+	MSectionLockSimple cs; cs.Lock(&gpDefTerm->childDataLock_);
+
+	for (auto iter = gpDefTerm->childData_.begin(); iter != gpDefTerm->childData_.end();)
+	{
+		const bool terminated = iter->second->hProcess.HasHandle()
+			? (WaitForSingleObject(iter->second->hProcess.GetHandle(), 0) == WAIT_OBJECT_0)
+			: true; // if we don't have a handle - let's clean the record on next invocation
+		if (terminated)
+			iter = gpDefTerm->childData_.erase(iter);
+		else
+			++iter;
+	}
+
+	gpDefTerm->childData_[childPid] = std::move(data);
+}
+
 /// @brief Try to find appropriate mapping with DefTerm options (Inside mode)
 /// @return returns smart pointer to loaded DefTerm settings from ConEmu's mappings (even if DefTerm is disabled there)
 std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 {
 	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo = insideMapInfo_;
-	
+
 	const auto now = std::chrono::steady_clock::now();
 	const auto delay = now - insideMapLastCheck_;
 	if (delay < insideMapCheckDelay_)
@@ -496,7 +542,7 @@ std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 		return insideMapInfo;
 	}
 	insideMapLastCheck_ = now;
-	
+
 	DWORD conemuGuiPid = FindInsideParentConEmuPid();
 	if (conemuGuiPid == 0)
 	{

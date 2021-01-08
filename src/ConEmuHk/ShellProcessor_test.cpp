@@ -166,6 +166,10 @@ bool CDefTermHk::IsInsideMode()
 	return false;
 }
 
+void CDefTermHk::CreateChildMapping(DWORD childPid, const MHandle& childHandle, DWORD conemuInsidePid)
+{
+}
+
 HWND WINAPI GetRealConsoleWindow()
 {
 	const MModule ConEmuHk(GetModuleHandle(ConEmuHk_DLL_3264));

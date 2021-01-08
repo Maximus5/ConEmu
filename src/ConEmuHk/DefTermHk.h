@@ -32,6 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/DefTermBase.h"
 #include <memory>
 #include <chrono>
+#include <unordered_map>
+
+
+
+#include "../common/MEvent.h"
+#include "../common/MHandle.h"
 
 class MFileLog;
 class CDefTermHk;
@@ -56,6 +62,11 @@ public:
 	static bool LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping);
 	static size_t GetSrvAddArgs(bool bGuiArgs, bool forceInjects, CEStr& rsArgs, CEStr& rsNewCon);
 	static bool IsInsideMode();
+	/// @brief Prepare event and mapping to resume created child process (e.g. msvsmon, VsDebugConsole, etc.)
+	/// @param childPid PID of the started child process, it's suspended at the moment of CreateChildMapping call
+	/// @param childHandle handle of childPid with SYNCHRONIZE access
+	/// @param conemuInsidePid if this PID is not 0, we are running in the DefTerm mode initiated from ConEmu inside
+	static void CreateChildMapping(DWORD childPid, const MHandle& childHandle, DWORD conemuInsidePid);
 
 	// Start the server and attach to its console
 	static HWND AllocHiddenConsole(bool bTempForVS);
@@ -106,4 +117,15 @@ private:
 	std::chrono::steady_clock::time_point insideMapLastCheck_{};
 	std::chrono::milliseconds insideMapCheckDelay_{ 1000 };
 	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo_{};
+
+	struct DefTermChildData
+	{
+		MEvent defTermMark; // CEDEFAULTTERMHOOK
+		MFileMapping<CONEMU_INSIDE_MAPPING> insideMapping; // CEINSIDEMAPNAMEP
+		MHandle hProcess; // handle with SYNCHRONIZE access right
+		DWORD pid; // started child process id (informational)
+	};
+
+	MSectionSimple childDataLock_{ true };
+	std::unordered_map<DWORD, std::unique_ptr<DefTermChildData>> childData_;
 };

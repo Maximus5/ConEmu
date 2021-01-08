@@ -60,9 +60,6 @@
     <ClInclude Include="common\MCircular.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="common\MEvent.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="common\MFileLogEx.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -73,9 +70,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\MGuiMacro.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="common\MHandle.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\MJsonReader.h">
@@ -106,9 +100,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\MToolTip.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="common\MWnd.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="common\MWow64Disable.h">
@@ -219,9 +210,6 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="common\MBSTR.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="common\MEvent.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="common\MFileLogEx.cpp">

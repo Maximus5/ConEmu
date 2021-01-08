@@ -255,7 +255,9 @@
     <ClInclude Include="common\Keyboard.h" />
     <ClInclude Include="common\MAssert.h" />
     <ClInclude Include="common\MConHandle.h" />
+    <ClInclude Include="common\MEvent.h" />
     <ClInclude Include="common\MFileLog.h" />
+    <ClInclude Include="common\MHandle.h" />
     <ClInclude Include="common\MModule.h" />
     <ClInclude Include="common\MProcess.h" />
     <ClInclude Include="common\MProcessBits.h" />
@@ -265,6 +267,7 @@
     <ClInclude Include="common\MSecurity.h" />
     <ClInclude Include="common\MStrDup.h" />
     <ClInclude Include="common\MStrSafe.h" />
+    <ClInclude Include="common\MWnd.h" />
     <ClInclude Include="common\Memory.h" />
     <ClInclude Include="common\RConStartArgs.h" />
     <ClInclude Include="common\WCodePage.h" />
@@ -291,6 +294,7 @@
     <ClCompile Include="common\Keyboard.cpp" />
     <ClCompile Include="common\MAssert.cpp" />
     <ClCompile Include="common\MConHandle.cpp" />
+    <ClCompile Include="common\MEvent.cpp" />
     <ClCompile Include="common\MFileLog.cpp" />
     <ClCompile Include="common\MModule.cpp" />
     <ClCompile Include="common\MProcess.cpp" />

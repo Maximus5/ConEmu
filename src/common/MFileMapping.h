@@ -105,7 +105,6 @@ public:
 		return mappedSize_;
 	}
 
-#ifndef CONEMU_MINIMAL
 	bool SetFrom(const T* pSrc, const int nSize = -1)
 	{
 		lastError_ = 0;
@@ -147,7 +146,6 @@ public:
 			return false;
 		}
 	}
-#endif
 
 	bool GetTo(typename std::remove_const<T>::type* pDst, const int nSize = -1)
 	{
@@ -292,13 +290,11 @@ protected:
 	}
 
 public:
-#ifndef CONEMU_MINIMAL
 	T* Create(const int nSize = -1)
 	{
 		_ASSERTE(nSize == -1 || nSize >= sizeof(T));
 		return InternalOpenCreate(true/*abCreate*/, true/*abReadWrite*/, nSize);
 	}
-#endif
 
 	T* Open(const bool abReadWrite = false/*false - only Read*/, const int nSize = -1)
 	{
