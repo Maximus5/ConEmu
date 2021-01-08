@@ -309,13 +309,12 @@ void CShellProc::LogExitLine(const int rc, const int line) const
 {
 	wchar_t szInfo[200];
 	msprintf(szInfo, countof(szInfo),
-		L"PrepareExecuteParams rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i",
+		L"PrepareExecuteParams rc=%i T:%u %u:%u:%u W:%u I:%u S:%u,%u line=%i",
 		/*rc*/(rc), /*T:*/gbPrepareDefaultTerminal ? 1 : 0,
-		(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient,
-		/*W:*/(UINT)workOptions_,
-		/*I:*/(UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, (UINT)mb_Opt_DontInject,
-		/*D:*/(UINT)mb_DebugWasRequested, /*H:*/(UINT)mb_HiddenConsoleDetachNeed,
-		/*S:*/(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart,
+		static_cast<UINT>(mn_ImageSubsystem), static_cast<UINT>(mn_ImageBits), static_cast<UINT>(mb_isCurrentGuiClient),
+		/*W:*/static_cast<UINT>(workOptions_),
+		/*I:*/static_cast<UINT>(mb_Opt_DontInject),
+		/*S:*/static_cast<UINT>(mb_Opt_SkipNewConsole), static_cast<UINT>(mb_Opt_SkipCmdStart),
 		line);
 	LogShellString(szInfo);
 }
@@ -797,7 +796,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	if (gbPrepareDefaultTerminal)
 	{
 		lbUseDosBox = FALSE; // Don't set now
-		if (mb_ConsoleMode)
+		if ((workOptions_ & ShellWorkOptions::ConsoleMode))
 		{
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
 		}
@@ -808,14 +807,14 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	}
 	else if ((ImageBits == 32) || (ImageBits == 64)) //-V112
 	{
-		if (!mb_ConsoleMode)
+		if (!(workOptions_ & ShellWorkOptions::ConsoleMode))
 			SetConsoleMode(true);
 
 		pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 	}
 	else if (ImageBits == 16)
 	{
-		if (!mb_ConsoleMode)
+		if (!(workOptions_ & ShellWorkOptions::ConsoleMode))
 			SetConsoleMode(true);
 
 		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & ConEmu::ConsoleFlags::DosBox))
@@ -939,7 +938,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		// "runas" (Shell) - start server
 		// CreateProcess - start GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
-		nCchSize += CDefTermHk::GetSrvAddArgs(!mb_ConsoleMode, mb_ForceInjectOriginal, szDefTermArg, szDefTermArg2);
+		nCchSize += CDefTermHk::GetSrvAddArgs(!(workOptions_ & ShellWorkOptions::ConsoleMode), (workOptions_ & ShellWorkOptions::ForceInjectOriginal), szDefTermArg, szDefTermArg2);
 	}
 
 	if (Flags & CEF_NEWCON_PREPEND)
@@ -1003,7 +1002,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			_wcscat_c((*psParam), nCchSize, szDefTermArg);
 		}
 
-		if (mb_ConsoleMode)
+		if ((workOptions_ & ShellWorkOptions::ConsoleMode))
 		{
 			// Здесь предполагается "runas", поэтому запускается сервер (ConEmuC.exe)
 			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
@@ -1408,7 +1407,7 @@ bool CShellProc::CheckForDefaultTerminal(const CmdOnCreateType aCmd, LPCWSTR asA
 				// :: Code.exe >> "cmd /c start /wait" >> "cmd.exe"
 				// :: have to hook both cmd to get second in ConEmu tab
 				// :: first cmd is started with CREATE_NO_WINDOW flag!
-				LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisualStudio Code");
+				LogShellString(L"Forcing (workOptions_ & ShellWorkOptions::NeedInjects) for cmd.exe started from VisualStudio Code");
 				SetNeedInjects(true);
 				SetConsoleMode(true);
 			}
@@ -1426,7 +1425,7 @@ bool CShellProc::CheckForDefaultTerminal(const CmdOnCreateType aCmd, LPCWSTR asA
 			{
 				if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 				{
-					SetDebugWasRequested(true);
+					SetWasDebug();
 					LogExit(0);
 					return false;
 				}
@@ -1501,7 +1500,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 			{
 				SetGnuDebugger();
 				// bDebugWasRequested = true; -- previously was set, but seems like it's wrong
-				SetPostInjectWasRequested(true);
+				SetPostInjectWasRequested();
 			}
 
 			if (IsVsDebugConsoleExe(ms_ExeTmp))
@@ -1549,7 +1548,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 				// > subprocess.call([r'C:\tools\Python27\python.exe'])
 				//
 				// -- bVsNetHostRequested = true;
-				const CEStr lsMsg(L"Forcing mb_NeedInjects for `", exeName, L"` started from `", gsExeName, L"`");
+				const CEStr lsMsg(L"Forcing (workOptions_ & ShellWorkOptions::NeedInjects) for `", exeName, L"` started from `", gsExeName, L"`");
 				LogShellString(lsMsg);
 				SetNeedInjects(true);
 			} // end of check "<starting exe> == <current exe>"
@@ -1654,25 +1653,25 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	wchar_t szInfo[200];
 
 	{ // Log PrepareExecuteParams function call -begin
-	lstrcpyn(szInfo, asAction ? asAction : L"-exec-", countof(szInfo));
-	struct ParmsStr { LPDWORD pVal; LPCWSTR pName; }
-	Parms[] = {
-		{anShellFlags, L"ShellFlags"},
-		{anCreateFlags, L"CreateFlags"},
-		{anStartFlags, L"StartFlags"},
-		{anShowCmd, L"ShowCmd"}
-	};
-	for (INT_PTR i = 0; i < countof(Parms); i++)
-	{
-		if (!Parms[i].pVal)
-			continue;
-		int iLen = lstrlen(szInfo);
-		msprintf(szInfo+iLen, countof(szInfo)-iLen, L" %s:x%X", Parms[i].pName, *Parms[i].pVal);
-	}
-	CEStr lsLog = lstrmerge(
-		(aCmd == eShellExecute) ? L"PrepareExecuteParams Shell " : L"PrepareExecuteParams Create ",
-		szInfo, asFile, asParam);
-	LogShellString(lsLog);
+		std::ignore = lstrcpyn(szInfo, asAction ? asAction : L"-exec-", countof(szInfo));
+		struct ParamsStr { LPDWORD pVal; LPCWSTR pName; }
+		params[] = {
+			{anShellFlags, L"ShellFlags"},
+			{anCreateFlags, L"CreateFlags"},
+			{anStartFlags, L"StartFlags"},
+			{anShowCmd, L"ShowCmd"}
+		};
+		for (auto& parm : params)
+		{
+			if (!parm.pVal)
+				continue;
+			int iLen = lstrlen(szInfo);
+			msprintf(szInfo + iLen, countof(szInfo) - iLen, L" %s:x%X", parm.pName, *parm.pVal);
+		}
+		CEStr lsLog = lstrmerge(
+			(aCmd == eShellExecute) ? L"PrepareExecuteParams Shell " : L"PrepareExecuteParams Create ",
+			szInfo, asFile, asParam);
+		LogShellString(lsLog);
 	} // Log PrepareExecuteParams function call -end
 
 	// Для логирования - запомним сразу
@@ -1752,8 +1751,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	// Service object (moved to members: RConStartArgs m_Args)
 	_ASSERTEX(m_Args.pszSpecialCmd == nullptr); // Must not be touched yet!
 
-	_ASSERTE(mb_DebugWasRequested == FALSE);
-	_ASSERTE(mb_PostInjectWasRequested == FALSE);
+	_ASSERTE((workOptions_ & ShellWorkOptions::PostInjectWasRequested) == FALSE);
 
 	// Issue 351: После перехода исполнятеля фара на ShellExecuteEx почему-то сюда стал приходить
 	//            левый хэндл (hStdOutput = 0x00010001), иногда получается 0x00060265
@@ -1765,7 +1763,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		if (IsWin5family())
 		{
 			if (//(*lphStdOut == (HANDLE)0x00010001)
-				(((DWORD_PTR)*lphStdOut) >= 0x00010000)
+				(reinterpret_cast<DWORD_PTR>(*lphStdOut) >= 0x00010000)
 				&& (*lphStdErr == nullptr))
 			{
 				*lphStdOut = nullptr;
@@ -2082,7 +2080,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		if (bGoChangeParm)
 		{
 			// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
-			if (!mb_ConsoleMode && CDefTermHk::IsInsideMode())
+			if (!(workOptions_ & ShellWorkOptions::ConsoleMode) && CDefTermHk::IsInsideMode())
 			{
 				SetConsoleMode(true);
 			}
@@ -2163,7 +2161,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		if (gbPrepareDefaultTerminal)
 		{
 			// normal DefTerm feature
-			if (mb_ConsoleMode && anShowCmd)
+			if ((workOptions_ & ShellWorkOptions::ConsoleMode) && anShowCmd)
 			{
 				*anShowCmd = SW_HIDE;
 			}
@@ -2172,7 +2170,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			{
 				// We need to post attach ConEmu GUI to started console
 				if (workOptions_ & ShellWorkOptions::VsNetHost)
-					SetPostInjectWasRequested(true);
+					SetPostInjectWasRequested();
 				goto wrap;
 			}
 		}
@@ -2195,7 +2193,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 
 			HWND hConWnd = GetRealConsoleWindow();
 
-			if (!mb_ConsoleMode)
+			if (!(workOptions_ & ShellWorkOptions::ConsoleMode))
 			{
 				// If we start ConEmu.exe (our GUI) application, we need to show it
 				if (anShowCmd && *anShowCmd == SW_HIDE)
@@ -2645,9 +2643,9 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 {
 	bool siChanged = false;
 
-	if (mb_NeedInjects)
+	if ((workOptions_ & ShellWorkOptions::NeedInjects))
 	{
-		// In DefTerm (gbPrepareDefaultTerminal) mb_NeedInjects is allowed too in some cases...
+		// In DefTerm (gbPrepareDefaultTerminal) (workOptions_ & ShellWorkOptions::NeedInjects) is allowed too in some cases...
 		// code.exe -> "cmd /c start /wait" -> cmd.exe
 		(*anCreationFlags) |= CREATE_SUSPENDED;
 	}
@@ -2660,9 +2658,9 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 		{
 			_ASSERTE(m_Args.NoDefaultTerm != crb_On);
 
-			if (!mb_PostInjectWasRequested)
+			if (!(workOptions_ & ShellWorkOptions::PostInjectWasRequested))
 			{
-				if (!mb_DebugWasRequested && !mb_ConsoleMode)
+				if (!(workOptions_ & ShellWorkOptions::WasDebug) && !(workOptions_ & ShellWorkOptions::ConsoleMode))
 					newShowCmd = SW_SHOWNORMAL; // ConEmu itself must starts normally
 			}
 		}
@@ -2696,7 +2694,7 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 						{
 							_ASSERTE(gnServerPID != 0);
 							// We managed to create hidden console window, run application there
-							SetHiddenConsoleDetachNeed(true);
+							SetHiddenConsoleDetachNeed();
 							// Do not need to "Show" it
 							siShowWindow = SW_HIDE;
 							siFlags |= STARTF_USESHOWWINDOW;
@@ -2718,7 +2716,7 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 					{
 						// Would be nice to hook only those instances which are started to work with *local* processes
 						// e.g.: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
-						SetPostInjectWasRequested(true);
+						SetPostInjectWasRequested();
 						if (!(workOptions_ & ShellWorkOptions::WasSuspended))
 							(*anCreationFlags) |= CREATE_SUSPENDED;
 					}
@@ -2985,7 +2983,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			}
 
 			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
-			if (mb_PostInjectWasRequested)
+			if ((workOptions_ & ShellWorkOptions::PostInjectWasRequested))
 			{
 				// This is "*.vshost.exe", it is GUI which can be used for debugging .Net console applications
 				// Also in CodeBlocks' gdb debugger
@@ -3000,9 +2998,9 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				}
 			}
 			// Starting debugging session from VS (for example)?
-			else if (mb_DebugWasRequested && !mb_HiddenConsoleDetachNeed)
+			else if ((workOptions_ & ShellWorkOptions::WasDebug) && !(workOptions_ & ShellWorkOptions::HiddenConsoleDetachNeed))
 			{
-				if (mb_ForceInjectOriginal)
+				if ((workOptions_ & ShellWorkOptions::ForceInjectOriginal))
 				{
 					// If user choose to inject ConEmuHk into debugging process (to have ANSI support, etc.)
 					RunInjectHooks(WIN3264TEST(L"DefTerm",L"DefTerm64"), lpPI);
@@ -3044,19 +3042,19 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 					}
 				}
 			}
-			else if (mb_NeedInjects)
+			else if ((workOptions_ & ShellWorkOptions::NeedInjects))
 			{
 				// code.exe -> "cmd /c start /wait" -> cmd.exe
 				RunInjectHooks(WIN3264TEST(L"DefTerm",L"DefTerm64"), lpPI);
 			}
 		}
-		else if (mb_NeedInjects)
+		else if ((workOptions_ & ShellWorkOptions::NeedInjects))
 		{
 			RunInjectHooks(WIN3264TEST(L"ConEmuHk",L"ConEmuHk64"), lpPI);
 		}
 	}
 
-	if (mb_HiddenConsoleDetachNeed)
+	if ((workOptions_ & ShellWorkOptions::HiddenConsoleDetachNeed))
 	{
 		FreeConsole();
 		SetServerPID(0);
@@ -3142,33 +3140,41 @@ void CShellProc::ClearChildGui()
 
 void CShellProc::SetNeedInjects(const bool value)
 {
-	mb_NeedInjects = value;
+	if (value)
+		workOptions_ |= ShellWorkOptions::NeedInjects;
+	else
+		workOptions_ = static_cast<ShellWorkOptions>(static_cast<uint32_t>(workOptions_)
+			& ~static_cast<uint32_t>(ShellWorkOptions::NeedInjects));
 }
 
 void CShellProc::SetForceInjectOriginal(const bool value)
 {
-	mb_ForceInjectOriginal = value;
+	if (value)
+		workOptions_ |= ShellWorkOptions::ForceInjectOriginal;
+	else
+		workOptions_ = static_cast<ShellWorkOptions>(static_cast<uint32_t>(workOptions_)
+			& ~static_cast<uint32_t>(ShellWorkOptions::ForceInjectOriginal));
+}
+
+void CShellProc::SetPostInjectWasRequested()
+{
+	workOptions_ |= ShellWorkOptions::PostInjectWasRequested;
 }
 
 void CShellProc::SetConsoleMode(const bool value)
 {
-	mb_ConsoleMode = value;
+	if (value)
+		workOptions_ |= ShellWorkOptions::ConsoleMode;
+	else
+		workOptions_ = static_cast<ShellWorkOptions>(static_cast<uint32_t>(workOptions_)
+			& ~static_cast<uint32_t>(ShellWorkOptions::ConsoleMode));
 }
 
-void CShellProc::SetDebugWasRequested(const bool value)
+void CShellProc::SetHiddenConsoleDetachNeed()
 {
-	mb_DebugWasRequested = value;
+	workOptions_ |= ShellWorkOptions::HiddenConsoleDetachNeed;
 }
 
-void CShellProc::SetHiddenConsoleDetachNeed(const bool value)
-{
-	mb_HiddenConsoleDetachNeed = value;
-}
-
-void CShellProc::SetPostInjectWasRequested(const bool value)
-{
-	mb_PostInjectWasRequested = value;
-}
 
 bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= nullptr*/)
 {

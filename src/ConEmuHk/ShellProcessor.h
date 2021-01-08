@@ -60,6 +60,27 @@ enum class ShellWorkOptions : uint32_t
 
 	// Starting ChildGui
 	ChildGui = 0x00000100,
+
+	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe).
+	// Modified via SetNeedInjects.
+	NeedInjects = 0x00001000,
+
+	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
+	// Modified via SetForceInjectOriginal.
+	ForceInjectOriginal = 0x00002000,
+
+	// Special case of injecting ConEmuHk during debugging.
+	// The process is started, thread is resumed until modules are initialized,
+	// after that thread is suspended again and StartDefTermHooker is called.
+	PostInjectWasRequested = 0x00004000,
+	
+	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed.
+	// Modified via SetConsoleMode.
+	ConsoleMode = 0x00010000,
+
+	// Special case to remove RealConsole flickering. E.g. in VisualStudio we attached to the console
+	// created by ConEmuC.exe server and later we have to call FreeConsole to avoid unexpected output to ConOut.
+	HiddenConsoleDetachNeed = 0x00020000,
 };
 
 ShellWorkOptions operator|=(ShellWorkOptions e1, ShellWorkOptions e2);
@@ -124,42 +145,16 @@ private:
 	// Starting ChildGui
 	void SetChildGui();
 	void ClearChildGui();
-
-	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe).
-	// Modified via SetNeedInjects.
-	bool mb_NeedInjects = false;
 	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe)
 	void SetNeedInjects(bool value);
-
-	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
-	// Modified via SetForceInjectOriginal.
-	bool mb_ForceInjectOriginal = false;
 	// Controls if we have to inject ConEmuHk regardless of DefTerm settings
 	void SetForceInjectOriginal(bool value);
-
-	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed.
-	// Modified via SetConsoleMode.
-	bool mb_ConsoleMode = false;
+	// Controls if we need to call StartDefTermHooker after resuming started process
+	void SetPostInjectWasRequested();
 	// Controls if we need to run console server, if value is false - running fo ConEmu.exe is allowed
 	void SetConsoleMode(bool value);
-
-	// If process is starting for debugging
-	bool mb_DebugWasRequested = false;
-	// Controls mb_DebugWasRequested
-	void SetDebugWasRequested(bool value);
-
-	// Special case to remove RealConsole flickering. E.g. in VisualStudio we attached to the console
-	// created by ConEmuC.exe server and later we have to call FreeConsole to avoid unexpected output to ConOut.
-	bool mb_HiddenConsoleDetachNeed = false;
 	// Controls if we need to call FreeConsole after process creation
-	void SetHiddenConsoleDetachNeed(bool value);
-
-	// Special case of injecting ConEmuHk during debugging.
-	// The process is started, thread is resumed until modules are initialized,
-	// after that thread is suspended again and StartDefTermHooker is called.
-	bool mb_PostInjectWasRequested = false;
-	// Controls if we need to call StartDefTermHooker after resuming started process
-	void SetPostInjectWasRequested(bool value);
+	void SetHiddenConsoleDetachNeed();
 
 	// ConEmuHooks=OFF
 	bool mb_Opt_DontInject = false;
