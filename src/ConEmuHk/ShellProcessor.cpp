@@ -101,8 +101,8 @@ void LogFarExecCommand(
 	CEStr log_str(
 		L"Far.exe: action=",
 		(aCmd == eShellExecute)
-			? ((asAction && *asAction) ? asAction : L"<shell>")
-			: L"<create>",
+		? ((asAction && *asAction) ? asAction : L"<shell>")
+		: L"<create>",
 		(asFile && *asFile) ? L", file=" : nullptr, asFile,
 		(asParam && *asParam) ? L", parm=" : nullptr, asParam,
 		(asDir && *asDir) ? L", dir=" : nullptr, asDir,
@@ -110,6 +110,25 @@ void LogFarExecCommand(
 	gfnSrvLogString(log_str);
 }
 }
+
+ShellWorkOptions operator|=(const ShellWorkOptions e1, const ShellWorkOptions e2)
+{
+	return static_cast<ShellWorkOptions>(static_cast<uint32_t>(e1) | static_cast<uint32_t>(e2));
+}
+
+ShellWorkOptions operator|(const ShellWorkOptions e1, const ShellWorkOptions e2)
+{
+	return static_cast<ShellWorkOptions>(static_cast<uint32_t>(e1) | static_cast<uint32_t>(e2));
+}
+
+bool operator&(const ShellWorkOptions e1, const ShellWorkOptions e2)
+{
+	if (e2 == ShellWorkOptions::None)
+		return e1 == ShellWorkOptions::None;
+	const auto masked = static_cast<uint32_t>(e1) & static_cast<uint32_t>(e2);
+	return masked == static_cast<uint32_t>(e2);
+}
+
 
 #define LogExit(frc) LogExitLine(frc, __LINE__)
 
@@ -293,7 +312,7 @@ void CShellProc::LogExitLine(const int rc, const int line) const
 		L"PrepareExecuteParams rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i",
 		/*rc*/(rc), /*T:*/gbPrepareDefaultTerminal ? 1 : 0,
 		(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient,
-		/*W:*/(UINT)mb_WasSuspended,
+		/*W:*/(UINT)workOptions_,
 		/*I:*/(UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, (UINT)mb_Opt_DontInject,
 		/*D:*/(UINT)mb_DebugWasRequested, /*H:*/(UINT)mb_HiddenConsoleDetachNeed,
 		/*S:*/(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart,
@@ -1380,7 +1399,7 @@ bool CShellProc::CheckForDefaultTerminal(
 
 	lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
 
-	if (CompareProcessNames(ms_ExeTmp, L"VsDebugConsole.exe"))
+	if (IsVsDebugConsoleExe(ms_ExeTmp))
 	{
 		SetForceInjectOriginal(true);
 	}
@@ -1456,7 +1475,7 @@ bool CShellProc::CheckForDefaultTerminal(
 	}
 
 	// Started from explorer/taskmgr - CREATE_SUSPENDED is set (why?)
-	if (mb_WasSuspended && anCreateFlags)
+	if ((workOptions_ & ShellWorkOptions::WasSuspended) && anCreateFlags)
 	{
 		_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
 		_ASSERTE(aCmd == eCreateProcess);
@@ -2674,7 +2693,9 @@ CShellProc::CreatePrepareData CShellProc::OnCreateProcessPrepare(
 
 	result.defaultShowCmd = result.showCmd;
 
-	mb_WasSuspended = anCreationFlags && (((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED);
+	_ASSERTE(!(workOptions_ & ShellWorkOptions::WasSuspended));
+	if (anCreationFlags && (((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED))
+		SetWasSuspended();
 
 	return result;
 }
@@ -2757,7 +2778,7 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 						// Would be nice to hook only those instances which are started to work with *local* processes
 						// e.g.: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
 						SetPostInjectWasRequested(true);
-						if (!mb_WasSuspended)
+						if (!(workOptions_ & ShellWorkOptions::WasSuspended))
 							(*anCreationFlags) |= CREATE_SUSPENDED;
 					}
 				}
@@ -2799,7 +2820,6 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : nullptr, mn_CP);
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : nullptr, mn_CP);
-	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 	const CEStr lsDir(str2wcs(asDir ? *asDir : nullptr, mn_CP));
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
@@ -3028,7 +3048,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			{
 				// This is "*.vshost.exe", it is GUI which can be used for debugging .Net console applications
 				// Also in CodeBlocks' gdb debugger
-				if (mb_WasSuspended)
+				if ((workOptions_ & ShellWorkOptions::WasSuspended))
 				{
 					// Supposing Studio will process only one "*.vshost.exe" at a time
 					m_WaitDebugVsThread = *lpPI;
@@ -3133,10 +3153,40 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const
 	}
 
 	// Release process, it called was not set CREATE_SUSPENDED flag
-	if (!mb_WasSuspended)
+	if (!(workOptions_ & ShellWorkOptions::WasSuspended))
 	{
 		ResumeThread(lpPI->hThread);
 	}
+}
+
+void CShellProc::SetWasSuspended()
+{
+	workOptions_ |= ShellWorkOptions::WasSuspended;
+}
+
+void CShellProc::SetWasDebug()
+{
+	workOptions_ |= ShellWorkOptions::WasDebug;
+}
+
+void CShellProc::SetGnuDebugger()
+{
+	workOptions_ |= ShellWorkOptions::GnuDebugger;
+}
+
+void CShellProc::SetVsNetHost()
+{
+	workOptions_ |= ShellWorkOptions::VsNetHost;
+}
+
+void CShellProc::SetVsDebugConsole()
+{
+	workOptions_ |= ShellWorkOptions::VsDebugConsole;
+}
+
+void CShellProc::SetChildGui()
+{
+	workOptions_ |= ShellWorkOptions::ChildGui;
 }
 
 void CShellProc::SetNeedInjects(const bool value)

@@ -43,6 +43,29 @@ const ChangeExecFlags
 
 enum CmdOnCreateType;
 
+enum class ShellWorkOptions : uint32_t
+{
+	None = 0,
+	// during CreateProcessXXX the flag CREATE_SUSPENDED was already set
+	WasSuspended = 0x00000001,
+	// DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS
+	WasDebug = 0x00000002,
+
+	// gbd.exe
+	GnuDebugger = 0x00000010,
+	// *.vshost.exe
+	VsNetHost = 0x00000020,
+	// VsDebugConsole.exe
+	VsDebugConsole = 0x00000040,
+
+	// Starting ChildGui
+	ChildGui = 0x00000100,
+};
+
+ShellWorkOptions operator|=(ShellWorkOptions e1, ShellWorkOptions e2);
+ShellWorkOptions operator|(ShellWorkOptions e1, ShellWorkOptions e2);
+bool operator&(ShellWorkOptions e1, ShellWorkOptions e2);
+
 class CShellProc
 {
 public:
@@ -85,8 +108,21 @@ private:
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
 	CmdArg ms_ExeTmp;
 
-	// if TRUE - than during CreateProcessXXX the flag CREATE_SUSPENDED was already set
-	bool mb_WasSuspended = false;
+	// Describes the request, e.g. runnings options, if we are to start gdb.exe, msvsmon.exe, etc.
+	ShellWorkOptions workOptions_ = ShellWorkOptions::None;
+
+	// during CreateProcessXXX the flag CREATE_SUSPENDED was already set
+	void SetWasSuspended();
+	// DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS
+	void SetWasDebug();
+	// gbd.exe
+	void SetGnuDebugger();
+	// *.vshost.exe
+	void SetVsNetHost();
+	// VsDebugConsole.exe
+	void SetVsDebugConsole();
+	// Starting ChildGui
+	void SetChildGui();
 
 	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe).
 	// Modified via SetNeedInjects.
@@ -130,16 +166,6 @@ private:
 	bool mb_Opt_SkipNewConsole = false;
 	// ConEmuHooks=NOSTART
 	bool mb_Opt_SkipCmdStart = false;
-
-	enum class WorkOptions : uint32_t
-	{
-		None = 0,
-		DebugWasRequested = 0x0001,
-		GuiApp = 0x0002,
-		VsNetHostRequested = 0x0004,
-		VsDebugConsole = 0x0008,
-	};
-	WorkOptions workOptions_ = WorkOptions::None;
 
 	void CheckHooksDisabled();
 	static bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp);

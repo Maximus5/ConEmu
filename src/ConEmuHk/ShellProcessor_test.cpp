@@ -105,6 +105,22 @@ TEST(ShellProcessor, Test)
 	}
 }
 
+TEST(ShellProcessor, WorkOptions)
+{
+	const ShellWorkOptions options = ShellWorkOptions::ChildGui | ShellWorkOptions::VsNetHost
+	| ShellWorkOptions::WasSuspended | ShellWorkOptions::WasDebug;
+	EXPECT_EQ(static_cast<uint32_t>(options),
+		static_cast<uint32_t>(ShellWorkOptions::ChildGui) | static_cast<uint32_t>(ShellWorkOptions::VsNetHost)
+		| static_cast<uint32_t>(ShellWorkOptions::WasSuspended) | static_cast<uint32_t>(ShellWorkOptions::WasDebug));
+
+	EXPECT_TRUE(options & ShellWorkOptions::WasSuspended);
+	EXPECT_TRUE(options & ShellWorkOptions::WasDebug);
+	EXPECT_TRUE(options & (ShellWorkOptions::WasSuspended | ShellWorkOptions::WasDebug));
+	EXPECT_FALSE(options & (ShellWorkOptions::WasSuspended | ShellWorkOptions::VsDebugConsole));
+	EXPECT_FALSE(options & ShellWorkOptions::VsDebugConsole);
+	EXPECT_TRUE(ShellWorkOptions::None & ShellWorkOptions::None);
+}
+
 
 // some global stubs
 BOOL    gbAttachGuiClient = FALSE;
