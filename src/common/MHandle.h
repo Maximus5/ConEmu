@@ -36,26 +36,26 @@ class MHandle final
 {
 private:
 	HANDLE handle_ = nullptr;
-	std::function<void(HANDLE)> closeFunc_ = nullptr;
+	std::function<void(HANDLE) noexcept> closeFunc_ = nullptr;
 
 public:
 	// ReSharper disable once CppNonExplicitConvertingConstructor
 	// ReSharper disable once CppParameterMayBeConst
-	MHandle(HANDLE handle)
+	MHandle(HANDLE handle) noexcept
 		: handle_(handle)
 	{
 	}
 
-	MHandle(HANDLE handle, std::function<void(HANDLE)> closeFunc)
+	MHandle(HANDLE handle, std::function<void(HANDLE) noexcept> closeFunc) noexcept
 		: handle_(handle), closeFunc_(std::move(closeFunc))
 	{
 	}
 
-	MHandle()
+	MHandle() noexcept
 	{
 	}
 
-	~MHandle()
+	~MHandle() noexcept
 	{
 		Close();
 	}
@@ -64,26 +64,48 @@ public:
 	MHandle(const MHandle&) = delete;
 	MHandle& operator=(const MHandle&) = delete;
 	// movable
-	MHandle(MHandle&&) = default;
-	MHandle& operator=(MHandle&&) = default;
+	MHandle(MHandle&&) noexcept = default;
+	MHandle& operator=(MHandle&& src) noexcept
+	{
+		if (handle_ != src.handle_)
+			Close();
+		handle_ = src.handle_;
+		closeFunc_ = std::move(src.closeFunc_);
+		src.handle_ = nullptr;
+		return *this;
+	}
+
+	MHandle Duplicate(const DWORD desiredAccess, const bool inheritHandle = false) const
+	{
+		MHandle result{nullptr, CloseHandle};
+		if (HasHandle())
+		{
+			auto* currentProcess = GetCurrentProcess();
+			if (!::DuplicateHandle(currentProcess, GetHandle(), currentProcess, &result.handle_, desiredAccess, inheritHandle, 0))
+			{
+				result.Close();
+			}
+		}
+		return result;
+	}
 
 public:
-	bool HasHandle() const
+	bool HasHandle() const noexcept
 	{
 		return handle_ != nullptr && handle_ != INVALID_HANDLE_VALUE;
 	}
 
-	operator HANDLE() const
+	operator HANDLE() const noexcept
 	{
 		return handle_;
 	}
 
-	HANDLE GetHandle() const
+	HANDLE GetHandle() const noexcept
 	{
 		return handle_;
 	}
 
-	HANDLE SetHandle(HANDLE handle)
+	HANDLE SetHandle(HANDLE handle) noexcept
 	{
 		if (handle_ != handle)
 			Close();
@@ -92,7 +114,7 @@ public:
 		return handle_;
 	}
 
-	HANDLE SetHandle(HANDLE handle, std::function<void(HANDLE)> closeFunc)
+	HANDLE SetHandle(HANDLE handle, std::function<void(HANDLE)> closeFunc) noexcept
 	{
 		if (handle_ != handle)
 			Close();
@@ -101,7 +123,7 @@ public:
 		return handle_;
 	}
 
-	void Close()
+	void Close() noexcept
 	{
 		if (HasHandle() && closeFunc_ != nullptr)
 		{

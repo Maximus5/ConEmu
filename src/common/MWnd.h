@@ -38,42 +38,42 @@ private:
 public:
 	// ReSharper disable once CppNonExplicitConvertingConstructor
 	// ReSharper disable once CppParameterMayBeConst
-	MWnd(HWND hwnd)
+	MWnd(HWND hwnd) noexcept
 		: hwnd_(hwnd)
 	{
 	}
 
-	MWnd()
+	MWnd() noexcept
 	{
 	}
 
-	~MWnd() = default;
+	~MWnd() noexcept = default;
 
 	// copyable
-	MWnd(const MWnd&) = default;
-	MWnd& operator=(const MWnd&) = default;
+	MWnd(const MWnd&) noexcept = default;
+	MWnd& operator=(const MWnd&) noexcept = default;
 	// movable
-	MWnd(MWnd&&) = default;
-	MWnd& operator=(MWnd&&) = default;
+	MWnd(MWnd&&) noexcept = default;
+	MWnd& operator=(MWnd&&) noexcept = default;
 
 public:
-	bool HasHandle() const
+	bool HasHandle() const noexcept
 	{
 		return (hwnd_ != nullptr);
 	}
 
-	operator HWND() const
+	operator HWND() const noexcept
 	{
 		return hwnd_;
 	}
 
-	HWND GetHwnd() const
+	HWND GetHandle() const noexcept
 	{
 		return hwnd_;
 	}
 
 	// All windows handles in Windows (64-bit or 32-bit) are available to both 32-bit and 64-bit processes
-	DWORD GetDword() const
+	DWORD GetPortableHandle() const noexcept
 	{
 		const auto dword = LODWORD(hwnd_);
 		if (reinterpret_cast<DWORD_PTR>(hwnd_) != dword)
@@ -85,13 +85,13 @@ public:
 	}
 
 	// ReSharper disable once CppParameterMayBeConst
-	HWND SetHwnd(HWND hwnd)
+	HWND SetHandle(HWND hwnd) noexcept
 	{
 		hwnd_ = hwnd;
 		return hwnd_;
 	}
 
-	HWND SetHwnd(DWORD portableHandle)
+	HWND SetPortableHandle(const DWORD portableHandle) noexcept
 	{
 		hwnd_ = reinterpret_cast<HWND>(static_cast<DWORD_PTR>(portableHandle));
 		return hwnd_;

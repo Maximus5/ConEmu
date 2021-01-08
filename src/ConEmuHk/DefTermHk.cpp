@@ -584,15 +584,15 @@ std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 DWORD CDefTermHk::FindInsideParentConEmuPid()
 {
 	const DWORD curPid = GetCurrentProcessId();
-	
+
 	const MWnd hFore = GetForegroundWindow();
-	
+
 	if (hFore)
 	{
 		DWORD pid = 0;
 		if (GetWindowThreadProcessId(hFore, &pid) && pid == curPid)
 		{
-			const DWORD conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEW, hFore.GetDword());
+			const DWORD conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEW, hFore.GetPortableHandle());
 			if (conemuGuiPid)
 				return conemuGuiPid;
 		}
@@ -606,7 +606,7 @@ DWORD CDefTermHk::FindInsideParentConEmuPid()
 			DWORD pid = 0;
 			if (GetWindowThreadProcessId(hTop, &pid) && pid == curPid)
 			{
-				const DWORD conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEW, hTop.GetDword());
+				const DWORD conemuGuiPid = LoadInsideConEmuPid(CEINSIDEMAPNAMEW, hTop.GetPortableHandle());
 				if (conemuGuiPid)
 					return conemuGuiPid;
 			}
