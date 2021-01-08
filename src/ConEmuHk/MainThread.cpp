@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/MArray.h"
 #include "../common/PipeServer.h"
+#include "../common/MToolHelp.h"
 #include "DbgHooks.h"
 #include "hlpProcess.h"
 #include "MainThread.h"
@@ -47,7 +48,7 @@ extern PipeServer<CESERVER_REQ> *gpHookServer;
 /// BOOL value is TRUE if thread was started by `CreateThread` function,
 /// otherwise it is FALSE if thread was found from DLL_THREAD_DETACH,
 /// or Thread32First/Next
-MMap<DWORD,BOOL> gStartedThreads;
+MMap<DWORD,BOOL> gStartedThreads;  // NOLINT(clang-diagnostic-exit-time-destructors)
 
 
 /// Main thread ID in the current process
@@ -74,46 +75,35 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 		}
 		else
 		{
-			DWORD dwPID = GetCurrentProcessId();
+			const DWORD dwPID = GetCurrentProcessId();
 
-			#ifdef FORCE_GETMAINTHREAD_PRINTF
-			wchar_t szInfo[160], szTail[32];
+#ifdef FORCE_GETMAINTHREAD_PRINTF
+			wchar_t szInfo[160] = L"", szTail[32] = L"";
 			msprintf(szInfo, countof(szInfo), L"\x1B[1;31;40m" L"*** [PID=%u %s] GetMainThreadId is using CreateToolhelp32Snapshot", dwPID, gsExeName);
 			wcscpy_c(szTail, L"\x1B[1;31;40m" L" ***" L"\x1B[0m" L"\n");
-			WriteProcessed2(szInfo, wcslen(szInfo), NULL, wps_Error);
-			#endif
+			WriteProcessed2(szInfo, LODWORD(wcslen(szInfo)), nullptr, wps_Error);
+#endif
 
 			// Unfortunately, dwPID is ignored in TH32CS_SNAPTHREAD
-			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-
-			if (snapshot != INVALID_HANDLE_VALUE)
+			MToolHelpThread snapshot(dwPID);
+			THREADENTRY32 thread = {};
+			// Don't stop enumeration on first thread, populate gStartedThreads
+			while (snapshot.Next(thread))
 			{
-				THREADENTRY32 module = {sizeof(THREADENTRY32)};
-
-				if (Thread32First(snapshot, &module))
+				if (thread.th32OwnerProcessID == dwPID)
 				{
-					// Don't stop enumeration on first thread, populate gStartedThreads
-					do
-					{
-						if (module.th32OwnerProcessID == dwPID)
-						{
-							DWORD nTID = module.th32ThreadID;
+					DWORD nTID = thread.th32ThreadID;
 
-							if (!gnHookMainThreadId)
-								gnHookMainThreadId = nTID;
+					if (!gnHookMainThreadId)
+						gnHookMainThreadId = nTID;
 
-							if (!gStartedThreads.Get(nTID, NULL))
-								gStartedThreads.Set(nTID, FALSE);
-						}
-
-					} while (Thread32Next(snapshot, &module));
+					if (!gStartedThreads.Get(nTID, nullptr))
+						gStartedThreads.Set(nTID, FALSE);
 				}
-
-				CloseHandle(snapshot);
 			}
 
 			#ifdef FORCE_GETMAINTHREAD_PRINTF
-			WriteProcessed2(szTail, wcslen(szTail), NULL, wps_Error);
+			WriteProcessed2(szTail, LODWORD(wcslen(szTail)), nullptr, wps_Error);
 			#endif
 		}
 	}
@@ -137,7 +127,7 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 /// Defines the structure for pThInfo, used to Suspend/Resume
 struct ThInfoStr { DWORD_PTR nTID; HANDLE hThread; };
 /// Stores suspended threads IDs and handles
-static MArray<ThInfoStr> *pThInfo = NULL;
+static MArray<ThInfoStr> *pThInfo = nullptr;
 
 /// Stores count of FixSshThreads(1) calls
 long gnFixSshThreadsResumeOk = 0;
@@ -153,7 +143,7 @@ void FixSshThreads(int iStep)
 	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 	#endif
 
-	switch (iStep)
+	switch (iStep)  // NOLINT(hicpp-multiway-paths-covered)
 	{
 		// Resume suspended threads
 		case 1:
@@ -162,12 +152,12 @@ void FixSshThreads(int iStep)
 			if (!pThInfo)
 				break;
 			// May occurs in several threads simultaneously
-			long n = InterlockedIncrement(&gnFixSshThreadsResumeOk);
+			const long n = InterlockedIncrement(&gnFixSshThreadsResumeOk);
 			if (n > 1)
 				break;
 			// Resume all suspended...
-			for (INT_PTR i = 0; i < pThInfo->size(); i++)
-				ResumeThread((*pThInfo)[i].hThread);
+			for (auto& i : *pThInfo)
+				ResumeThread(i.hThread);
 			break;
 		}
 
@@ -176,10 +166,10 @@ void FixSshThreads(int iStep)
 		{
 			_ASSERTEX(gnHookMainThreadId!=0);
 			pThInfo = new MArray<ThInfoStr>;
-			HANDLE hThread = NULL, hSnap = NULL;
-			DWORD nTID = 0, dwPID = GetCurrentProcessId();
-			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-			if (snapshot == INVALID_HANDLE_VALUE)
+			HANDLE hThread = nullptr;
+			const DWORD dwPID = GetCurrentProcessId();
+			MToolHelpThread snapshot(dwPID);
+			if (!snapshot.Open())
 			{
 				#ifdef _DEBUG
 				nErr = GetLastError();
@@ -189,23 +179,15 @@ void FixSshThreads(int iStep)
 			}
 			else
 			{
-				THREADENTRY32 module = {sizeof(THREADENTRY32)};
-				if (!Thread32First(snapshot, &module))
-				{
-					#ifdef _DEBUG
-					nErr = GetLastError();
-					msprintf(szInfo, countof(szInfo), "Thread32First failed in FixSshThreads, code=%u\n", nErr);
-					if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-					#endif
-				}
-				else do
+				THREADENTRY32 module = {};
+				while (snapshot.Next(module))
 				{
 					if ((module.th32OwnerProcessID == dwPID) && (gnHookMainThreadId != module.th32ThreadID))
 					{
 						// JIC, add thread ID to our list.
 						// In theory, all thread must be already initialized
 						// either from DLL_THREAD_ATTACH, or from GetMainThreadId.
-						if (!gStartedThreads.Get(module.th32ThreadID, NULL))
+						if (!gStartedThreads.Get(module.th32ThreadID, nullptr))
 							gStartedThreads.Set(module.th32ThreadID, FALSE);
 
 						// Don't freeze our own threads
@@ -223,8 +205,8 @@ void FixSshThreads(int iStep)
 						}
 						else
 						{
-							DWORD nSC = SuspendThread(hThread);  // -V720
-							if (nSC == (DWORD)-1)
+							const DWORD nSc = SuspendThread(hThread);  // -V720
+							if (nSc == static_cast<DWORD>(-1))
 							{
 								// Error!
 								#ifdef _DEBUG
@@ -244,9 +226,7 @@ void FixSshThreads(int iStep)
 							}
 						}
 					}
-				} while (Thread32Next(snapshot, &module));
-
-				CloseHandle(snapshot);
+				}
 			}
 			break;
 		}
@@ -274,9 +254,9 @@ struct HookThreadList
 /// @result INVALID_HANDLE_VALUE on errors, or pointer to HookThreadList
 HANDLE WINAPI HookThreadListCreate(DWORD dwFlags, DWORD th32ProcessID)
 {
-	HookThreadList* p = (HookThreadList*)calloc(sizeof(HookThreadList),1);
+	HookThreadList* p = static_cast<HookThreadList*>(calloc(sizeof(HookThreadList), 1));
 
-	p->iCount = gStartedThreads.GetKeysValues(&p->pThreadIDs, NULL);
+	p->iCount = gStartedThreads.GetKeysValues(&p->pThreadIDs, nullptr);
 
 	if ((p->iCount <= 0) || (!p->pThreadIDs))
 	{
@@ -284,14 +264,14 @@ HANDLE WINAPI HookThreadListCreate(DWORD dwFlags, DWORD th32ProcessID)
 		free(p);
 		return INVALID_HANDLE_VALUE;
 	}
-	return (HANDLE)p;
+	return static_cast<HANDLE>(p);
 }
 
-BOOL WINAPI HookThreadListNext(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
+BOOL WINAPI HookThreadListNext(HANDLE hSnapshot, THREADENTRY32* lpte)
 {
 	if (hSnapshot && (hSnapshot != INVALID_HANDLE_VALUE))
 	{
-		HookThreadList* p = (HookThreadList*)hSnapshot;
+		HookThreadList* p = static_cast<HookThreadList*>(hSnapshot);
 		if (p->iCurrent < p->iCount)
 		{
 			// minhook requires only two fields
@@ -307,7 +287,7 @@ BOOL WINAPI HookThreadListClose(HANDLE hSnapshot)
 {
 	if (hSnapshot && (hSnapshot != INVALID_HANDLE_VALUE))
 	{
-		HookThreadList* p = (HookThreadList*)hSnapshot;
+		HookThreadList* p = static_cast<HookThreadList*>(hSnapshot);
 		gStartedThreads.ReleasePointer(p->pThreadIDs);
 		free(p);
 		return TRUE;
