@@ -1390,24 +1390,16 @@ bool CShellProc::PrepareNewConsoleInFile(
 	return isNewConsoleArg;
 }
 
-bool CShellProc::CheckForDefaultTerminal(
-	const CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
-	const DWORD* anShowCmd, bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger)
+bool CShellProc::CheckForDefaultTerminal(const CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags,
+	const DWORD* anCreateFlags, const DWORD* anShowCmd)
 {
 	if (!gbPrepareDefaultTerminal)
 		return true; // nothing to do
 
-	lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
-
-	if (IsVsDebugConsoleExe(ms_ExeTmp))
-	{
-		SetForceInjectOriginal(true);
-	}
-
 	if (aCmd == eCreateProcess)
 	{
 		if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
-			&& !lbGnuDebugger
+			&& !(workOptions_ & ShellWorkOptions::GnuDebugger)
 			)
 		{
 			if (gbIsVsCode
@@ -1466,7 +1458,7 @@ bool CShellProc::CheckForDefaultTerminal(
 	}
 
 	if (anShowCmd && (*anShowCmd == SW_HIDE)
-		&& !lbGnuDebugger
+		&& !(workOptions_ & ShellWorkOptions::GnuDebugger)
 		)
 	{
 		// Creating process with window initially hidden, not our case
@@ -1474,49 +1466,10 @@ bool CShellProc::CheckForDefaultTerminal(
 		return false;
 	}
 
-	// Started from explorer/taskmgr - CREATE_SUSPENDED is set (why?)
-	if ((workOptions_ & ShellWorkOptions::WasSuspended) && anCreateFlags)
-	{
-		_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
-		_ASSERTE(aCmd == eCreateProcess);
-		_ASSERTE(gbPrepareDefaultTerminal);
-		// Actually, this branch can be activated from any GUI application
-		// For example, Issue 1516: Dopus, notepad, etc.
-		if (!((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
-		{
-			// Well, there is a chance, that CREATE_SUSPENDED was intended for
-			// setting hooks from current process with SetThreadContext, but
-			// on the other hand, we get here if only user himself activates
-			// "Default terminal" feature for this process. So, I believe,
-			// this decision is almost safe.
-			bIgnoreSuspended = true;
-		}
-	}
-
-	// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
-	//    Also: How to Disable the Hosting Process
-	//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
-	if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|(bIgnoreSuspended?0:CREATE_SUSPENDED))))
-	{
-		#if 0
-		// Для поиска трапов в дереве запускаемых процессов
-		if (m_SrvMapping.Flags & ConEmu::ConsoleFlags::BlockChildDbg)
-		{
-			(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
-		}
-		else
-		#endif
-		{
-			bDebugWasRequested = true;
-		}
-		// Пока продолжим, нам нужно определить, а консольное ли это приложение?
-	}
-
 	return true;
 }
 
-void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags, bool lbGnuDebugger,
-		bool& bDebugWasRequested, bool& lbGuiApp, bool& bVsNetHostRequested)
+void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags)
 {
 	if (exeName.IsEmpty())
 		return;
@@ -1538,35 +1491,55 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 		// gh-681: NodeJSPortable.exe just runs "Server.cmd"
 		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
 			mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-		lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+
+		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+			SetChildGui();
+
 		if (gbPrepareDefaultTerminal)
 		{
+			if (IsGDB(ms_ExeTmp)) // Allow GDB in Lazarus etc.
+			{
+				SetGnuDebugger();
+				// bDebugWasRequested = true; -- previously was set, but seems like it's wrong
+				SetPostInjectWasRequested(true);
+			}
+
+			if (IsVsDebugConsoleExe(ms_ExeTmp))
+			{
+				SetForceInjectOriginal(true);
+			}
+
 			if (IsVsNetHostExe(exeName))
 			{
 				// *.vshost.exe
-				bVsNetHostRequested = true;
+				SetVsNetHost();
 				// Intended for .Net debugging?
 				if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED))
 				{
-					bDebugWasRequested = true;
+					SetWasDebug();
 				}
 			} // end of check "starting *.vshost.exe" (seems like not used in latest VS & .Net)
-			else if (gbIsVSDebug && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+
+			if (anCreateFlags && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
 			{
+				if ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS))
+				{
+					SetWasDebug();
+				}
+
 				// Intended for .Net debugging (without native support)
-				if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED)
+				// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
+				//    Also: How to Disable the Hosting Process
+				//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
+				if (gbIsVSDebug && ((*anCreateFlags) & CREATE_SUSPENDED)
 					// DEBUG_XXX flags are processed above explicitly
 					&& !((*anCreateFlags) & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS)))
 				{
-					bDebugWasRequested = true;
+					SetWasDebug();
 				}
 			} // end of check "starting C# console app from msvsmon.exe"
-			else if (lbGnuDebugger)
-			{
-				bDebugWasRequested = true;
-				SetPostInjectWasRequested(true);
-			} // end of check "starting new gnu debugger"
-			else if (CompareProcessNames(gsExeName, exeName))
+
+			if (CompareProcessNames(gsExeName, exeName))
 			{
 				// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
 				//
@@ -1728,11 +1701,15 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		if (anShowCmd && *anShowCmd == 0)
 		{
 			// Historical (create process detached from parent console)
-			if (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)))
+			if (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE | CREATE_NO_WINDOW | DETACHED_PROCESS)))
+			{
 				bDontForceInjects = bDetachedOrHidden = true;
+			}
 			// Detect creating "root" from mintty-like applications
 			else if ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)))
+			{
 				bDontForceInjects = bDetachedOrHidden = true;
+			}
 		}
 		// Started with redirected output? For example, from Far cmd line:
 		// edit:<git log
@@ -1775,9 +1752,6 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	// Service object (moved to members: RConStartArgs m_Args)
 	_ASSERTEX(m_Args.pszSpecialCmd == nullptr); // Must not be touched yet!
 
-	bool bDebugWasRequested = false;
-	bool bVsNetHostRequested = false;
-	bool bIgnoreSuspended = false;
 	_ASSERTE(mb_DebugWasRequested == FALSE);
 	_ASSERTE(mb_PostInjectWasRequested == FALSE);
 
@@ -1833,30 +1807,18 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		GetStartingExeName(asFile, asParam, ms_ExeTmp);
 	}
 
-	bool lbGnuDebugger = false;
-
-	// Some additional checks for "Default terminal" mode
-	if (!CheckForDefaultTerminal(
-		aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd,
-		bIgnoreSuspended, bDebugWasRequested, lbGnuDebugger))
-	{
-		return PrepareExecuteResult::Bypass;
-	}
-
 	// #HOOKS try to process *.lnk files?
-
-	//wchar_t *szTest = (wchar_t*)malloc(MAX_PATH*2*sizeof(wchar_t)); //[MAX_PATH*2]
-	//wchar_t *szExe = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t)); //[MAX_PATH+1];
-	//DWORD /*mn_ImageSubsystem = 0, mn_ImageBits = 0,*/ nFileAttrs = (DWORD)-1;
-	bool lbGuiApp = false;
-	//int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
-	//int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
-	//int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
 
 	if (!ms_ExeTmp.IsEmpty())
 	{
 		// check image subsystem, vsnet debugger helpers, etc.
-		CheckForExeName(ms_ExeTmp, anCreateFlags, lbGnuDebugger, bDebugWasRequested, lbGuiApp, bVsNetHostRequested);
+		CheckForExeName(ms_ExeTmp, anCreateFlags);
+	}
+
+	// Some additional checks for "Default terminal" mode
+	if (!CheckForDefaultTerminal(aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd))
+	{
+		return PrepareExecuteResult::Bypass;
 	}
 
 	BOOL lbChanged = FALSE;
@@ -1930,7 +1892,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageBits = 16;
 					bLongConsoleOutput = FALSE;
-					lbGuiApp = false;
+					ClearChildGui();
 				}
 
 				if (m_Args.LongOutputDisable == crb_On)
@@ -1940,6 +1902,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			}
 		}
 	}
+
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
 	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
 	if (!(NewConsoleFlags & CEF_NEWCON_SWITCH)
@@ -1971,10 +1934,12 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			bForceNewConsole = true;
 		}
 	}
-	if (mb_isCurrentGuiClient && ((NewConsoleFlags & CEF_NEWCON_SWITCH) || bForceNewConsole) && !lbGuiApp)
+
+	if (mb_isCurrentGuiClient && ((NewConsoleFlags & CEF_NEWCON_SWITCH) || bForceNewConsole) && !(workOptions_ & ShellWorkOptions::ChildGui))
 	{
-		lbGuiApp = true;
+		SetChildGui();
 	}
+
 	// Used with "start" for example, but ignore "start /min ..."
 	if ((aCmd == eCreateProcess)
 		&& !mb_Opt_SkipCmdStart // Issue 1822
@@ -2076,12 +2041,12 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
-	if (lbGuiApp && !(NewConsoleFlags || bForceNewConsole || bVsNetHostRequested))
+	if ((workOptions_ & ShellWorkOptions::ChildGui) && !(NewConsoleFlags || bForceNewConsole || (workOptions_ & ShellWorkOptions::VsNetHost)))
 	{
 		if (gbAttachGuiClient && !ghAttachGuiClient && (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On))
 		{
 			_ASSERTE(gnAttachPortableGuiCui==0);
-			gnAttachPortableGuiCui = (GuiCui)IMAGE_SUBSYSTEM_WINDOWS_GUI;
+			gnAttachPortableGuiCui = static_cast<GuiCui>(IMAGE_SUBSYSTEM_WINDOWS_GUI);
 			SetNeedInjects(TRUE);
 		}
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
@@ -2113,7 +2078,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
-		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (bVsNetHostRequested || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && ((workOptions_ & ShellWorkOptions::VsNetHost) || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
 		if (bGoChangeParm)
 		{
 			// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
@@ -2143,7 +2108,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		for (bool once = true; once; once = false)
 		{
 			// it's an attach of ChildGui into new ConEmu tab OR new console from GUI
-			if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
+			if ((workOptions_ & ShellWorkOptions::ChildGui) && (NewConsoleFlags || bForceNewConsole))
 			{
 				bGoChangeParm = true; break;
 			}
@@ -2203,18 +2168,11 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				*anShowCmd = SW_HIDE;
 			}
 
-			if (bDebugWasRequested)
+			if (workOptions_ & ShellWorkOptions::WasDebug)
 			{
 				// We need to post attach ConEmu GUI to started console
-				if (bVsNetHostRequested)
+				if (workOptions_ & ShellWorkOptions::VsNetHost)
 					SetPostInjectWasRequested(true);
-				else
-					SetDebugWasRequested(true);
-				// Пока что не будем убирать "мелькание" окошка.
-				// На факт "видимости" консольного окна ориентируется ConEmuC
-				// при аттаче. Если окошко НЕ видимое - считаем, что оно было
-				// запущено процессом для служебных целей, и не трогаем его...
-				// -> ConsoleMain.cpp: ParseCommandLine: "if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())"
 				goto wrap;
 			}
 		}
@@ -2245,7 +2203,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 					*anShowCmd = SW_SHOWNORMAL;
 				}
 			}
-			else if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
+			else if ((workOptions_ & ShellWorkOptions::ChildGui) && (NewConsoleFlags || bForceNewConsole))
 			{
 				if (anShowCmd)
 				{
@@ -2256,23 +2214,6 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				{
 					*anShellFlags |= SEE_MASK_NO_CONSOLE;
 				}
-
-				#if 0
-				// нужно запускаться ВНЕ текущей консоли!
-				if (aCmd == eCreateProcess)
-				{
-					if (anCreateFlags)
-					{
-						*anCreateFlags |= CREATE_NEW_CONSOLE;
-						*anCreateFlags &= ~(DETACHED_PROCESS|CREATE_NO_WINDOW);
-					}
-				}
-				else if (aCmd == eShellExecute)
-				{
-					if (anShellFlags)
-						*anShellFlags |= SEE_MASK_NO_CONSOLE;
-				}
-				#endif
 			}
 			pIn = NewCmdOnCreate(eParmsChanged,
 					asAction, *psFile, *psParam, asDir,
@@ -3187,6 +3128,16 @@ void CShellProc::SetVsDebugConsole()
 void CShellProc::SetChildGui()
 {
 	workOptions_ |= ShellWorkOptions::ChildGui;
+}
+
+void CShellProc::ClearChildGui()
+{
+	if (workOptions_ & ShellWorkOptions::ChildGui)
+	{
+		_ASSERTE(FALSE && "Check if SetChildGui() call  was intended");
+		workOptions_ = static_cast<ShellWorkOptions>(static_cast<uint32_t>(workOptions_)
+			& ~static_cast<uint32_t>(ShellWorkOptions::ChildGui));
+	}
 }
 
 void CShellProc::SetNeedInjects(const bool value)

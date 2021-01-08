@@ -48,7 +48,7 @@ enum class ShellWorkOptions : uint32_t
 	None = 0,
 	// during CreateProcessXXX the flag CREATE_SUSPENDED was already set
 	WasSuspended = 0x00000001,
-	// DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS
+	// Either native or .net debugging is supposed
 	WasDebug = 0x00000002,
 
 	// gbd.exe
@@ -123,6 +123,7 @@ private:
 	void SetVsDebugConsole();
 	// Starting ChildGui
 	void SetChildGui();
+	void ClearChildGui();
 
 	// Controls if we need to inject ConEmuHk into started executable (either original, or changed ConEmu.exe / ConEmuC.exe).
 	// Modified via SetNeedInjects.
@@ -205,11 +206,9 @@ private:
 	static bool PrepareNewConsoleInFile(
 				CmdOnCreateType aCmd, LPCWSTR& asFile, LPCWSTR& asParam,
 				CEStr& lsReplaceFile, CEStr& lsReplaceParm, CEStr& exeName);
-	bool CheckForDefaultTerminal(
-				CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
-				const DWORD* anShowCmd, bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger);
-	void CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags, bool lbGnuDebugger,
-		bool& bDebugWasRequested, bool& lbGuiApp, bool& bVsNetHostRequested);
+	bool CheckForDefaultTerminal(CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags,
+				const DWORD* anCreateFlags, const DWORD* anShowCmd);
+	void CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags);
 	PrepareExecuteResult PrepareExecuteParams(
 				enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,

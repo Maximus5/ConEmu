@@ -249,7 +249,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	DWORD nDuration = 0;
 	DWORD nStopWaitRc = (DWORD)-1;
 
-	#ifdef _DEBUG
+	#ifdef DEBUG_RETRY_PIPE_OPEN_DLG
 	wchar_t szDbgMsg[512], szTitle[128];
 	#endif
 
