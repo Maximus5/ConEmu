@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
+#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -2049,7 +2050,7 @@ int CRealConsole::EvalPromptCtrlBSCount(const AppSettings* pApp)
 				iBSCount++, i--;
 			bFirst = false;
 		}
-		
+
 		// delimiters
 		while ((i >= 0) && wcschr(cBreaks+2, line.pChar[i]))
 		{
@@ -12421,7 +12422,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 		buffer = std::move(oneLinerBuffer);
 		nBufLen = buffer.GetLen();
-		
+
 		// Buffer must not contain any line-feeds now! Safe for paste in command line!
 		_ASSERTE(wcspbrk(buffer.c_str(), L"\r\n\t") == nullptr);
 		pszRN = nullptr;

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WErrGuard.h"
 
 #include <memory>
+#include <tuple>
 
 #ifdef _DEBUG
 #include "MStrDup.h"

@@ -64,7 +64,12 @@ public:
 	MHandle(const MHandle&) = delete;
 	MHandle& operator=(const MHandle&) = delete;
 	// movable
-	MHandle(MHandle&&) noexcept = default;
+	MHandle(MHandle&& src) noexcept
+	{
+		handle_ = src.handle_;
+		closeFunc_ = std::move(src.closeFunc_);
+		src.handle_ = nullptr;
+	}
 	MHandle& operator=(MHandle&& src) noexcept
 	{
 		if (handle_ != src.handle_)

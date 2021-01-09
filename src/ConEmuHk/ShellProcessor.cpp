@@ -1312,7 +1312,9 @@ bool CShellProc::IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam)
 		if (!NextArg(psz, ms_ExeTmp))
 		{
 			// AnsiCon exists in command line?
+			#ifdef _DEBUG
 			_ASSERTEX(bAnsiConFound==false);
+			#endif
 			continue;
 		}
 
@@ -1325,7 +1327,9 @@ bool CShellProc::IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam)
 			break;
 		}
 
+		#ifdef _DEBUG
 		_ASSERTEX(bAnsiConFound==false);
+		#endif
 	}
 
 	if (bAnsiCon)
