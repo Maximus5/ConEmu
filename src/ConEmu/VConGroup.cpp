@@ -5199,8 +5199,8 @@ bool CVConGroup::PreReSize(unsigned WindowMode, RECT rcWnd, enum ConEmuRect tFro
 
 	if (!rcCon.right || !rcCon.bottom)
 	{
-		Assert(rcCon.right && rcCon.bottom);
-		// Исключительная ситуация, сюда попадать мы не должны
+		// #Inside: Could happens during initialization of inside mode
+		_ASSERTE(rcCon.right && rcCon.bottom);
 		rcCon.right = DEF_CON_WIDTH;
 		rcCon.bottom = DEF_CON_HEIGHT;
 	}
