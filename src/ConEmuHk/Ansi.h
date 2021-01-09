@@ -92,8 +92,8 @@ struct CpCvt;
 
 struct CEAnsi
 {
-//private:
-//	static MMap<DWORD,CEAnsi*> AnsiTls;
+	//private:
+	//	static MMap<DWORD,CEAnsi*> AnsiTls;
 public:
 	/* ************************************* */
 	/* Init and release thread local storage */
@@ -107,19 +107,19 @@ public:
 	static HANDLE StartVimTerm(bool bFromDllStart);
 	static HANDLE StopVimTerm();
 
-	static BOOL OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal = true);
+	static BOOL OurWriteConsoleW(HANDLE hConsoleOutput, const VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal = true);
 
 	static void OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	static void OnReadConsoleAfter(bool bFinal, bool bNoLineFeed);
 
-	static void InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes);
+	static void InitAnsiLog(LPCWSTR asFilePath, bool LogAnsiCodes);
 	static void DoneAnsiLog(bool bFinal);
 
 	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
 	static SHORT GetDefaultTextAttr();
 
-	static HANDLE ghAnsiLogFile /*= NULL*/;
+	static HANDLE ghAnsiLogFile /*= nullptr*/;
 	static bool   gbAnsiLogCodes /*= false*/;
 	static LONG   gnEnterPressed /*= 0*/;
 	static bool   gbAnsiLogNewLine /*= false*/;
@@ -164,10 +164,10 @@ public:
 		LPCWSTR  ArgSZ; // Reserved for key mapping
 		size_t   cchArgSZ;
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 		LPCWSTR  pszEscStart;
 		size_t   nTotalLen;
-	#endif
+#endif
 
 		int      PvtLen;
 		wchar_t  Pvt[16];
@@ -178,16 +178,16 @@ public:
 	/*         Working methods               */
 	/* ************************************* */
 	// NON-static, because we need to ‘cache’ parts of non-translated MBCS chars (one UTF-8 symbol may be transmitted by up to *three* parts)
-	BOOL OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+	BOOL OurWriteConsoleA(HANDLE hConsoleOutput, const char* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 	// Unicode method
-	BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+	BOOL WriteAnsiCodes(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 protected:
 	CpCvt m_Cvt{};
 	wchar_t m_LastWrittenChar = L' ';
 protected:
-	void WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
-	void WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
-static void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+	void WriteAnsiCode_CSI(OnWriteConsoleW_t writeConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+	void WriteAnsiCode_OSC(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+	static void WriteAnsiCode_VIM(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
 	void ReportTerminalPixelSize();
@@ -203,26 +203,26 @@ public:
 	static void AnsiLogEnterPressed();
 	static void WriteAnsiLogFormat(const char* format, ...);
 protected:
-	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
-	static HANDLE XTermAltBuffer(const bool bSetAltBuffer, const int mode = 1049);
+	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = nullptr);
+	static HANDLE XTermAltBuffer(bool bSetAltBuffer, int mode = 1049);
 	static HANDLE XTermBufferConEmuAlternative();
 	static HANDLE XTermBufferConEmuPrimary();
 	//static HANDLE XTermBufferWin10(const int mode, const bool bSetAltBuffer);
 public:
 
-static void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
+	static void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
 
 	static int DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
 
-	BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE, EXTREADWRITEFLAGS AddFlags = ewtf_None);
-static BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);
+	BOOL WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE, EXTREADWRITEFLAGS AddFlags = ewtf_None);
+	static BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);
 	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir) const;
 	//BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	BOOL FullReset(HANDLE hConsoleOutput) const;
 	BOOL ForwardLF(HANDLE hConsoleOutput, BOOL& bApply);
 	BOOL ReverseLF(HANDLE hConsoleOutput, BOOL& bApply) const;
-	BOOL LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const;
-static BOOL LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount);
+	BOOL LinesInsert(HANDLE hConsoleOutput, unsigned linesCount) const;
+	static BOOL LinesDelete(HANDLE hConsoleOutput, unsigned linesCount);
 	void DoSleep(LPCWSTR asMS);
 	void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen) const;
 	void DoMessage(LPCWSTR asMsg, INT_PTR cchLen) const;
@@ -232,7 +232,7 @@ static BOOL LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount);
 	void DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen) const;
 	bool IsAnsiExecAllowed(LPCWSTR asCmd) const;
 
-	int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, BOOL ReEntrance = FALSE);
+	int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t(&szPreDump)[CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, BOOL ReEntrance = FALSE);
 
 protected:
 	/* ************************************* */
@@ -248,30 +248,30 @@ protected:
 	};
 	VTCharSet mCharSet = VTCS_DEFAULT;
 
-	#undef DP_PROP
-	#define DP_PROP(t,n) \
-		private: t _##n; \
+#undef DP_PROP
+#define DP_PROP(t,n) \
+		private: t _##n{}; \
 		public: t get##n() const { return _##n; }; \
-		public: void set##n(const t val);
+		public: void set##n(const t val)
 public:
 	enum cbit { clr4b = 0, clr8b, clr24b };
 	struct DisplayParm
 	{
-		void Reset(const bool full);
+		void Reset(bool full);
 		DP_PROP(bool, WasSet);
 		DP_PROP(bool, BrightOrBold);     // 1
 		DP_PROP(bool, Italic);           // 3
 		DP_PROP(bool, Underline);        // 4
 		DP_PROP(bool, Inverse);          // 7
-		DP_PROP(bool, Crossed)           // 9
+		DP_PROP(bool, Crossed);          // 9
 		DP_PROP(bool, BrightFore);       // 90-97
 		DP_PROP(bool, BrightBack);       // 100-107
-		DP_PROP(int,  TextColor);        // 30-37,38,39
+		DP_PROP(int, TextColor);         // 30-37,38,39
 		DP_PROP(cbit, Text256);          // 38
-		DP_PROP(int,  BackColor);        // 40-47,48,49
+		DP_PROP(int, BackColor);         // 40-47,48,49
 		DP_PROP(cbit, Back256);          // 48
 	}; // gDisplayParm = {};
-	#undef DP_PROP
+#undef DP_PROP
 	static const DisplayParm& getDisplayParm();
 
 protected:
@@ -305,7 +305,7 @@ protected:
 	// Bad thing again...
 	static DisplayOpt gDisplayOpt;
 	// Store absolute coords by relative ANSI values
-	void SetScrollRegion(bool bRegion, bool bRelative = true, int nStart = 0, int nEnd = 0, HANDLE hConsoleOutput = NULL) const;
+	void SetScrollRegion(bool bRegion, bool bRelative = true, int nStart = 0, int nEnd = 0, HANDLE hConsoleOutput = nullptr) const;
 	// Return absolute coordinates of our working area
 	SMALL_RECT GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort) const;
 

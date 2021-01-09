@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 
-#include <tlhelp32.h>
+#include <TlHelp32.h>
 
 #include "hkKernel.h"
 

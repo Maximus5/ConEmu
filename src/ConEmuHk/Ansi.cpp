@@ -82,7 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 /* ************ Globals ************ */
-extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
+// extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 #include "MainThread.h"
 
 /* ************ Globals for SetHook ************ */
@@ -92,7 +92,7 @@ extern HWND    ghConEmuWnd;   // Root! ConEmu window  // NOLINT(readability-redu
 extern HWND    ghConEmuWndDC; // ConEmu DC window  // NOLINT(readability-redundant-declaration)
 // ReSharper disable once CppInconsistentNaming
 extern DWORD   gnGuiPID;  // NOLINT(readability-redundant-declaration)
-extern wchar_t gsInitConTitle[512];
+// extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
 /* ************ Globals for xTerm/ViM ************ */
@@ -1059,7 +1059,7 @@ wrap:
 }
 
 
-BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit /*= FALSE*/, EXTREADWRITEFLAGS AddFlags /*= ewtf_None*/)
+BOOL CEAnsi::WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit /*= FALSE*/, EXTREADWRITEFLAGS AddFlags /*= ewtf_None*/)
 {
 	BOOL lbRc = FALSE;
 	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
@@ -1067,7 +1067,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	#ifdef _DEBUG
 	ORIGINAL_KRNL(WriteConsoleW);
 	OnWriteConsoleW_t pfnDbgWriteConsoleW = F(WriteConsoleW);
-	_ASSERTE(((_WriteConsoleW == pfnDbgWriteConsoleW) || !HooksWereSet) && "It must point to CallPointer for 'unhooked' call");
+	_ASSERTE(((writeConsoleW == pfnDbgWriteConsoleW) || !HooksWereSet) && "It must point to CallPointer for 'unhooked' call");
 	#endif
 
 	if (lpBuffer && nNumberOfCharsToWrite)
@@ -1077,7 +1077,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	write.StructSize = sizeof(write);
 	write.Flags = ewtf_Current | AddFlags;
 	write.ConsoleOutput = hConsoleOutput;
-	write.Private = reinterpret_cast<void*>(_WriteConsoleW);
+	write.Private = reinterpret_cast<void*>(writeConsoleW);
 
 	LPCWSTR pszSrcBuffer = lpBuffer;
 	wchar_t cvtBuf[80];
@@ -1232,7 +1232,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		}
 		_ASSERTE(nWriteTo<=nNumberOfCharsToWrite);
 
-		//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, nullptr);
+		//lbRc = writeConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, nullptr);
 		write.Buffer = lpBuffer + nWriteFrom;
 		write.NumberOfCharsToWrite = nWriteTo - nWriteFrom;
 
@@ -1592,7 +1592,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						_ASSERTEX(nSkipLen > 0 && nSkipLen <= static_cast<INT_PTR>(countof(gsPrevAnsiPart)) && nSkipLen <= gnPrevAnsiPart);
 						DumpUnknownEscape(gsPrevAnsiPart, nSkipLen);
 
-						//WriteText(_WriteConsoleW, hConsoleOutput, gsPrevAnsiPart, nSkipLen, &nWritten);
+						//WriteText(writeConsoleW, hConsoleOutput, gsPrevAnsiPart, nSkipLen, &nWritten);
 						_ASSERTEX(nSkipLen <= (static_cast<int>(CEAnsi_MaxPrevPart) - static_cast<int>(cchPrevPart)));
 						memmove(szPreDump, gsPrevAnsiPart, nSkipLen);
 						cchPrevPart += static_cast<int>(nSkipLen);
@@ -2569,7 +2569,7 @@ void CEAnsi::ReportCursorPosition(HANDLE hConsoleOutput)
 	}
 }
 
-BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
 	BOOL lbRc = TRUE, lbApply = FALSE;
 	// ReSharper disable once CppLocalVariableMayBeConst
@@ -2582,12 +2582,12 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 	GetFeatures(nullptr, &mb_SuppressBells);
 
 	// Store this pointer
-	pfnWriteConsoleW = _WriteConsoleW;
+	pfnWriteConsoleW = writeConsoleW;
 	// Ans current output handle
 	mh_WriteOutput = hConsoleOutput;
 
 	//ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
-	//write.Private = _WriteConsoleW;
+	//write.Private = writeConsoleW;
 
 	while (lpBuffer < lpEnd)
 	{
@@ -2608,7 +2608,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 				lbApply = FALSE;
 			}
 
-			lbRc = WriteText(_WriteConsoleW, hConsoleOutput, szPreDump, cchPrevPart, lpNumberOfCharsWritten);
+			lbRc = WriteText(writeConsoleW, hConsoleOutput, szPreDump, cchPrevPart, lpNumberOfCharsWritten);
 			if (!lbRc)
 				goto wrap;
 		}
@@ -2626,8 +2626,8 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 				}
 
 				const DWORD nWrite = static_cast<DWORD>(lpStart - lpBuffer);
-				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
-				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten, FALSE);
+				//lbRc = WriteText(writeConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
+				lbRc = WriteText(writeConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten, FALSE);
 				if (!lbRc)
 					goto wrap;
 				//write.Buffer = lpBuffer;
@@ -2657,7 +2657,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					case L'[':
 						{
 							lbApply = TRUE;
-							WriteAnsiCode_CSI(_WriteConsoleW, hConsoleOutput, Code, lbApply);
+							WriteAnsiCode_CSI(writeConsoleW, hConsoleOutput, Code, lbApply);
 
 						} // case L'[':
 						break;
@@ -2665,7 +2665,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					case L']':
 						{
 							lbApply = TRUE;
-							WriteAnsiCode_OSC(_WriteConsoleW, hConsoleOutput, Code, lbApply);
+							WriteAnsiCode_OSC(writeConsoleW, hConsoleOutput, Code, lbApply);
 
 						} // case L']':
 						break;
@@ -2674,7 +2674,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						{
 							// vim-xterm-emulation
 							lbApply = TRUE;
-							WriteAnsiCode_VIM(_WriteConsoleW, hConsoleOutput, Code, lbApply);
+							WriteAnsiCode_VIM(writeConsoleW, hConsoleOutput, Code, lbApply);
 						} // case L'|':
 						break;
 
@@ -2701,7 +2701,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						ReverseLF(hConsoleOutput, lbApply);
 						break;
 					case L'E':
-						WriteText(_WriteConsoleW, hConsoleOutput, L"\r\n", 2, nullptr);
+						WriteText(writeConsoleW, hConsoleOutput, L"\r\n", 2, nullptr);
 						break;
 					case L'D':
 						ForwardLF(hConsoleOutput, lbApply);
@@ -2748,8 +2748,8 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 				}
 
 				const DWORD nWrite = static_cast<DWORD>(lpNext - lpBuffer);
-				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
-				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
+				//lbRc = WriteText(writeConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
+				lbRc = WriteText(writeConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
 				if (!lbRc)
 					goto wrap;
 				//write.Buffer = lpBuffer;
@@ -2790,7 +2790,7 @@ wrap:
 	return lbRc;
 }
 
-void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t writeConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
 	/*
 
@@ -3039,7 +3039,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				{
 					for (int i = 0; i < repeat; ++i)
 						ptr[i] = m_LastWrittenChar;
-					WriteText(_WriteConsoleW, hConsoleOutput, ptr, repeat, nullptr);
+					WriteText(writeConsoleW, hConsoleOutput, ptr, repeat, nullptr);
 				}
 			}
 		}
@@ -3779,7 +3779,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 	} // switch (Code.Action)
 }
 
-void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
 	if (!Code.ArgSZ)
 	{
@@ -3993,7 +3993,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 	}
 }
 
-void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
 	if (!gbWasXTermOutput && !gnWriteProcessed)
 	{
