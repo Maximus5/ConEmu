@@ -49,6 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hkKernel.h"
 
+#include "DllOptions.h"
+
 /* **************** */
 
 // Helper function

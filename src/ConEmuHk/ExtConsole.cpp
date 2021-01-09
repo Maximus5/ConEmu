@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkConsoleOutput.h"
 #include "hkWindow.h"
 #include "hlpConsole.h"
+#include "DllOptions.h"
 
 #include <tuple>
 

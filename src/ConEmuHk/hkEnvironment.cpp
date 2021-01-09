@@ -40,6 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "hkEnvironment.h"
 
+#include "DllOptions.h"
+
 /* **************** */
 
 void CheckVariables()

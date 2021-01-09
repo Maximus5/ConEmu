@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #endif
+#include "../common/InQueue.h"
 #include "../common/HandleKeeper.h"
 #include "../common/PipeServer.h"
 #include "../common/ConEmuInOut.h"

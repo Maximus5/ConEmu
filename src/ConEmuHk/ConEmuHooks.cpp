@@ -80,9 +80,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "SetHook.h"
 #include "DefTermHk.h"
+#include "DllOptions.h"
 #include "ShellProcessor.h"
 #include "../common/CmdLine.h"
-#include "../common/WConsole.h"
 #include "../common/WObjects.h"
 
 #include "hkCmdExe.h"

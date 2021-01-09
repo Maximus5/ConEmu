@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpConsole.h"
 #include "DllOptions.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/InQueue.h"
 #include "../common/WObjects.h"
 
 /* **************** */

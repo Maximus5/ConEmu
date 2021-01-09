@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Windows.h>
 
 #include "../common/Common.h"
-#include "../common/InQueue.h"
 #include "../common/MFileMapping.h"
 
 #include "DbgHooks.h"
@@ -114,77 +113,6 @@ struct CpConv
 };
 extern struct CpConv gCpConv;
 
-/* ************ Globals for Far ************ */
-extern bool    gbIsFarProcess;
-extern InQueue gInQueue;
-/* ************ Globals for Far ************ */
-
-/* ************ Globals for cmd.exe/clink ************ */
-extern bool     gbIsCmdProcess;
-//extern size_t   gcchLastWriteConsoleMax;
-//extern wchar_t *gpszLastWriteConsole;
-extern int      gnCmdInitialized; // 0 - Not already, 1 - OK, -1 - Fail
-extern bool     gbAllowClinkUsage;
-extern bool     gbClinkInjectRequested;
-extern bool     gbAllowUncPaths;
-/* ************ Globals for cmd.exe/clink ************ */
-
-/* ************ Globals for powershell ************ */
-extern bool gbIsPowerShellProcess;
-extern bool gbPowerShellMonitorProgress;
-extern WORD gnConsolePopupColors;
-extern int  gnPowerShellProgressValue;
-/* ************ Globals for powershell ************ */
-
-/* ************ Globals for Node.JS ************ */
-extern bool gbIsNodeJsProcess;
-/* ************ Globals for Node.JS ************ */
-
-/* ************ Globals for cygwin/msys ************ */
-extern bool gbIsBashProcess;
-extern bool gbIsSshProcess;
-extern bool gbIsLessProcess;
-/* ************ Globals for cygwin/msys ************ */
-
-/* ************ Globals for ViM ************ */
-extern bool gbIsVimProcess;
-extern bool gbIsVimAnsi;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for Plink ************ */
-extern bool gbIsPlinkProcess;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for MinTTY ************ */
-extern bool gbIsMinTtyProcess;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for HIEW32.EXE ************ */
-extern bool gbIsHiewProcess;
-/* ************ Globals for HIEW32.EXE ************ */
-
-/* ************ Globals for DosBox.EXE ************ */
-extern bool gbDosBoxProcess;
-/* ************ Globals for DosBox.EXE ************ */
-
-/* ************ Don't show VirtualAlloc errors ************ */
-extern bool gbSkipVirtualAllocErr;
-/* ************ Don't show VirtualAlloc errors ************ */
-
-/* ************ Globals for "Default terminal ************ */
-extern bool gbPrepareDefaultTerminal;
-extern bool gbIsNetVsHost;
-extern bool gbIsVStudio;
-extern bool gbIsVSDebugger; // msvsmon.exe
-extern bool gbIsVsCode;
-extern int  gnVsHostStartConsole;
-extern bool gbIsGdbHost;
-/* ************ Globals for "Default terminal ************ */
-
-/* ************ Hooking time functions ************ */
-extern DWORD gnTimeEnvVarLastCheck;
-extern wchar_t gszTimeEnvVarSave[32];
-/* ************ Hooking time functions ************ */
 
 void GuiSetProgress(AnsiProgressStatus st, WORD pr, LPCWSTR pszName = nullptr);
 
