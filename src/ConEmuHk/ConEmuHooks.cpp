@@ -614,19 +614,19 @@ bool InitHooksDefTerm()
 		HOOK_ITEM_BY_NAME(WinExec,				KERNEL32),
 		// Need for hook "Run as administrator"
 		HOOK_ITEM_BY_NAME(ShellExecuteExW,		SHELL32),
-		{0}
+		{}
 	};
 	HookItem HooksAllocConsole[] =
 	{
 		// gh-888, gh-55: Allow to use ConEmu as default console in third-party applications
 		HOOK_ITEM_BY_NAME(AllocConsole,			KERNEL32), // Only for "*.vshost.exe"?
-		{0}
+		{}
 	};
 	HookItem HooksCmdLine[] =
 	{
 		// Issue 1125: "Run as administrator" too. Must be last export
 		HOOK_ITEM_BY_ORDN(ShellExecCmdLine,		SHELL32,   265),
-		{0}
+		{}
 	};
 	HookItem HooksVshost[] =
 	{
@@ -634,7 +634,7 @@ bool InitHooksDefTerm()
 		// AllocConsole moved to HooksCommon
 		HOOK_ITEM_BY_NAME(ShowWindow,			USER32),
 		/* ************************ */
-		{0}
+		{}
 	};
 	// Required in VisualStudio and CodeBlocks (gdb) debuggers
 	// Don't restrict to them, other Dev Envs may behave in similar way
@@ -642,7 +642,7 @@ bool InitHooksDefTerm()
 	{
 		HOOK_ITEM_BY_NAME(ResumeThread,			KERNEL32),
 		/* ************************ */
-		{0}
+		{}
 	};
 
 	// Required for hooking in OS

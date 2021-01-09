@@ -98,7 +98,7 @@ void LogFarExecCommand(
 		gFarMode.farVer.dwVerMajor, gFarMode.farVer.dwVerMinor, gFarMode.farVer.dwBuild,
 		gFarMode.farVer.Bis ? L"bis" : L"", gFarMode.farVer.dwBits,
 		gFarMode.bLongConsoleOutput ? L"yes" : L"no");
-	CEStr log_str(
+	const CEStr log_str(
 		L"Far.exe: action=",
 		(aCmd == eShellExecute)
 		? ((asAction && *asAction) ? asAction : L"<shell>")
@@ -111,9 +111,9 @@ void LogFarExecCommand(
 }
 }
 
-ShellWorkOptions operator|=(const ShellWorkOptions e1, const ShellWorkOptions e2)
+ShellWorkOptions operator|=(ShellWorkOptions& e1, const ShellWorkOptions e2)
 {
-	return static_cast<ShellWorkOptions>(static_cast<uint32_t>(e1) | static_cast<uint32_t>(e2));
+	return e1 = static_cast<ShellWorkOptions>(static_cast<uint32_t>(e1) | static_cast<uint32_t>(e2));
 }
 
 ShellWorkOptions operator|(const ShellWorkOptions e1, const ShellWorkOptions e2)

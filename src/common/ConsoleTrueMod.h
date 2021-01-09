@@ -66,9 +66,9 @@ inline ColorFlags operator|(const ColorFlags e1, const ColorFlags e2)
 	return static_cast<ColorFlags>(static_cast<uint64_t>(e1) | static_cast<uint64_t>(e2));
 }
 
-inline ColorFlags operator|=(const ColorFlags e1, const ColorFlags e2)
+inline ColorFlags operator|=(ColorFlags& e1, const ColorFlags e2)
 {
-	return static_cast<ColorFlags>(static_cast<uint64_t>(e1) | static_cast<uint64_t>(e2));
+	return e1 = static_cast<ColorFlags>(static_cast<uint64_t>(e1) | static_cast<uint64_t>(e2));
 }
 
 inline bool operator&(const ColorFlags e1, const ColorFlags e2)

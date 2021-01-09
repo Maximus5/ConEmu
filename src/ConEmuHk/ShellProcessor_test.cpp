@@ -113,6 +113,13 @@ TEST(ShellProcessor, WorkOptions)
 		static_cast<uint32_t>(ShellWorkOptions::ChildGui) | static_cast<uint32_t>(ShellWorkOptions::VsNetHost)
 		| static_cast<uint32_t>(ShellWorkOptions::WasSuspended) | static_cast<uint32_t>(ShellWorkOptions::WasDebug));
 
+	ShellWorkOptions ored = ShellWorkOptions::None;
+	EXPECT_EQ(ored, ShellWorkOptions::None);
+	ored |= ShellWorkOptions::ChildGui;
+	EXPECT_EQ(ored, ShellWorkOptions::ChildGui);
+	ored |= ShellWorkOptions::WasDebug;
+	EXPECT_EQ(ored, static_cast<ShellWorkOptions>(static_cast<uint32_t>(ShellWorkOptions::ChildGui) | static_cast<uint32_t>(ShellWorkOptions::WasDebug)));
+
 	EXPECT_TRUE(options & ShellWorkOptions::WasSuspended);
 	EXPECT_TRUE(options & ShellWorkOptions::WasDebug);
 	EXPECT_TRUE(options & (ShellWorkOptions::WasSuspended | ShellWorkOptions::WasDebug));

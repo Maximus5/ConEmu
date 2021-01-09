@@ -83,7 +83,7 @@ enum class ShellWorkOptions : uint32_t
 	HiddenConsoleDetachNeed = 0x00020000,
 };
 
-ShellWorkOptions operator|=(ShellWorkOptions e1, ShellWorkOptions e2);
+ShellWorkOptions operator|=(ShellWorkOptions& e1, ShellWorkOptions e2);
 ShellWorkOptions operator|(ShellWorkOptions e1, ShellWorkOptions e2);
 bool operator&(ShellWorkOptions e1, ShellWorkOptions e2);
 
