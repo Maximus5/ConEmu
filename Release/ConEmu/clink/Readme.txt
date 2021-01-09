@@ -1,7 +1,7 @@
 ﻿You may try "Clink" - bash style autocomplete
 Download and unpack files to this folder
 
-http://mridgers.github.io/clink/
+https://chrisant996.github.io/clink/
 
 Note! Clink distribution has subfolders.
 Unpack all the files (without subfolder) into %ConEmuBaseDir%\clink.
