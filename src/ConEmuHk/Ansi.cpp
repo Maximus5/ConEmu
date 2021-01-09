@@ -2083,7 +2083,7 @@ BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply) const
 	return TRUE;
 }
 
-BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const
+BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned linesCount) const
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -2095,9 +2095,9 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const
 	// Apply default color before scrolling!
 	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
 
-	if (static_cast<int>(LinesCount) <= 0)
+	if (static_cast<int>(linesCount) <= 0)
 	{
-		_ASSERTEX(static_cast<int>(LinesCount) >= 0);
+		_ASSERTEX(static_cast<int>(linesCount) >= 0);
 		return FALSE;
 	}
 
@@ -2112,11 +2112,11 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const
 		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = std::max<int>(gDisplayOpt.ScrollEnd, 0);
 
-		if (static_cast<int>(LinesCount) <= (BottomLine - TopLine))
+		if (static_cast<int>(linesCount) <= (BottomLine - TopLine))
 		{
 			ExtScrollScreenParm scroll = {
 				sizeof(scroll), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-				static_cast<int>(LinesCount), {}, L' ',
+				static_cast<int>(linesCount), {}, L' ',
 				// region to be scrolled (that is not a clipping region)
 				{0, TopLine, csbi.dwSize.X - 1, BottomLine}};
 			lbRc |= ExtScrollScreen(&scroll);
@@ -2125,7 +2125,7 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const
 		{
 			ExtFillOutputParm fill = {
 				sizeof(fill), efof_Attribute|efof_Character, hConsoleOutput,
-				{}, L' ', {0, MakeShort(TopLine)}, csbi.dwSize.X * LinesCount};
+				{}, L' ', {0, MakeShort(TopLine)}, csbi.dwSize.X * linesCount};
 			lbRc |= ExtFillOutput(&fill);
 		}
 	}
@@ -2139,14 +2139,14 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount) const
 
 		ExtScrollScreenParm scroll = {
 			sizeof(scroll), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-			static_cast<int>(LinesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+			static_cast<int>(linesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
 		lbRc |= ExtScrollScreen(&scroll);
 	}
 
 	return lbRc;
 }
 
-BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
+BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned linesCount)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -2166,7 +2166,7 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
 		// ScrollStart & ScrollEnd are 0-based absolute line indexes
 		// relative to VISIBLE area, these are not absolute buffer coords
-		if (((csbi.dwCursorPosition.Y + static_cast<int>(LinesCount)) <= gDisplayOpt.ScrollStart)
+		if (((csbi.dwCursorPosition.Y + static_cast<int>(linesCount)) <= gDisplayOpt.ScrollStart)
 			|| (csbi.dwCursorPosition.Y > gDisplayOpt.ScrollEnd))
 		{
 			return TRUE; // Nothing to scroll
@@ -2174,7 +2174,7 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = gDisplayOpt.ScrollEnd;
 
-		const int negateLinesCount = -static_cast<int>(LinesCount);
+		const int negateLinesCount = -static_cast<int>(linesCount);
 		ExtScrollScreenParm scrl = {
 			sizeof(scrl), essf_Current | essf_Commit | essf_Region, hConsoleOutput,
 			negateLinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X - 1, BottomLine} };
@@ -2202,7 +2202,7 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 			return FALSE;
 		}
 
-		const int negateLinesCount = -static_cast<int>(LinesCount);
+		const int negateLinesCount = -static_cast<int>(linesCount);
 		ExtScrollScreenParm scrl = {
 			sizeof(scrl), essf_Current | essf_Commit | essf_Region, hConsoleOutput,
 			negateLinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X - 1, BottomLine} };
