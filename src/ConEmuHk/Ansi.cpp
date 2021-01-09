@@ -487,12 +487,16 @@ void CEAnsi::AnsiLogEnterPressed()
 bool CEAnsi::GetFeatures(ConEmu::ConsoleFlags& features)
 {
 	static std::chrono::steady_clock::time_point nLastCheck{};
-	struct FeaturesCache
+	union FeaturesCache
 	{
-		ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
-		bool result = false;
+		uint64_t raw = 0;
+		struct
+		{
+			ConEmu::ConsoleFlags features;
+			bool result;
+		};
 	};
-	static std::atomic<FeaturesCache> featuresCache{};
+	static std::atomic_uint64_t featuresCache{};
 
 	if ((std::chrono::steady_clock::now() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT)
 	{
@@ -502,16 +506,20 @@ bool CEAnsi::GetFeatures(ConEmu::ConsoleFlags& features)
 		{
 			// bAnsiAllowed = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
 			// bSuppressBells = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::SuppressBells));
-			featuresCache.store(FeaturesCache{ pMap->Flags, true });
+			FeaturesCache rc{};
+			rc.features = pMap->Flags;
+			rc.result = true;
+			featuresCache.store(rc.raw);
 		}
 		else
 		{
-			featuresCache.store(FeaturesCache{});
+			featuresCache.store(0);
 		}
 		nLastCheck = std::chrono::steady_clock::now();
 	}
 
-	const auto rc = featuresCache.load();
+	FeaturesCache rc{};
+	rc.raw = featuresCache.load();
 	features = rc.features;
 	return rc.result;
 }
