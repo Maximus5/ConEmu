@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "HandleKeeper.h"
+
+#include "MMap.h"
 #include "WErrGuard.h"
 
 #ifdef _DEBUG
@@ -38,18 +40,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace HandleKeeper
 {
-	static MMap<HANDLE,HandleInformation>* gp_Handles = NULL;
-	static bool gb_IsConnector = false;
+	static MMap<HANDLE,HandleInformation>* gp_Handles = nullptr;
+	static bool gbIsConnector = false;
 
 	static bool InitHandleStorage();
-	static void FillHandleInfo(HandleInformation& Info, DWORD access);
-	static bool CheckConName(HandleSource source, DWORD access, const VOID* as_name, HandleInformation& Info);
+	static void FillHandleInfo(HandleInformation& info, DWORD access);
+	static bool CheckConName(HandleSource source, DWORD access, const VOID* as_name, HandleInformation& info);
 };
 
 // MT-Safe, lock-free
 static bool HandleKeeper::InitHandleStorage()
 {
-	if (gp_Handles == NULL)
+	if (gp_Handles == nullptr)
 	{
 		MMap<HANDLE,HandleInformation>* pHandles = (MMap<HANDLE,HandleInformation>*)malloc(sizeof(*pHandles));
 		if (pHandles)
@@ -61,8 +63,8 @@ static bool HandleKeeper::InitHandleStorage()
 			}
 			else
 			{
-				MMap<HANDLE,HandleInformation>* p = (MMap<HANDLE,HandleInformation>*)InterlockedCompareExchangePointer((LPVOID*)&gp_Handles, pHandles, NULL);
-				_ASSERTE(p == NULL || p != pHandles);
+				MMap<HANDLE,HandleInformation>* p = (MMap<HANDLE,HandleInformation>*)InterlockedCompareExchangePointer((LPVOID*)&gp_Handles, pHandles, nullptr);
+				_ASSERTE(p == nullptr || p != pHandles);
 				if (pHandles != gp_Handles)
 				{
 					pHandles->Release();
@@ -72,12 +74,12 @@ static bool HandleKeeper::InitHandleStorage()
 		}
 	}
 
-	return (gp_Handles != NULL);
+	return (gp_Handles != nullptr);
 }
 
 void HandleKeeper::ReleaseHandleStorage()
 {
-	MMap<HANDLE,HandleInformation>* p = (MMap<HANDLE,HandleInformation>*)InterlockedExchangePointer((LPVOID*)&gp_Handles, NULL);
+	MMap<HANDLE,HandleInformation>* p = (MMap<HANDLE,HandleInformation>*)InterlockedExchangePointer((LPVOID*)&gp_Handles, nullptr);
 	if (p)
 	{
 		p->Release();
@@ -85,114 +87,117 @@ void HandleKeeper::ReleaseHandleStorage()
 	}
 }
 
-void HandleKeeper::SetConnectorMode(bool isConnector)
+void HandleKeeper::SetConnectorMode(const bool isConnector)
 {
-	gb_IsConnector = isConnector;
+	gbIsConnector = isConnector;
 }
 
 // Check if handle has console capabilities
-static void HandleKeeper::FillHandleInfo(HandleInformation& Info, DWORD access)
+static void HandleKeeper::FillHandleInfo(HandleInformation& info, const DWORD access)
 {
-	// We can't set is_input/is_output/is_error by Info.source (hs_StdXXX)
+	// We can't set is_input/is_output/is_error by info.source (hs_StdXXX)
 	// because STD_XXX handles may be pipes or files
 
 	// Is handle capable to full set of console API?
 	BOOL b1, b2; DWORD m; CONSOLE_SCREEN_BUFFER_INFO csbi = {}; DEBUGTEST(DWORD err;)
-	b1 = GetConsoleMode(Info.h, &m);
+	b1 = GetConsoleMode(info.h, &m);
 	if (!b1)
 	{
 		#ifdef _DEBUG
-		Info.errorPlace = 1;
-		Info.errorCode = GetLastError();
+		info.errorPlace = 1;
+		info.errorCode = GetLastError();
 		#endif
 		// In connector mode all handles are expected to be AnsiCapable!
-		_ASSERTE(!gb_IsConnector);
+		_ASSERTE(!gbIsConnector);
 	}
 	else
 	{
-		b2 = GetConsoleScreenBufferInfo(Info.h, &csbi);
+		b2 = GetConsoleScreenBufferInfo(info.h, &csbi);
 		DEBUGTEST(err = GetLastError());
 		if (b2)
 		{
-			if (!Info.is_output && !Info.is_error)
+			if (!info.is_output && !info.is_error)
 			{
-				if (Info.source == hs_StdErr)
-					Info.is_error = true;
+				if (info.source == HandleSource::StdErr)
+					info.is_error = true;
 				else
-					Info.is_output = true;
+					info.is_output = true;
 			}
 
-			_ASSERTE(Info.is_input==false);
-			Info.is_input = false;
+			_ASSERTE(info.is_input==false);
+			info.is_input = false;
 
-			Info.is_ansi = true;
+			info.is_ansi = true;
 
 			#ifdef _DEBUG
-			Info.csbi = csbi;
+			info.csbi = csbi;
 			#endif
 		}
 		else
 		{
 			#ifdef _DEBUG
-			Info.errorPlace = 2;
-			Info.errorCode = GetLastError();
+			info.errorPlace = 2;
+			info.errorCode = GetLastError();
 			#endif
-			if (Info.source == hs_StdIn && !Info.is_input)
-				Info.is_input = true;
+			if (info.source == HandleSource::StdIn && !info.is_input)
+				info.is_input = true;
 			// In connector mode all handles are expected to be AnsiCapable!
-			_ASSERTE(!gb_IsConnector);
-			_ASSERTE(Info.is_ansi == false);
-			//_ASSERTE(Info.is_output == false && Info.is_error == false); -- STD_OUTPUT_HANDLE can be "virtual"
+			_ASSERTE(!gbIsConnector);
+			_ASSERTE(info.is_ansi == false);
+			//_ASSERTE(info.is_output == false && info.is_error == false); -- STD_OUTPUT_HANDLE can be "virtual"
 		}
 	}
 
 	// Input/Output handles must have either GENERIC_READ or GENERIC_WRITE rights
-	if ((Info.source > hs_StdErr) && !(access & (GENERIC_WRITE|GENERIC_READ)))
+	if ((info.source > HandleSource::StdErr) && !(access & (GENERIC_WRITE|GENERIC_READ)))
 	{
-		Info.is_invalid = true;
+		info.is_invalid = true;
 	}
 	// Generic handle "CON" opened for output (redirection to console)
-	else if (Info.is_con && (access & GENERIC_WRITE))
+	else if (info.is_con && (access & GENERIC_WRITE))
 	{
-		Info.is_output = true;
+		info.is_output = true;
 	}
 }
 
 // Check if as_name is "CON", "CONIN$" or "CONOUT$"
-static bool HandleKeeper::CheckConName(HandleSource source, DWORD access, const VOID* as_name, HandleInformation& Info)
+static bool HandleKeeper::CheckConName(const HandleSource source, const DWORD access, const VOID* as_name, HandleInformation& info)
 {
 	// Just a simple check for "string" validity
-	if (as_name && (((DWORD_PTR)as_name) & ~0xFFFF))
+	if (as_name && (reinterpret_cast<DWORD_PTR>(as_name) & ~0xFFFF))
 	{
-		if (source == hs_CreateFileW)
+		if (source == HandleSource::CreateFileW)
 		{
 			if (access & (GENERIC_READ|GENERIC_WRITE))
 			{
-				Info.is_con = (lstrcmpiW((LPCWSTR)as_name, L"CON") == 0);
-				Info.is_input = (lstrcmpiW((LPCWSTR)as_name, L"CONIN$") == 0);
-				Info.is_output = (lstrcmpiW((LPCWSTR)as_name, L"CONOUT$") == 0);
+				info.is_con = (lstrcmpiW(static_cast<LPCWSTR>(as_name), L"CON") == 0);
+				info.is_input = (lstrcmpiW(static_cast<LPCWSTR>(as_name), L"CONIN$") == 0);
+				info.is_output = (lstrcmpiW(static_cast<LPCWSTR>(as_name), L"CONOUT$") == 0);
 			}
 
 			#ifdef _DEBUG
-			Info.file_name_w = lstrdup((LPCWSTR)as_name); // debugging and informational purposes only
+			// debugging and informational purposes only, released via file_name_ptr
+			info.file_name_w = lstrdup(static_cast<LPCWSTR>(as_name));
 			#endif
 
-			return (Info.is_con || Info.is_input || Info.is_output);
+			return (info.is_con || info.is_input || info.is_output);
 		}
-		else if (source == hs_CreateFileA)
+
+		if (source == HandleSource::CreateFileA)
 		{
 			if (access & (GENERIC_READ|GENERIC_WRITE))
 			{
-				Info.is_con = (lstrcmpiA((LPCSTR)as_name, "CON") == 0);
-				Info.is_input = (lstrcmpiA((LPCSTR)as_name, "CONIN$") == 0);
-				Info.is_output = (lstrcmpiA((LPCSTR)as_name, "CONOUT$") == 0);
+				info.is_con = (lstrcmpiA(static_cast<LPCSTR>(as_name), "CON") == 0);
+				info.is_input = (lstrcmpiA(static_cast<LPCSTR>(as_name), "CONIN$") == 0);
+				info.is_output = (lstrcmpiA(static_cast<LPCSTR>(as_name), "CONOUT$") == 0);
 			}
 
 			#ifdef _DEBUG
-			Info.file_name_a = lstrdup((LPCSTR)as_name); // debugging and informational purposes only
+			// debugging and informational purposes only, released via file_name_ptr
+			info.file_name_a = lstrdup(static_cast<LPCSTR>(as_name));
 			#endif
 
-			return (Info.is_con || Info.is_input || Info.is_output);
+			return (info.is_con || info.is_input || info.is_output);
 		}
 	}
 
@@ -201,9 +206,9 @@ static bool HandleKeeper::CheckConName(HandleSource source, DWORD access, const 
 
 bool HandleKeeper::PreCreateHandle(HandleSource source, DWORD& dwDesiredAccess, DWORD& dwShareMode, const void** as_name)
 {
-	if ((source != hs_CreateFileA) && (source != hs_CreateFileW))
+	if ((source != HandleSource::CreateFileA) && (source != HandleSource::CreateFileW))
 	{
-		_ASSERTE((source == hs_CreateFileA) || (source == hs_CreateFileW));
+		_ASSERTE((source == HandleSource::CreateFileA) || (source == HandleSource::CreateFileW));
 		return false;
 	}
 	if (!as_name || !*as_name)
@@ -212,16 +217,16 @@ bool HandleKeeper::PreCreateHandle(HandleSource source, DWORD& dwDesiredAccess, 
 		return false;
 	}
 
-	HandleInformation Info = {};
+	HandleInformation info = {};
 
 	// Check if as_name is "CON", "CONIN$" or "CONOUT$"
-	if (CheckConName(source, dwDesiredAccess, *as_name, Info))
+	if (CheckConName(source, dwDesiredAccess, *as_name, info))
 	{
 		// If handle is opened with limited right, console API would be very limited
 		// and we even can't query current console window properties (cursor pos, buffer size, etc.)
 		// This hack may be removed if we rewrite all console API functions completely
-		if (Info.is_output
-			|| (Info.is_con && (dwDesiredAccess & GENERIC_WRITE))
+		if (info.is_output
+			|| (info.is_con && (dwDesiredAccess & GENERIC_WRITE))
 			)
 		{
 			if ((dwDesiredAccess & (GENERIC_READ|GENERIC_WRITE)) != (GENERIC_READ|GENERIC_WRITE))
@@ -231,26 +236,26 @@ bool HandleKeeper::PreCreateHandle(HandleSource source, DWORD& dwDesiredAccess, 
 				dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
 
 			// We have to change opening name to 'CONOUT$' or CreateFile will fail
-			if (Info.is_con)
+			if (info.is_con)
 			{
 				static char szConOut[] = "CONOUT$";
 				static wchar_t wszConOut[] = L"CONOUT$";
-				if (source == hs_CreateFileA)
+				if (source == HandleSource::CreateFileA)
 					*as_name = szConOut;
-				else if (source == hs_CreateFileW)
+				else if (source == HandleSource::CreateFileW)
 					*as_name = wszConOut;
 			}
 		}
 	}
 
 	#ifdef _DEBUG
-	SafeFree(Info.file_name_ptr);
+	SafeFree(info.file_name_ptr);
 	#endif
 
 	return false;
 }
 
-bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, const void* as_name, HandleInformation* pInfo /*= NULL*/)
+bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, const void* as_name, HandleInformation* pInfo /*= nullptr*/)
 {
 	if (!h || (h == INVALID_HANDLE_VALUE))
 		return false;
@@ -258,28 +263,29 @@ bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, 
 	if (!InitHandleStorage())
 		return false;
 
-	HandleInformation Info = {h};
-	Info.source = source;
+	HandleInformation info = {};
+	info.h = h;
+	info.source = source;
 
 	// Check if as_name is "CON", "CONIN$" or "CONOUT$"
-	if ((((source == hs_CreateFileA) || (source == hs_CreateFileW))
-			&& CheckConName(source, access, as_name, Info))
-		|| (source <= hs_CreateConsoleScreenBuffer)
+	if ((((source == HandleSource::CreateFileA) || (source == HandleSource::CreateFileW))
+			&& CheckConName(source, access, as_name, info))
+		|| (source <= HandleSource::CreateConsoleScreenBuffer)
 		)
 	{
 		// Check if handle has console capabilities
-		FillHandleInfo(Info, access);
+		FillHandleInfo(info, access);
 	}
 
 	if (pInfo)
-		*pInfo = Info;
+		*pInfo = info;
 
-	gp_Handles->Set(h, Info);
+	gp_Handles->Set(h, info);
 
 	return true;
 }
 
-bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& Info, bool AnsiOutExpected)
+bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& info, const bool ansiOutExpected)
 {
 	CLastErrorGuard errGuard;
 
@@ -289,36 +295,36 @@ bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& Info, bool AnsiO
 
 	if (gp_Handles)
 	{
-		bFound = gp_Handles->Get(h, &Info);
+		bFound = gp_Handles->Get(h, &info);
 	}
 
-	if (bFound && AnsiOutExpected)
+	if (bFound && ansiOutExpected)
 	{
 		// Force to refresh handle information
-		if (gb_IsConnector && (!Info.is_ansi || !(Info.is_output || Info.is_error)))
+		if (gbIsConnector && (!info.is_ansi || !(info.is_output || info.is_error)))
 		{
 			// In connector mode all handles are expected to be AnsiCapable!
-			_ASSERTE((Info.is_ansi && (Info.is_output || Info.is_error)) || !gb_IsConnector);
+			_ASSERTE((info.is_ansi && (info.is_output || info.is_error)) || !gbIsConnector);
 			bFound = false;
 		}
 	}
 
 	if (!bFound)
-		bFound = AllocHandleInfo(h, hs_Unknown, 0, NULL, &Info);
+		bFound = AllocHandleInfo(h, HandleSource::Unknown, 0, nullptr, &info);
 
 	return bFound;
 }
 
 void HandleKeeper::CloseHandleInfo(HANDLE h)
 {
-	HandleInformation Info = {};
+	HandleInformation info = {};
 	if (gp_Handles)
 	{
-		if (gp_Handles->Get(h, &Info, true))
+		if (gp_Handles->Get(h, &info, true))
 		{
 			#ifdef _DEBUG
-			if (Info.file_name_ptr)
-				free(Info.file_name_ptr)
+			if (info.file_name_ptr)
+				free(info.file_name_ptr)
 			#endif
 				;
 		}
@@ -327,26 +333,26 @@ void HandleKeeper::CloseHandleInfo(HANDLE h)
 
 bool HandleKeeper::IsAnsiCapable(HANDLE hFile, bool *pbIsConOut)
 {
-	HandleInformation Info = {};
-	if (!QueryHandleInfo(hFile, Info, true))
+	HandleInformation info = {};
+	if (!QueryHandleInfo(hFile, info, true))
 		return false;
 	if (pbIsConOut)
-		*pbIsConOut = (Info.is_output || Info.is_error);
-	return (Info.is_ansi);
+		*pbIsConOut = (info.is_output || info.is_error);
+	return (info.is_ansi);
 }
 
 bool HandleKeeper::IsOutputHandle(HANDLE hFile)
 {
-	HandleInformation Info = {};
-	if (!QueryHandleInfo(hFile, Info, true))
+	HandleInformation info = {};
+	if (!QueryHandleInfo(hFile, info, true))
 		return false;
-	return (Info.is_output || Info.is_error);
+	return (info.is_output || info.is_error);
 }
 
 bool HandleKeeper::IsInputHandle(HANDLE hFile)
 {
-	HandleInformation Info = {};
-	if (!QueryHandleInfo(hFile, Info, false))
+	HandleInformation info = {};
+	if (!QueryHandleInfo(hFile, info, false))
 		return false;
-	return (Info.is_input);
+	return (info.is_input);
 }

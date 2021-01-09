@@ -688,7 +688,7 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(
 		h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
 
 	if (h && (h != INVALID_HANDLE_VALUE))
-		HandleKeeper::AllocHandleInfo(h, hs_CreateConsoleScreenBuffer);
+		HandleKeeper::AllocHandleInfo(h, HandleSource::CreateConsoleScreenBuffer);
 
 #ifdef SHOWCREATEBUFFERINFO
 	msprintf(szDebugInfo+lstrlen(szDebugInfo), 32, L"=0x%X", (DWORD)(DWORD_PTR)h);

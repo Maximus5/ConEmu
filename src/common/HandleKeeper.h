@@ -29,17 +29,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/Common.h"
-#include "../common/MMap.h"
 
-enum HandleSource
+enum class HandleSource : unsigned
 {
-	hs_Unknown = 0,
-	hs_StdIn = 1,
-	hs_StdOut = 2,
-	hs_StdErr = 3,
-	hs_CreateConsoleScreenBuffer = 4,
-	hs_CreateFileA = 5,
-	hs_CreateFileW = 6,
+	Unknown = 0,
+	StdIn = 1,
+	StdOut = 2,
+	StdErr = 3,
+	CreateConsoleScreenBuffer = 4,
+	CreateFileA = 5,
+	CreateFileW = 6,
 };
 
 struct HandleInformation
@@ -78,14 +77,14 @@ struct HandleInformation
 namespace HandleKeeper
 {
 	bool PreCreateHandle(HandleSource source, DWORD& dwDesiredAccess, DWORD& dwShareMode, const void** as_name);
-	bool AllocHandleInfo(HANDLE h, HandleSource source, DWORD access = 0, const void* as_name = NULL, HandleInformation* pInfo = NULL);
-	bool QueryHandleInfo(HANDLE h, HandleInformation& Info, bool AnsiOutExpected);
+	bool AllocHandleInfo(HANDLE h, HandleSource source, DWORD access = 0, const void* as_name = nullptr, HandleInformation* pInfo = nullptr);
+	bool QueryHandleInfo(HANDLE h, HandleInformation& info, bool ansiOutExpected);
 	void CloseHandleInfo(HANDLE h);
 	void SetConnectorMode(bool isConnector);
 
 	void ReleaseHandleStorage();
 
-	bool IsAnsiCapable(HANDLE hFile, bool *pbIsConOut = NULL);
+	bool IsAnsiCapable(HANDLE hFile, bool *pbIsConOut = nullptr);
 	bool IsOutputHandle(HANDLE hFile);
 	bool IsInputHandle(HANDLE hFile);
 };

@@ -68,14 +68,14 @@ HANDLE WINAPI OnCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwSh
 	ORIGINAL_KRNL(CreateFileA);
 	HANDLE h;
 
-	HandleKeeper::PreCreateHandle(hs_CreateFileA, dwDesiredAccess, dwShareMode, (const void**)&lpFileName);
+	HandleKeeper::PreCreateHandle(HandleSource::CreateFileA, dwDesiredAccess, dwShareMode, (const void**)&lpFileName);
 
 	h = F(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD nLastErr = GetLastError();
 
 	DebugString(L"OnCreateFileA executed\n");
 
-	HandleKeeper::AllocHandleInfo(h, hs_CreateFileA, dwDesiredAccess, lpFileName);
+	HandleKeeper::AllocHandleInfo(h, HandleSource::CreateFileA, dwDesiredAccess, lpFileName);
 
 	SetLastError(nLastErr);
 	return h;
@@ -87,14 +87,14 @@ HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 	ORIGINAL_KRNL(CreateFileW);
 	HANDLE h;
 
-	HandleKeeper::PreCreateHandle(hs_CreateFileW, dwDesiredAccess, dwShareMode, (const void**)&lpFileName);
+	HandleKeeper::PreCreateHandle(HandleSource::CreateFileW, dwDesiredAccess, dwShareMode, (const void**)&lpFileName);
 
 	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD nLastErr = GetLastError();
 
 	DebugString(L"OnCreateFileW executed\n");
 
-	HandleKeeper::AllocHandleInfo(h, hs_CreateFileW, dwDesiredAccess, lpFileName);
+	HandleKeeper::AllocHandleInfo(h, HandleSource::CreateFileW, dwDesiredAccess, lpFileName);
 
 	SetLastError(nLastErr);
 	return h;
