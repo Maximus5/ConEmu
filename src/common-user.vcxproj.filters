@@ -39,6 +39,9 @@
     <ClInclude Include="common\DefTermBase.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\DefTermChildMap.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\Dump.h">
       <Filter>Headers</Filter>
     </ClInclude>

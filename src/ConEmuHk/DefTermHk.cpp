@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DllOptions.h"
 #include "SetHook.h"
+#include "../common/DefTermChildMap.h"
 #include "../common/MWnd.h"
 #include "../ConEmu/version.h"
 
@@ -490,43 +491,12 @@ void CDefTermHk::CreateChildMapping(const DWORD childPid, const MHandle& childHa
 	if (!gpDefTerm)
 		return;
 
-	auto data = std::make_unique<DefTermChildData>();
-
-	data->defTermMark.InitName(CEDEFAULTTERMHOOK, childPid);
-	if (data->defTermMark.Open(true))
-	{
-		data->defTermMark.Set();
-	}
-
-	data->hProcess = childHandle.Duplicate(SYNCHRONIZE);
-
-	if (conemuInsidePid)
-	{
-		data->insideMapping.InitName(CEINSIDEMAPNAMEP, childPid);
-		if (data->insideMapping.Create())
-		{
-			CONEMU_INSIDE_MAPPING info{};
-			info.cbSize = sizeof(info);
-			info.nProtocolVersion = CESERVER_REQ_VER;
-			info.nGuiPID = conemuInsidePid;
-			data->insideMapping.SetFrom(&info);
-		}
-	}
-
 	MSectionLockSimple cs; cs.Lock(&gpDefTerm->childDataLock_);
 
-	for (auto iter = gpDefTerm->childData_.begin(); iter != gpDefTerm->childData_.end();)
-	{
-		const bool terminated = iter->second->hProcess.HasHandle()
-			? (WaitForSingleObject(iter->second->hProcess.GetHandle(), 0) == WAIT_OBJECT_0)
-			: true; // if we don't have a handle - let's clean the record on next invocation
-		if (terminated)
-			iter = gpDefTerm->childData_.erase(iter);
-		else
-			++iter;
-	}
+	if (!gpDefTerm->childData_)
+		gpDefTerm->childData_ = std::make_shared<CDefTermChildMap>();
 
-	gpDefTerm->childData_[childPid] = std::move(data);
+	gpDefTerm->childData_->CreateChildMapping(childPid, childHandle, conemuInsidePid);
 }
 
 /// @brief Try to find appropriate mapping with DefTerm options (Inside mode)

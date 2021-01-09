@@ -244,6 +244,7 @@
     <ClInclude Include="common\ConsoleTrueMod.h" />
     <ClInclude Include="common\DbgHlpGcc.h" />
     <ClInclude Include="common\DefTermBase.h" />
+    <ClInclude Include="common\DefTermChildMap.h" />
     <ClInclude Include="common\Dump.h" />
     <ClInclude Include="common\EmergencyShow.h" />
     <ClInclude Include="common\FarVersion.h" />

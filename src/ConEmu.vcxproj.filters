@@ -537,6 +537,9 @@
     <ClInclude Include="common\DefTermBase.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="common\DefTermChildMap.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\Dump.h">
       <Filter>Common</Filter>
     </ClInclude>

@@ -44,6 +44,8 @@ class CDefTermHk;
 
 extern CDefTermHk* gpDefTerm;
 
+class CDefTermChildMap;
+
 class CDefTermHk final : public CDefTermBase
 {
 public:
@@ -118,14 +120,6 @@ private:
 	std::chrono::milliseconds insideMapCheckDelay_{ 1000 };
 	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo_{};
 
-	struct DefTermChildData
-	{
-		MEvent defTermMark; // CEDEFAULTTERMHOOK
-		MFileMapping<CONEMU_INSIDE_MAPPING> insideMapping; // CEINSIDEMAPNAMEP
-		MHandle hProcess; // handle with SYNCHRONIZE access right
-		DWORD pid; // started child process id (informational)
-	};
-
 	MSectionSimple childDataLock_{ true };
-	std::unordered_map<DWORD, std::unique_ptr<DefTermChildData>> childData_;
+	std::shared_ptr<CDefTermChildMap> childData_;
 };
