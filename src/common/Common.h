@@ -701,24 +701,33 @@ const ConEmuModifiers
 
 
 //#pragma pack(push, 1)
-#include <pshpack1.h>
+#include <pshpack1.h>  // NOLINT(clang-diagnostic-pragma-pack)
 
 struct HWND2
 {
 	DWORD u;
 	operator HWND() const
 	{
-		return (HWND)(DWORD_PTR)u; //-V204
-	};
+		return reinterpret_cast<HWND>(static_cast<DWORD_PTR>(u)); //-V204
+	}
 	operator DWORD() const
 	{
-		return (DWORD)u;
-	};
+		return u;
+	}
+	DWORD GetPortableHandle() const
+	{
+		return u;
+	}
+	HWND GetHandle() const
+	{
+		return reinterpret_cast<HWND>(static_cast<DWORD_PTR>(u));
+	}
 	struct HWND2& operator=(HWND h)
 	{
-		u = (DWORD)(DWORD_PTR)h; //-V205
+		u = static_cast<DWORD>(reinterpret_cast<DWORD_PTR>(h)); //-V205
+		_ASSERTE(GetHandle() == h);
 		return *this;
-	};
+	}
 };
 
 // Для унификации x86/x64. Хранить здесь реальный HKEY нельзя.
@@ -2522,7 +2531,7 @@ struct CESERVER_REQ
 
 
 //#pragma pack(pop)
-#include <poppack.h>
+#include <poppack.h>  // NOLINT(clang-diagnostic-pragma-pack)
 
 
 
