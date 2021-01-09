@@ -64,6 +64,7 @@ bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsSshAgentHelper(LPCWSTR pszProcessName);
 bool IsVsNetHostExe(LPCWSTR processName);
 bool IsVsDebugConsoleExe(LPCWSTR processName);
+bool IsVsDebugger(LPCWSTR processName);
 bool IsGDB(LPCWSTR processName);
 
 /// <summary>

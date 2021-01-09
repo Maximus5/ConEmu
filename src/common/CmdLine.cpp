@@ -1160,6 +1160,11 @@ bool IsVsDebugConsoleExe(LPCWSTR processName)
 	return CompareProcessNames(L"VsDebugConsole.exe", processName);
 }
 
+bool IsVsDebugger(LPCWSTR processName)
+{
+	return CompareProcessNames(L"msvsmon.exe", processName);
+}
+
 bool IsGDB(LPCWSTR processName)
 {
 	return CompareProcessNames(L"gdb.exe", processName);

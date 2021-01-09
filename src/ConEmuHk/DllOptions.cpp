@@ -130,12 +130,13 @@ wchar_t gszTimeEnvVarSave[32] = L"";
 
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
-bool gbIsNetVsHost = false;
-bool gbIsVStudio = false;
-bool gbIsVSDebug = false; // msvsmon.exe
-bool gbIsVsCode = false;
+bool gbIsNetVsHost = false; // *.vshost.exe
+bool gbIsVStudio = false; // devenv.exe or WDExpress.exe
+bool gbIsVSDebugger = false; // msvsmon.exe
+bool gbIsVSDebugConsole = false; // VsDebugConsole.exe
+bool gbIsVsCode = false; // code.exe
 int  gnVsHostStartConsole = 0;
-bool gbIsGdbHost = false;
+bool gbIsGdbHost = false; // gdb.exe
 CDefTermHk* gpDefTerm = nullptr;
 /* ************ Globals for "Default terminal ************ */
 

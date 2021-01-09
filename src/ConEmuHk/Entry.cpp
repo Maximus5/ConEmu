@@ -1263,9 +1263,13 @@ void InitExeName()
 	{
 		gbIsVStudio = true;
 	}
-	else if ((lstrcmpi(gsExeName, L"msvsmon.exe") == 0))
+	else if (IsVsDebugger(gsExeName))
 	{
-		gbIsVSDebug = true;
+		gbIsVSDebugger = true;
+	}
+	else if (IsVsDebugConsoleExe(gsExeName))
+	{
+		gbIsVSDebugConsole = true;
 	}
 	else if (lstrcmpi(gsExeName, L"code.exe") == 0)
 	{

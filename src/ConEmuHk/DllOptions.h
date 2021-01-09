@@ -135,12 +135,13 @@ extern wchar_t gszTimeEnvVarSave[32];
 
 /* ************ Globals for "Default terminal ************ */
 extern bool gbPrepareDefaultTerminal;
-extern bool gbIsNetVsHost;
-extern bool gbIsVStudio;
-extern bool gbIsVSDebug; // msvsmon.exe
-extern bool gbIsVsCode;
+extern bool gbIsNetVsHost; // *.vshost.exe
+extern bool gbIsVStudio; // devenv.exe or WDExpress.exe
+extern bool gbIsVSDebugger; // msvsmon.exe
+extern bool gbIsVSDebugConsole; // VsDebugConsole.exe
+extern bool gbIsVsCode; // code.exe
 extern int  gnVsHostStartConsole;
-extern bool gbIsGdbHost;
+extern bool gbIsGdbHost; // gdb.exe
 extern CDefTermHk* gpDefTerm;
 /* ************ Globals for "Default terminal ************ */
 
