@@ -65,7 +65,7 @@ bool CDefTermHk::IsDefTermEnabled()
 {
 	if (!gbPrepareDefaultTerminal || !gpDefTerm)
 		return false;
-	const bool bDontCheckName = (gbIsNetVsHost || gbIsVSDebug)
+	const bool bDontCheckName = (gbIsNetVsHost || gbIsVSDebugConsole || gbIsVSDebugger)
 		// Especially for Code, which starts detached "cmd /c start /wait"
 		|| ((ghConWnd == nullptr) && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
 		;
@@ -320,15 +320,14 @@ bool CDefTermHk::LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping)
 	if (!gbPrepareDefaultTerminal || !gpDefTerm)
 		return false;
 
+	const auto insideSettings = gpDefTerm->LoadInsideSettings();
 	const auto& opt = gpDefTerm->m_Opt;
 
 	srvMapping.cbSize = sizeof(srvMapping);
 
-	// #DefTerm: nGuiPID & hConEmuRoot should be in m_SrvMapping already (LoadInsideSettings)
-
 	srvMapping.nProtocolVersion = CESERVER_REQ_VER;
-	srvMapping.nGuiPID = 0; //nGuiPID;
-	srvMapping.hConEmuRoot = nullptr; //ghConEmuWnd;
+	srvMapping.nGuiPID = gpDefTerm->insideConEmuPid_.load();
+	srvMapping.hConEmuRoot = gpDefTerm->insideConEmuWnd_.load();
 	srvMapping.hConEmuWndDc = nullptr;
 	srvMapping.hConEmuWndBack = nullptr;
 	srvMapping.Flags = opt.nConsoleFlags;
@@ -365,6 +364,8 @@ CDefTermHk::CDefTermHk()
 
 	mp_FileLog = nullptr;
 
+	insideLock_ = new MSectionSimple(true);
+
 	mn_LastCheck = 0;
 	ReloadSettings();
 
@@ -396,6 +397,8 @@ void CDefTermHk::StopHookers()
 	SetEvent(mh_StopEvent);
 
 	WaitForSingleObject(mh_PostThread, STOP_HOOKERS_TIMEOUT);
+
+	SafeDelete(insideLock_);
 
 	CDefTermBase::StopHookers();
 }
@@ -439,7 +442,7 @@ void CDefTermHk::PostCreateThreadFinished()
 	while ((dwWait = WaitForSingleObject(mh_StopEvent, FOREGROUND_CHECK_DELAY)) == WAIT_TIMEOUT)
 	{
 		// If non-aggressive - don't do anything here...
-		if (!isDefaultTerminalAllowed(true) || !m_Opt.bAggressive)
+		if (!m_Opt.bAggressive || !isDefaultTerminalAllowed(true))
 			continue;
 
 		// Aggressive mode
@@ -454,8 +457,8 @@ void CDefTermHk::PostCreateThreadFinished()
 
 void CDefTermHk::ReloadSettings()
 {
-	MSectionLockSimple CS;
-	CS.Lock(mcs);
+	MSectionLockSimple cs;
+	cs.Lock(mcs);
 
 	if (!LoadInsideSettings())
 		m_Opt.Serialize();
@@ -471,19 +474,19 @@ void CDefTermHk::ReloadSettings()
 	}
 }
 
-bool CDefTermHk::IsInsideMode()
+DWORD CDefTermHk::GetConEmuInsidePid()
 {
 	if (!gpDefTerm)
-		return false;
+		return 0;
 	const auto insideOpt = gpDefTerm->LoadInsideSettings();
 	if (!insideOpt)
-		return false;
+		return 0;
 	if (!insideOpt->bUseDefaultTerminal)
-		return false;
+		return 0;
 	if (!insideOpt->hConEmuRoot || !IsWindow(insideOpt->hConEmuRoot))
-		return false;
+		return 0;
 	// ConEmu inside is ready for DefTerm
-	return true;
+	return insideOpt->nGuiPID;
 }
 
 void CDefTermHk::CreateChildMapping(const DWORD childPid, const MHandle& childHandle, const DWORD conemuInsidePid)
@@ -503,6 +506,9 @@ void CDefTermHk::CreateChildMapping(const DWORD childPid, const MHandle& childHa
 /// @return returns smart pointer to loaded DefTerm settings from ConEmu's mappings (even if DefTerm is disabled there)
 std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 {
+	MSectionLockSimple cs;
+	cs.Lock(insideLock_);
+
 	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo = insideMapInfo_;
 
 	const auto now = std::chrono::steady_clock::now();
@@ -549,6 +555,8 @@ std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 		if (insideMapInfo_)
 			m_Opt.bUseDefaultTerminal = false;
 		insideMapInfo_.reset();
+		insideConEmuPid_.store(0);
+		insideConEmuWnd_.store(nullptr);
 		return {};
 	}
 
@@ -590,6 +598,9 @@ std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> CDefTermHk::LoadInsideSettings()
 	setString(m_Opt.pszConfigName, emptyStr);
 	setMszString(m_Opt.pszzHookedApps, info.defaultTerminalApps, countof(info.defaultTerminalApps));
 	m_Opt.bExternalPointers = true;
+
+	insideConEmuPid_.store(info.nGuiPID);
+	insideConEmuWnd_.store(info.hConEmuRoot);
 
 	insideMapInfo_ = insideMapInfo;
 	return insideMapInfo;

@@ -480,8 +480,9 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		return FALSE;
 
 	bool lbRc = false;
-	wchar_t *szComspec = nullptr;
-	wchar_t *pszOurExe = nullptr; // ConEmuC64.exe или ConEmu64.exe (для DefTerm)
+	CEStr szComspec;
+	CEStr pszOurExe; // ConEmuC64.exe or ConEmu64.exe (for DefTerm)
+	bool ourGuiExe = false; // ConEmu64.exe
 	BOOL lbUseDosBox = FALSE;
 	CEStr szDosBoxExe, szDosBoxCfg;
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
@@ -510,7 +511,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		wchar_t* pszFileUnquote = nullptr;
 		if (asFile && (*asFile == L'"'))
 		{
-			pszFileUnquote = lstrdup(asFile+1);
+			pszFileUnquote = lstrdup(asFile + 1);
 			asFile = pszFileUnquote;
 			pszFileUnquote = wcschr(pszFileUnquote, L'"');
 			if (pszFileUnquote)
@@ -799,10 +800,12 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		if ((workOptions_ & ShellWorkOptions::ConsoleMode))
 		{
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
+			_ASSERTEX(ourGuiExe == false);
 		}
 		else
 		{
 			pszOurExe = lstrdup(m_SrvMapping.sConEmuExe);
+			ourGuiExe = true;
 		}
 	}
 	else if ((ImageBits == 32) || (ImageBits == 64)) //-V112
@@ -811,6 +814,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			SetConsoleMode(true);
 
 		pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
+		_ASSERTEX(ourGuiExe == false);
 	}
 	else if (ImageBits == 16)
 	{
@@ -831,6 +835,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 
 			// DosBox.exe - 32-bit process
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", L"ConEmuC.exe");
+			_ASSERTEX(ourGuiExe == false);
 			lbUseDosBox = TRUE;
 		}
 		else
@@ -846,6 +851,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			else
 			{
 				pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", L"ConEmuC.exe");
+				_ASSERTEX(ourGuiExe == false);
 			}
 		}
 	}
@@ -857,15 +863,17 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		goto wrap;
 	}
 
-	if (!pszOurExe)
+	if (pszOurExe.IsEmpty())
 	{
-		_ASSERTE(pszOurExe!=nullptr);
+		_ASSERTE(!pszOurExe.IsEmpty());
 		lbRc = FALSE;
 		goto wrap;
 	}
 
 	// We change application to our executable (GUI or ConEmuC), so don't inject ConEmuHk there
 	SetNeedInjects(false);
+	SetExeReplaced(ourGuiExe);
+
 
 	nCchSize = (asFile ? wcslen(asFile) : 0) + (asParam ? wcslen(asParam) : 0) + 64;
 	if (lbUseDosBox)
@@ -939,6 +947,9 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		// CreateProcess - start GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
 		nCchSize += CDefTermHk::GetSrvAddArgs(!(workOptions_ & ShellWorkOptions::ConsoleMode), (workOptions_ & ShellWorkOptions::ForceInjectOriginal), szDefTermArg, szDefTermArg2);
+
+		if (workOptions_ & ShellWorkOptions::InheritDefTerm)
+			nCchSize += 20;
 	}
 
 	if (Flags & CEF_NEWCON_PREPEND)
@@ -988,13 +999,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		_wcscat_c((*psParam), nCchSize, szParentFar);
 	}
 
-	// Don't add when gbPrepareDefaultTerminal - we are calling "ConEmu.exe", not "ConEmuC.exe"
-	if ((args.InjectsDisable == crb_On) && !gbPrepareDefaultTerminal)
-	{
-		// добавить " /NOINJECT"
-		_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
-	}
-
 	if (gbPrepareDefaultTerminal)
 	{
 		if (!szDefTermArg.IsEmpty())
@@ -1002,10 +1006,14 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			_wcscat_c((*psParam), nCchSize, szDefTermArg);
 		}
 
+		if ((workOptions_ & ShellWorkOptions::InheritDefTerm) && (workOptions_ & ShellWorkOptions::ExeReplacedConsole) && deftermConEmuInsidePid_)
+		{
+			_wcscat_c((*psParam), nCchSize, L" /InheritDefTerm");
+		}
+
 		if ((workOptions_ & ShellWorkOptions::ConsoleMode))
 		{
-			// Здесь предполагается "runas", поэтому запускается сервер (ConEmuC.exe)
-			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
+			_wcscat_c((*psParam), nCchSize, L" /AttachDefTerm /ROOT ");
 		}
 		else
 		{
@@ -1018,21 +1026,27 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			_wcscat_c((*psParam), nCchSize, szDefTermArg2);
 		}
 	}
-	// 111211 - "-new_console" передается в GUI
-	else if (lbNewConsoleFromGui)
-	{
-		// Нужно еще добавить /ATTACH /GID=%i,  и т.п.
-		int nCurLen = lstrlen(*psParam);
-		msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /GHWND=%08X /ROOT ",
-			m_SrvMapping.nGuiPID, (DWORD)m_SrvMapping.hConEmuRoot);
-		TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
-	}
 	else
 	{
-		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-		// If was used "start" from cmd prompt or batch
-		if (Flags & CEF_NEWCON_PREPEND)
-			_wcscat_c((*psParam), nCchSize, L"-new_console ");
+		if (args.InjectsDisable == crb_On)
+		{
+			_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
+		}
+
+		if (lbNewConsoleFromGui)
+		{
+			int nCurLen = lstrlen(*psParam);
+			msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /GHWND=%08X /ROOT ",
+				m_SrvMapping.nGuiPID, m_SrvMapping.hConEmuRoot.GetPortableHandle());
+			TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
+		}
+		else
+		{
+			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+			// If was used "start" from cmd prompt or batch
+			if (Flags & CEF_NEWCON_PREPEND)
+				_wcscat_c((*psParam), nCchSize, L"-new_console ");
+		}
 	}
 	if (asParam && *asParam == L' ')
 		asParam++;
@@ -1253,10 +1267,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 
 	lbRc = TRUE;
 wrap:
-	if (szComspec)
-		free(szComspec);
-	if (pszOurExe)
-		free(pszOurExe);
 	return lbRc;
 }
 
@@ -1395,6 +1405,8 @@ bool CShellProc::CheckForDefaultTerminal(const CmdOnCreateType aCmd, LPCWSTR asA
 	if (!gbPrepareDefaultTerminal)
 		return true; // nothing to do
 
+	deftermConEmuInsidePid_ = CDefTermHk::GetConEmuInsidePid();
+
 	if (aCmd == eCreateProcess)
 	{
 		if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
@@ -1505,6 +1517,15 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 
 			if (IsVsDebugConsoleExe(ms_ExeTmp))
 			{
+				SetVsDebugConsole();
+				SetInheritDefTerm();
+				SetForceInjectOriginal(true);
+			}
+
+			if (IsVsDebugger(ms_ExeTmp))
+			{
+				SetVsDebugger();
+				SetInheritDefTerm();
 				SetForceInjectOriginal(true);
 			}
 
@@ -1530,7 +1551,7 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 				// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
 				//    Also: How to Disable the Hosting Process
 				//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
-				if (gbIsVSDebug && ((*anCreateFlags) & CREATE_SUSPENDED)
+				if (gbIsVSDebugger && ((*anCreateFlags) & CREATE_SUSPENDED)
 					// DEBUG_XXX flags are processed above explicitly
 					&& !((*anCreateFlags) & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS)))
 				{
@@ -1551,7 +1572,14 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 				const CEStr lsMsg(L"Forcing (workOptions_ & ShellWorkOptions::NeedInjects) for `", exeName, L"` started from `", gsExeName, L"`");
 				LogShellString(lsMsg);
 				SetNeedInjects(true);
+				SetInheritDefTerm();
 			} // end of check "<starting exe> == <current exe>"
+
+			if (!(workOptions_ & ShellWorkOptions::InheritDefTerm))
+			{
+				if (gpDefTerm->IsAppNameMonitored(ms_ExeTmp))
+					SetInheritDefTerm();
+			}
 		}
 	}
 
@@ -2076,11 +2104,12 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	if (gbPrepareDefaultTerminal)
 	{
 		// set up default terminal
-		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && ((workOptions_ & ShellWorkOptions::VsNetHost) || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
+		bGoChangeParm = ((m_Args.NoDefaultTerm != crb_On) && (gnServerPID == 0)
+			&& ((workOptions_ & ShellWorkOptions::VsNetHost) || mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE));
 		if (bGoChangeParm)
 		{
 			// when we already have ConEmu inside - no sense to start GUI, just start new console server (tab)
-			if (!(workOptions_ & ShellWorkOptions::ConsoleMode) && CDefTermHk::IsInsideMode())
+			if (!(workOptions_ & ShellWorkOptions::ConsoleMode) && deftermConEmuInsidePid_)
 			{
 				SetConsoleMode(true);
 			}
@@ -2091,7 +2120,9 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				{
 					// injects were disabled in DefTerm options
 					SetNeedInjects(false);
-					SetForceInjectOriginal(false);
+					// for some apps, e.g. VsDebugConsole.exe, we still need to inject, regardless DefTerm options
+					// that's required for proper termination of them, etc.
+					// -- SetForceInjectOriginal(false);
 				}
 				else
 				{
@@ -2235,7 +2266,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
 		SetNeedInjects((aCmd == eCreateProcess) && (mn_ImageBits != 16)
-			&& (m_Args.InjectsDisable != crb_On) && !gbPrepareDefaultTerminal
+			&& (m_Args.InjectsDisable != crb_On) && (m_SrvMapping.useInjects == ConEmuUseInjects::Use)
 			&& !bDontForceInjects);
 
 		// Параметр -cur_console / -new_console нужно вырезать
@@ -2643,10 +2674,16 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 {
 	bool siChanged = false;
 
-	if ((workOptions_ & ShellWorkOptions::NeedInjects))
-	{
+	if (
 		// In DefTerm (gbPrepareDefaultTerminal) (workOptions_ & ShellWorkOptions::NeedInjects) is allowed too in some cases...
 		// code.exe -> "cmd /c start /wait" -> cmd.exe
+		(workOptions_ & ShellWorkOptions::NeedInjects)
+		// If we need to create Event and Mapping before created application starts
+		|| ((workOptions_ & ShellWorkOptions::InheritDefTerm)
+			&& !((workOptions_ & ShellWorkOptions::ExeReplacedGui) || (workOptions_ & ShellWorkOptions::ExeReplacedConsole)))
+		)
+	{
+
 		(*anCreationFlags) |= CREATE_SUSPENDED;
 	}
 
@@ -2975,11 +3012,10 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 		if (CDefTermHk::IsDefTermEnabled())
 		{
-			// #DefTerm: add special flag to auto hooked apps (msvsmon, VsConsoleDebugger, etc)
-			if (gpDefTerm->IsAppNameMonitored(ms_ExeTmp))
+			if ((workOptions_ & ShellWorkOptions::InheritDefTerm)
+				&& !((workOptions_ & ShellWorkOptions::ExeReplacedGui) || (workOptions_ & ShellWorkOptions::ExeReplacedConsole)))
 			{
-				// #DefTerm: conemuInsidePid should be in m_SrvMapping already
-				gpDefTerm->CreateChildMapping(lpPI->dwProcessId, lpPI->hProcess, 0/*conemuInsidePid*/);
+				gpDefTerm->CreateChildMapping(lpPI->dwProcessId, lpPI->hProcess, deftermConEmuInsidePid_);
 			}
 
 			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
@@ -3123,6 +3159,11 @@ void CShellProc::SetVsDebugConsole()
 	workOptions_ |= ShellWorkOptions::VsDebugConsole;
 }
 
+void CShellProc::SetVsDebugger()
+{
+	workOptions_ |= ShellWorkOptions::VsDebugger;
+}
+
 void CShellProc::SetChildGui()
 {
 	workOptions_ |= ShellWorkOptions::ChildGui;
@@ -3173,6 +3214,22 @@ void CShellProc::SetConsoleMode(const bool value)
 void CShellProc::SetHiddenConsoleDetachNeed()
 {
 	workOptions_ |= ShellWorkOptions::HiddenConsoleDetachNeed;
+}
+
+void CShellProc::SetInheritDefTerm()
+{
+	workOptions_ |= ShellWorkOptions::InheritDefTerm;
+}
+
+void CShellProc::SetExeReplaced(const bool ourGuiExe)
+{
+	workOptions_ = static_cast<ShellWorkOptions>(static_cast<uint32_t>(workOptions_)
+		& ~static_cast<uint32_t>(ShellWorkOptions::ExeReplacedGui | ShellWorkOptions::ExeReplacedConsole));
+
+	if (ourGuiExe)
+		workOptions_ |= ShellWorkOptions::ExeReplacedGui;
+	else
+		workOptions_ |= ShellWorkOptions::ExeReplacedConsole;
 }
 
 

@@ -184,9 +184,9 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, bool forceInjects, CEStr& rsArgs
 	return 0;
 }
 
-bool CDefTermHk::IsInsideMode()
+DWORD CDefTermHk::GetConEmuInsidePid()
 {
-	return false;
+	return 0;
 }
 
 void CDefTermHk::CreateChildMapping(DWORD childPid, const MHandle& childHandle, DWORD conemuInsidePid)

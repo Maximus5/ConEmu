@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 #include <chrono>
 #include <unordered_map>
-
+#include <atomic>
 
 
 #include "../common/MEvent.h"
@@ -63,7 +63,7 @@ public:
 	static void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = nullptr);
 	static bool LoadDefTermSrvMapping(CESERVER_CONSOLE_MAPPING_HDR& srvMapping);
 	static size_t GetSrvAddArgs(bool bGuiArgs, bool forceInjects, CEStr& rsArgs, CEStr& rsNewCon);
-	static bool IsInsideMode();
+	static DWORD GetConEmuInsidePid();
 	/// @brief Prepare event and mapping to resume created child process (e.g. msvsmon, VsDebugConsole, etc.)
 	/// @param childPid PID of the started child process, it's suspended at the moment of CreateChildMapping call
 	/// @param childHandle handle of childPid with SYNCHRONIZE access
@@ -118,7 +118,10 @@ private:
 	
 	std::chrono::steady_clock::time_point insideMapLastCheck_{};
 	std::chrono::milliseconds insideMapCheckDelay_{ 1000 };
+	MSectionSimple* insideLock_ = nullptr;
 	std::shared_ptr<CONEMU_INSIDE_DEFTERM_MAPPING> insideMapInfo_{};
+	std::atomic<DWORD> insideConEmuPid_{ 0 };
+	std::atomic<HWND> insideConEmuWnd_{ nullptr };
 
 	MSectionSimple childDataLock_{ true };
 	std::shared_ptr<CDefTermChildMap> childData_;

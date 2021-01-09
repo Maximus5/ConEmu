@@ -41,6 +41,7 @@ struct ConProcess;
 class DebuggerInfo;
 enum class DumpProcessType;
 struct CEStr;
+class CDefTermChildMap;
 
 extern MConHandle ghConOut;
 
@@ -152,6 +153,8 @@ public:
 
 	CEStr ExpandTaskCmd(LPCWSTR asCmdLine) const;
 
+	void CreateDefTermChildMapping(const PROCESS_INFORMATION& pi);
+
 	// Methods for server safety
 	virtual void FreezeRefreshThread();
 	virtual void ThawRefreshThread();
@@ -238,6 +241,8 @@ protected:
 	std::shared_ptr<CProcessEnvCmd> pSetEnv_{};
 	LPCWSTR pszCheck4NeedCmd_ = nullptr; // debugging purposes
 	wchar_t gszComSpec[MAX_PATH+1] = {0};
+
+	std::shared_ptr<CDefTermChildMap> defTermChildMap_;
 };
 
 extern WorkerBase* gpWorker;  // NOLINT(readability-redundant-declaration)

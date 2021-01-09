@@ -218,6 +218,8 @@ public:
 	SwitchBool creatingHiddenConsole_;
 	/// Server was started from DefTerm application (*.vshost.exe), console could be hidden
 	SwitchBool defTermCall_;
+	/// We should create CEDEFAULTTERMHOOK event and CEINSIDEMAPNAMEP mapping
+	SwitchBool inheritDefTerm_;
 	/// Don't inject ConEmuHk.dll into root process
 	SwitchBool doNotInjectConEmuHk_;
 	/// Attach was initiated from Far Manager

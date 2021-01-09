@@ -1289,6 +1289,11 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 			szDbgMsg[0] = 0;
 			#endif
 
+			if (gpConsoleArgs->inheritDefTerm_)
+			{
+				gpWorker->CreateDefTermChildMapping(pi);
+			}
+
 			if (gpConsoleArgs->doNotInjectConEmuHk_
 				|| (!szExeName.IsEmpty() && IsConsoleServer(szExeName)))
 			{

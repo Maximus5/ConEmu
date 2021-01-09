@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ExportedFunctions.h"
 #include "StartEnv.h"
 #include "StdCon.h"
+#include "../common/DefTermChildMap.h"
 #include "../common/MProcess.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/SetEnvVar.h"
@@ -1832,6 +1833,21 @@ CEStr WorkerBase::ExpandTaskCmd(LPCWSTR asCmdLine) const
 	ExecuteFreeResult(pOut);
 
 	return pszResult;
+}
+
+void WorkerBase::CreateDefTermChildMapping(const PROCESS_INFORMATION& pi)
+{
+	if (!defTermChildMap_)
+		defTermChildMap_ = std::make_shared<CDefTermChildMap>();
+
+	if (gState.conemuPid_ == 0)
+	{
+		_ASSERTE(gState.conemuPid_ != 0);
+		return;
+	}
+
+	defTermChildMap_->CreateChildMapping(pi.dwProcessId, pi.hProcess, gState.conemuPid_);
+
 }
 
 void WorkerBase::FreezeRefreshThread()

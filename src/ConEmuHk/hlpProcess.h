@@ -175,7 +175,7 @@ extern bool gbSkipVirtualAllocErr;
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
-extern bool gbIsVSDebug; // msvsmon.exe
+extern bool gbIsVSDebugger; // msvsmon.exe
 extern bool gbIsVsCode;
 extern int  gnVsHostStartConsole;
 extern bool gbIsGdbHost;

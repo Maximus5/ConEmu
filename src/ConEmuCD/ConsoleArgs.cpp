@@ -661,6 +661,10 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 				gState.attachMode_ |= am_Simple;
 			gState.runMode_ = RunMode::Server;
 		}
+		else if (szArg.IsSwitch(L"/InheritDefTerm"))
+		{
+			inheritDefTerm_.SetBool(true);
+		}
 		else if (szArg.OneOfSwitches(L"/AutoAttach", L"/AttachDefTerm"))
 		{
 			ShowAttachMsgBox(szArg);

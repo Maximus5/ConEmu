@@ -1729,7 +1729,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	GetImageSubsystem(gnImageSubsystem, gnImageBits);
 	DLOGEND1();
 
-	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess && !gbConEmuConnector)
+	if (!gbConEmuCProcess && !gbConEmuConnector)
 	{
 		DLOG1_("CEDEFAULTTERMHOOK",ul_reason_for_call);
 

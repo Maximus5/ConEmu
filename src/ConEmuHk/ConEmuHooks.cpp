@@ -329,7 +329,6 @@ bool InitHooksConsole()
 		HOOK_ITEM_BY_NAME(SetStdHandle,			KERNEL32),
 		/* ************************ */
 		HOOK_ITEM_BY_NAME(GetConsoleWindow,     KERNEL32),
-		HOOK_ITEM_BY_NAME(GetConsoleProcessList,KERNEL32),
 		HOOK_ITEM_BY_NAME(GetConsoleMode,		KERNEL32),
 		HOOK_ITEM_BY_NAME(SetConsoleMode,  		KERNEL32),
 		HOOK_ITEM_BY_NAME(SetConsoleTitleA,		KERNEL32),
@@ -641,6 +640,7 @@ bool InitHooksDefTerm()
 	HookItem HooksDevStudio[] =
 	{
 		HOOK_ITEM_BY_NAME(ResumeThread,			KERNEL32),
+		HOOK_ITEM_BY_NAME(GetConsoleProcessList,KERNEL32),
 		/* ************************ */
 		{}
 	};

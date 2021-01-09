@@ -57,6 +57,8 @@ enum class ShellWorkOptions : uint32_t
 	VsNetHost = 0x00000020,
 	// VsDebugConsole.exe
 	VsDebugConsole = 0x00000040,
+	// msvsmon.exe
+	VsDebugger = 0x00000080,
 
 	// Starting ChildGui
 	ChildGui = 0x00000100,
@@ -81,6 +83,14 @@ enum class ShellWorkOptions : uint32_t
 	// Special case to remove RealConsole flickering. E.g. in VisualStudio we attached to the console
 	// created by ConEmuC.exe server and later we have to call FreeConsole to avoid unexpected output to ConOut.
 	HiddenConsoleDetachNeed = 0x00020000,
+
+	// Create DefTerm event and mapping before resuming the process
+	InheritDefTerm = 0x00040000,
+
+	// executable was replaced with ConEmu.exe (GUI)
+	ExeReplacedGui = 0x00100000,
+	// executable was replaced with ConEmuC.exe (Console)
+	ExeReplacedConsole = 0x00200000,
 };
 
 ShellWorkOptions operator|=(ShellWorkOptions& e1, ShellWorkOptions e2);
@@ -142,6 +152,8 @@ private:
 	void SetVsNetHost();
 	// VsDebugConsole.exe
 	void SetVsDebugConsole();
+	// msvsmon.exe
+	void SetVsDebugger();
 	// Starting ChildGui
 	void SetChildGui();
 	void ClearChildGui();
@@ -155,6 +167,10 @@ private:
 	void SetConsoleMode(bool value);
 	// Controls if we need to call FreeConsole after process creation
 	void SetHiddenConsoleDetachNeed();
+	// Controls if we need to create DefTerm event and mapping before resuming the process
+	void SetInheritDefTerm();
+	// Updates workOptions_ ExeReplacedGui or ExeReplacedConsole
+	void SetExeReplaced(bool ourGuiExe);
 
 	// ConEmuHooks=OFF
 	bool mb_Opt_DontInject = false;
@@ -177,6 +193,9 @@ private:
 	HWND mh_PreConEmuWnd = nullptr, mh_PreConEmuWndDC = nullptr;
 	BOOL mb_TempConEmuWnd = FALSE;
 
+	// Contains ConEmu GUI PID if it's running in inside mode (e.g. in VisualStudio pane)
+	DWORD deftermConEmuInsidePid_ = 0;
+
 	enum class PrepareExecuteResult
 	{
 		// Restrict execution, leads to ERROR_FILE_NOT_FOUND
@@ -187,11 +206,15 @@ private:
 		Modified = 1,
 	};
 
+	// Parameters stored and passed by during CreateProcess
 	struct CreatePrepareData
 	{
+		// true if process is created without console (redirected IO or detached window)
 		bool consoleNoWindow;
-		DWORD showCmd;
+		// originally requested wShowCmd
 		DWORD defaultShowCmd;
+		// on prepare contains defaultShowCmd, on result contains desired wShowCmd
+		DWORD showCmd;
 	};
 
 private:
