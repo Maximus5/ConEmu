@@ -53,8 +53,8 @@ void CheckVariables()
 void CheckAnsiConVar(LPCWSTR asName)
 {
 	CLastErrorGuard errGuard;
-	bool bAnsi = false;
-	CEAnsi::GetFeatures(&bAnsi, NULL);
+
+	const bool bAnsi = isProcessAnsi();
 
 	if (bAnsi)
 	{
@@ -154,6 +154,20 @@ DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSiz
 			}
 			goto wrap;
 		}
+		else if (lstrcmpiA(lpName, ENV_CONEMU_FEATURES_A) == 0)
+		{
+			char buffer[16] = "";
+			ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
+			if (CEAnsi::GetFeatures(features))
+				msprintf(buffer, countof(buffer), "0x%08X", static_cast<DWORD>(features));
+			const auto len = lstrlenA(buffer);
+			if (lpBuffer && (static_cast<INT_PTR>(nSize) > len))
+			{
+				lstrcpynA(lpBuffer, buffer, nSize);
+				lRc = len;
+			}
+			goto wrap;
+		}
 	}
 
 	lRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
@@ -189,6 +203,20 @@ DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nS
 			{
 				lstrcpynW(lpBuffer, _CRT_WIDE(ENV_ANSICON_VER_VALUE), nSize);
 				lRc = lstrlenA(ENV_ANSICON_VER_VALUE);
+			}
+			goto wrap;
+		}
+		else if (lstrcmpiW(lpName, ENV_CONEMU_FEATURES_W) == 0)
+		{
+			wchar_t buffer[16] = L"";
+			ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
+			if (CEAnsi::GetFeatures(features))
+				msprintf(buffer, countof(buffer), L"0x%08X", static_cast<DWORD>(features));
+			const auto len = lstrlenW(buffer);
+			if (lpBuffer && (static_cast<INT_PTR>(nSize) > len))
+			{
+				lstrcpynW(lpBuffer, buffer, nSize);
+				lRc = len;
 			}
 			goto wrap;
 		}

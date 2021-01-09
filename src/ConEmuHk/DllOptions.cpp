@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "DllOptions.h"
 
+#include "Ansi.h"
+
 HMODULE ghOurModule = nullptr;
 
 wchar_t gsConEmuBaseDir[MAX_PATH + 1] = L"";
@@ -152,4 +154,21 @@ void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd)
 void SetServerPID(const DWORD anMainSrvPid)
 {
 	gnServerPID = anMainSrvPid;
+}
+
+
+bool isProcessAnsi()
+{
+	ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
+	CEAnsi::GetFeatures(features);
+	const bool processAnsi = (features & ConEmu::ConsoleFlags::ProcessAnsi);
+	return processAnsi;
+}
+
+bool isSuppressBells()
+{
+	ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
+	CEAnsi::GetFeatures(features);
+	const bool suppressBells = (features & ConEmu::ConsoleFlags::SuppressBells);
+	return suppressBells;
 }

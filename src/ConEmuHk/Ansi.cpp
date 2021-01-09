@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <chrono>
 #include <tuple>
+#include <atomic>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/ConsoleMixAttr.h"
@@ -483,11 +484,15 @@ void CEAnsi::AnsiLogEnterPressed()
 	gbAnsiLogNewLine = true;
 }
 
-void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
+bool CEAnsi::GetFeatures(ConEmu::ConsoleFlags& features)
 {
 	static std::chrono::steady_clock::time_point nLastCheck{};
-	static bool bAnsiAllowed = true;
-	static bool bSuppressBells = true;
+	struct FeaturesCache
+	{
+		ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
+		bool result = false;
+	};
+	static std::atomic<FeaturesCache> featuresCache{};
 
 	if ((std::chrono::steady_clock::now() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT)
 	{
@@ -495,23 +500,27 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 		//	(CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
 		if (pMap)
 		{
-			//if (!::LoadSrvMapping(ghConWnd, *pMap) || !pMap->bProcessAnsi)
-			//	bAnsiAllowed = false;
-			//else
-			//	bAnsiAllowed = true;
-
-			bAnsiAllowed = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
-			bSuppressBells = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::SuppressBells));
-
-			//free(pMap);
+			// bAnsiAllowed = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
+			// bSuppressBells = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::SuppressBells));
+			featuresCache.store(FeaturesCache{ pMap->Flags, true });
+		}
+		else
+		{
+			featuresCache.store(FeaturesCache{});
 		}
 		nLastCheck = std::chrono::steady_clock::now();
 	}
 
-	if (pbAnsiAllowed)
-		*pbAnsiAllowed = bAnsiAllowed;
-	if (pbSuppressBells)
-		*pbSuppressBells = bSuppressBells;
+	const auto rc = featuresCache.load();
+	features = rc.features;
+	return rc.result;
+}
+
+void CEAnsi::ReloadFeatures()
+{
+	ConEmu::ConsoleFlags features = ConEmu::ConsoleFlags::Empty;
+	GetFeatures(features);
+	mb_SuppressBells = (features & ConEmu::ConsoleFlags::SuppressBells);
 }
 
 
@@ -1132,7 +1141,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, L
 		}
 	}
 
-	GetFeatures(nullptr, &mb_SuppressBells);
+	ReloadFeatures();
 	if (mb_SuppressBells)
 	{
 		write.Flags |= ewtf_NoBells;
@@ -2579,7 +2588,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutp
 	// ReSharper disable once CppJoinDeclarationAndAssignment
 	DWORD cchPrevPart;
 
-	GetFeatures(nullptr, &mb_SuppressBells);
+	ReloadFeatures();
 
 	// Store this pointer
 	pfnWriteConsoleW = writeConsoleW;

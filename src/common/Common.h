@@ -231,6 +231,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 // Override default console CP: ConEmuDefCp=65001
 #define ENV_CONEMU_DEFAULTCP_A         "ConEmuDefaultCp"
 #define ENV_CONEMU_DEFAULTCP_W           _CRT_WIDE(ENV_CONEMU_DEFAULTCP_A)
+// Return set of ConEmu::ConsoleFlags flags from ConEmu settings, e.g. "0x000082A6"
+#define ENV_CONEMU_FEATURES_A          "ConEmuFeatures"
+#define ENV_CONEMU_FEATURES_W            _CRT_WIDE(ENV_CONEMU_FEATURES_A)
 
 #define CONEMU_CONHOST_CREATED_MSG L"ConEmu: ConHost was created PID=" // L"%u\n"
 

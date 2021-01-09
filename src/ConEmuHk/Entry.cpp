@@ -330,13 +330,6 @@ void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes)
 }
 #endif
 
-bool isSuppressBells()
-{
-	bool bSuppressBells = false;
-	CEAnsi::GetFeatures(nullptr, &bSuppressBells);
-	return bSuppressBells;
-}
-
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = nullptr;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = nullptr;
 MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap = nullptr;

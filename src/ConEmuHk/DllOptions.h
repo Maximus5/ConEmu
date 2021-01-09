@@ -148,3 +148,7 @@ extern CDefTermHk* gpDefTerm;
 
 void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd);
 void SetServerPID(DWORD anMainSrvPid);
+
+bool isProcessAnsi();
+bool isSuppressBells();
+#define LogBeepSkip(x) OutputDebugString(x)

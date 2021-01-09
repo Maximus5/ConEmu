@@ -37,9 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DbgHooks.h"
 
-bool isSuppressBells();
-#define LogBeepSkip(x) OutputDebugString(x)
-
 extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();

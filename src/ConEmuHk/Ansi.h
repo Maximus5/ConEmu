@@ -115,7 +115,7 @@ public:
 	static void InitAnsiLog(LPCWSTR asFilePath, bool LogAnsiCodes);
 	static void DoneAnsiLog(bool bFinal);
 
-	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
+	static bool GetFeatures(ConEmu::ConsoleFlags& features);
 
 	static SHORT GetDefaultTextAttr();
 
@@ -133,6 +133,8 @@ public:
 
 protected:
 	static int NextNumber(LPCWSTR& asMS);
+
+	void ReloadFeatures();
 
 public:
 	static void ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID = 0);

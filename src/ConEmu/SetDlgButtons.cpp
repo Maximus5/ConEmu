@@ -3806,7 +3806,7 @@ void CSetDlgButtons::OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbTrueColorer);
 
 	gpSet->isTrueColorer = _bool(uCheck);
-	CVConGroup::OnUpdateFarSettings();
+	gpConEmu->OnGlobalSettingsChanged();
 	gpConEmu->Update(true);
 
 } // cbTrueColorer

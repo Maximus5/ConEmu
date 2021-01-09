@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 
+#include "../ConEmuHk/Ansi.h"
+
 
 bool gbVerifyFailed = false;
 bool gbVerifyStepFailed = false;
@@ -122,6 +124,7 @@ void SkipOneShowWindow() {}
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/) {}
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/) { return false; }
 void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode) {}
+bool CEAnsi::GetFeatures(ConEmu::ConsoleFlags& features) { features = ConEmu::ConsoleFlags::Empty; return false; }
 
 #if defined(_DEBUG)
 BOOL POSTMESSAGE(HWND h, UINT m, WPARAM w, LPARAM l, BOOL extra) { return FALSE; }
