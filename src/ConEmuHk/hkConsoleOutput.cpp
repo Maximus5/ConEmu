@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpConsole.h"
 #include "MainThread.h"
 #include "DllOptions.h"
+#include "../common/MHandle.h"
 #include "../common/WObjects.h"
 
 /* **************** */
@@ -132,8 +133,25 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		{
 			if (!HandleKeeper::IsOutputHandle(hConsoleHandle))
 			{
-				_ASSERT(HandleKeeper::IsInputHandle(hConsoleHandle));
-				CEAnsi::StartXTermMode((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0);
+				static MHandle xtermEnabledFor;  // NOLINT(clang-diagnostic-exit-time-destructors)
+				const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0;
+
+				#ifdef _DEBUG
+				const auto* hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				#endif
+				const bool isInput = HandleKeeper::IsInputHandle(hConsoleHandle);
+				const bool allowChange = isInput
+					|| (!enableXterm && xtermEnabledFor.GetHandle() == hConsoleHandle);
+
+				if (allowChange)
+				{
+					CEAnsi::StartXTermMode(enableXterm);
+
+					if (enableXterm)
+						xtermEnabledFor.SetHandle(hConsoleHandle);
+					else
+						xtermEnabledFor.SetHandle(nullptr);
+				}
 				//if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
 				//	CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
 			}
@@ -143,9 +161,10 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		if ((!CEAnsi::gbWasXTermOutput && (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 			|| (CEAnsi::gbWasXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)))
 		{
+			const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;
 			if (HandleKeeper::IsOutputHandle(hConsoleHandle))
 			{
-				CEAnsi::StartXTermOutput((dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0);
+				CEAnsi::StartXTermOutput(enableXterm);
 			}
 		}
 	}

@@ -32,59 +32,62 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HandleKeeper.h"
 
 #include "MMap.h"
+#include "MArray.h"
 #include "WErrGuard.h"
+
+#include <memory>
 
 #ifdef _DEBUG
 #include "MStrDup.h"
+#include <deque>
+#include <mutex>
 #endif
 
 namespace HandleKeeper
 {
-	static MMap<HANDLE,HandleInformation>* gp_Handles = nullptr;
+	static std::shared_ptr<MMap<HANDLE,HandleInformation>> gpHandles{};  // NOLINT(clang-diagnostic-exit-time-destructors)
 	static bool gbIsConnector = false;
 
-	static bool InitHandleStorage();
+	#ifdef _DEBUG
+	static std::mutex gDeletedLock{};  // NOLINT(clang-diagnostic-exit-time-destructors)
+	static std::deque<HandleInformation, MArrayAllocator<HandleInformation>>* gpDeletedBuffer{ nullptr };  // NOLINT(clang-diagnostic-exit-time-destructors)
+	static size_t gDeletedMaxCount = 256;
+	#endif
+
+	static std::shared_ptr<MMap<HANDLE,HandleInformation>> GetHandleStorage();
 	static void FillHandleInfo(HandleInformation& info, DWORD access);
 	static bool CheckConName(HandleSource source, DWORD access, const VOID* as_name, HandleInformation& info);
 };
 
 // MT-Safe, lock-free
-static bool HandleKeeper::InitHandleStorage()
+static std::shared_ptr<MMap<HANDLE,HandleInformation>> HandleKeeper::GetHandleStorage()
 {
-	if (gp_Handles == nullptr)
+	if (gpHandles == nullptr)
 	{
-		MMap<HANDLE,HandleInformation>* pHandles = (MMap<HANDLE,HandleInformation>*)malloc(sizeof(*pHandles));
+		auto pHandles = std::make_shared<MMap<HANDLE, HandleInformation>>();
 		if (pHandles)
 		{
 			if (!pHandles->Init(256/*may be auto-enlarged*/, true/*OnCreate*/))
 			{
 				pHandles->Release();
-				free(pHandles);
+				pHandles.reset();
 			}
 			else
 			{
-				MMap<HANDLE,HandleInformation>* p = (MMap<HANDLE,HandleInformation>*)InterlockedCompareExchangePointer((LPVOID*)&gp_Handles, pHandles, nullptr);
-				_ASSERTE(p == nullptr || p != pHandles);
-				if (pHandles != gp_Handles)
-				{
-					pHandles->Release();
-					free(pHandles);
-				}
+				gpHandles = std::move(pHandles);
 			}
 		}
 	}
 
-	return (gp_Handles != nullptr);
+	return gpHandles;
 }
 
 void HandleKeeper::ReleaseHandleStorage()
 {
-	MMap<HANDLE,HandleInformation>* p = (MMap<HANDLE,HandleInformation>*)InterlockedExchangePointer((LPVOID*)&gp_Handles, nullptr);
-	if (p)
-	{
-		p->Release();
-		free(p);
-	}
+	gpHandles.reset();
+	#ifdef _DEBUG
+	SafeDelete(gpDeletedBuffer);
+	#endif
 }
 
 void HandleKeeper::SetConnectorMode(const bool isConnector)
@@ -98,9 +101,10 @@ static void HandleKeeper::FillHandleInfo(HandleInformation& info, const DWORD ac
 	// We can't set is_input/is_output/is_error by info.source (hs_StdXXX)
 	// because STD_XXX handles may be pipes or files
 
+	// ReSharper disable CppJoinDeclarationAndAssignment
+	BOOL b2; DWORD m; CONSOLE_SCREEN_BUFFER_INFO csbi = {}; DEBUGTEST(DWORD err;)
 	// Is handle capable to full set of console API?
-	BOOL b1, b2; DWORD m; CONSOLE_SCREEN_BUFFER_INFO csbi = {}; DEBUGTEST(DWORD err;)
-	b1 = GetConsoleMode(info.h, &m);
+	const BOOL b1 = GetConsoleMode(info.h, &m);
 	if (!b1)
 	{
 		#ifdef _DEBUG
@@ -260,7 +264,8 @@ bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, 
 	if (!h || (h == INVALID_HANDLE_VALUE))
 		return false;
 
-	if (!InitHandleStorage())
+	auto storage = GetHandleStorage();
+	if (!storage)
 		return false;
 
 	HandleInformation info = {};
@@ -280,7 +285,7 @@ bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, 
 	if (pInfo)
 		*pInfo = info;
 
-	gp_Handles->Set(h, info);
+	storage->Set(h, info);
 
 	return true;
 }
@@ -293,9 +298,10 @@ bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& info, const bool
 		return false;
 	bool bFound = false;
 
-	if (gp_Handles)
+	auto storage = GetHandleStorage();
+	if (storage)
 	{
-		bFound = gp_Handles->Get(h, &info);
+		bFound = storage->Get(h, &info);
 	}
 
 	if (bFound && ansiOutExpected)
@@ -318,15 +324,23 @@ bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& info, const bool
 void HandleKeeper::CloseHandleInfo(HANDLE h)
 {
 	HandleInformation info = {};
-	if (gp_Handles)
+	auto storage = GetHandleStorage();
+	if (storage)
 	{
-		if (gp_Handles->Get(h, &info, true))
+		if (storage->Get(h, &info, true))
 		{
 			#ifdef _DEBUG
 			if (info.file_name_ptr)
-				free(info.file_name_ptr)
+				free(info.file_name_ptr);
+			std::lock_guard<std::mutex> lock(gDeletedLock);
+			if (!gpDeletedBuffer)
+				gpDeletedBuffer = new std::deque<HandleInformation, MArrayAllocator<HandleInformation>>;
+			gpDeletedBuffer->push_back(info);
+			while (gpDeletedBuffer->size() > gDeletedMaxCount)
+				gpDeletedBuffer->pop_front();
 			#endif
-				;
+
+			std::ignore = info.h;
 		}
 	}
 }
