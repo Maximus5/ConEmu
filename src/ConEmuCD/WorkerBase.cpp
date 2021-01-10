@@ -317,7 +317,34 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	LPCWSTR lsCmdLine = gpConsoleArgs->command_.c_str(L"");
 
+	bool needSetEnv = false;
 	if (gState.runMode_ == RunMode::Server)
+	{
+		needSetEnv = true;
+	}
+
+	if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
+	{
+		LogFunction(L"ExpandTaskCmd {bash} -> wsl.exe");
+		// Allow smth like: ConEmuC -c {Far} /e text.txt
+		// _ASSERTE(FALSE && "Continue to ExpandTaskCmd");
+		gpConsoleArgs->taskCommand_ = ExpandTaskCmd(lsCmdLine);
+		if (!gpConsoleArgs->taskCommand_.IsEmpty())
+		{
+			lsCmdLine = gpConsoleArgs->taskCommand_.c_str();
+			needSetEnv = true;
+		}
+	}
+
+	// Cut and process the "-new_console" / "-cur_console"
+	const CEStr stripNewConsole(lsCmdLine);
+	SafeFree(args_.pszSpecialCmd);
+	args_.pszSpecialCmd = stripNewConsole.data();
+	args_.ProcessNewConArg();
+	args_.pszSpecialCmd = nullptr; // this point to global gpszRunCmd
+	lsCmdLine = stripNewConsole.c_str();
+
+	if (needSetEnv)
 	{
 		LogFunction(L"ProcessSetEnvCmd {set, title, chcp, etc.}");
 		// Console may be started as follows:
@@ -330,23 +357,6 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		auto* pSetEnv = EnvCmdProcessor();
 		CStartEnvTitle setTitleVar(&gpszForcedTitle);
 		ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
-	}
-
-	if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
-	{
-		LogFunction(L"ExpandTaskCmd {bash} -> wsl.exe");
-		// Allow smth like: ConEmuC -c {Far} /e text.txt
-		// _ASSERTE(FALSE && "Continue to ExpandTaskCmd");
-		gpConsoleArgs->taskCommand_ = ExpandTaskCmd(lsCmdLine);
-		if (!gpConsoleArgs->taskCommand_.IsEmpty())
-		{
-			lsCmdLine = gpConsoleArgs->taskCommand_.c_str();
-
-			LogFunction(L"ProcessSetEnvCmd {by task}");
-			auto* pSetEnv = EnvCmdProcessor();
-			CStartEnvTitle setTitleVar(&gpszForcedTitle);
-			ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
-		}
 	}
 
 	if (gState.runMode_ == RunMode::Comspec)
@@ -415,7 +425,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	CheckNeedSkipWowChange(lsCmdLine);
 	#endif
 
-	int nCmdLine = lstrlenW(lsCmdLine);
+	int nCmdLine = lsCmdLine ? lstrlenW(lsCmdLine) : 0;
 
 	if (!gState.runViaCmdExe_)
 	{
@@ -430,7 +440,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
 		if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 		{
-			_ASSERTE("cmd.exe not found!");
+			_ASSERTE(FALSE && "cmd.exe not found!");
 			_printf("Can't find cmd.exe!\n");
 			return CERR_CMDEXENOTFOUND;
 		}
@@ -492,17 +502,12 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
 	}
 
-	// Cut and process the "-new_console" / "-cur_console"
-	SafeFree(args_.pszSpecialCmd);
-	args_.pszSpecialCmd = gpszRunCmd;
-	args_.ProcessNewConArg();
-	args_.pszSpecialCmd = nullptr; // this point to global gpszRunCmd
-	// Если указана рабочая папка
+	// If working folder was specified
 	if (args_.pszStartupDir && *args_.pszStartupDir)
 	{
 		SetCurrentDirectory(args_.pszStartupDir);
 	}
-	//
+
 	gbRunInBackgroundTab = (args_.BackgroundTab == crb_On);
 	if (args_.BufHeight == crb_On)
 	{
@@ -510,7 +515,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		gnBufferHeight = args_.nBufHeight;
 		gbParmBufSize = TRUE;
 	}
-	// DosBox?
+
 	if (args_.ForceDosBox == crb_On)
 	{
 		gState.dosbox_.use_ = TRUE;
@@ -1715,7 +1720,7 @@ void WorkerBase::CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 
 					if (lstrcmpiW(szApp, szSysNative) == 0)
 					{
-						gState.bSkipWowChange_ = TRUE;
+						gState.bSkipWowChange_ = true;
 					}
 				}
 			}

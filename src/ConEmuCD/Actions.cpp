@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //#define SHOW_ATTACH_MSGBOX
 //#define SHOW_OUTPUT_MSGBOX
+//#define SHOW_INJECT_MSGBOX
 #endif
 
 #include "../common/Common.h"
@@ -226,12 +227,17 @@ int DoInjectHooks(const CEStr& asCmdArg)
 
 
 	#ifdef SHOW_INJECT_MSGBOX
-	wchar_t szDbgMsg[512], szTitle[128];
-	PROCESSENTRY32 pinf;
-	GetProcessInfo(pi.dwProcessId, &pinf);
-	swprintf_c(szTitle, L"ConEmuCD PID=%u", GetCurrentProcessId());
-	swprintf_c(szDbgMsg, L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
-	MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	{
+		wchar_t szDbgMsg[512] = L"", szTitle[128] = L"";
+		PROCESSENTRY32W procInfo{};
+		GetProcessInfo(pi.dwProcessId, procInfo);
+		swprintf_c(szTitle, L"ConEmuCD PID=%u", GetCurrentProcessId());
+		swprintf_c(szDbgMsg, L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg.c_str(L""), procInfo.szExeFile, GetCurrentProcessId());
+		if (MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL | MB_OKCANCEL) != IDOK)
+		{
+			return CERR_HOOKS_FAILED;
+		}
+	}
 	#endif
 
 
@@ -244,8 +250,8 @@ int DoInjectHooks(const CEStr& asCmdArg)
 			return CERR_HOOKS_WAS_SET;
 		}
 
-		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
-		DWORD nErrCode = GetLastError();
+		// It's better to show an error message
+		const DWORD nErrCode = GetLastError();
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 		wchar_t szDbgMsg[255], szTitle[128];
 		swprintf_c(szTitle, L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
@@ -255,11 +261,11 @@ int DoInjectHooks(const CEStr& asCmdArg)
 	else
 	{
 		//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
-		wchar_t szDbgMsg[512], szTitle[128];
+		wchar_t szDbgMsg[512] = L"", szTitle[128] = L"";
 		swprintf_c(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
 		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
 			GetCurrentProcessId(), LODWORD(pi.hProcess), LODWORD(pi.hThread), pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
-			asCmdArg);
+			asCmdArg.c_str(L""));
 		MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
 

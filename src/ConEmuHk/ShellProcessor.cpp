@@ -3111,7 +3111,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const
 
 	if (iHookRc != CIH_OK/*0*/)
 	{
-		DWORD nErrCode = GetLastError();
+		const DWORD nErrCode = GetLastError();
 		// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
 		// но при запуске dos приложений мы сюда дойти не должны
 		_ASSERTE(iHookRc == 0);

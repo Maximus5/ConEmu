@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MStrDup.h"
 #include "RConStartArgsEx.h"
 
+extern bool gbVerifyIgnoreAsserts;
+
 TEST(CmdLine, NextArg_Switches)
 {
 	LPCWSTR pszCmd =

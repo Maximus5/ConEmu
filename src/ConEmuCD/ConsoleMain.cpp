@@ -242,8 +242,8 @@ int ShowInjectRemoteMsg(int nRemotePID, LPCWSTR asCmdArg)
 	int iBtn = IDOK;
 	#ifdef SHOW_INJECTREM_MSGBOX
 	wchar_t szDbgMsg[512], szTitle[128];
-	PROCESSENTRY32 pinf;
-	GetProcessInfo(nRemotePID, &pinf);
+	PROCESSENTRY32W pinf{};
+	GetProcessInfo(nRemotePID, pinf);
 	swprintf_c(szTitle, L"ConEmuCD PID=%u", GetCurrentProcessId());
 	swprintf_c(szDbgMsg, L"Hooking PID=%s {%s}\nConEmuCD PID=%u. Continue with injects?", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
 	iBtn = MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL);
@@ -1236,14 +1236,9 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		}
 
 		LPSECURITY_ATTRIBUTES lpSec = nullptr; //LocalSecurity();
-		//#ifdef _DEBUG
-		//		lpSec = nullptr;
-		//#endif
-		// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-		lbRc = createProcess(!gState.bSkipWowChange_, nullptr, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
-		                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
-		                      |CREATE_SUSPENDED/*((gpStatus->runMode_ == RunMode::RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
-		                      nullptr, pszCurDir, &si, &pi);
+		lbRc = createProcess(gState.bSkipWowChange_, nullptr, gpszRunCmd, lpSec, lpSec, lbInheritHandle,
+			NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/ | CREATE_SUSPENDED/*((gpStatus->runMode_ == RunMode::RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
+			nullptr, pszCurDir, &si, &pi);
 		dwErr = GetLastError();
 
 		if (!lbRc && (gState.runMode_ == RunMode::Server) && dwErr == ERROR_FILE_NOT_FOUND)
@@ -1265,12 +1260,10 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 						*pszSlash = 0; // получили родительскую папку
 						pszCurDir = szSelf;
 						SetCurrentDirectory(pszCurDir);
-						// Пробуем еще раз, в родительской директории
-						// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-						lbRc = createProcess(!gState.bSkipWowChange_, nullptr, gpszRunCmd, nullptr,nullptr, FALSE/*TRUE*/,
-						                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
-						                      |CREATE_SUSPENDED/*((gpStatus->runMode_ == RunMode::RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
-						                      nullptr, pszCurDir, &si, &pi);
+						// Try again in the up-level directory
+						lbRc = createProcess(gState.bSkipWowChange_, nullptr, gpszRunCmd, nullptr, nullptr, FALSE/*TRUE*/,
+							NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/ | CREATE_SUSPENDED/*((gpStatus->runMode_ == RunMode::RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
+							nullptr, pszCurDir, &si, &pi);
 						dwErr = GetLastError();
 					}
 				}

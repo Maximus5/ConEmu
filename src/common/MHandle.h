@@ -110,22 +110,22 @@ public:
 		return handle_;
 	}
 
-	HANDLE SetHandle(HANDLE handle) noexcept
+	bool SetHandle(HANDLE handle) noexcept
 	{
 		if (handle_ != handle)
 			Close();
 		handle_ = handle;
 		closeFunc_ = nullptr;
-		return handle_;
+		return HasHandle();
 	}
 
-	HANDLE SetHandle(HANDLE handle, std::function<void(HANDLE)> closeFunc) noexcept
+	bool SetHandle(HANDLE handle, std::function<void(HANDLE)> closeFunc) noexcept
 	{
 		if (handle_ != handle)
 			Close();
 		handle_ = handle;
 		closeFunc_ = std::move(closeFunc);
-		return handle_;
+		return HasHandle();
 	}
 
 	void Close() noexcept
