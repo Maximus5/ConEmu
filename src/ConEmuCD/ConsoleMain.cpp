@@ -87,11 +87,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "../common/WConsole.h"
 #include "../common/StartupEnvEx.h"
-#include "../common/SetEnvVar.h"
 #include "../common/RConStartArgs.h"
-#include "../common/ProcessSetEnv.h"
 #include "../common/MWow64Disable.h"
-#include "../common/MSectionSimple.h"
 #include "../common/MRect.h"
 #include "../common/MProcess.h"
 #include "../common/MPerfCounter.h"
@@ -104,7 +101,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 
 #include <tuple>
-
+#include <chrono>
 
 
 #ifndef __GNUC__
@@ -466,7 +463,7 @@ void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessIn
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	CEStr fnDescr(lstrmerge(L"createProcess App={", lpApplicationName, L"} Cmd={", lpCommandLine, L"}"));
+	const CEStr fnDescr(lstrmerge(L"createProcess App={", lpApplicationName, L"} Cmd={", lpCommandLine, L"}"));
 	LogFunction(fnDescr);
 
 	MWow64Disable wow;
@@ -476,7 +473,7 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	// %PATHS% from [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths]
 	// must be already processed in IsNeedCmd >> FileExistsSearch >> SearchAppPaths
 
-	DWORD nStartTick = GetTickCount();
+	const auto nStartTick = std::chrono::high_resolution_clock::now();
 
 #if defined(SHOW_STARTED_PRINT_LITE)
 	if (gState.runMode_ == RunMode::Server)
@@ -488,15 +485,16 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 	SetLastError(0);
 
-	BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
-	DWORD dwErr = GetLastError();
-	DWORD nStartDuration = GetTickCount() - nStartTick;
+	const BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	const DWORD dwErr = GetLastError();
+	const auto nStartDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::high_resolution_clock::now() - nStartTick);
 
 	wchar_t szRunRc[80];
 	if (lbRc)
-		swprintf_c(szRunRc, L"Succeeded (%u ms) PID=%u", nStartDuration, lpProcessInformation->dwProcessId);
+		swprintf_c(szRunRc, L"Succeeded (%u ms) PID=%u", nStartDuration.count(), lpProcessInformation->dwProcessId);
 	else
-		swprintf_c(szRunRc, L"Failed (%u ms) Code=%u(x%04X)", nStartDuration, dwErr, dwErr);
+		swprintf_c(szRunRc, L"Failed (%u ms) Code=%u(x%04X)", nStartDuration.count(), dwErr, dwErr);
 	LogFunction(szRunRc);
 
 #if defined(SHOW_STARTED_PRINT_LITE)
