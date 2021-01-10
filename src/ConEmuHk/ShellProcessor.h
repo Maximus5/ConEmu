@@ -97,7 +97,7 @@ ShellWorkOptions operator|=(ShellWorkOptions& e1, ShellWorkOptions e2);
 ShellWorkOptions operator|(ShellWorkOptions e1, ShellWorkOptions e2);
 bool operator&(ShellWorkOptions e1, ShellWorkOptions e2);
 
-class CShellProc
+class CShellProc final
 {
 public:
 	static bool  mb_StartingNewGuiChildTab;

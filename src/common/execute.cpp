@@ -768,8 +768,19 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //	return iRc;
 //}
 
-bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, LPDWORD pFileAttrs /*= NULL*/)
+bool FindImageSubsystem(const wchar_t *Module, DWORD& ImageSubsystem, DWORD& ImageBits, LPDWORD pFileAttrs /*= NULL*/)
 {
+	#if CE_UNIT_TEST==1
+	{
+		bool result = false;
+		extern bool FindImageSubsystemMock(const wchar_t *module, DWORD& imageSubsystem, DWORD& imageBits, LPDWORD fileAttrs, bool& result);
+		if (FindImageSubsystemMock(Module, ImageSubsystem, ImageBits, pFileAttrs, result))
+		{
+			return result;
+		}
+	}
+	#endif
+
 	if (!Module || !*Module)
 		return false;
 

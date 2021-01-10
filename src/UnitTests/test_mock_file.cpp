@@ -48,10 +48,10 @@ bool FileExistsMock(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/, b
 		return true;
 	}
 
-	if (gpFileSystemMock->HasFilePath(asFilePath))
+	if (const auto* fileInfo = gpFileSystemMock->HasFilePath(asFilePath))
 	{
 		if (pnSize)
-			*pnSize = 512;
+			*pnSize = fileInfo->size;
 		result = true;
 	}
 	else if (gpFileSystemMock->HasDirectoryPath(asFilePath))
@@ -112,6 +112,21 @@ bool SearchPathMock(LPCWSTR path, LPCWSTR fileName, LPCWSTR extension, CEStr& re
 	return true;
 }
 
+bool FindImageSubsystemMock(const wchar_t *module, DWORD& imageSubsystem, DWORD& imageBits, LPDWORD fileAttrs, bool& result)
+{
+	if (const auto* fileInfo = gpFileSystemMock->HasFilePath(module))
+	{
+		imageSubsystem = fileInfo->subsystem;
+		imageBits = fileInfo->bitness;
+		if (fileAttrs)
+			*fileAttrs = FILE_ATTRIBUTE_NORMAL;
+		result = true;
+		return true;
+	}
+
+	return false;
+}
+
 
 FileSystemMock::FileSystemMock()
 {
@@ -129,9 +144,9 @@ void FileSystemMock::Reset()
 	directories_.clear();
 }
 
-void FileSystemMock::MockFile(const std::wstring& filePath)
+void FileSystemMock::MockFile(const std::wstring& filePath, const uint64_t size, const uint32_t subsystem, const uint32_t bitness)
 {
-	files_.insert(MakeCanonic(filePath));
+	files_.insert({ MakeCanonic(filePath), FileInfo{size, subsystem, bitness} });
 }
 
 void FileSystemMock::MockDirectory(const std::wstring& directoryPath)
@@ -139,16 +154,19 @@ void FileSystemMock::MockDirectory(const std::wstring& directoryPath)
 	directories_.insert(MakeCanonic(directoryPath));
 }
 
-void FileSystemMock::MockPathFile(const std::wstring& fileName, const std::wstring& filePath)
+void FileSystemMock::MockPathFile(const std::wstring& fileName, const std::wstring& filePath, const uint64_t size, const uint32_t subsystem, const uint32_t bitness)
 {
 	auto canonicPath = MakeCanonic(filePath);
 	fileToPath_.insert({ MakeCanonic(fileName), canonicPath });
-	files_.insert(std::move(canonicPath));
+	files_.insert({ std::move(canonicPath), FileInfo{size, subsystem, bitness} });
 }
 
-bool FileSystemMock::HasFilePath(const std::wstring& filePath) const
+const FileSystemMock::FileInfo* FileSystemMock::HasFilePath(const std::wstring& filePath) const
 {
-	return files_.count(MakeCanonic(filePath)) > 0;
+	const auto found = files_.find(MakeCanonic(filePath));
+	if (found == files_.end())
+		return nullptr;
+	return &found->second;
 }
 
 bool FileSystemMock::HasDirectoryPath(const std::wstring& directoryPath) const

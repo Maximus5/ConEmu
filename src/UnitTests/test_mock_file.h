@@ -47,20 +47,27 @@ namespace test_mocks
 
 		void Reset();
 
-		void MockFile(const std::wstring& filePath);
+		void MockFile(const std::wstring& filePath, uint64_t size = 512, uint32_t subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI, uint32_t bitness = 32);
 		void MockDirectory(const std::wstring& directoryPath);
 
 		// Used to simulate files found by %PATH% search
-		void MockPathFile(const std::wstring& fileName, const std::wstring& filePath);
+		void MockPathFile(const std::wstring& fileName, const std::wstring& filePath, uint64_t size = 512, uint32_t subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI, uint32_t bitness = 32);
 
-		bool HasFilePath(const std::wstring& filePath) const;
+		struct FileInfo
+		{
+			uint64_t size = 512;
+			uint32_t subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+			uint32_t bitness = 32;
+		};
+
+		const FileInfo* HasFilePath(const std::wstring& filePath) const;
 		bool HasDirectoryPath(const std::wstring& directoryPath) const;
 		std::wstring FindInPath(const std::wstring& fileName, const wchar_t* fileExtension) const;
 
 	protected:
 		static std::wstring MakeCanonic(const std::wstring& filePath);
 		
-		std::unordered_set<std::wstring> files_;
+		std::unordered_map<std::wstring, FileInfo> files_;
 		std::unordered_set<std::wstring> directories_;
 		std::unordered_map<std::wstring, std::wstring> fileToPath_;
 	};

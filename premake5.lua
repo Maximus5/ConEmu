@@ -895,6 +895,10 @@ project "Tests"
     -- conemuhk sources
     "src/ConEmuHk/DllOptions.cpp",
     "src/ConEmuHk/ShellProcessor.cpp",
+    -- minhook
+    "src/modules/minhook/src/**.c",
+    "src/modules/minhook/src/**.h",
+    "src/modules/minhook/include/*.h",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }

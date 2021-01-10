@@ -169,8 +169,10 @@ int gnSynchroCount = 0;
 bool gbSynchroProhibited = false;
 bool gbInputSynchroPending = false;
 
-struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
-extern SetFarHookMode_t SetFarHookMode;
+struct HookModeFar gFarMode = {sizeof(HookModeFar), true/*bFarHookMode*/,
+	false, false, false, false, false, {}, nullptr};
+// ReSharper disable once CppInconsistentNaming
+extern SetFarHookMode_t SetFarHookMode;  // NOLINT(readability-redundant-declaration)
 
 
 PluginAndMenuCommands gpPluginMenu[menu_Last] =

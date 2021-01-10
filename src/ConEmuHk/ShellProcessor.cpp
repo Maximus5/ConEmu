@@ -31,14 +31,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //	#define PRINT_SHELL_LOG
 	#undef PRINT_SHELL_LOG
+	#define DEBUG_SHELL_LOG_OUTPUT
+//	#undef DEBUG_SHELL_LOG_OUTPUT
 #else
 	#undef PRINT_SHELL_LOG
+	#undef DEBUG_SHELL_LOG_OUTPUT
 #endif
 
 #include "../common/Common.h"
 
 #include <tchar.h>
-#include <shlwapi.h>
+#include <Shlwapi.h>
 #include "../common/shlobj.h"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
@@ -1668,6 +1671,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 
 	if (IsAnsiConLoader(asFile, asParam))
 	{
+		LogShellString(L"PrepareExecuteParams skipped (ansicon)");
 		return PrepareExecuteResult::Restrict;
 	}
 
@@ -1702,7 +1706,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		}
 		CEStr lsLog = lstrmerge(
 			(aCmd == eShellExecute) ? L"PrepareExecuteParams Shell " : L"PrepareExecuteParams Create ",
-			szInfo, asFile, asParam);
+			szInfo, L"; file=", asFile, L"; param=", asParam, L";");
 		LogShellString(lsLog);
 	} // Log PrepareExecuteParams function call -end
 
@@ -1812,6 +1816,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		// Настройка в ConEmu ConEmuGuiMapping.useInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
 		if (!bLongConsoleOutput)
 		{
+			LogShellString(L"PrepareExecuteParams skipped (disabled by mapping)");
 			LogExit(0);
 			return PrepareExecuteResult::Bypass;
 		}
@@ -1848,6 +1853,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	// Some additional checks for "Default terminal" mode
 	if (!CheckForDefaultTerminal(aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd))
 	{
+		LogShellString(L"PrepareExecuteParams skipped (disabled by DefTerm settings)");
 		return PrepareExecuteResult::Bypass;
 	}
 
@@ -2365,6 +2371,14 @@ wrap:
 		CheckHookServer();
 	}
 
+	#ifdef DEBUG_SHELL_LOG_OUTPUT
+	{
+		const CEStr dbgStr(lbChanged ? L"PrepareExecuteParams changed: file=" : L"PrepareExecuteParams not_changed: file=",
+			(psFile&&* psFile) ? *psFile : L"<null>", L"; param=", (psParam&&* psParam) ? *psParam : L"<null>",
+			L"; dir=", (psStartDir&&* psStartDir) ? *psStartDir : L"<null>", L";");
+		LogShellString(dbgStr);
+	}
+	#endif
 	LogExit(lbChanged ? 1 : 0);
 	return lbChanged ? PrepareExecuteResult::Modified : PrepareExecuteResult::Bypass;
 } // PrepareExecuteParams
@@ -3336,5 +3350,13 @@ void CShellProc::LogShellString(LPCWSTR asMessage) const
 
 	#ifdef PRINT_SHELL_LOG
 	wprintf(L"%s\n", asMessage);
+	#endif
+
+	#ifdef DEBUG_SHELL_LOG_OUTPUT
+	if (asMessage && *asMessage)
+	{
+		const CEStr dbgOut(asMessage, L"\n");
+		OutputDebugStringW(dbgOut);
+	}
 	#endif
 }

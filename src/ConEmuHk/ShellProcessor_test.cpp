@@ -38,65 +38,158 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DllOptions.h"
 #include <memory>
 
+#include "../common/execute.h"
+#include "../ConEmuHk/MainThread.h"
+#include "../UnitTests/test_mock_file.h"
+
+#ifndef __GNUC__
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+#endif
+
+namespace {
+template<typename T>
+struct VarSet
+{
+	T& var_;
+	const T save_;
+	VarSet(T& var, T value)
+		: var_(var), save_(var)
+	{
+		var = value;
+	}
+	~VarSet()
+	{
+		var_ = save_;
+	}
+	VarSet(const VarSet&) = delete;
+	VarSet& operator=(const VarSet&) = delete;
+	VarSet(VarSet&&) = delete;
+	VarSet& operator=(VarSet&&) = delete;
+};
+}
+
 
 TEST(ShellProcessor, Test)
 {
+	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> mappingMock;
 	CESERVER_CONSOLE_MAPPING_HDR srvMap{};
 	ghConWnd = GetRealConsoleWindow();
-	if (LoadSrvMapping(ghConWnd, srvMap))
-	{	
-		ghConEmuWnd = srvMap.hConEmuRoot;
-		ghConEmuWndBack = srvMap.hConEmuWndBack;
-		ghConEmuWndDC = srvMap.hConEmuWndDc;
-		gnServerPID = srvMap.nServerPID;
-	}
-	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
+	if (!ghConWnd)
 	{
-		cdbg() << "Test is not fully functional, hConEmuWndDc is nullptr";
+		cdbg() << "Test is not functional, GetRealConsoleWindow is nullptr";
+		return;
+	}
+	if (!LoadSrvMapping(ghConWnd, srvMap))
+	{
+		mappingMock.InitName(CECONMAPNAME, LODWORD(ghConWnd));
+		if (mappingMock.Create())
+		{
+			srvMap.cbSize = sizeof(srvMap);
+			srvMap.hConEmuRoot = ghConWnd;
+			srvMap.hConEmuWndBack = ghConWnd;
+			srvMap.hConEmuWndDc = ghConWnd;
+			srvMap.nServerPID = GetCurrentProcessId();
+			srvMap.useInjects = ConEmuUseInjects::Use;
+			srvMap.nProtocolVersion = CESERVER_REQ_VER;
+			wcscpy_s(srvMap.sConEmuExe, L"C:\\Tools\\ConEmu.exe");
+			wcscpy_s(srvMap.ComSpec.Comspec32, L"C:\\Windows\\System32\\cmd.exe");
+			wcscpy_s(srvMap.ComSpec.Comspec64, L"C:\\Windows\\System32\\cmd.exe");
+			wcscpy_s(srvMap.ComSpec.ConEmuExeDir, L"C:\\Tools");
+			wcscpy_s(srvMap.ComSpec.ConEmuBaseDir, L"C:\\Tools\\ConEmu");
+
+			mappingMock.SetFrom(&srvMap);
+		}
 	}
 
-	// #Tests Add more CShellProc tests and check the modified commands
-	
-	for (int i = 0; i < 10; i++)
+	VarSet<HWND> setRoot(ghConEmuWnd, srvMap.hConEmuRoot);
+	VarSet<HWND> setBack(ghConEmuWndBack, srvMap.hConEmuWndBack);
+	VarSet<HWND> setDc(ghConEmuWndDC, srvMap.hConEmuWndDc);
+	VarSet<DWORD> setSrvPid(gnServerPID, srvMap.nServerPID);
+	VarSet<DWORD> setMainTid(gnHookMainThreadId, GetCurrentThreadId());
+	#ifndef __GNUC__
+	VarSet<HANDLE2> setModule(ghWorkingModule, HANDLE2{ reinterpret_cast<uint64_t>(reinterpret_cast<HMODULE>(&__ImageBase)) });
+	#endif
+
+	FarVersion farVer{}; farVer.dwVerMajor = 3; farVer.dwVerMinor = 0; farVer.dwBuild = 5709;
+	VarSet<HookModeFar> farMode(gFarMode,
+		{ sizeof(HookModeFar), true, 0, 0, 0, 0, true, farVer, nullptr });
+
+	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
+	{
+		cdbg() << "Test is not functional, hConEmuWndDc is nullptr";
+		return;
+	}
+
+	test_mocks::FileSystemMock fileMock;
+	fileMock.MockFile(L"C:\\mingw\\bin\\mingw32-make.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	fileMock.MockFile(L"C:\\DosGames\\Prince\\PRINCE.EXE", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
+	fileMock.MockFile(L"C:\\Tools\\ConEmu.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
+	fileMock.MockFile(L"C:\\Tools\\ConEmu64.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
+	fileMock.MockFile(L"C:\\Tools\\ConEmu\\ConEmuC.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	fileMock.MockFile(L"C:\\Tools\\ConEmu\\ConEmuC64.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+
+	enum class Function { CreateW, ShellW };
+	struct TestInfo
+	{
+		Function function;
+		const wchar_t* file;
+		const wchar_t* param;
+		const wchar_t* expectFile;
+		const wchar_t* expectParam;
+	};
+
+	TestInfo tests[] = {
+		{Function::CreateW,
+			LR"(C:\mingw\bin\mingw32-make.exe)", LR"(mingw32-make "1.cpp" )",
+			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+		{Function::CreateW,
+			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("mingw32-make.exe" "1.cpp" )",
+			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+		{Function::CreateW,
+			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
+			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+
+		// #TODO: Add DosBox mock/test
+		{Function::CreateW,
+			LR"(C:\DosGames\Prince\PRINCE.EXE)", LR"(prince megahit)",
+			LR"(C:\DosGames\Prince\PRINCE.EXE)", LR"(prince megahit)"},
+		{Function::CreateW,
+			nullptr, LR"( "C:\DosGames\Prince\PRINCE.EXE")",
+			nullptr, LR"( "C:\DosGames\Prince\PRINCE.EXE")"},
+
+		{Function::ShellW,
+			LR"(C:\mingw\bin\mingw32-make.exe)", LR"( "1.cpp" )",
+			LR"(C:\mingw\bin\mingw32-make.exe)", LR"( "1.cpp" )"},
+	};
+
+	for (const auto& test : tests)
 	{
 		MCHKHEAP;
 		auto sp = std::make_shared<CShellProc>();
-		LPCWSTR pszFile = nullptr, pszParam = nullptr;
-		DWORD nCreateFlags = 0, nShowCmd = 0;
+		LPCWSTR pszFile = test.file, pszParam = test.param;
+		DWORD nCreateFlags = CREATE_DEFAULT_ERROR_MODE, nShowCmd = 0;
 		STARTUPINFOW si = {};
 		auto* psi = &si;
 		si.cb = sizeof(si);
-		switch (i)
+
+		wchar_t paramBuffer[1024] = L"";
+		const auto pid = GetCurrentProcessId();
+		msprintf(paramBuffer, countof(paramBuffer), test.expectParam, pid);
+
+		const CEStr testInfo(L"file=", test.file ? test.file : L"<null>",
+			L"; param=", test.param ? test.param : L"<null>", L";");
+
+		switch (test.function)
 		{
-		case 0:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L"mingw32-make \"1.cpp\" ";
+		case Function::CreateW:
 			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
+			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
 			break;
-		case 1:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L"\"mingw32-make.exe\" \"1.cpp\" ";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
-			break;
-		case 2:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L"\"C:\\GCC\\mingw\\bin\\mingw32-make.exe\" \"1.cpp\" ";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
-			break;
-		case 3:
-			pszFile = L"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE";
-			pszParam = L"prince megahit";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
-			break;
-		case 4:
-			pszFile = nullptr;
-			pszParam = L" \"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE\"";
-			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
-			break;
-		case 5:
-			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
-			pszParam = L" \"1.cpp\" ";
+		case Function::ShellW:
 			EXPECT_TRUE(sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, &nCreateFlags, &nShowCmd));
+			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
 			break;
 		default:
 			break;
