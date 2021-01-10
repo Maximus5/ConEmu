@@ -20,6 +20,30 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.1.9
+* gh-2231: Validate shared memory on use.
+* gh-2220: Add VsDevCmd.bat to VisualStudio default task creation search.
+* gh-2228: return `ANSICON_VER` environment variable value as `189`.
+* Fix save 'Sync dir' option of ConEmu Inside mode. Support empty (default) CD format.
+* Fix GuiMacro assertion could appear in Inside mode during startup.
+* Internal changes in ConEmuHk Inject routine (error codes -113, -115).
+* gh-1691: Buffer keyboard sequences before writing to pty input (Connector version 1.2.9).
+* DefTerm: Prefer ConEmu inside instance when console app is running from parent window, e.g. VS debugging and ConEmu in a VS pane.
+* Ensure bitness is checked properly while injecting hooks (error -710).
+* DefTerm: fix starting python.exe from GUI idle.
+* DefTerm: Avoid RealConsole flickering while starting console app from VS without debugging.
+* DefTerm: Remove RealConsole flickering while starting debugger.
+* gh-1952: DefTerm. Modifications were made to support VS 2019 debugging and running of console applications (native and .net).
+  With "ConEmu Integration 2019" VS extension it's possible now to run and debug console applications using embedded terminal.
+* gh-2228: Implement `ConEmuFeatures` environment variable.
+  It's available only on direct requests, e.g. `echo %ConEmuFeatures%`
+  but does not exist in the environment (`set ConEmuFeatures` will not show it).
+  Returns a set of ConEmu::ConsoleFlags flags from ConEmu settings, e.g. "0x000082A6".
+* gh-947: Don't show `rcCon.right && rcCon.bottom` assertion in release.
+* Change clink URL to maintained fork
+* l10n: Translations were updated, Italian translation was started.
+
+
 2020.11.24
 * gh-2201: Support new executor in Far 3 build 5709.
 * l10n: German translations were updated
