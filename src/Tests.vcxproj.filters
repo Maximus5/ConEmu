@@ -1289,6 +1289,9 @@
     <ClCompile Include="common\InQueue.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\InQueue_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\Keyboard.cpp">
       <Filter>common</Filter>
     </ClCompile>

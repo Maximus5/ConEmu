@@ -725,6 +725,7 @@
     <ClCompile Include="common\HandleKeeper.cpp" />
     <ClCompile Include="common\HkFunc.cpp" />
     <ClCompile Include="common\InQueue.cpp" />
+    <ClCompile Include="common\InQueue_test.cpp" />
     <ClCompile Include="common\Keyboard.cpp" />
     <ClCompile Include="common\MAssert.cpp" />
     <ClCompile Include="common\MBSTR.cpp" />
