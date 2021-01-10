@@ -65,8 +65,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ConEmuC -OsVerInfo
 int OsVerInfo()
 {
-	OSVERSIONINFOEX osv = {sizeof(osv)};
-	GetOsVersionInformational((OSVERSIONINFO*)&osv);
+	OSVERSIONINFOEX osv = {};
+	osv.dwOSVersionInfoSize = sizeof(osv);
+	GetOsVersionInformational(reinterpret_cast<OSVERSIONINFO*>(&osv));
 
 	UINT DBCS = IsWinDBCS();
 	UINT HWFS = IsHwFullScreenAvailable();

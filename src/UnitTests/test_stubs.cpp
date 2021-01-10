@@ -134,12 +134,13 @@ namespace conemu {
 namespace tests {
 void PrepareGoogleTests()
 {
-	gOSVer = { sizeof(gOSVer) };
+	gOSVer = {};
+	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetOsVersionInformational(&gOSVer);
-	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
+	gnOsVer = static_cast<WORD>((gOSVer.dwMajorVersion & 0xFF) << 8) | static_cast<WORD>(gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	initMainThread();
-	Settings settings;
+	static Settings settings{};  // NOLINT(clang-diagnostic-exit-time-destructors)
 	gpSet = &settings;
 
 	gpHotKeys = new ConEmuHotKeyList;
