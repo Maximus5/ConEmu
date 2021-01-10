@@ -285,6 +285,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 
 	if (FileExists(asFilePath))
 	{
+		rsFound.Set(asFilePath);
 		return true;
 	}
 

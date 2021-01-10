@@ -1280,6 +1280,9 @@
     <ClCompile Include="common\EnvVar.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\FileSystem_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\HandleKeeper.cpp">
       <Filter>common</Filter>
     </ClCompile>

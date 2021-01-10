@@ -722,6 +722,7 @@
     <ClCompile Include="common\ConsoleRead.cpp" />
     <ClCompile Include="common\EmergencyShow.cpp" />
     <ClCompile Include="common\EnvVar.cpp" />
+    <ClCompile Include="common\FileSystem_test.cpp" />
     <ClCompile Include="common\HandleKeeper.cpp" />
     <ClCompile Include="common\HkFunc.cpp" />
     <ClCompile Include="common\InQueue.cpp" />
