@@ -121,12 +121,13 @@ TEST(ShellProcessor, Test)
 	}
 
 	test_mocks::FileSystemMock fileMock;
-	fileMock.MockFile(L"C:\\mingw\\bin\\mingw32-make.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
-	fileMock.MockFile(L"C:\\DosGames\\Prince\\PRINCE.EXE", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
-	fileMock.MockFile(L"C:\\Tools\\ConEmu.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
-	fileMock.MockFile(L"C:\\Tools\\ConEmu64.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
-	fileMock.MockFile(L"C:\\Tools\\ConEmu\\ConEmuC.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
-	fileMock.MockFile(L"C:\\Tools\\ConEmu\\ConEmuC64.exe", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+	fileMock.MockFile(LR"(C:\mingw\bin\mingw32-make.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	fileMock.MockFile(LR"(C:\DosGames\Prince\PRINCE.EXE)", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
+	fileMock.MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
+	fileMock.MockFile(LR"(C:\Tools\ConEmu.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
+	fileMock.MockFile(LR"(C:\Tools\ConEmu64.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
+	fileMock.MockFile(LR"(C:\Tools\ConEmu\ConEmuC.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	fileMock.MockFile(LR"(C:\ToolsConEmu\ConEmuC64.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
 
 	enum class Function { CreateW, ShellW };
 	struct TestInfo
@@ -148,6 +149,10 @@ TEST(ShellProcessor, Test)
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
 			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+
+		{Function::CreateW,
+			nullptr, LR"("C:\1 @\a.cmd")",
+			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
 
 		// #TODO: Add DosBox mock/test
 		{Function::CreateW,

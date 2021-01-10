@@ -490,13 +490,14 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	CEStr szDosBoxExe, szDosBoxCfg;
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	size_t nCchSize = 0;
-	BOOL lbEndQuote = FALSE, lbCheckEndQuote = FALSE;
+	BOOL lbEndQuote = FALSE;
 	#if 0
 	bool lbNewGuiConsole = false;
 	#endif
 	bool lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 	CEStr szDefTermArg, szDefTermArg2;
+	CEStr fileUnquote;
 
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
 	if (gbPrepareDefaultTerminal)
@@ -511,14 +512,13 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			asFile = nullptr;
 
 		// Кто-то может додуматься окавычить asFile
-		wchar_t* pszFileUnquote = nullptr;
 		if (asFile && (*asFile == L'"'))
 		{
-			pszFileUnquote = lstrdup(asFile + 1);
-			asFile = pszFileUnquote;
-			pszFileUnquote = wcschr(pszFileUnquote, L'"');
-			if (pszFileUnquote)
-				*pszFileUnquote = 0;
+			fileUnquote.Set(asFile + 1);
+			auto* endQuote = wcschr(fileUnquote.data(), L'"');
+			if (endQuote)
+				*endQuote = L'\0';
+			asFile = fileUnquote.c_str();
 		}
 
 		// Для простоты - сразу откинем asFile если он совпадает с первым аргументом в asParam
@@ -612,8 +612,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 				}
 			}
 		}
-
-		SafeFree(pszFileUnquote);
 	}
 
 	//szComspec = (wchar_t*)calloc(cchComspec,sizeof(*szComspec));
@@ -981,10 +979,8 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	else if (aCmd == eCreateProcess)
 	{
 		// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
-		// Если это не окавычить - cmd.exe отрежет первую и последнюю, и обломается
-		lbEndQuote = (asFile && *asFile == L'"') || (!asFile && asParam && *asParam == L'"');
-		// But don't put excess quotas
-		lbCheckEndQuote = TRUE;
+		// if we don't quotate, cmd.exe may cut first and last quote mark and fail
+		lbEndQuote = (asFile && *asFile == L'"') || (!asFile && asParam && *SkipNonPrintable(asParam) == L'"');
 	}
 
 	if (lbUseDosBox)
@@ -1058,7 +1054,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	if (lbUseDosBox)
 	{
 		_ASSERTEX(!gbPrepareDefaultTerminal);
-		lbEndQuote = TRUE; lbCheckEndQuote = FALSE;
+		lbEndQuote = TRUE;
 		_wcscat_c((*psParam), nCchSize, L"\"\"");
 		_wcscat_c((*psParam), nCchSize, szDosBoxExe);
 		_wcscat_c((*psParam), nCchSize, L"\" -noconsole ");
@@ -1177,25 +1173,6 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	}
 	else //NOT lbUseDosBox
 	{
-		if (lbEndQuote && lbCheckEndQuote)
-		{
-			// May be double quotation will be excess?
-			if (!(asFile && *asFile) && asParam && *asParam)
-			{
-				LPCWSTR pszTest = asParam;
-				CmdArg szTest;
-				if ((pszTest = NextArg(pszTest, szTest)))
-				{
-					pszTest = SkipNonPrintable(pszTest);
-					// Now - checks
-					if (!pszTest || !*pszTest)
-					{
-						lbEndQuote = FALSE;
-					}
-				}
-			}
-		}
-
 		if (lbEndQuote)
 			_wcscat_c((*psParam), nCchSize, L"\"");
 
