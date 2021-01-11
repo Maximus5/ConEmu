@@ -147,8 +147,18 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 	const COORD crLeft = {0, nRow};
 	DWORD nRead = 0, nWrite = 0;
 
-	if (!ReadConsoleOutputAttribute(hConOut, nAttrs, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS))
+	// Win 10 (1909) 18363.1256 bug? ReadConsoleOutputAttribute returns zeros after exit from wsl started as "cmd.exe /k wsl.exe"
+	// if (!ReadConsoleOutputAttribute(hConOut, nAttrs, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS))
+	//	return false;
+
+	CHAR_INFO data[ROWID_USED_CELLS] = {};
+	SMALL_RECT readRect{ 0, nRow, ROWID_USED_CELLS - 1, nRow };
+	if (!ReadConsoleOutputW(hConOut, data, COORD{ ROWID_USED_CELLS, 1 }, COORD{ 0,0 }, &readRect))
 		return false;
+	for (size_t i = 0; i < ROWID_USED_CELLS; ++i)
+	{
+		nAttrs[i] = data[i].Attributes;
+	}
 
 	if (RowId)
 	{
