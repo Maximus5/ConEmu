@@ -336,6 +336,27 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		}
 	}
 
+	if (gState.runMode_ == RunMode::Comspec)
+	{
+		// New console was requested?
+		if (IsNewConsoleArg(lsCmdLine))
+		{
+			auto* comspec = dynamic_cast<WorkerComspec*>(gpWorker);
+			if (!comspec)
+			{
+				_ASSERTE(comspec != nullptr);
+			}
+			else
+			{
+				const auto iNewConRc = comspec->ProcessNewConsoleArg(lsCmdLine);
+				if (iNewConRc != 0)
+				{
+					return iNewConRc;
+				}
+			}
+		}
+	}
+
 	// Cut and process the "-new_console" / "-cur_console"
 	const CEStr stripNewConsole(lsCmdLine);
 	SafeFree(args_.pszSpecialCmd);
@@ -358,28 +379,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		CStartEnvTitle setTitleVar(&gpszForcedTitle);
 		ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
 	}
-
-	if (gState.runMode_ == RunMode::Comspec)
-	{
-		// New console was requested?
-		if (IsNewConsoleArg(lsCmdLine))
-		{
-			auto* comspec = dynamic_cast<WorkerComspec*>(gpWorker);
-			if (!comspec)
-			{
-				_ASSERTE(comspec != nullptr);
-			}
-			else
-			{
-				const auto iNewConRc = comspec->ProcessNewConsoleArg(lsCmdLine);
-				if (iNewConRc != 0)
-				{
-					return iNewConRc;
-				}
-			}
-		}
-	}
-
+	
 	LPCWSTR pszArguments4EnvVar = nullptr;
 	CEStr szExeTest;
 
