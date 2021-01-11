@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_PRINT_LITE
 //	#define SHOW_EXITWAITKEY_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
+//	#define SHOW_INJECT_FAILURE_MSGBOX
 //	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //	#define SHOW_ROOT_STARTED
@@ -61,8 +62,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
 #define DEBUGSTRCP(x) DEBUGSTR(x)
 #define DEBUGSTRSIZE(x) DEBUGSTR(x)
-
-//#define SHOW_INJECT_MSGBOX
 
 #include "ConsoleMain.h"
 
@@ -485,6 +484,8 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 	SetLastError(0);
 
+	*lpProcessInformation = PROCESS_INFORMATION{};
+
 	const BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	const DWORD dwErr = GetLastError();
 	const auto nStartDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -492,9 +493,10 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 	wchar_t szRunRc[80];
 	if (lbRc)
-		swprintf_c(szRunRc, L"Succeeded (%u ms) PID=%u", nStartDuration.count(), lpProcessInformation->dwProcessId);
+		swprintf_c(szRunRc, L"Succeeded (%u ms) PID=%u handle=%s err=%u", static_cast<uint32_t>(nStartDuration.count()), lpProcessInformation->dwProcessId,
+			(lpProcessInformation->hProcess && lpProcessInformation->hProcess != INVALID_HANDLE_VALUE) ? L"valid" : L"null", dwErr);
 	else
-		swprintf_c(szRunRc, L"Failed (%u ms) Code=%u(x%04X)", nStartDuration.count(), dwErr, dwErr);
+		swprintf_c(szRunRc, L"Failed (%u ms) Code=%u(x%04X)", static_cast<uint32_t>(nStartDuration.count()), dwErr, dwErr);
 	LogFunction(szRunRc);
 
 #if defined(SHOW_STARTED_PRINT_LITE)
@@ -939,6 +941,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 
 	LoadExePath();
 
+	LogFunction(L"ConsoleMain3 continued");
+
 	PRINT_COMSPEC(L"ConEmuC started: %s\n", asCmdLine);
 	nExitPlaceStep = 50;
 	xf_check();
@@ -1239,6 +1243,10 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 			nullptr, pszCurDir, &si, &pi);
 		dwErr = GetLastError();
 
+		{
+			LogFunction(L"first createProcess finished");
+		}
+
 		if (!lbRc && (gState.runMode_ == RunMode::Server) && dwErr == ERROR_FILE_NOT_FOUND)
 		{
 			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
@@ -1294,6 +1302,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 			}
 			else
 			{
+				LogFunction(L"Preparing injects");
 				TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
 				//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
 				// #TODO При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!
@@ -1319,7 +1328,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 				else
 				{
 					// Чтобы модуль хуков в корневом процессе знал, что оно корневое
-					_ASSERTE(ghRootProcessFlag==nullptr);
+					_ASSERTE(ghRootProcessFlag == nullptr);
 					wchar_t szEvtName[64];
 					msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, pi.dwProcessId);
 					ghRootProcessFlag = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
@@ -1329,21 +1338,38 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 					}
 					else
 					{
-						_ASSERTE(ghRootProcessFlag!=nullptr);
+						_ASSERTE(ghRootProcessFlag != nullptr);
 					}
 
+					LogFunction(L"InjectHooks calling");
 					// Inject ConEmuHk.dll into started process space
 					iHookRc = InjectHooks(pi, gnImageBits, gbLogProcess, gsSelfPath, gState.realConWnd_);
 				}
 
 				if (iHookRc != CIH_OK/*0*/)
 				{
+					LogFunction(L"InjectHooks failed");
 					DWORD nErrCode = GetLastError();
-					//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
+					if (!gpConsoleArgs->preferSilentMode_.GetBool())
+					{
+						printf(
+							"--------------------------------------\n"
+							"ConEmuC.M[%u], PID=%u, Injecting hooks into PID=%u FAILED, code=%i:0x%08X"
+							"\n--------------------------------------\n",
+							WIN3264TEST(32, 64), static_cast<unsigned>(GetCurrentProcessId()),
+							static_cast<unsigned>(pi.dwProcessId), iHookRc, static_cast<unsigned>(nErrCode));
+					}
+					#ifdef SHOW_INJECT_FAILURE_MSGBOX
 					wchar_t szDbgMsg[255], szTitle[128];
-					swprintf_c(szTitle, L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
-					swprintf_c(szDbgMsg, L"ConEmuC.M, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
+					swprintf_c(szTitle, L"ConEmuC[%u], PID=%u", WIN3264TEST(32, 64), GetCurrentProcessId());
+					swprintf_c(szDbgMsg, L"ConEmuC.M[%u], PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X",
+						WIN3264TEST(32, 64), GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
 					MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+					#endif
+				}
+				else
+				{
+					LogFunction(L"InjectHooks succeeded");
 				}
 
 				if (gState.dosbox_.use_)
@@ -1359,8 +1385,10 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 			MessageBoxW(nullptr, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 			#endif
 
-			// Отпустить процесс (это корневой процесс консоли, например far.exe)
+			// This is root console process (e.g. far.exe)
 			ResumeThread(pi.hThread);
+
+			LogFunction(L"Process started and resumed");
 		}
 
 		if (!lbRc && dwErr == 0x000002E4)
