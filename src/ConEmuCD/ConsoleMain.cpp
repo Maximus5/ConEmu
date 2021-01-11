@@ -3288,6 +3288,14 @@ void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pCon
 
 bool LogString(LPCSTR asText)
 {
+	#ifdef _DEBUG
+	if (gpConsoleArgs && gpConsoleArgs->debugVerbose_.GetBool())
+	{
+		printf("%s\n", asText);
+		fflush(stdout);
+	}
+	#endif
+	
 	if (!gpLogSize)
 	{
 		#ifdef _DEBUG
@@ -3313,6 +3321,14 @@ bool LogString(LPCSTR asText)
 
 bool LogString(LPCWSTR asText)
 {
+	#ifdef _DEBUG
+	if (gpConsoleArgs && gpConsoleArgs->debugVerbose_.GetBool())
+	{
+		wprintf(L"%s\n", asText);
+		fflush(stdout);
+	}
+	#endif
+	
 	if (!gpLogSize)
 	{
 		DEBUGSTR(asText);

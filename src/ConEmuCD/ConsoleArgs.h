@@ -189,6 +189,8 @@ public:
 	ConEmuExecAction eExecAction_ = ConEmuExecAction::None;
 	/// print to StdOut process exit code (RunMode::RM_COMSPEC mainly)
 	SwitchBool printRetErrLevel_;
+	/// print some debug output to stdout
+	SwitchBool debugVerbose_;
 	/// don't print to console (GuiMacro and ExportXXX modes)
 	SwitchBool preferSilentMode_;
 	/// Set GuiMacro result to environment variable "ConEmuMacroResult" and export it

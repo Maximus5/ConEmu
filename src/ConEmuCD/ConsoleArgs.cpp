@@ -503,6 +503,10 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		{
 			printRetErrLevel_.SetBool(true);
 		}
+		else if (szArg.IsSwitch(L"/Verbose"))
+		{
+			debugVerbose_.SetBool(true);
+		}
 		else if (szArg.OneOfSwitches(L"/echo", L"/e"))
 		{
 			eExecAction_ = ConEmuExecAction::OutEcho;

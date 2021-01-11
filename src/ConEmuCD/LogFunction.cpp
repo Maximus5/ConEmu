@@ -1,4 +1,4 @@
-
+﻿
 /*
 Copyright (c) 2009-present Maximus5
 All rights reserved.
@@ -29,8 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleMain.h"
 #include "LogFunction.h"
 #include "ConEmuSrv.h"
+#include "ConsoleArgs.h"
 #include <algorithm>
-#include <windows.h>
+#include <Windows.h>
 
 namespace {
 const wchar_t kFnBegin[] = L" [begin]";
@@ -68,7 +69,7 @@ void CLogFunction::DoLogFunction(const wchar_t* asFnName)
 	const auto lLevel = std::min<int32_t>(++m_FnLevel, 20);
 	mb_Logged = true;
 
-	if (!gpLogSize)
+	if (!gpLogSize && !(gpConsoleArgs && gpConsoleArgs->debugVerbose_.GetBool()))
 		return;
 
 	const int cchFnInfo = std::size(mc_FnInfo);
