@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.1.11
+* gh-2212: Fix run batch from Far Manager from paths containing space and `@`.
+* Fix running from cmd prompt: `ConEmuC -c {bash}`.
+
+
 2021.1.9
 * gh-2231: Validate shared memory on use.
 * gh-2220: Add VsDevCmd.bat to VisualStudio default task creation search.
