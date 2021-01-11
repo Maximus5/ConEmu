@@ -164,7 +164,17 @@ BOOL InQueue::ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount, BOOL bNoRemove /*
 		}
 
 		if (pSrc == this->pInputQueueEnd)
+		{
 			pSrc = this->pInputQueue;
+			pEnd = this->pInputQueueWrite;
+			while (n && pSrc < pEnd)
+			{
+				_ASSERTE(pSrc->EventType != 0);
+				*pDst = *pSrc; nCount++; pSrc++;
+				InterlockedDecrement(&nUsedLen);
+				n--; pDst++;
+			}
+		}
 
 		TODO("Доделать чтение начала буфера, если считали его конец");
 		//
@@ -195,7 +205,7 @@ BOOL InQueue::GetNumberOfBufferEvents()
 		if (pSrc == this->pInputQueueEnd)
 		{
 			pSrc = this->pInputQueue;
-			pEnd = (this->pInputQueueRead < this->pInputQueueWrite) ? this->pInputQueueWrite : this->pInputQueueEnd;
+			pEnd = this->pInputQueueWrite;
 
 			while(pSrc < pEnd)
 			{

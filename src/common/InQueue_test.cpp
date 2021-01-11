@@ -103,12 +103,11 @@ TEST(InQueue, ReadWrite)
 	EXPECT_TRUE(queue.IsInputQueueEmpty());
 	EXPECT_TRUE(queue.WriteInputQueue(&writeRecords[0], false, static_cast<DWORD>(writeRecords.size())));
 	EXPECT_FALSE(queue.IsInputQueueEmpty());
+	EXPECT_EQ(queue.GetNumberOfBufferEvents(), 8);
 	readRecords.resize(10);
+	// Now, ReadInputQueue() reads events even if data is wrapped over the end of queue.
 	EXPECT_TRUE(queue.ReadInputQueue(&readRecords[0], &(readCount = 8), false));
-	EXPECT_EQ(readCount, 1); // this should be fixed by finish reading from the buffer start
-	EXPECT_FALSE(queue.IsInputQueueEmpty());
-	EXPECT_TRUE(queue.ReadInputQueue(&readRecords[1], &(readCount = 8), false));
-	EXPECT_EQ(readCount, 7);
+	EXPECT_EQ(readCount, 8);
 	EXPECT_TRUE(queue.IsInputQueueEmpty());
 	readRecords.resize(8);
 	EXPECT_EQ(readRecords, writeRecords);

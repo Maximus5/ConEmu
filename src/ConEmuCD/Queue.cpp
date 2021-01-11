@@ -677,6 +677,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	InputLogger::Log(InputLogger::Event::evt_WriteConInput, nCount);
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
+#if 0 // The code below disturbs reconstruction of special keys (such as arraw keys) events in pseudo console.
 	// Strange VIM reaction on xterm-keypresses
 	if ((nCount > 2) && (nCount <= 32) && (pr->EventType == KEY_EVENT) && (pr->Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE))
 	{
@@ -692,6 +693,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		}
 	}
 	else
+#endif
 	{
 		fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 	}
