@@ -103,7 +103,7 @@ TEST(InQueue, ReadWrite)
 	EXPECT_TRUE(queue.IsInputQueueEmpty());
 	EXPECT_TRUE(queue.WriteInputQueue(&writeRecords[0], false, static_cast<DWORD>(writeRecords.size())));
 	EXPECT_FALSE(queue.IsInputQueueEmpty());
-	EXPECT_TRUE(queue.GetNumberOfBufferEvents(), 8);
+	EXPECT_EQ(queue.GetNumberOfBufferEvents(), 8);
 	readRecords.resize(10);
 	EXPECT_TRUE(queue.ReadInputQueue(&readRecords[0], &(readCount = 8), false));
 	EXPECT_EQ(readCount, 8);
