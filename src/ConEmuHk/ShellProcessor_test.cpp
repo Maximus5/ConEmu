@@ -31,6 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include "../UnitTests/gtest.h"
+#include "../UnitTests/test_mock_file.h"
+#include "../common/EnvVar.h"
+#include "../common/execute.h"
+#include "../ConEmuHk/MainThread.h"
 #include "Ansi.h"
 #include "ShellProcessor.h"
 #include "GuiAttach.h"
@@ -38,9 +42,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DllOptions.h"
 #include <memory>
 
-#include "../common/execute.h"
-#include "../ConEmuHk/MainThread.h"
-#include "../UnitTests/test_mock_file.h"
 
 #ifndef __GNUC__
 extern "C" IMAGE_DOS_HEADER __ImageBase;
@@ -101,6 +102,9 @@ TEST(ShellProcessor, Test)
 		}
 	}
 
+	SetEnvironmentVariableW(L"ConEmuBaseDirTest", srvMap.ComSpec.ConEmuBaseDir);
+	SetEnvironmentVariableW(L"ConEmuLogTest", srvMap.nLogLevel ? L"/LOG " : L"");
+
 	VarSet<HWND> setRoot(ghConEmuWnd, srvMap.hConEmuRoot);
 	VarSet<HWND> setBack(ghConEmuWndBack, srvMap.hConEmuWndBack);
 	VarSet<HWND> setDc(ghConEmuWndDC, srvMap.hConEmuWndDc);
@@ -124,10 +128,14 @@ TEST(ShellProcessor, Test)
 	fileMock.MockFile(LR"(C:\mingw\bin\mingw32-make.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
 	fileMock.MockFile(LR"(C:\DosGames\Prince\PRINCE.EXE)", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
 	fileMock.MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
-	fileMock.MockFile(LR"(C:\Tools\ConEmu.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
-	fileMock.MockFile(LR"(C:\Tools\ConEmu64.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
-	fileMock.MockFile(LR"(C:\Tools\ConEmu\ConEmuC.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
-	fileMock.MockFile(LR"(C:\ToolsConEmu\ConEmuC64.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+	CEStr exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu.exe");
+	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
+	exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu64.exe");
+	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
+	exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC.exe");
+	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC64.exe");
+	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
 
 	enum class Function { CreateW, ShellW };
 	struct TestInfo
@@ -142,17 +150,17 @@ TEST(ShellProcessor, Test)
 	TestInfo tests[] = {
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"(mingw32-make "1.cpp" )",
-			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
 
 		{Function::CreateW,
 			nullptr, LR"("C:\1 @\a.cmd")",
-			nullptr, LR"("C:\Tools\ConEmu\ConEmuC.exe" /PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
 
 		// #TODO: Add DosBox mock/test
 		{Function::CreateW,
@@ -179,7 +187,8 @@ TEST(ShellProcessor, Test)
 
 		wchar_t paramBuffer[1024] = L"";
 		const auto pid = GetCurrentProcessId();
-		msprintf(paramBuffer, countof(paramBuffer), test.expectParam, pid);
+		CEStr expanded(ExpandEnvStr(test.expectParam));
+		msprintf(paramBuffer, countof(paramBuffer), expanded.c_str(), pid);
 
 		const CEStr testInfo(L"file=", test.file ? test.file : L"<null>",
 			L"; param=", test.param ? test.param : L"<null>", L";");
@@ -201,6 +210,9 @@ TEST(ShellProcessor, Test)
 		}
 		MCHKHEAP;
 	}
+
+	SetEnvironmentVariableW(L"ConEmuBaseDirTest", nullptr);
+	SetEnvironmentVariableW(L"ConEmuLogTest", nullptr);
 }
 
 TEST(ShellProcessor, WorkOptions)
