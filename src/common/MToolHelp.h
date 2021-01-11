@@ -242,6 +242,8 @@ public:
 	// Inherited
 	// bool Next(PROCESSENTRY32* lp);
 
+	using MToolHelp::Find;
+
 	bool Find(DWORD pid, PROCESSENTRY32& result)
 	{
 		return MToolHelp::Find([pid](const PROCESSENTRY32& item) {return item.th32ProcessID == pid; }, result);
