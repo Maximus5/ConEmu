@@ -61,6 +61,9 @@ struct cdbg : public std::ostringstream
 	{
 		const auto data = this->str();
 		testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "[ %s ] %s", m_label.c_str(), data.c_str());
+		static const bool in_color_mode = _isatty(_fileno(stdout)) != 0;
+		if (!in_color_mode)
+			fflush(stdout);
 	}
 
 private:
