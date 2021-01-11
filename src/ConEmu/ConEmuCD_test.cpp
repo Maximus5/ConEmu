@@ -29,10 +29,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#include <thread>
+
 #include "../common/defines.h"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/MHandle.h"
 #include "../common/MModule.h"
+#include "../common/MToolHelp.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../UnitTests/gtest.h"
 #include "../ConEmuCD/ExportedFunctions.h"
@@ -423,6 +427,49 @@ TEST_F(ServerDllTest, RunCmdExe)
 		return; // nothing to check more
 	}
 
+	const MHandle hStdOut(GetStdHandle(STD_OUTPUT_HANDLE));
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	if (!GetConsoleScreenBufferInfo(hStdOut, &csbi))
+	{
+		cdbg() << "GetConsoleScreenBufferInfo failed, error=" + std::to_string(GetLastError()) << std::endl;
+	}
+
+	std::atomic_bool guardStop{ false };
+	auto hungGuardFn = [&guardStop]()
+	{
+		const auto started = std::chrono::steady_clock::now();
+		const std::chrono::seconds hangDelay{ 60 };
+		bool hang = false;
+		while (!guardStop.load() && !hang)
+		{
+			hang = (std::chrono::steady_clock::now() - started) > hangDelay;
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+		}
+		if (!hang)
+			return;
+
+		MToolHelpProcess processes;
+		PROCESSENTRY32W pi{};
+		if (processes.Find([](const PROCESSENTRY32W& item)
+			{
+				const auto* itemName = PointToName(item.szExeFile);
+				if (!itemName)
+					return false;
+				if (item.th32ParentProcessID != GetCurrentProcessId())
+					return false;
+				const int iCmp = lstrcmpi(itemName, L"cmd.exe");
+				return (iCmp == 0);
+			}, pi))
+		{
+			const MHandle process(OpenProcess(MY_PROCESS_ALL_ACCESS|PROCESS_TERMINATE|SYNCHRONIZE, false, pi.th32ProcessID), CloseHandle);
+			cdbg() << "Terminating cmd.exe PID=" << pi.th32ProcessID << std::endl;
+			if (!TerminateProcess(process, 255))
+				cdbg() << "TerminateProcess PID=" << pi.th32ProcessID << " failed, code=" << GetLastError() << std::endl;
+		}
+	};
+
+	guardStop.store(false);
+	std::thread hangGuard1(hungGuardFn);
 	const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo echo from cmd.exe");
 	EXPECT_EQ(0, cmdRc1);
 	try
@@ -438,7 +485,13 @@ TEST_F(ServerDllTest, RunCmdExe)
 	{
 		FAIL() << ex.what();
 	}
+	guardStop.store(true);
+	hangGuard1.join();
 
+	guardStop.store(false);
+	std::thread hangGuard2(hungGuardFn);
 	const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");
 	EXPECT_EQ(3, cmdRc2);
+	guardStop.store(true);
+	hangGuard2.join();
 }

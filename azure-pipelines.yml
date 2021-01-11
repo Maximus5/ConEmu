@@ -19,6 +19,7 @@ jobs:
 
 - job: 'x64_Release'
   displayName: 'x64|Release'
+  timeoutInMinutes: 15
   variables:
     platform: 'x64'
     configuration: 'Release'
@@ -39,6 +40,7 @@ jobs:
 
 - job: 'x64_Debug'
   displayName: 'x64|Debug'
+  timeoutInMinutes: 15
   variables:
     platform: 'x64'
     configuration: 'Debug'
@@ -59,6 +61,7 @@ jobs:
 
 - job: 'Win32_Release'
   displayName: 'Win32|Release'
+  timeoutInMinutes: 15
   variables:
     platform: 'Win32'
     configuration: 'Release'
@@ -79,6 +82,7 @@ jobs:
 
 - job: 'Win32_Debug'
   displayName: 'Win32|Debug'
+  timeoutInMinutes: 15
   variables:
     platform: 'Win32'
     configuration: 'Debug'
