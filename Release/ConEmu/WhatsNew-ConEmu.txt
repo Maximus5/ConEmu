@@ -20,6 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.1.12
+* gh-2243: Fix arrow key issue in cygwin pseudo console. (#2245)
+* Add `ConEmuC -verbose` switch to force called functions printing to stdout (debugging purposes).
+* Don't show MessageBox on injects failures in ConEmuC.exe, print error to stdout instead. May be suppressed by `-silent` switch.
+* Workaround for Win10 bug leading to invisible leading 4 characters in prompt after exit from `cmd.exe /k wsl.exe`.
+
+
 2021.1.11
 * gh-2212: Fix run batch from Far Manager from paths containing space and `@`.
 * Fix running from cmd prompt: `ConEmuC -c {bash}`.
