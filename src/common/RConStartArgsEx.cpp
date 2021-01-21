@@ -102,10 +102,10 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 		return false;
 	}
 
-	if (!abConcat || args.BackgroundTab || args.ForegroungTab)
+	if (!abConcat || args.BackgroundTab || args.ForegroundTab)
 	{
 		this->BackgroundTab = args.BackgroundTab;
-		this->ForegroungTab = args.ForegroungTab;
+		this->ForegroundTab = args.ForegroundTab;
 	}
 	if (!abConcat || args.NoDefaultTerm)
 	{
@@ -226,7 +226,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks) const
 						+ wcslen(szUserPassword)) : 0);
 	if (ForceUserDialog == crb_On) cchMaxLen++; // -new_console:u
 	if (BackgroundTab == crb_On) cchMaxLen++; // -new_console:b
-	if (ForegroungTab == crb_On) cchMaxLen++; // -new_console:f
+	if (ForegroundTab == crb_On) cchMaxLen++; // -new_console:f
 	if (BufHeight == crb_On) cchMaxLen += 32; // -new_console:h<lines>
 	if (LongOutputDisable == crb_On) cchMaxLen++; // -new_console:o
 	if (OverwriteMode != crb_Off) cchMaxLen += 2; // -new_console:w[0|1]
@@ -279,7 +279,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks) const
 
 	if (BackgroundTab == crb_On)
 		wcscat_c(szAdd, L"b");
-	else if (ForegroungTab == crb_On)
+	else if (ForegroundTab == crb_On)
 		wcscat_c(szAdd, L"f");
 
 	if (ForceDosBox == crb_On)

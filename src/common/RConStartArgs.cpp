@@ -337,11 +337,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					case L'b':
 						// b - background, don't activate the starting console
-						BackgroundTab = crb_On; ForegroungTab = crb_Off;
+						BackgroundTab = crb_On; ForegroundTab = crb_Off;
 						break;
 					case L'f':
 						// f - foreground,  activate the tab (same as ">" in Tasks)
-						ForegroungTab = crb_On; BackgroundTab = crb_Off;
+						ForegroundTab = crb_On; BackgroundTab = crb_Off;
 						break;
 
 					case L'z':

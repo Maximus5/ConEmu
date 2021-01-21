@@ -14464,8 +14464,8 @@ void CRealConsole::UpdateStartArgs(RConStartArgsEx::SplitType aSplitType, UINT a
 	// Ensure than active console does not have 'Background' flag
 	if (active && m_Args.BackgroundTab)
 		m_Args.BackgroundTab = crb_Undefined;
-	if (!active && m_Args.ForegroungTab)
-		m_Args.ForegroungTab = crb_Undefined;
+	if (!active && m_Args.ForegroundTab)
+		m_Args.ForegroundTab = crb_Undefined;
 }
 
 void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev)

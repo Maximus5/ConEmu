@@ -3274,8 +3274,8 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 		{
 			if (rpbSetActive)
 				*rpbSetActive = true;
-			if (pArgs && (pArgs->ForegroungTab == crb_Undefined) && (pArgs->BackgroundTab == crb_Undefined))
-				pArgs->ForegroungTab = crb_On;
+			if (pArgs && (pArgs->ForegroundTab == crb_Undefined) && (pArgs->BackgroundTab == crb_Undefined))
+				pArgs->ForegroundTab = crb_On;
 		}
 
 		if (*apszLine == L'*')
@@ -3469,7 +3469,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStart
 				pLastVCon = pVCon;
 
 				const RConStartArgsEx& modArgs = pVCon->RCon()->GetArgs();
-				if (lbSetActive || (!pSetActive && (modArgs.ForegroungTab == crb_On)))
+				if (lbSetActive || (!pSetActive && (modArgs.ForegroundTab == crb_On)))
 					pSetActive = pVCon;
 
 				if (CVConGroup::isVConExists((int)MAX_CONSOLE_COUNT-1))

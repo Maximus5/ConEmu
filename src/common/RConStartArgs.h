@@ -76,7 +76,7 @@ public:
 	// -new_console:b
 	RConBoolArg     BackgroundTab = crb_Undefined;
 	// -new_console:f
-	RConBoolArg     ForegroungTab = crb_Undefined;
+	RConBoolArg     ForegroundTab = crb_Undefined;
 	// -new_console:z - don't use "Default terminal" feature. Ignored in CreateCommandLine()
 	RConBoolArg     NoDefaultTerm = crb_Undefined;
 
