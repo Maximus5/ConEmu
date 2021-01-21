@@ -177,10 +177,10 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 {
 #ifdef _DEBUG
 	xf_dump_chk();
-	xf_validate(NULL);
+	xf_validate(nullptr);
 #endif
 	//WARNING("Послать в GUI CONEMUCMDSTOPPED");
-	LogSize(NULL, 0, "ComspecDone");
+	LogSize(nullptr, 0, "ComspecDone");
 
 	// Это необходимо делать, т.к. при смене буфера (SetConsoleActiveScreenBuffer) приложением,
 	// дескриптор нужно закрыть, иначе conhost может не вернуть предыдущий буфер
@@ -247,7 +247,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 					{
 						*(pszNewTarget++) = 0;
 						if (*pszNewTarget == 0)
-							pszNewTarget = NULL;
+							pszNewTarget = nullptr;
 					}
 
 					AddConsoleAlias(pszNewName, pszNewTarget, szSelfName);
@@ -260,14 +260,14 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 		if (pszPostAliases)
 		{
-			free(pszPostAliases); pszPostAliases = NULL;
+			free(pszPostAliases); pszPostAliases = nullptr;
 		}
 	}
 
 	xf_dump_chk();
 	//TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
 	DWORD dwErr1 = 0; //, dwErr2 = 0;
-	HANDLE hOut1 = NULL, hOut2 = NULL;
+	HANDLE hOut1 = nullptr, hOut2 = nullptr;
 	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
 	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
 
@@ -294,7 +294,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 	#ifdef _DEBUG
 	xf_dump_chk();
-	xf_validate(NULL);
+	xf_validate(nullptr);
 	#endif
 
 	if (!gbNonGuiMode && (gpWorker->ParentFarPid() != 0))
@@ -315,7 +315,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 				lbRc1 = TRUE;
 			}
 
-			ExecuteFreeResult(pOut); pOut = NULL;
+			ExecuteFreeResult(pOut); pOut = nullptr;
 		}
 
 		if (!gbWasBufferHeight)
@@ -392,8 +392,8 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 		CEStr srvPid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
 		if (guiPid && srvPid)
 		{
-			DWORD GuiPID = wcstoul(guiPid, NULL, 10);
-			DWORD SrvPID = wcstoul(srvPid, NULL, 10);
+			DWORD GuiPID = wcstoul(guiPid, nullptr, 10);
+			DWORD SrvPID = wcstoul(srvPid, nullptr, 10);
 			ConEmuGuiMapping GuiMapping = { sizeof(GuiMapping) };
 			if (GuiPID && LoadGuiMapping(GuiPID, GuiMapping))
 			{
@@ -420,7 +420,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 		if (!hConEmu || !IsWindow(hConEmu))
 		{
 			// попытаться найти открытый ConEmu
-			hConEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+			hConEmu = FindWindowEx(nullptr, nullptr, VirtualConsoleClassMain, nullptr);
 			if (hConEmu)
 				gbNonGuiMode = TRUE; // Чтобы не пытаться выполнить SendStopped (ибо некому)
 		}
@@ -440,7 +440,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 			wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
 			if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
 			{
-				wchar_t* pszEnd = NULL;
+				wchar_t* pszEnd = nullptr;
 				pIn->NewCmd.hFromDcWnd.u = wcstoul(pszDcWnd + 2, &pszEnd, 16);
 			}
 			SafeFree(pszDcWnd);
@@ -460,7 +460,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 			}
 			else
 			{
-				_ASSERTE(pOut != NULL);
+				_ASSERTE(pOut != nullptr);
 				iNewConRc = CERR_RUNNEWCONSOLEFAILED;
 			}
 			ExecuteFreeResult(pIn);
@@ -475,7 +475,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 	}
 
 	// Executed outside of ConEmu, impossible to bypass command to new console
-	_ASSERTE(hConWnd != NULL);
+	_ASSERTE(hConWnd != nullptr);
 	return 0; // try to continue as usual
 }
 
@@ -523,7 +523,7 @@ bool WorkerComspec::GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD 
 				// Попробовать ANSI функции
 				UINT nCP = CP_OEMCP;
 				char szExeName[MAX_PATH+1];
-				char *pszAliases = NULL;
+				char *pszAliases = nullptr;
 				WideCharToMultiByte(nCP,0,asExeName,-1,szExeName,MAX_PATH+1,0,0);
 				nSizeA = GetConsoleAliasesLengthA(szExeName);
 
@@ -566,7 +566,7 @@ bool WorkerComspec::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_R
 
 	if (!gState.realConWnd_)
 	{
-		DEBUGSTRSIZE(L"SetConsoleSize: Skipped due to gState.realConWnd==NULL");
+		DEBUGSTRSIZE(L"SetConsoleSize: Skipped due to gState.realConWnd==nullptr");
 		return FALSE;
 	}
 

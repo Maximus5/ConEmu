@@ -70,10 +70,10 @@ wchar_t* lstrdupW(const char* asText, UINT cp /*= CP_ACP*/)
 	return psz;
 }
 
-char* lstrdupA(const wchar_t* asText, UINT cp /*= CP_ACP*/, int* pnLen /*= NULL*/)
+char* lstrdupA(const wchar_t* asText, UINT cp /*= CP_ACP*/, int* pnLen /*= nullptr*/)
 {
 	if (!asText)
-		return NULL;
+		return nullptr;
 
 	if (!*asText)
 	{
@@ -81,15 +81,15 @@ char* lstrdupA(const wchar_t* asText, UINT cp /*= CP_ACP*/, int* pnLen /*= NULL*
 		return lstrdup("");
 	}
 
-	int nLen = WideCharToMultiByte(cp, 0, asText, -1, NULL, 0, NULL, NULL);
-	char* psz = NULL;
+	int nLen = WideCharToMultiByte(cp, 0, asText, -1, nullptr, 0, nullptr, nullptr);
+	char* psz = nullptr;
 
 	if (nLen > 0)
 	{
 		psz = (char*)malloc(nLen);
 		if (!psz)
-			return NULL; // memory allocation failure
-		nLen = WideCharToMultiByte(cp, 0, asText, -1, psz, nLen, NULL, NULL);
+			return nullptr; // memory allocation failure
+		nLen = WideCharToMultiByte(cp, 0, asText, -1, psz, nLen, nullptr, nullptr);
 		if (nLen <= 1)
 		{
 			SafeFree(psz);
@@ -103,7 +103,7 @@ char* lstrdupA(const wchar_t* asText, UINT cp /*= CP_ACP*/, int* pnLen /*= NULL*
 	return psz;
 }
 
-wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/, const wchar_t* asStr6 /*= NULL*/, const wchar_t* asStr7 /*= NULL*/, const wchar_t* asStr8 /*= NULL*/, const wchar_t* asStr9 /*= NULL*/)
+wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= nullptr*/, const wchar_t* asStr4 /*= nullptr*/, const wchar_t* asStr5 /*= nullptr*/, const wchar_t* asStr6 /*= nullptr*/, const wchar_t* asStr7 /*= nullptr*/, const wchar_t* asStr8 /*= nullptr*/, const wchar_t* asStr9 /*= nullptr*/)
 {
 	size_t cchMax = 1;
 	const size_t Count = 9;
@@ -116,9 +116,9 @@ wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* 
 		cchMax += cch[i];
 	}
 
-	wchar_t* pszRet = (wchar_t*)malloc(cchMax*sizeof(*pszRet));
+	wchar_t* pszRet = static_cast<wchar_t*>(malloc(cchMax * sizeof(*pszRet)));
 	if (!pszRet)
-		return NULL;
+		return nullptr;
 	*pszRet = 0;
 	wchar_t* psz = pszRet;
 
@@ -127,16 +127,16 @@ wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* 
 		if (!cch[i])
 			continue;
 
-		_wcscpy_c(psz, cch[i]+1, pszStr[i]);
+		_wcscpy_c(psz, cch[i] + 1, pszStr[i]);
 		psz += cch[i];
 	}
 
 	return pszRet;
 }
 
-bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/, const wchar_t* asStr6 /*= NULL*/, const wchar_t* asStr7 /*= NULL*/, const wchar_t* asStr8 /*= NULL*/, const wchar_t* asStr9 /*= NULL*/)
+bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= nullptr*/, const wchar_t* asStr4 /*= nullptr*/, const wchar_t* asStr5 /*= nullptr*/, const wchar_t* asStr6 /*= nullptr*/, const wchar_t* asStr7 /*= nullptr*/, const wchar_t* asStr8 /*= nullptr*/, const wchar_t* asStr9 /*= nullptr*/)
 {
-	_ASSERTE(apsStr1!=NULL);
+	_ASSERTE(apsStr1!=nullptr);
 
 	wchar_t* pszNew = lstrmerge(*apsStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8, asStr9);
 	if (!pszNew)

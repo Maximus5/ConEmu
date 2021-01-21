@@ -225,11 +225,11 @@ protected:
 
 		crc = 0xFFFFFFFF;
 
-		hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (!hFile || hFile == INVALID_HANDLE_VALUE)
 		{
 			Sleep(250);
-			hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+			hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 			if (!hFile || hFile == INVALID_HANDLE_VALUE)
 				goto wrap;
 		}
@@ -243,7 +243,7 @@ protected:
 		while (nReadLeft)
 		{
 			nToRead = std::min<DWORD>(nBufSize, nReadLeft);
-			if (!ReadFile(hFile, buf, nToRead, &nRead, NULL) || (nToRead != nRead))
+			if (!ReadFile(hFile, buf, nToRead, &nRead, nullptr) || (nToRead != nRead))
 				goto wrap;
 			if (!CalcCRC(buf, nRead, crc))
 				goto wrap;
@@ -291,7 +291,7 @@ protected:
 
 		while (!bExit)
 		{
-			bSuccess = ReadFile(pObj->mh_PipeErrRead, Line, dwToRead, &dwRead, NULL);
+			bSuccess = ReadFile(pObj->mh_PipeErrRead, Line, dwToRead, &dwRead, nullptr);
 			if (!bSuccess || dwRead == 0)
 			{
 				nErrCode = GetLastError();
@@ -306,13 +306,13 @@ protected:
 			while (buffer.GetLine(szLine))
 			{
 				bool bProgress = false;
-				if ((ptr = wcsstr(szLine, sProgressMark)) != NULL)
+				if ((ptr = wcsstr(szLine, sProgressMark)) != nullptr)
 				{
 					bProgress = true;
 					if (pObj->mfn_Callback[dc_ProgressCallback])
 					{
 						// 09:01:20.811{1234} Progr: Bytes downloaded 1656
-						wchar_t* ptrEnd = NULL;
+						wchar_t* ptrEnd = nullptr;
 						LPCWSTR pszFrom = wcspbrk(ptr+wcslen(sProgressMark), L"0123456789");
 						nValue = pszFrom ? wcstoul(pszFrom, &ptrEnd, 10) : 0;
 
@@ -332,7 +332,7 @@ protected:
 				}
 
 				// For logging purposes
-				if (!bProgress && ((ptr = wcsstr(szLine, sErrorMark)) != NULL))
+				if (!bProgress && ((ptr = wcsstr(szLine, sErrorMark)) != nullptr))
 				{
 					if (pObj->mfn_Callback[dc_ErrCallback])
 					{
@@ -344,7 +344,7 @@ protected:
 						pObj->mfn_Callback[dc_ErrCallback](&Error);
 					}
 				}
-				else //if (bProgress || ((ptr = wcsstr(szLine, sInformationMark)) != NULL))
+				else //if (bProgress || ((ptr = wcsstr(szLine, sInformationMark)) != nullptr))
 				{
 					if (pObj->mfn_Callback[dc_LogCallback])
 					{
@@ -400,7 +400,7 @@ protected:
 		{
 			// We need to redirect only StdError output
 
-			SECURITY_ATTRIBUTES saAttr = {sizeof(saAttr), NULL, TRUE};
+			SECURITY_ATTRIBUTES saAttr = {sizeof(saAttr), nullptr, TRUE};
 			if (!CreatePipe(&mh_PipeErrRead, &mh_PipeErrWrite, &saAttr, 0))
 			{
 				iRc = GetLastError();
@@ -413,7 +413,7 @@ protected:
 			SetHandleInformation(mh_PipeErrRead, HANDLE_FLAG_INHERIT, 0);
 
 			mh_PipeErrThread = apiCreateThread(StdErrReaderThread, (LPVOID)&threadParm, &mn_PipeErrThreadId, "Downloader::ReaderThread");
-			if (mh_PipeErrThread != NULL)
+			if (mh_PipeErrThread != nullptr)
 			{
 				m_SI.dwFlags |= STARTF_USESTDHANDLES;
 				// Let's try to change only Error pipe?
@@ -422,7 +422,7 @@ protected:
 		}
 
 		// Now we can run the downloader
-		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE/*!Inherit!*/, nCreateFlags, NULL, szCmdDirectory, &m_SI, &m_PI))
+		if (!CreateProcess(nullptr, pszCommand, nullptr, nullptr, TRUE/*!Inherit!*/, nCreateFlags, nullptr, szCmdDirectory, &m_SI, &m_PI))
 		{
 			iRc = GetLastError();
 			_ASSERTE(FALSE && "Create downloader process was failed");
@@ -476,7 +476,7 @@ protected:
 
 	wchar_t* CreateCommand(LPCWSTR asSource, LPCWSTR asTarget, UINT& iRc)
 	{
-		wchar_t* pszCommand = NULL;
+		wchar_t* pszCommand = nullptr;
 
 		if (!szCmdStringFormat || !*szCmdStringFormat)
 		{
@@ -570,8 +570,8 @@ public:
 	{
 		UINT iRc = E_UNEXPECTED;
 		UINT nWait;
-		wchar_t* pszCommand = NULL;
-		wchar_t* szCmdDirectory = NULL; // Destination directory for file creation
+		wchar_t* pszCommand = nullptr;
+		wchar_t* szCmdDirectory = nullptr; // Destination directory for file creation
 
 		MCHKHEAP;
 
@@ -596,7 +596,7 @@ public:
 			goto wrap;
 		}
 
-		_ASSERTE(m_PI.hProcess==NULL);
+		_ASSERTE(m_PI.hProcess==nullptr);
 		MCHKHEAP;
 
 		nWait = ExecuteDownloader(pszCommand, szCmdDirectory);
@@ -631,26 +631,26 @@ public:
 		DEBUGTEST(gbAllowChkHeap = true);
 		mb_AsyncMode = true;
 		ZeroStruct(m_Proxy);
-		szCmdStringFormat = NULL;
+		szCmdStringFormat = nullptr;
 		ZeroStruct(mfn_Callback);
 		ZeroStruct(m_CallbackLParam);
 		mb_RequestTerminate = false;
 		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
 		ZeroStruct(m_PI);
 		mb_Terminating = false;
-		mh_PipeErrRead = mh_PipeErrWrite = mh_PipeErrThread = NULL;
+		mh_PipeErrRead = mh_PipeErrWrite = mh_PipeErrThread = nullptr;
 		mn_PipeErrThreadId = 0;
 	};
 
 	~CDownloader()
 	{
 		CloseInternet(true);
-		SetProxy(NULL, NULL, NULL);
+		SetProxy(nullptr, nullptr, nullptr);
 		SafeFree(szCmdStringFormat);
 	};
 };
 
-static CDownloader* gpInet = NULL;
+static CDownloader* gpInet = nullptr;
 
 #if defined(__GNUC__)
 extern "C"
@@ -666,7 +666,7 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 	case dc_Init:
 		if (!gpInet)
 			gpInet = new CDownloader;
-		nResult = (gpInet != NULL);
+		nResult = (gpInet != nullptr);
 		break;
 	case dc_Reset:
 		if (gpInet)
@@ -681,9 +681,9 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 		if (gpInet)
 		{
 			gpInet->SetProxy(
-				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
-				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
-				(argc > 2 && argv[2].argType == at_Str) ? argv[2].strArg : NULL);
+				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : nullptr,
+				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : nullptr,
+				(argc > 2 && argv[2].argType == at_Str) ? argv[2].strArg : nullptr);
 			nResult = TRUE;
 		}
 		break;
@@ -704,8 +704,8 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 		{
 			DWORD crc = 0, size = 0;
 			UINT iDlRc = gpInet->DownloadFile(
-				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
-				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
+				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : nullptr,
+				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : nullptr,
 				crc, size,
 				(argc > 2) ? argv[2].uintArg : TRUE);
 			// Succeeded?

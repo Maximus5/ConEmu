@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Returns true, if application was found in registry:
 // [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 // Also, function may change local process %PATH% variable
-bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore /*= NULL*/)
+bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore /*= nullptr*/)
 {
 	#if defined(CONEMU_MINIMAL)
 	PRAGMA_ERROR("Must not be included in ConEmuHk");
@@ -56,7 +56,7 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 	// "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"
 	LPCWSTR pszRoot = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
 	HKEY hk; LONG lRc;
-	CEStr lsName(pszRoot, pszSearchFile, pszExt ? NULL : L".exe");
+	CEStr lsName(pszRoot, pszSearchFile, pszExt ? nullptr : L".exe");
 	// Seems like 32-bit and 64-bit registry branches are the same now, but just in case - will check both
 	DWORD nWOW[2] = {WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY)};
 	for (int i = 0; i < 3; i++)
@@ -69,10 +69,10 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 		if (lRc != 0) continue;
 		wchar_t szVal[MAX_PATH+1] = L"";
 		DWORD nType, nSize = sizeof(szVal)-sizeof(szVal[0]);
-		lRc = RegQueryValueEx(hk, NULL, NULL, &nType, (LPBYTE)szVal, &nSize);
+		lRc = RegQueryValueEx(hk, nullptr, nullptr, &nType, (LPBYTE)szVal, &nSize);
 		if (lRc == 0)
 		{
-			wchar_t *pszCheck = NULL;
+			wchar_t *pszCheck = nullptr;
 			if (nType == REG_SZ)
 			{
 				pszCheck = szVal;
@@ -98,15 +98,15 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 					if (abSetPath)
 					{
 						nSize = 0;
-						lRc = RegQueryValueEx(hk, L"PATH", NULL, &nType, NULL, &nSize);
+						lRc = RegQueryValueEx(hk, L"PATH", nullptr, &nType, nullptr, &nSize);
 						if (lRc == 0 && nSize)
 						{
 							wchar_t* pszCurPath = GetEnvVar(L"PATH");
 							wchar_t* pszAddPath = (wchar_t*)calloc(nSize+4,1);
-							wchar_t* pszNewPath = NULL;
+							wchar_t* pszNewPath = nullptr;
 							if (pszAddPath)
 							{
-								lRc = RegQueryValueEx(hk, L"PATH", NULL, &nType, (LPBYTE)pszAddPath, &nSize);
+								lRc = RegQueryValueEx(hk, L"PATH", nullptr, &nType, (LPBYTE)pszAddPath, &nSize);
 								if (lRc == 0 && *pszAddPath)
 								{
 									// Если в "%PATH%" этого нет (в начале) - принудительно добавить
@@ -134,7 +134,7 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 										}
 										else
 										{
-											_ASSERTE(pszNewPath!=NULL && "Allocation failed?");
+											_ASSERTE(pszNewPath!=nullptr && "Allocation failed?");
 										}
 									}
 								}
@@ -159,12 +159,12 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 // GetFullPathName & ExpandEnvStr
 wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 {
-	wchar_t* pszResult = NULL;
-	wchar_t* pszTemp = NULL;
+	wchar_t* pszResult = nullptr;
+	wchar_t* pszTemp = nullptr;
 
 	if (wcschr(asPath, L'%'))
 	{
-		if ((pszTemp = ExpandEnvStr(asPath)) != NULL)
+		if ((pszTemp = ExpandEnvStr(asPath)) != nullptr)
 		{
 			asPath = pszTemp;
 		}
@@ -183,7 +183,7 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 
 	if (!pszResult)
 	{
-		_ASSERTEX(pszResult!=NULL);
+		_ASSERTEX(pszResult!=nullptr);
 		pszResult = lstrdup(asPath);
 	}
 
@@ -223,9 +223,9 @@ bool FindFileName(LPCWSTR asPath, CEStr& rsName)
 		nErrCode = GetLastError();
 		if (nErrCode == ERROR_ACCESS_DENIED)
 		{
-			hFind = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+			hFind = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 			if (hFind == INVALID_HANDLE_VALUE)
-				hFind = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+				hFind = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
 			lbFileFound = (hFind && hFind != INVALID_HANDLE_VALUE);
 			SafeCloseHandle(hFind);
 		}
@@ -248,7 +248,7 @@ bool MakePathProperCase(CEStr& rsPath)
 
 	bool bFound = false;
 	// Must be full path here with back-slashes
-	_ASSERTE(wcschr(rsPath,L'/')==NULL && wcschr(rsPath,L'\\')!=NULL);
+	_ASSERTE(wcschr(rsPath,L'/')==nullptr && wcschr(rsPath,L'\\')!=nullptr);
 
 	// Let loop through folders
 	wchar_t* psz = rsPath.ms_Val;
@@ -337,7 +337,7 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 		return -1;
 	}
 
-	DWORD nSize = GetFileSize(hFile, NULL);
+	DWORD nSize = GetFileSize(hFile, nullptr);
 
 	if (!nSize || nSize >= cchMax)
 	{
@@ -403,7 +403,7 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 		if (!BOM)
 		{
 			rsBuffer = (wchar_t*)pszDataA;
-			pszDataA = NULL;
+			pszDataA = nullptr;
 			rnChars = (nSize >> 1);
 		}
 		else
@@ -441,14 +441,14 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 }
 
 // Returns negative numbers on errors
-int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/, DWORD OutCP /*= CP_UTF8*/, bool WriteBOM /*= true*/, LPDWORD rnErrCode /*= NULL*/)
+int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/, DWORD OutCP /*= CP_UTF8*/, bool WriteBOM /*= true*/, LPDWORD rnErrCode /*= nullptr*/)
 {
 	int iRc = 0;
 	int iWriteLen = 0;
 	DWORD nWritten = 0;
-	LPCVOID ptrBuf = NULL;
-	char* pszMultibyte = NULL;
-	HANDLE hFile = NULL;
+	LPCVOID ptrBuf = nullptr;
+	char* pszMultibyte = nullptr;
+	HANDLE hFile = nullptr;
 
 	if (OutCP == 1200)
 	{
@@ -457,7 +457,7 @@ int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/
 	}
 	else //if (DefaultCP == CP_UTF8)
 	{
-		int iMBLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, NULL, 0, NULL, NULL);
+		int iMBLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, nullptr, 0, nullptr, nullptr);
 		if (iMBLen < 0)
 		{
 			iRc = -2;
@@ -471,7 +471,7 @@ int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/
 			goto wrap;
 		}
 
-		iWriteLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, pszMultibyte, iMBLen, NULL, NULL);
+		iWriteLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, pszMultibyte, iMBLen, nullptr, nullptr);
 	}
 
 	if (iWriteLen < 0)
@@ -480,7 +480,7 @@ int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/
 		goto wrap;
 	}
 
-	hFile = CreateFile(asPath, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	hFile = CreateFile(asPath, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (!hFile || (hFile == INVALID_HANDLE_VALUE))
 	{
 		iRc = -1;
@@ -496,10 +496,10 @@ int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/
 		switch (OutCP)
 		{
 		case CP_UTF8:
-			iRc = (WriteFile(hFile, UTF8BOM, 3, &nBomSize, NULL) && (nBomSize == 3)) ? nBomSize : -4;
+			iRc = (WriteFile(hFile, UTF8BOM, 3, &nBomSize, nullptr) && (nBomSize == 3)) ? nBomSize : -4;
 			break;
 		case 1200:
-			iRc = (WriteFile(hFile, CP1200BOM, 2, &nBomSize, NULL) && (nBomSize == 2)) ? nBomSize : -4;
+			iRc = (WriteFile(hFile, CP1200BOM, 2, &nBomSize, nullptr) && (nBomSize == 2)) ? nBomSize : -4;
 			break;
 		}
 
@@ -507,7 +507,7 @@ int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/
 			goto wrap;
 	}
 
-	if (!WriteFile(hFile, ptrBuf, (DWORD)iWriteLen, &nWritten, NULL) || ((DWORD)iWriteLen != nWritten))
+	if (!WriteFile(hFile, ptrBuf, (DWORD)iWriteLen, &nWritten, nullptr) || ((DWORD)iWriteLen != nWritten))
 	{
 		iRc = -5;
 		goto wrap;
@@ -535,7 +535,7 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/
 		return false;
 
 	bool bFound = false;
-	wchar_t* pszBuf = NULL;
+	wchar_t* pszBuf = nullptr;
 	LPCWSTR pszCur = asFileList;
 	int nDirLen = lstrlen(asDirectory);
 
@@ -712,7 +712,7 @@ bool DirectoryExists(LPCWSTR asPath)
 
 	bool lbFound = false;
 
-	HANDLE hFind = CreateFile(asPath, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	HANDLE hFind = CreateFile(asPath, 0, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
 	if (hFind && hFind != INVALID_HANDLE_VALUE)
 	{
 		BY_HANDLE_FILE_INFORMATION fi = {0};
@@ -777,7 +777,7 @@ bool MyCreateDirectory(wchar_t* asPath)
 		if (*(pszSlash+1))
 			pszSlash++;
 		else
-			pszSlash = NULL;
+			pszSlash = nullptr;
 	}
 
 	if (pszSlash)
@@ -798,7 +798,7 @@ bool MyCreateDirectory(wchar_t* asPath)
 			return true;
 	}
 
-	if (CreateDirectory(asPath, NULL))
+	if (CreateDirectory(asPath, nullptr))
 	{
 		bOk = TRUE;
 	}
@@ -826,16 +826,16 @@ bool MyCreateDirectory(wchar_t* asPath)
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)
 {
 	bool bMatch = false;
-	HANDLE hFile1, hFile2 = NULL;
-	LPBYTE pBuf1 = NULL, pBuf2 = NULL;
+	HANDLE hFile1, hFile2 = nullptr;
+	LPBYTE pBuf1 = nullptr, pBuf2 = nullptr;
 	LARGE_INTEGER lSize1 = {}, lSize2 = {};
 	DWORD nRead1 = 0, nRead2 = 0;
 	BOOL bRead1, bRead2;
 
-	hFile1 = CreateFile(asFilePath1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	hFile1 = CreateFile(asFilePath1, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (!hFile1 || hFile1 == INVALID_HANDLE_VALUE)
 		goto wrap;
-	hFile2 = CreateFile(asFilePath2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	hFile2 = CreateFile(asFilePath2, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (!hFile2 || hFile2 == INVALID_HANDLE_VALUE)
 		goto wrap;
 
@@ -852,8 +852,8 @@ bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)
 	if (!pBuf1 || !pBuf2)
 		goto wrap;
 
-	bRead1 = ReadFile(hFile1, pBuf1, lSize1.LowPart, &nRead1, NULL);
-	bRead2 = ReadFile(hFile2, pBuf2, lSize2.LowPart, &nRead2, NULL);
+	bRead1 = ReadFile(hFile1, pBuf1, lSize1.LowPart, &nRead1, nullptr);
+	bRead2 = ReadFile(hFile2, pBuf2, lSize2.LowPart, &nRead2, nullptr);
 
 	if (!bRead1 || !bRead2 || nRead1 != lSize1.LowPart || nRead2 != nRead1)
 		goto wrap;
@@ -878,13 +878,13 @@ int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped)
 	BOOL bRc = FALSE;
 
 	typedef BOOL (WINAPI* CancelIoEx_t)(HANDLE hFile, LPOVERLAPPED lpOverlapped);
-	static CancelIoEx_t fnCancelIoEx = NULL;
+	static CancelIoEx_t fnCancelIoEx = nullptr;
 	static bool fnChecked = false;
 
 	if (!fnChecked)
 	{
 		HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
-		fnCancelIoEx = hKernel ? (CancelIoEx_t)GetProcAddress(hKernel, "CancelIoEx") : NULL;
+		fnCancelIoEx = hKernel ? (CancelIoEx_t)GetProcAddress(hKernel, "CancelIoEx") : nullptr;
 		fnChecked = false;
 	}
 
@@ -905,13 +905,13 @@ int apiCancelSynchronousIo(HANDLE hThread)
 	BOOL bRc = FALSE;
 
 	typedef BOOL (WINAPI* CancelSynchronousIo_t)(HANDLE hThread);
-	static CancelSynchronousIo_t fnCancelSynchronousIo = NULL;
+	static CancelSynchronousIo_t fnCancelSynchronousIo = nullptr;
 	static bool fnChecked = false;
 
 	if (!fnChecked)
 	{
 		HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
-		fnCancelSynchronousIo = hKernel ? (CancelSynchronousIo_t)GetProcAddress(hKernel, "CancelSynchronousIo") : NULL;
+		fnCancelSynchronousIo = hKernel ? (CancelSynchronousIo_t)GetProcAddress(hKernel, "CancelSynchronousIo") : nullptr;
 		fnChecked = false;
 	}
 
@@ -943,11 +943,11 @@ bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID)
 	#ifdef _DEBUG
 	char szData[128] = ""; DWORD nRead = 0; BOOL bRead;
 	#endif
-	HANDLE hStream = CreateFile(lsZoneStream, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hStream = CreateFile(lsZoneStream, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (hStream && (hStream != INVALID_HANDLE_VALUE))
 	{
 		#ifdef _DEBUG
-		bRead = ReadFile(hStream, szData, sizeof(szData), &nRead, NULL);
+		bRead = ReadFile(hStream, szData, sizeof(szData), &nRead, nullptr);
 		#endif
 		CloseHandle(hStream);
 

@@ -1,4 +1,5 @@
-﻿/*
+﻿
+/*
 Copyright (c) 1996 Eugene Roshal
 Copyright (c) 2000 Far Group
 Copyright (c) 2014-present Maximus5
@@ -74,7 +75,7 @@ bool IsFileBatch(LPCWSTR pszExt)
 		// Other scripts ?
 		// L".ps1", L".sh", L".py",
 		// End of predefined
-		NULL};
+		nullptr};
 	for (INT_PTR i = 0; Known[i]; i++)
 	{
 		if (lstrcmpi(Known[i], pszExt) == 0)
@@ -976,7 +977,7 @@ bool FindImageSubsystem(const wchar_t *Module, DWORD& ImageSubsystem, DWORD& Ima
 		if (!*Ext)
 			continue;
 
-		if (SearchPath(NULL, Module, Ext, cchstrTmpName, strTmpName, &pszFilePart))
+		if (SearchPath(nullptr, Module, Ext, cchStrTmpName, strTmpName, &pszFilePart))
 		{
 			if (GetImageSubsystem(strTmpName, ImageSubsystem, ImageBits, FileAttrs))
 			{
@@ -989,22 +990,18 @@ bool FindImageSubsystem(const wchar_t *Module, DWORD& ImageSubsystem, DWORD& Ima
 	// третий проход - лезем в реестр в "App Paths"
 	if (!wcschr(Module, L'\\'))
 	{
-		hAdvApi = LoadLibrary(L"AdvApi32.dll");
-		if (!hAdvApi)
+		if (!hAdvApi.Load(L"AdvApi32.dll"))
 			goto wrap;
-		_RegOpenKeyEx = (RegOpenKeyExW_t)GetProcAddress(hAdvApi, "RegOpenKeyExW");
-		_RegQueryValueEx = (RegQueryValueExW_t)GetProcAddress(hAdvApi, "RegQueryValueExW");
-		_RegCloseKey = (RegCloseKey_t)GetProcAddress(hAdvApi, "RegCloseKey");
-		if (!_RegOpenKeyEx || !_RegQueryValueEx || !_RegCloseKey)
+		if (!hAdvApi.GetProcAddress("RegOpenKeyExW", _RegOpenKeyEx)
+			|| !hAdvApi.GetProcAddress("RegQueryValueExW", _RegQueryValueEx)
+			|| !hAdvApi.GetProcAddress("RegCloseKey", _RegCloseKey))
 			goto wrap;
 
-		LPCWSTR RegPath = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
+		const wchar_t RegPath[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
 		// В строке Module заменить исполняемый модуль на полный путь, который
 		// берется из SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths
 		// Сначала смотрим в HKCU, затем - в HKLM
 		HKEY RootFindKey[] = {HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
-
-		strExpand = (wchar_t*)malloc(cchstrExpand*sizeof(wchar_t)); *strExpand = 0;
 
 		BOOL lbAddExt = FALSE;
 		pszExtCur = strPathExt;
@@ -1012,7 +1009,7 @@ bool FindImageSubsystem(const wchar_t *Module, DWORD& ImageSubsystem, DWORD& Ima
 		{
 			if (!lbAddExt)
 			{
-				Ext = NULL;
+				Ext = nullptr;
 				lbAddExt = TRUE;
 			}
 			else

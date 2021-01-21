@@ -73,13 +73,13 @@ bool apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 	return lbRc;
 }
 
-void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= false*/, LPDWORD pnPID /*= NULL*/)
+void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= false*/, LPDWORD pnPID /*= nullptr*/)
 {
 	DWORD nPID = 0;
 
 	if (!ahWnd)
 	{
-		wcscpy_c(rsInfo, L"<NULL>");
+		wcscpy_c(rsInfo, L"<nullptr>");
 	}
 	else if (!IsWindow(ahWnd))
 	{
@@ -133,7 +133,7 @@ bool IsUserAdmin()
 
 	if (b)
 	{
-		if (!CheckTokenMembership(NULL, AdministratorsGroup, &b))
+		if (!CheckTokenMembership(nullptr, AdministratorsGroup, &b))
 		{
 			b = FALSE;
 		}
@@ -154,10 +154,10 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 	PTOKEN_USER ptu = &user;
 	BOOL bFreeToken = FALSE;
 
-	// Verify the parameter passed in is not NULL.
-	if (NULL == ppszSID)
+	// Verify the parameter passed in is not nullptr.
+	if (nullptr == ppszSID)
 		goto Cleanup;
-	*ppszSID = NULL;
+	*ppszSID = nullptr;
 
 	if (!hToken)
 		bFreeToken = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
@@ -176,7 +176,7 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 
 		ptu = (PTOKEN_USER)calloc(dwLength,1);
 
-		if (ptu == NULL)
+		if (ptu == nullptr)
 			goto Cleanup;
 	}
 
@@ -193,7 +193,7 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 		goto Cleanup;
 	}
 
-	if (!ConvertSidToStringSid(ptu->User.Sid, ppszSID) || (*ppszSID == NULL))
+	if (!ConvertSidToStringSid(ptu->User.Sid, ppszSID) || (*ppszSID == nullptr))
 		goto Cleanup;
 
 	bSuccess = true;
@@ -201,7 +201,7 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 Cleanup:
 
 	// Free the buffer for the token groups.
-	if ((ptu != NULL) && (ptu != &user))
+	if ((ptu != nullptr) && (ptu != &user))
 		free(ptu);
 	if (bFreeToken && hToken)
 		CloseHandle(hToken);
@@ -211,9 +211,9 @@ Cleanup:
 
 HANDLE DuplicateProcessHandle(DWORD anTargetPID)
 {
-	HANDLE src = GetCurrentProcess(), dst = NULL;
+	HANDLE src = GetCurrentProcess(), dst = nullptr;
 	if (!DuplicateHandleForPID(anTargetPID, 1, &src, &dst))
-		return NULL;
+		return nullptr;
 	return dst;
 }
 
@@ -275,7 +275,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 			L"%ConEmuDir%\\..\\tcc\\tcc.exe",
 			L"%ConEmuDir%\\..\\..\\tcc\\tcc.exe",
 			// End of predefined list
-			NULL};
+			nullptr};
 		for (INT_PTR i = 0; ppszPredefined[i]; i++)
 		{
 			DWORD nExpand = ExpandEnvironmentStrings(ppszPredefined[i], szPath, countof(szPath));
@@ -311,12 +311,12 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
 						{
 							// Just in case, check "Path" too
-							LPCWSTR rsNames[] = {NULL, L"Path"};
+							LPCWSTR rsNames[] = {nullptr, L"Path"};
 
 							for (size_t n = 0; n < countof(rsNames); n++)
 							{
 								ZeroStruct(szPath); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
-								if (!RegQueryValueExW(hk2, rsNames[n], NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
+								if (!RegQueryValueExW(hk2, rsNames[n], nullptr, nullptr, (LPBYTE)szPath, &nSize) && *szPath)
 								{
 									wchar_t* psz, *pszEnd;
 									psz = (wchar_t*)Unquote(szPath, true);
@@ -380,11 +380,11 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
 						{
 							ZeroStruct(szPath); DWORD nSize = (countof(szPath) - 1)*sizeof(szPath[0]);
-							if (!RegQueryValueExW(hk2, L"Publisher", NULL, NULL, (LPBYTE)szPath, &nSize)
+							if (!RegQueryValueExW(hk2, L"Publisher", nullptr, nullptr, (LPBYTE)szPath, &nSize)
 								&& !lstrcmpi(szPath, L"JP Software"))
 							{
 								nSize = (countof(szPath)-12)*sizeof(szPath[0]);
-								if (!RegQueryValueExW(hk2, L"InstallLocation", NULL, NULL, (LPBYTE)szPath, &nSize)
+								if (!RegQueryValueExW(hk2, L"InstallLocation", nullptr, nullptr, (LPBYTE)szPath, &nSize)
 									&& *szPath)
 								{
 									wchar_t* psz, *pszEnd;
@@ -454,7 +454,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 {
 	if (!pOpt)
 	{
-		_ASSERTE(pOpt!=NULL);
+		_ASSERTE(pOpt!=nullptr);
 		return;
 	}
 
@@ -462,7 +462,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 	{
 		//if (pOpt->csType == cst_AutoTccCmd) -- always, if isUpdateEnv
 		{
-			LPCWSTR pszNew = NULL;
+			LPCWSTR pszNew = nullptr;
 			switch (pOpt->csBits)
 			{
 			case csb_SameOS:
@@ -476,7 +476,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 				break;
 			default:
 				_ASSERTE(pOpt->csBits==csb_SameOS || pOpt->csBits==csb_SameApp || pOpt->csBits==csb_x32);
-				pszNew = NULL;
+				pszNew = nullptr;
 			}
 			if (pszNew && *pszNew)
 			{
@@ -485,17 +485,17 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 				if (lstrcmpi(szCurrent, pszNew))
 				{
 					wchar_t szMsg[MAX_PATH*4], szProc[MAX_PATH] = {}, szPid[MAX_PATH];
-					GetModuleFileName(NULL, szProc, countof(szProc));
+					GetModuleFileName(nullptr, szProc, countof(szProc));
 					swprintf_c(szPid,
 						L"PID=%u, '%s'", GetCurrentProcessId(), PointToName(szProc));
 					swprintf_c(szMsg,
 						L"Changing %%ComSpec%% in %s\nCur=%s\nNew=%s",
 						szPid , szCurrent, pszNew);
-					MessageBox(NULL, szMsg, szPid, MB_SYSTEMMODAL);
+					MessageBox(nullptr, szMsg, szPid, MB_SYSTEMMODAL);
 				}
 				#endif
 
-				_ASSERTE(wcschr(pszNew, L'%')==NULL);
+				_ASSERTE(wcschr(pszNew, L'%')==nullptr);
 				SetEnvVarExpanded(L"ComSpec", pszNew);
 			}
 		}
@@ -528,7 +528,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 			else
 			{
 				bool bChanged = false;
-				wchar_t* pszAdd = NULL;
+				wchar_t* pszAdd = nullptr;
 
 				CharUpperBuff(pszUpr, n);
 
