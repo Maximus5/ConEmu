@@ -32,13 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "CmdLine.h"
 
-typedef bool (WINAPI* RegEnumKeysCallback)(HKEY hk, LPCWSTR pszSubkeyName, LPARAM lParam);
-int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPARAM lParam);
+typedef bool (WINAPI* RegEnumKeysCallback_t)(HKEY hk, const wchar_t* pszSubkeyName, LPARAM lParam);
+int RegEnumKeys(HKEY hkRoot, const wchar_t* pszParentPath, RegEnumKeysCallback_t fn, LPARAM lParam);
 
-typedef bool (WINAPI* RegEnumValuesCallback)(HKEY hk, LPCWSTR pszName, DWORD dwType, LPARAM lParam);
-int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam, const bool one_bitness_only = false);
+typedef bool (WINAPI* RegEnumValuesCallback_t)(HKEY hk, const wchar_t* pszName, DWORD dwType, LPARAM lParam);
+int RegEnumValues(HKEY hkRoot, const wchar_t* pszParentPath, RegEnumValuesCallback_t fn, LPARAM lParam, bool oneBitnessOnly = false);
 
-int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& rszData, DWORD Wow64Flags = 0);
-LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR pszData, DWORD Wow64Flags = 0);
+int RegGetStringValue(HKEY hk, const wchar_t* pszSubKey, const wchar_t* pszValueName, CEStr& rszData, DWORD wow64Flags = 0);
+LONG RegSetStringValue(HKEY hk, const wchar_t* pszSubKey, const wchar_t* pszValueName, const wchar_t* pszData, DWORD wow64Flags = 0);
 
-bool RegDeleteKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
+bool RegDeleteKeyRecursive(HKEY hRoot, const wchar_t* asParent, const wchar_t* asName);
