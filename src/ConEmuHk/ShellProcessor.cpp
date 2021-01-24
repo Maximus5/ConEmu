@@ -974,13 +974,30 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	if (aCmd == eShellExecute)
 	{
 		// C:\Windows\system32\cmd.exe /C ""F:\Batches\!!Save&SetNewCFG.cmd" "
-		lbEndQuote = (asFile && *asFile); // иначе некоторые имена обрабатываются некорректно
+		lbEndQuote = (asFile && *asFile); // #execute: Check this иначе некоторые имена обрабатываются некорректно
 	}
 	else if (aCmd == eCreateProcess)
 	{
 		// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
 		// if we don't quotate, cmd.exe may cut first and last quote mark and fail
-		lbEndQuote = (asFile && *asFile == L'"') || (!asFile && asParam && *SkipNonPrintable(asParam) == L'"');
+		if (asFile && *asFile == L'"')
+		{
+			lbEndQuote = true;
+		}
+		else if (!asFile && asParam && *SkipNonPrintable(asParam) == L'"')
+		{
+			const auto* paramStart = SkipNonPrintable(asParam);
+			const auto paramLen = wcslen(paramStart);
+			const auto* paramEnd = paramStart + paramLen - 1;
+			while ((paramEnd > (paramStart + 1)) && IsNonPrintable(*paramEnd))
+				--paramEnd;
+
+			lbEndQuote = !(paramLen > 3 && *(paramStart + 1) == L'"' && *paramEnd == L'"');
+		}
+		else
+		{
+			lbEndQuote = false;
+		}
 	}
 
 	if (lbUseDosBox)

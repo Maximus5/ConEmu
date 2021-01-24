@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../UnitTests/test_mock_file.h"
 #include "../common/EnvVar.h"
 #include "../common/execute.h"
+#include "../common/WObjects.h"
 #include "../ConEmuHk/MainThread.h"
 #include "Ansi.h"
 #include "ShellProcessor.h"
@@ -41,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefTermHk.h"
 #include "DllOptions.h"
 #include <memory>
+
 
 
 #ifndef __GNUC__
@@ -117,6 +119,7 @@ public:
 		// farMode - should be set up in the test
 
 		fileMock = std::make_unique<test_mocks::FileSystemMock>();
+
 		CEStr exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu.exe");
 		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
 		exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu64.exe");
@@ -125,6 +128,12 @@ public:
 		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
 		exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC64.exe");
 		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+
+		#ifdef _WIN64
+		fileMock->MockFile(srvMap.ComSpec.Comspec64, 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+		#else
+		fileMock->MockFile(srvMap.ComSpec.Comspec32, 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+		#endif
 	}
 
 	void TearDown() override
@@ -161,7 +170,7 @@ protected:
 };
 
 
-TEST_F(ShellProcessor, General)
+TEST_F(ShellProcessor, Far300)
 {
 	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
 	{
@@ -175,7 +184,7 @@ TEST_F(ShellProcessor, General)
 
 	fileMock->MockFile(LR"(C:\mingw\bin\mingw32-make.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
 	fileMock->MockFile(LR"(C:\DosGames\Prince\PRINCE.EXE)", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
-	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
+	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use
 
 	enum class Function { CreateW, ShellW };
 	struct TestInfo
@@ -225,10 +234,10 @@ TEST_F(ShellProcessor, General)
 		auto* psi = &si;
 		si.cb = sizeof(si);
 
-		wchar_t paramBuffer[1024] = L"";
+		wchar_t expectedParamBuff[1024] = L"";
 		const auto pid = GetCurrentProcessId();
 		CEStr expanded(ExpandEnvStr(test.expectParam));
-		msprintf(paramBuffer, countof(paramBuffer), expanded.c_str(), pid);
+		msprintf(expectedParamBuff, countof(expectedParamBuff), expanded.c_str(), pid);
 
 		const CEStr testInfo(L"file=", test.file ? test.file : L"<null>",
 			L"; param=", test.param ? test.param : L"<null>", L";");
@@ -238,12 +247,12 @@ TEST_F(ShellProcessor, General)
 		case Function::CreateW:
 			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
 			break;
 		case Function::ShellW:
-			EXPECT_TRUE(sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, &nCreateFlags, &nShowCmd));
+			EXPECT_TRUE(sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
 			break;
 		default:
 			break;
@@ -264,7 +273,7 @@ TEST_F(ShellProcessor, Far175)
 	farMode = std::make_unique<VarSet<HookModeFar>>(gFarMode,
 		HookModeFar{ sizeof(HookModeFar), true, 0, 0, 0, 0, true, farVer, nullptr });
 
-	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
+	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use
 
 	enum class Function { CreateA, ShellA };
 	struct TestInfo
@@ -280,6 +289,15 @@ TEST_F(ShellProcessor, Far175)
 		{Function::CreateA,
 			nullptr, R"("C:\1 @\a.cmd")",
 			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+		{Function::CreateA,
+			nullptr, R"(C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")",
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+		{Function::CreateA,
+			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd"")",
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+		{Function::CreateA,
+			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd""  )",
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd""  )"},
 	};
 
 	for (const auto& test : tests)
@@ -292,10 +310,10 @@ TEST_F(ShellProcessor, Far175)
 		auto* psi = &si;
 		si.cb = sizeof(si);
 
-		char paramBuffer[1024] = "";
+		char expectedParamBuff[1024] = "";
 		const auto pid = GetCurrentProcessId();
 		CEStrA expanded(ExpandEnvStr(test.expectParam));
-		msprintf(paramBuffer, countof(paramBuffer), expanded.c_str(), pid);
+		msprintf(expectedParamBuff, countof(expectedParamBuff), expanded.c_str(), pid);
 
 		const CEStrA testInfo("file=", test.file ? test.file : "<null>",
 			"; param=", test.param ? test.param : "<null>", ";");
@@ -305,12 +323,12 @@ TEST_F(ShellProcessor, Far175)
 		case Function::CreateA:
 			EXPECT_TRUE(sp->OnCreateProcessA(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
 			break;
 		case Function::ShellA:
-			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &pszFile, &pszParam, nullptr, &nCreateFlags, &nShowCmd));
+			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
 			break;
 		default:
 			break;
