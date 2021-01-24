@@ -269,6 +269,8 @@ wchar_t* CEStr::GetBuffer(const ssize_t cchMaxLen)
 	{
 		_ASSERTE(cchMaxLen > 0 && nOldLen >= 0 && std::min(cchMaxLen,nOldLen) < GetMaxCount());
 		SetAt(std::min(cchMaxLen,nOldLen), 0);
+		if (cchMaxLen > 0)
+			SetAt(cchMaxLen, 0);
 	}
 
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
@@ -312,6 +314,53 @@ const wchar_t* CEStr::Append(const wchar_t* asStr1, const wchar_t* asStr2 /*= nu
 	CESTRLOG1("CEStr::Append:x%p(...)", ms_Val);
 	lstrmerge(&ms_Val, asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8);
 	return ms_Val;
+}
+
+CEStr& CEStr::Replace(const wchar_t* what, const wchar_t* newText)
+{
+	if (IsEmpty() || !what || !*what)
+		return *this;
+
+	const auto* found = wcsstr(ms_Val, what);
+	if (!found)
+		return *this;
+
+	const auto srcLen = GetLen();
+	const auto whatLen = wcslen(what);
+	const auto newLen = newText ? wcslen(newText) : 0;
+
+	CEStr newStr;
+	const size_t cchNew = srcLen + newLen - whatLen;
+	auto* newBuffer = newStr.GetBuffer(cchNew);
+	if (!newBuffer)
+		return *this; // #TODO throw an error
+
+	size_t shift = 0;
+	const size_t headLen = found - ms_Val;
+	const size_t tailLen = srcLen - headLen - whatLen;
+	_ASSERTE(tailLen < static_cast<size_t>(srcLen));
+	if (headLen > 0)
+	{
+		wmemcpy_s(newBuffer, cchNew + 1, ms_Val, headLen);
+		shift += headLen;
+	}
+	if (newLen > 0)
+	{
+		_ASSERTE(cchNew > shift);
+		wmemcpy_s(newBuffer + shift, cchNew + 1 - shift, newText, newLen);
+		shift += newLen;
+	}
+	if (tailLen > 0)
+	{
+		_ASSERTE(cchNew > shift);
+		wmemcpy_s(newBuffer + shift, cchNew + 1 - shift, ms_Val + headLen + whatLen, tailLen);
+		shift += tailLen;
+	}
+	_ASSERTE(newStr[shift] == 0);
+	newStr.SetAt(shift, 0);
+
+	*this = std::move(newStr);
+	return *this;
 }
 
 const wchar_t* CEStr::Attach(wchar_t*&& asPtr)

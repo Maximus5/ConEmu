@@ -80,6 +80,7 @@ public:
 	const wchar_t*  Append(const wchar_t* asStr1, const wchar_t* asStr2 = nullptr, const wchar_t* asStr3 = nullptr,
 		const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr,
 		const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr);
+	CEStr& Replace(const wchar_t* what, const wchar_t* newText);
 	/// @brief If string allocated, make it zero-length.
 	void Clear();
 	void Release();

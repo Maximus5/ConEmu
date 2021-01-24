@@ -129,3 +129,13 @@ TEST(Strings, Realloc)
 	EXPECT_NE(ptr1, ptr2);
 	EXPECT_STREQ(str.c_str(), testStr);
 }
+
+TEST(Strings, Replace)
+{
+	EXPECT_STREQ(CEStr(L"").Replace(L"<what>", L"with").c_str(), L"");
+
+	EXPECT_STREQ(CEStr(L"Text <what>").Replace(L"<what>", L"with-text").c_str(), L"Text with-text");
+	EXPECT_STREQ(CEStr(L"<what> text").Replace(L"<what>", L"with-text").c_str(), L"with-text text");
+	EXPECT_STREQ(CEStr(L"Text <what> text").Replace(L"<what>", L"with-text").c_str(), L"Text with-text text");
+	EXPECT_STREQ(CEStr(L"Text <what> text").Replace(L"<what>", L"with").c_str(), L"Text with text");
+}
