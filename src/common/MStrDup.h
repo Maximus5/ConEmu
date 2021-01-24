@@ -35,4 +35,5 @@ wchar_t* lstrdup(const wchar_t* asText, size_t cchExtraSizeAdd = 0);
 wchar_t* lstrdupW(const char* asText, UINT cp = CP_ACP);
 char* lstrdupA(const wchar_t* asText, UINT cp = CP_ACP, int* pnLen = nullptr);
 wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 = nullptr, const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr, const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr, const wchar_t* asStr9 = nullptr);
+char* lstrmerge(const char* asStr1, const char* asStr2, const char* asStr3 = nullptr, const char* asStr4 = nullptr, const char* asStr5 = nullptr, const char* asStr6 = nullptr, const char* asStr7 = nullptr, const char* asStr8 = nullptr, const char* asStr9 = nullptr);
 bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 = nullptr, const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr, const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr, const wchar_t* asStr9 = nullptr);

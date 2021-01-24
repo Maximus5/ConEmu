@@ -134,6 +134,37 @@ wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* 
 	return pszRet;
 }
 
+char* lstrmerge(const char* asStr1, const char* asStr2, const char* asStr3 /*= nullptr*/, const char* asStr4 /*= nullptr*/, const char* asStr5 /*= nullptr*/, const char* asStr6 /*= nullptr*/, const char* asStr7 /*= nullptr*/, const char* asStr8 /*= nullptr*/, const char* asStr9 /*= nullptr*/)
+{
+	size_t cchMax = 1;
+	const size_t Count = 9;
+	size_t cch[Count] = {};
+	const char* pszStr[Count] = {asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8, asStr9};
+
+	for (size_t i = 0; i < Count; i++)
+	{
+		cch[i] = pszStr[i] ? strlen(pszStr[i]) : 0;
+		cchMax += cch[i];
+	}
+
+	char* pszRet = static_cast<char*>(malloc(cchMax * sizeof(*pszRet)));
+	if (!pszRet)
+		return nullptr;
+	*pszRet = 0;
+	char* psz = pszRet;
+
+	for (size_t i = 0; i < Count; i++)
+	{
+		if (!cch[i])
+			continue;
+
+		_strcpy_c(psz, cch[i] + 1, pszStr[i]);
+		psz += cch[i];
+	}
+
+	return pszRet;
+}
+
 bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= nullptr*/, const wchar_t* asStr4 /*= nullptr*/, const wchar_t* asStr5 /*= nullptr*/, const wchar_t* asStr6 /*= nullptr*/, const wchar_t* asStr7 /*= nullptr*/, const wchar_t* asStr8 /*= nullptr*/, const wchar_t* asStr9 /*= nullptr*/)
 {
 	_ASSERTE(apsStr1!=nullptr);
