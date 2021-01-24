@@ -386,11 +386,17 @@ const wchar_t* NextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Fla
 	//const wchar_t szSpacesLines[] = L" \t\r\n";
 
 	if ((Flags & (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES)) == (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES))
+	{
 		psz = SkipNonPrintable(psz);
+	}
 	else if (Flags & NLF_TRIM_SPACES)
+	{
 		while (*psz == L' ' || *psz == L'\t') psz++;
+	}
 	else if (Flags & NLF_SKIP_EMPTY_LINES)
+	{
 		while (*psz == L'\r' || *psz == L'\n') psz++;
+	}
 
 	if (!*psz)
 	{
@@ -435,12 +441,18 @@ int AddEndSlash(wchar_t* rsPath, int cchMax)
 	return nLen;
 }
 
+bool IsNonPrintable(const wchar_t chr)
+{
+	return (chr == L' ' || chr == L'\t' || chr == L'\r' || chr == L'\n');
+}
+
 const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 {
 	if (!asParams)
 		return nullptr;
 	const wchar_t* psz = asParams;
-	while (*psz == L' ' || *psz == L'\t' || *psz == L'\r' || *psz == L'\n') psz++;
+	while (IsNonPrintable(*psz))
+		psz++;
 	return psz;
 }
 

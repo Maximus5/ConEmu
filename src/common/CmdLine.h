@@ -99,6 +99,7 @@ struct NeedCmdOptions
 bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options = nullptr);
 
 bool IsQuotationNeeded(LPCWSTR pszPath);
+bool IsNonPrintable(wchar_t chr);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 
 int AddEndSlash(wchar_t* rsPath, int cchMax);

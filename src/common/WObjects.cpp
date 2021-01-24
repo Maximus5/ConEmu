@@ -147,7 +147,7 @@ int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr
 
 	if (!lpFileName || !*lpFileName)
 	{
-		_ASSERTE(lpFileName && *lpFileName);
+		_ASSERTE(lpFileName != nullptr);
 		return 0;
 	}
 	
@@ -198,7 +198,7 @@ int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath)
 {
 	if (!lpFileName || !*lpFileName)
 	{
-		_ASSERTE(lpFileName && *lpFileName);
+		_ASSERTE(lpFileName != nullptr);
 		return 0;
 	}
 
@@ -244,7 +244,7 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 
 	if (!asFilePath || !*asFilePath)
 	{
-		_ASSERTE(asFilePath && *asFilePath);
+		_ASSERTE(asFilePath != nullptr);
 		return false;
 	}
 
@@ -297,7 +297,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 {
 	if (!asFilePath || !*asFilePath)
 	{
-		_ASSERTEX(asFilePath && *asFilePath);
+		_ASSERTEX(asFilePath != nullptr);
 		return false;
 	}
 
