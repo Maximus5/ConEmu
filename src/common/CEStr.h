@@ -80,6 +80,7 @@ public:
 	const wchar_t*  Append(const wchar_t* asStr1, const wchar_t* asStr2 = nullptr, const wchar_t* asStr3 = nullptr,
 		const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr,
 		const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr);
+	/// @brief If string allocated, make it zero-length.
 	void Clear();
 	void Release();
 	const wchar_t* Set(const wchar_t* asNewValue, ssize_t anChars = -1);
@@ -106,6 +107,9 @@ public:
 	~CEStrA();
 	CEStrA(const char* asPtr);
 	CEStrA(char*&& asPtr) noexcept;
+	CEStrA(const char* asStr1, const char* asStr2, const char* asStr3 = nullptr,
+		const char* asStr4 = nullptr, const char* asStr5 = nullptr, const char* asStr6 = nullptr,
+		const char* asStr7 = nullptr, const char* asStr8 = nullptr, const char* asStr9 = nullptr);
 
 	CEStrA(const CEStrA& src);
 	CEStrA(CEStrA&& src) noexcept;
@@ -123,8 +127,12 @@ public:
 	// ReSharper disable once CppInconsistentNaming
 	char* data() const;
 	ssize_t GetLen() const;
+	ssize_t GetMaxCount();
 	void Clear();
 	void Release();
+
+	const char* Set(const char* asNewValue, ssize_t anChars = -1);
+	char SetAt(const ssize_t nIdx, const char chr);
 
 	// Reset the buffer to new empty data of required size
 	char* GetBuffer(ssize_t cchMaxLen);
@@ -132,6 +140,8 @@ public:
 
 public:
 	char* ms_Val = nullptr;
+private:
+	ssize_t maxCount_ = 0; // Including termination \0
 };
 
 

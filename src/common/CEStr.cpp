@@ -26,12 +26,13 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// ReSharper disable CppMemberFunctionMayBeConst
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
 #include "CEStr.h"
 #include "MStrDup.h"
 
-#if CE_UNIT_TEST==1
+#if defined(CE_UNIT_TEST) && CE_UNIT_TEST==1
 	#include <cstdio>
 	extern bool gbVerifyVerbose;
 	// ReSharper disable once IdentifierTypo
@@ -267,7 +268,7 @@ wchar_t* CEStr::GetBuffer(const ssize_t cchMaxLen)
 	if (ms_Val)
 	{
 		_ASSERTE(cchMaxLen > 0 && nOldLen >= 0 && std::min(cchMaxLen,nOldLen) < GetMaxCount());
-		ms_Val[std::min(cchMaxLen,nOldLen)] = '\0';
+		SetAt(std::min(cchMaxLen,nOldLen), 0);
 	}
 
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
@@ -295,13 +296,12 @@ void CEStr::Release()
 	SafeFree(ptr);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void CEStr::Clear()
 {
 	CESTRLOG1("CEStr::Clear(x%p)", ms_Val);
 	if (ms_Val)
 	{
-		ms_Val[0] = 0;
+		SetAt(0, 0);
 	}
 }
 
@@ -390,7 +390,7 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, const ssize_t anChars /*= -
 	if (asNewValue)
 	{
 		const ssize_t nNewLen = (anChars < 0)
-			? ssize_t(wcslen(asNewValue))
+			? static_cast<ssize_t>(wcslen(asNewValue))
 			: std::min<ssize_t>(anChars, wcslen(asNewValue));
 
 		// Assign empty but NOT nullptr string
@@ -398,7 +398,7 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, const ssize_t anChars /*= -
 		{
 			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
 			if (GetBuffer(1))
-				ms_Val[0] = 0;
+				SetAt(0, 0);
 
 		}
 		// Self pointer assign?
@@ -409,15 +409,19 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, const ssize_t anChars /*= -
 
 			if (asNewValue > ms_Val)
 				wmemmove(ms_Val, asNewValue, nNewLen);
-			ms_Val[nNewLen] = 0;
+			SetAt(nNewLen, 0);
 
 		}
 		// New value
-		else if (GetBuffer(nNewLen))
+		else if (GetBuffer(nNewLen) && ms_Val)
 		{
-			_ASSERTE(maxCount_ > nNewLen); // Must be set in GetBuffer
+			_ASSERTE(ms_Val && maxCount_ > nNewLen); // Must be set in GetBuffer
 			_wcscpyn_c(ms_Val, maxCount_, asNewValue, nNewLen);
-			ms_Val[nNewLen] = 0;
+			SetAt(nNewLen, 0);
+		}
+		else
+		{
+			_ASSERTE(ms_Val != nullptr);
 		}
 	}
 	else
@@ -431,14 +435,17 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, const ssize_t anChars /*= -
 	return ms_Val;
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 wchar_t CEStr::SetAt(const ssize_t nIdx, const wchar_t wc)
 {
 	wchar_t prev = 0;
-	if (ms_Val && (nIdx >= 0) && (nIdx < maxCount_))
+	if (ms_Val && (nIdx >= 0) && (nIdx < GetMaxCount()))
 	{
 		prev = ms_Val[nIdx];
 		ms_Val[nIdx] = wc;
+	}
+	else
+	{
+		_ASSERTE(ms_Val && (nIdx >= 0) && (nIdx < GetMaxCount()));
 	}
 	return prev;
 }
@@ -446,7 +453,7 @@ wchar_t CEStr::SetAt(const ssize_t nIdx, const wchar_t wc)
 
 
 // *********************************
-//           CEStrConcat
+//           CEStrA
 // *********************************
 
 CEStrA::CEStrA()
@@ -477,6 +484,14 @@ CEStrA::CEStrA(char*&& asPtr) noexcept
 	CESTRLOG1("CEStrA::CEStrA(char*&& x%p)", asPtr);
 
 	ms_Val = asPtr;
+}
+
+CEStrA::CEStrA(
+	const char* asStr1, const char* asStr2, const char* asStr3, const char* asStr4, const char* asStr5, const char* asStr6,
+	const char* asStr7, const char* asStr8, const char* asStr9)
+{
+	CESTRLOG3("CEStr::CEStr(const wchar_t* x%p, x%p, x%p, ...)", asStr1, asStr2, asStr3);
+	ms_Val = lstrmerge(asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8, asStr9);
 }
 
 CEStrA::CEStrA(const CEStrA& src)
@@ -559,19 +574,25 @@ ssize_t CEStrA::GetLen() const
 	return ms_Val ? strlen(ms_Val) : 0;
 }
 
+ssize_t CEStrA::GetMaxCount()
+{
+	if (ms_Val && (maxCount_ <= 0))
+		maxCount_ = GetLen() + 1;
+	return maxCount_;
+}
+
 void CEStrA::Release()
 {
 	CESTRLOG1("CEStrA::Release(x%p)", ms_Val);
 	SafeFree(ms_Val);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void CEStrA::Clear()
 {
 	CESTRLOG1("CEStrA::Clear(x%p)", ms_Val);
 	if (ms_Val)
 	{
-		ms_Val[0] = 0;
+		SetAt(0, 0);
 	}
 }
 
@@ -579,11 +600,14 @@ char* CEStrA::GetBuffer(const ssize_t cchMaxLen)
 {
 	CESTRLOG1("CEStrA::GetBuffer(%i)", static_cast<int>(cchMaxLen));
 	Release();
-	if (cchMaxLen >= 0)
+	if (cchMaxLen >= 0 && cchMaxLen < (std::numeric_limits<ssize_t>::max() - 1))
 	{
 		ms_Val = static_cast<char*>(malloc(cchMaxLen + 1));
 		if (ms_Val)
-			ms_Val[0] = 0;
+		{
+			maxCount_ = cchMaxLen + 1;
+			SetAt(0, 0);
+		}
 	}
 	return ms_Val;
 }
@@ -597,6 +621,74 @@ char* CEStrA::Detach()
 	Release(); // JIC
 	return ptr;
 }
+
+const char* CEStrA::Set(const char* asNewValue, const ssize_t anChars /*= -1*/)
+{
+	CESTRLOG2("CEStr::Set(x%p,%i)", asNewValue, static_cast<int>(anChars));
+
+	if (asNewValue)
+	{
+		const ssize_t nNewLen = (anChars < 0)
+			? static_cast<ssize_t>(strlen(asNewValue))
+			: std::min<ssize_t>(anChars, strlen(asNewValue));
+
+		// Assign empty but NOT nullptr string
+		if (nNewLen <= 0)
+		{
+			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
+			if (GetBuffer(1))
+				SetAt(0, 0);
+
+		}
+		// Self pointer assign?
+		else if (ms_Val && (asNewValue >= ms_Val) && (asNewValue < (ms_Val + maxCount_)))
+		{
+			_ASSERTE((asNewValue + nNewLen) < (ms_Val + maxCount_));
+			_ASSERTE(nNewLen < maxCount_);
+
+			if (asNewValue > ms_Val)
+				memmove(ms_Val, asNewValue, nNewLen);
+			SetAt(nNewLen, 0);
+
+		}
+		// New value
+		else if (GetBuffer(nNewLen) && ms_Val)
+		{
+			_ASSERTE(ms_Val && maxCount_ > nNewLen); // Must be set in GetBuffer
+			_strcpyn_c(ms_Val, maxCount_, asNewValue, nNewLen);
+			SetAt(nNewLen, 0);
+		}
+		else
+		{
+			_ASSERTE(ms_Val != nullptr);
+		}
+	}
+	else
+	{
+		// Make it nullptr
+		Clear();
+	}
+
+	CESTRLOG1("  ms_Val=x%p", ms_Val);
+
+	return ms_Val;
+}
+
+char CEStrA::SetAt(const ssize_t nIdx, const char chr)
+{
+	char prev = 0;
+	if (ms_Val && (nIdx >= 0) && (nIdx < GetMaxCount()))
+	{
+		prev = ms_Val[nIdx];
+		ms_Val[nIdx] = chr;
+	}
+	else
+	{
+		_ASSERTE(ms_Val && (nIdx >= 0) && (nIdx < GetMaxCount()));
+	}
+	return prev;
+}
+
 
 
 // *********************************
