@@ -49,7 +49,7 @@ protected:
 	// dpi support
 	CDpiForDialog* mp_DpiAware = nullptr;
 	// Buffer
-	wchar_t ms_CurUser[MAX_PATH*2+1];
+	wchar_t ms_CurUser[MAX_PATH*2+1] = L"";
 protected:
 	void InitVars();
 	void FreeVars();

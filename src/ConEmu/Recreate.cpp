@@ -253,7 +253,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 
 	const wchar_t *pszUser = pArgs->pszUserName;
 	const wchar_t *pszDomain = pArgs->pszDomain;
-	bool bResticted = (pArgs->RunAsRestricted == crb_On);
+	bool runRestricted = (pArgs->RunAsRestricted == crb_On);
 	int nChecked = rbCurrentUser;
 	int nNetOnly = cbRunAsNetOnly;
 	DWORD nUserNameLen = countof(ms_CurUser);
@@ -261,8 +261,8 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	if (!GetUserName(ms_CurUser, &nUserNameLen))
 		ms_CurUser[0] = 0;
 
-	wchar_t szRbCaption[MAX_PATH*3];
-	lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, ms_CurUser);
+	CEStr szRbCaption(GetDlgItemTextPtr(hDlg, rbCurrentUser));
+	szRbCaption.Replace(L"<UserName>", ms_CurUser);
 	SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
 
 	wchar_t szOtherUser[MAX_PATH*2+1]; szOtherUser[0] = 0;
@@ -271,11 +271,11 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : nullptr;
 	EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), FALSE);
 	if ((pArgs->pszUserName && *pArgs->pszUserName)
-		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(pszUser, pszDomain, bResticted)))
+		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(pszUser, pszDomain, runRestricted)))
 	{
 		nChecked = rbAnotherUser;
 		CheckDlgButton(hDlg, cbRunAsNetOnly, (pArgs->RunAsNetOnly == crb_On) ? BST_CHECKED : BST_UNCHECKED);
-		if (bResticted)
+		if (runRestricted)
 		{
 			CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
 		}
