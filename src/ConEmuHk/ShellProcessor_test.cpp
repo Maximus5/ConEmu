@@ -298,6 +298,9 @@ TEST_F(ShellProcessor, Far175)
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd""  )",
 			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd""  )"},
+		{Function::CreateA,
+			nullptr, R"(C:\Windows\system32\cmd.exe /C "set > res.log")",
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C "set > res.log")"},
 	};
 
 	for (const auto& test : tests)

@@ -992,7 +992,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			while ((paramEnd > (paramStart + 1)) && IsNonPrintable(*paramEnd))
 				--paramEnd;
 
-			lbEndQuote = !(paramLen > 3 && *(paramStart + 1) == L'"' && *paramEnd == L'"');
+			lbEndQuote = !(paramLen >= 3 && *paramEnd == L'"');
 		}
 		else
 		{
