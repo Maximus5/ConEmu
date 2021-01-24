@@ -107,3 +107,25 @@ TEST(Strings, Compare)
 	EXPECT_NE(0, str.Compare(lowerCase, true));
 	EXPECT_NE(0, str.Compare(titleCase, true));
 }
+
+TEST(Strings, Realloc)
+{
+	const wchar_t testStr[] = L"Part1";
+	CEStr str;
+	EXPECT_EQ(nullptr, str.data());
+	EXPECT_EQ(0, str.GetMaxCount());
+
+	const auto* ptr0 = str.GetBuffer(16);
+	EXPECT_NE(nullptr, ptr0);
+	EXPECT_EQ(17, str.GetMaxCount());
+	const auto* ptr1 = str.data();
+	EXPECT_EQ(ptr1, ptr0);
+	EXPECT_EQ(ptr1, str.Set(testStr));
+	EXPECT_STREQ(str.c_str(), testStr);
+
+	const auto* ptr2 = str.GetBuffer(128);
+	EXPECT_NE(nullptr, ptr2);
+	EXPECT_EQ(129, str.GetMaxCount());
+	EXPECT_NE(ptr1, ptr2);
+	EXPECT_STREQ(str.c_str(), testStr);
+}

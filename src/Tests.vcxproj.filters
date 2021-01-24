@@ -1280,6 +1280,9 @@
     <ClCompile Include="common\EnvVar.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\EnvVar_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\FileSystem_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
@@ -1366,6 +1369,9 @@
     </ClCompile>
     <ClCompile Include="common\MStrSafe.cpp">
       <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MStrSafe_test.cpp">
+      <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="common\MTimer.cpp">
       <Filter>common</Filter>

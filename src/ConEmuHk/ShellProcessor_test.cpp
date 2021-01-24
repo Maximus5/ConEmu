@@ -69,73 +69,113 @@ struct VarSet
 };
 }
 
-
-TEST(ShellProcessor, Test)
+class ShellProcessor : public testing::Test
 {
+public:
+	void SetUp() override
+	{
+		ghConWnd = GetRealConsoleWindow();
+		if (!ghConWnd)
+		{
+			cdbg() << "Test is not functional, GetRealConsoleWindow is nullptr";
+			return;
+		}
+		if (!LoadSrvMapping(ghConWnd, srvMap))
+		{
+			mappingMock.InitName(CECONMAPNAME, LODWORD(ghConWnd));
+			if (mappingMock.Create())
+			{
+				srvMap.cbSize = sizeof(srvMap);
+				srvMap.hConEmuRoot = ghConWnd;
+				srvMap.hConEmuWndBack = ghConWnd;
+				srvMap.hConEmuWndDc = ghConWnd;
+				srvMap.nServerPID = GetCurrentProcessId();
+				srvMap.useInjects = ConEmuUseInjects::Use;
+				srvMap.nProtocolVersion = CESERVER_REQ_VER;
+				wcscpy_s(srvMap.sConEmuExe, L"C:\\Tools\\ConEmu.exe");
+				wcscpy_s(srvMap.ComSpec.Comspec32, L"C:\\Windows\\System32\\cmd.exe");
+				wcscpy_s(srvMap.ComSpec.Comspec64, L"C:\\Windows\\System32\\cmd.exe");
+				wcscpy_s(srvMap.ComSpec.ConEmuExeDir, L"C:\\Tools");
+				wcscpy_s(srvMap.ComSpec.ConEmuBaseDir, L"C:\\Tools\\ConEmu");
+
+				mappingMock.SetFrom(&srvMap);
+			}
+		}
+
+		SetEnvironmentVariableW(L"ConEmuBaseDirTest", srvMap.ComSpec.ConEmuBaseDir);
+		SetEnvironmentVariableW(L"ConEmuLogTest", srvMap.nLogLevel ? L"/LOG " : L"");
+
+		setRoot = std::make_unique<VarSet<HWND>>(ghConEmuWnd, srvMap.hConEmuRoot);
+		setBack = std::make_unique<VarSet<HWND>>(ghConEmuWndBack, srvMap.hConEmuWndBack);
+		setDc = std::make_unique<VarSet<HWND>>(ghConEmuWndDC, srvMap.hConEmuWndDc);
+		setSrvPid = std::make_unique<VarSet<DWORD>>(gnServerPID, srvMap.nServerPID);
+		setMainTid = std::make_unique<VarSet<DWORD>>(gnHookMainThreadId, GetCurrentThreadId());
+		#ifndef __GNUC__
+		setModule = std::make_unique<VarSet<HANDLE2>>(ghWorkingModule, HANDLE2{ reinterpret_cast<uint64_t>(reinterpret_cast<HMODULE>(&__ImageBase)) });
+		#endif
+
+		// farMode - should be set up in the test
+
+		fileMock = std::make_unique<test_mocks::FileSystemMock>();
+		CEStr exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu.exe");
+		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
+		exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu64.exe");
+		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
+		exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC.exe");
+		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+		exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC64.exe");
+		fileMock->MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+	}
+
+	void TearDown() override
+	{
+		SetEnvironmentVariableW(L"ConEmuBaseDirTest", nullptr);
+		SetEnvironmentVariableW(L"ConEmuLogTest", nullptr);
+
+		mappingMock.CloseMap();
+
+		setRoot.reset();
+		setBack.reset();
+		setDc.reset();
+		setSrvPid.reset();
+		setMainTid.reset();
+		setModule.reset();
+		farMode.reset();
+
+		fileMock.reset();
+	}
+
+protected:
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> mappingMock;
 	CESERVER_CONSOLE_MAPPING_HDR srvMap{};
-	ghConWnd = GetRealConsoleWindow();
-	if (!ghConWnd)
-	{
-		cdbg() << "Test is not functional, GetRealConsoleWindow is nullptr";
-		return;
-	}
-	if (!LoadSrvMapping(ghConWnd, srvMap))
-	{
-		mappingMock.InitName(CECONMAPNAME, LODWORD(ghConWnd));
-		if (mappingMock.Create())
-		{
-			srvMap.cbSize = sizeof(srvMap);
-			srvMap.hConEmuRoot = ghConWnd;
-			srvMap.hConEmuWndBack = ghConWnd;
-			srvMap.hConEmuWndDc = ghConWnd;
-			srvMap.nServerPID = GetCurrentProcessId();
-			srvMap.useInjects = ConEmuUseInjects::Use;
-			srvMap.nProtocolVersion = CESERVER_REQ_VER;
-			wcscpy_s(srvMap.sConEmuExe, L"C:\\Tools\\ConEmu.exe");
-			wcscpy_s(srvMap.ComSpec.Comspec32, L"C:\\Windows\\System32\\cmd.exe");
-			wcscpy_s(srvMap.ComSpec.Comspec64, L"C:\\Windows\\System32\\cmd.exe");
-			wcscpy_s(srvMap.ComSpec.ConEmuExeDir, L"C:\\Tools");
-			wcscpy_s(srvMap.ComSpec.ConEmuBaseDir, L"C:\\Tools\\ConEmu");
 
-			mappingMock.SetFrom(&srvMap);
-		}
-	}
+	std::unique_ptr<VarSet<HWND>> setRoot;
+	std::unique_ptr<VarSet<HWND>> setBack;
+	std::unique_ptr<VarSet<HWND>> setDc;
+	std::unique_ptr<VarSet<DWORD>> setSrvPid;
+	std::unique_ptr<VarSet<DWORD>> setMainTid;
+	std::unique_ptr<VarSet<HANDLE2>> setModule;
+	std::unique_ptr<VarSet<HookModeFar>> farMode;
 
-	SetEnvironmentVariableW(L"ConEmuBaseDirTest", srvMap.ComSpec.ConEmuBaseDir);
-	SetEnvironmentVariableW(L"ConEmuLogTest", srvMap.nLogLevel ? L"/LOG " : L"");
+	std::unique_ptr<test_mocks::FileSystemMock> fileMock;
+};
 
-	VarSet<HWND> setRoot(ghConEmuWnd, srvMap.hConEmuRoot);
-	VarSet<HWND> setBack(ghConEmuWndBack, srvMap.hConEmuWndBack);
-	VarSet<HWND> setDc(ghConEmuWndDC, srvMap.hConEmuWndDc);
-	VarSet<DWORD> setSrvPid(gnServerPID, srvMap.nServerPID);
-	VarSet<DWORD> setMainTid(gnHookMainThreadId, GetCurrentThreadId());
-	#ifndef __GNUC__
-	VarSet<HANDLE2> setModule(ghWorkingModule, HANDLE2{ reinterpret_cast<uint64_t>(reinterpret_cast<HMODULE>(&__ImageBase)) });
-	#endif
 
-	FarVersion farVer{}; farVer.dwVerMajor = 3; farVer.dwVerMinor = 0; farVer.dwBuild = 5709;
-	VarSet<HookModeFar> farMode(gFarMode,
-		{ sizeof(HookModeFar), true, 0, 0, 0, 0, true, farVer, nullptr });
-
+TEST_F(ShellProcessor, General)
+{
 	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
 	{
 		cdbg() << "Test is not functional, hConEmuWndDc is nullptr";
 		return;
 	}
 
-	test_mocks::FileSystemMock fileMock;
-	fileMock.MockFile(LR"(C:\mingw\bin\mingw32-make.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
-	fileMock.MockFile(LR"(C:\DosGames\Prince\PRINCE.EXE)", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
-	fileMock.MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
-	CEStr exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu.exe");
-	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 32);
-	exeMock = JoinPath(srvMap.ComSpec.ConEmuExeDir, L"ConEmu64.exe");
-	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_GUI, 64);
-	exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC.exe");
-	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
-	exeMock = JoinPath(srvMap.ComSpec.ConEmuBaseDir, L"ConEmuC64.exe");
-	fileMock.MockFile(exeMock.c_str(), 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 64);
+	FarVersion farVer{}; farVer.dwVerMajor = 3; farVer.dwVerMinor = 0; farVer.dwBuild = 5709;
+	farMode = std::make_unique<VarSet<HookModeFar>>(gFarMode,
+		HookModeFar{ sizeof(HookModeFar), true, 0, 0, 0, 0, true, farVer, nullptr });
+
+	fileMock->MockFile(LR"(C:\mingw\bin\mingw32-make.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	fileMock->MockFile(LR"(C:\DosGames\Prince\PRINCE.EXE)", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
+	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
 
 	enum class Function { CreateW, ShellW };
 	struct TestInfo
@@ -210,12 +250,76 @@ TEST(ShellProcessor, Test)
 		}
 		MCHKHEAP;
 	}
-
-	SetEnvironmentVariableW(L"ConEmuBaseDirTest", nullptr);
-	SetEnvironmentVariableW(L"ConEmuLogTest", nullptr);
 }
 
-TEST(ShellProcessor, WorkOptions)
+TEST_F(ShellProcessor, Far175)
+{
+	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
+	{
+		cdbg() << "Test is not functional, hConEmuWndDc is nullptr";
+		return;
+	}
+
+	FarVersion farVer{}; farVer.dwVerMajor = 1; farVer.dwVerMinor = 75; farVer.dwBuild = 2634;
+	farMode = std::make_unique<VarSet<HookModeFar>>(gFarMode,
+		HookModeFar{ sizeof(HookModeFar), true, 0, 0, 0, 0, true, farVer, nullptr });
+
+	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32);
+
+	enum class Function { CreateA, ShellA };
+	struct TestInfo
+	{
+		Function function;
+		const char* file;
+		const char* param;
+		const char* expectFile;
+		const char* expectParam;
+	};
+
+	TestInfo tests[] = {
+		{Function::CreateA,
+			nullptr, R"("C:\1 @\a.cmd")",
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+	};
+
+	for (const auto& test : tests)
+	{
+		MCHKHEAP;
+		auto sp = std::make_shared<CShellProc>();
+		LPCSTR pszFile = test.file, pszParam = test.param;
+		DWORD nCreateFlags = CREATE_DEFAULT_ERROR_MODE, nShowCmd = 0;
+		STARTUPINFOA si = {};
+		auto* psi = &si;
+		si.cb = sizeof(si);
+
+		char paramBuffer[1024] = "";
+		const auto pid = GetCurrentProcessId();
+		CEStrA expanded(ExpandEnvStr(test.expectParam));
+		msprintf(paramBuffer, countof(paramBuffer), expanded.c_str(), pid);
+
+		const CEStrA testInfo("file=", test.file ? test.file : "<null>",
+			"; param=", test.param ? test.param : "<null>", ";");
+
+		switch (test.function)
+		{
+		case Function::CreateA:
+			EXPECT_TRUE(sp->OnCreateProcessA(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
+			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
+			break;
+		case Function::ShellA:
+			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &pszFile, &pszParam, nullptr, &nCreateFlags, &nShowCmd));
+			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, paramBuffer) << testInfo.c_str();
+			break;
+		default:
+			break;
+		}
+		MCHKHEAP;
+	}
+}
+
+TEST_F(ShellProcessor, WorkOptions)
 {
 	const ShellWorkOptions options = ShellWorkOptions::ChildGui | ShellWorkOptions::VsNetHost
 	| ShellWorkOptions::WasSuspended | ShellWorkOptions::WasDebug;

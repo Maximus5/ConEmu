@@ -55,8 +55,8 @@ void StartEnvUnitTests()
 
 	const wchar_t szInit[] = L"initial", szPref[] = L"abc;", szSuffix[] = L";def";
 	
-	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
-	wchar_t* pchValue = nullptr;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	CEStr pchValue;
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	int iCmp = 0;
 
@@ -65,7 +65,7 @@ void StartEnvUnitTests()
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, szInit) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 
 	// ce_temp="abc;initial"
 	const CEStr lsSet1(szPref, L"%", szTempName, L"%");
@@ -74,12 +74,12 @@ void StartEnvUnitTests()
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, lsCmd1) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 	setEnv.Set(szTempName, lsSet1);
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, lsCmd1) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 
 	// ce_temp="abc;initial;def"
 	const CEStr lsSet2(L"%", szTempName, L"%", szSuffix);
@@ -88,19 +88,19 @@ void StartEnvUnitTests()
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, lsCmd2) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 	setEnv.Set(szTempName, lsSet2);
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, lsCmd2) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 
 	// ce_temp="initial"
 	setEnv.Set(szTempName, szInit);
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, szInit) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 
 	// ce_temp="abc;initial;def"
 	const CEStr lsSet3(szPref, L"%", szTempName, L"%", szSuffix);
@@ -109,12 +109,12 @@ void StartEnvUnitTests()
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, lsCmd3) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 	setEnv.Set(szTempName, lsSet3);
 	pchValue = GetEnvVar(szTempName);
 	iCmp = pchValue ? wcscmp(pchValue, lsCmd3) : -1;
 	EXPECT_EQ(0, iCmp);
-	SafeFree(pchValue);
+	pchValue.Release();
 
 	// Drop temp variable
 	SetEnvironmentVariable(szTempName, nullptr);

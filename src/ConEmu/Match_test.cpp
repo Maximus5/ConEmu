@@ -115,6 +115,8 @@ TEST(CMatch, UnitTests)
 			etr_AnyClickable, true, {L"DefResolve.cpp(18)"}},
 		{NEED_FIX_FAILED_TEST L"\t" L"DefResolve.cpp(18): warning: note xxx" L"\t",
 			etr_AnyClickable, true, {L"DefResolve.cpp(18)"}},
+		{NEED_FIX_FAILED_TEST L"\t" L"C:\\Program Files (x86)\\Microsoft Visual Studio\\include\\intrin.h:56:1: error: expected function body" L"\t",
+			etr_AnyClickable, true, {L"C:\\Program Files (x86)\\Microsoft Visual Studio\\include\\intrin.h:56:1"}},
 		// -- GCC
 		{L"\t" L"ConEmuC.cpp:49: error: 'qqq' does not name a type" L"\t",
 			etr_AnyClickable, true, {L"ConEmuC.cpp:49"}},

@@ -722,6 +722,7 @@
     <ClCompile Include="common\ConsoleRead.cpp" />
     <ClCompile Include="common\EmergencyShow.cpp" />
     <ClCompile Include="common\EnvVar.cpp" />
+    <ClCompile Include="common\EnvVar_test.cpp" />
     <ClCompile Include="common\FileSystem_test.cpp" />
     <ClCompile Include="common\HandleKeeper.cpp" />
     <ClCompile Include="common\HkFunc.cpp" />
@@ -751,6 +752,7 @@
     <ClCompile Include="common\MStrEsc.cpp" />
     <ClCompile Include="common\MStrEsc_test.cpp" />
     <ClCompile Include="common\MStrSafe.cpp" />
+    <ClCompile Include="common\MStrSafe_test.cpp" />
     <ClCompile Include="common\MTimer.cpp" />
     <ClCompile Include="common\MToolHelp_test.cpp" />
     <ClCompile Include="common\MToolTip.cpp" />
