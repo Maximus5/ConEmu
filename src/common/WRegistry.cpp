@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPARAM lParam)
 {
 	int iRc = -1;
-	HKEY hk = NULL, hkChild = NULL;
+	HKEY hk = nullptr, hkChild = nullptr;
 	LONG lrc;
 	bool bContinue = true;
 	bool ib64 = IsWindows64();
@@ -62,12 +62,12 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 			UINT n = 0;
 			wchar_t szSubKey[MAX_PATH] = L""; DWORD cchMax = countof(szSubKey) - 1;
 
-			while (0 == (lrc = RegEnumKeyEx(hk, n++, szSubKey, &cchMax, NULL, NULL, NULL, NULL)))
+			while (0 == (lrc = RegEnumKeyEx(hk, n++, szSubKey, &cchMax, nullptr, nullptr, nullptr, nullptr)))
 			{
 				if (0 == (lrc = RegOpenKeyEx(hk, szSubKey, 0, samDesired, &hkChild)))
 				{
 					iRc++;
-					if (fn != NULL)
+					if (fn != nullptr)
 					{
 						if (!fn(hkChild, szSubKey, lParam))
 						{
@@ -90,7 +90,7 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam, const bool one_bitness_only)
 {
 	int iRc = -1;
-	HKEY hk = NULL;
+	HKEY hk = nullptr;
 	LONG lrc;
 	bool bContinue = true;
 	bool ib64 = IsWindows64();
@@ -115,11 +115,11 @@ int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, 
 			wchar_t* pszName = lsName.GetBuffer(cchNameMax+1);
 			DWORD idx = 0, cchName = cchNameMax, dwType = 0;
 
-			while ((iRc = RegEnumValue(hk, idx++, pszName, &cchName, NULL, &dwType, NULL, NULL)) == 0)
+			while ((iRc = RegEnumValue(hk, idx++, pszName, &cchName, nullptr, &dwType, nullptr, nullptr)) == 0)
 			{
 				iRc++;
 				pszName[std::min(cchNameMax,cchName)] = 0;
-				if (fn != NULL)
+				if (fn != nullptr)
 				{
 					if (!fn(hk, pszName, dwType, lParam))
 					{
@@ -151,7 +151,7 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 
 	if (pszSubKey && *pszSubKey)
 	{
-		if (hk == NULL)
+		if (hk == nullptr)
 		{
 			lrc = RegGetStringValue(HKEY_CURRENT_USER, pszSubKey, pszValueName, rszData, 0);
 			if (lrc < 0)
@@ -170,16 +170,16 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 		}
 
 		if (0 != (lrc = RegOpenKeyEx(hk, pszSubKey, 0, KEY_READ|Wow64Flags, &hkChild)))
-			hkChild = NULL;
+			hkChild = nullptr;
 	}
 
-	if (hkChild && (0 == (lrc = RegQueryValueEx(hkChild, pszValueName, NULL, NULL, NULL, &cbSize))))
+	if (hkChild && (0 == (lrc = RegQueryValueEx(hkChild, pszValueName, nullptr, nullptr, nullptr, &cbSize))))
 	{
 		wchar_t* pszData = rszData.GetBuffer((cbSize>>1)+2); // +wchar_t+1byte (на возможные ошибки хранения данных в реестре)
 		if (pszData)
 		{
 			pszData[cbSize>>1] = 0; // Make sure it will be 0-terminated
-			if (0 == (lrc = RegQueryValueEx(hkChild, pszValueName, NULL, NULL, (LPBYTE)pszData, &cbSize)))
+			if (0 == (lrc = RegQueryValueEx(hkChild, pszValueName, nullptr, nullptr, (LPBYTE)pszData, &cbSize)))
 			{
 				iLen = lstrlen(pszData);
 			}
@@ -207,7 +207,7 @@ LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR
 	if (pszSubKey && *pszSubKey)
 	{
 		if (0 != (lrc = RegOpenKeyEx(hk, pszSubKey, 0, KEY_WRITE|Wow64Flags, &hkChild)))
-			hkChild = NULL;
+			hkChild = nullptr;
 	}
 
 	if (hkChild)
@@ -234,8 +234,8 @@ LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR
 bool RegDeleteKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName)
 {
 	bool lbRc = false;
-	HKEY hParent = NULL;
-	HKEY hKey = NULL;
+	HKEY hParent = nullptr;
+	HKEY hKey = nullptr;
 
 	if (!asName || !*asName || !hRoot)
 		return false;
@@ -256,7 +256,7 @@ bool RegDeleteKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName)
 			if (0 != RegEnumKeyEx(hKey, 0, szName, &nMax, 0, 0, 0, 0))
 				break;
 
-			if (!RegDeleteKeyRecursive(hKey, NULL, szName))
+			if (!RegDeleteKeyRecursive(hKey, nullptr, szName))
 				break;
 		}
 
