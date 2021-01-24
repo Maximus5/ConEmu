@@ -32,77 +32,147 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include "EnvVar.h"
 #include "MStrDup.h"
+#include <limits>
 
+namespace {
 
-wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
+ssize_t StrLen(const char* str)
 {
-	if (!pszCommand || !*pszCommand)
-		return NULL;
-
-	DWORD cchMax = ExpandEnvironmentStrings(pszCommand, NULL, 0);
-	if (!cchMax)
-		return lstrdup(pszCommand);
-
-	wchar_t* pszExpand = (wchar_t*)malloc((cchMax+2)*sizeof(*pszExpand));
-	if (pszExpand)
-	{
-		pszExpand[0] = 0;
-		pszExpand[cchMax] = 0xFFFF;
-		pszExpand[cchMax+1] = 0xFFFF;
-
-		DWORD nExp = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-		if (nExp && (nExp <= cchMax) && *pszExpand)
-			return pszExpand;
-
-		SafeFree(pszExpand);
-	}
-	return NULL;
+	return str ? strlen(str) : -1;
 }
 
-wchar_t* GetEnvVar(LPCWSTR VarName)
+ssize_t StrLen(const wchar_t* str)
 {
-	if (!VarName || !*VarName)
+	return str ? wcslen(str) : -1;
+}
+
+template <typename String, typename CharType>
+String ExpandEnvStr(const CharType* command, const CharType tailChar,
+	DWORD(WINAPI* expandFunction)(const CharType* lpSrc, CharType* lpDst, DWORD nSize))
+{
+	if (!command || !*command)
 	{
-		return NULL;
+		return String{};
 	}
 
-	DWORD cchMax, nRc, nErr;
+	const DWORD cchMax = expandFunction(command, nullptr, 0);
+	if (cchMax && (cchMax < static_cast<DWORD>((std::numeric_limits<int>::max)() - 3)))
+	{
+		String result{};
+		const DWORD tailedSize = cchMax + 2;
+		auto* pszExpand = result.GetBuffer(tailedSize);
+		if (pszExpand)
+		{
+			result.SetAt(0, 0);
+			result.SetAt(cchMax, 0);
+			result.SetAt(tailedSize - 2, tailChar);
+			result.SetAt(tailedSize - 1, tailChar);
 
-	nRc = GetEnvironmentVariable(VarName, NULL, 0);
+			const DWORD nExp = expandFunction(command, pszExpand, cchMax);
+			if (nExp && (nExp <= cchMax) && *pszExpand)
+			{
+				return result;
+			}
+		}
+	}
+
+	const ssize_t srcLen = StrLen(command);
+	if (srcLen <= 0 || (srcLen >= ((std::numeric_limits<ssize_t>::max)() - 3)))
+	{
+		_ASSERTE(srcLen > 0 && (srcLen < ((std::numeric_limits<ssize_t>::max)() - 3)));
+		return String{};
+	}
+	const ssize_t tailedSize = srcLen + 2;
+	String result{};
+	if (!result.GetBuffer(tailedSize))
+	{
+		_ASSERTE(FALSE && "failed to allocate tailedSize");
+		return String{};
+	}
+	result.Set(command);
+	result.SetAt(tailedSize - 1, tailChar);
+	result.SetAt(tailedSize - 2, tailChar);
+	return result;
+}
+
+template <typename String, typename CharType>
+String GetEnvVar(const CharType* varName,
+	DWORD(WINAPI* getEnvVarFunction)(const CharType* lpName, CharType* lpBuffer, DWORD nSize))
+{
+	if (!varName || !*varName)
+	{
+		return String{};
+	}
+
+	DWORD nErr = 0;
+	const DWORD zzTail = 2; // to ensure +2 trailing '\0'
+	String result{};
+
+	DWORD nRc = getEnvVarFunction(varName, nullptr, 0);
 	if (nRc == 0)
 	{
-		// Weird. This may be empty variable or not existing variable
+		// This may be empty variable or not existing variable
 		nErr = GetLastError();
 		if (nErr == ERROR_ENVVAR_NOT_FOUND)
-			return NULL;
-		return (wchar_t*)calloc(3,sizeof(wchar_t));
+			return String{};
+		result.GetBuffer(zzTail);
+		result.SetAt(0, 0);
+		result.SetAt(1, 0);
+		return result;
+	}
+	// buffer overflow?
+	if (nRc >= ((std::numeric_limits<int>::max)() - zzTail))
+	{
+		_ASSERTE(nRc < ((std::numeric_limits<int>::max)() - zzTail));
+		return String{};
 	}
 
-	cchMax = nRc+2;
-	wchar_t* pszVal = (wchar_t*)calloc(cchMax,sizeof(*pszVal));
+	const DWORD cchMax = nRc + zzTail;
+	auto* pszVal = result.GetBuffer(cchMax);
 	if (!pszVal)
 	{
-		_ASSERTE((pszVal!=NULL) && "GetEnvVar memory allocation failed");
-		return NULL;
+		_ASSERTE((pszVal != nullptr) && "GetEnvVar memory allocation failed");
+		return String{};
 	}
 
-	nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
+	nRc = getEnvVarFunction(varName, pszVal, cchMax);
 	if ((nRc == 0) || (nRc >= cchMax))
 	{
 		_ASSERTE(nRc > 0 && nRc < cchMax);
-		SafeFree(pszVal);
+		return String{};
 	}
 
-	return pszVal;
+	result.SetAt(nRc + 1, 0);
+	result.SetAt(nRc + 2, 0);
+	return result;
 }
 
+}
+
+CEStr ExpandEnvStr(const wchar_t* command)
+{
+	return ExpandEnvStr<CEStr, wchar_t>(command, 0xFFFF, ExpandEnvironmentStringsW);
+}
+
+CEStrA ExpandEnvStr(const char* command)
+{
+	return ExpandEnvStr<CEStrA, char>(command, '\xFF', ExpandEnvironmentStringsA);
+}
+
+CEStr GetEnvVar(const wchar_t* varName)
+{
+	return GetEnvVar<CEStr, wchar_t>(varName, GetEnvironmentVariableW);
+}
+
+CEStrA GetEnvVar(const char* varName)
+{
+	return GetEnvVar<CEStrA, char>(varName, GetEnvironmentVariableA);
+}
 
 
 
 CEnvStrings::CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */)
-	: ms_Strings(pszStrings)
-	, mcch_Length(0)
-	, mn_Count(0)
+	: strings_(pszStrings)
 {
 	// Must be ZZ-terminated
 	if (pszStrings && *pszStrings)
@@ -111,20 +181,20 @@ CEnvStrings::CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */)
 		LPCWSTR pszSrc = pszStrings;
 		while (*pszSrc)
 		{
-			pszSrc += lstrlen(pszSrc) + 1;
-			mn_Count++;
+			pszSrc += wcslen(pszSrc) + 1;
+			count_++;
 		}
-		mcch_Length = pszSrc - pszStrings + 1;
-		// mn_Count holds count of 'lines' like "name=value\0"
+		cchLength_ = pszSrc - pszStrings + 1;
+		// count_ holds count of 'lines' like "name=value\0"
 	}
 }
 
 CEnvStrings::~CEnvStrings()
 {
-	if (ms_Strings)
+	if (strings_)
 	{
-		FreeEnvironmentStringsW((LPWCH)ms_Strings);
-		ms_Strings = NULL;
+		FreeEnvironmentStringsW(static_cast<LPWCH>(strings_));
+		strings_ = nullptr;
 	}
 }
 
@@ -132,26 +202,26 @@ CEnvStrings::~CEnvStrings()
 
 CEnvRestorer::~CEnvRestorer()
 {
-	if (mb_RestoreEnvVar && ms_VarName && ms_OldValue)
+	if (restoreEnvVar_ && varName_ && oldValue_)
 	{
-		SetEnvironmentVariable(ms_VarName, ms_OldValue);
+		SetEnvironmentVariableW(varName_, oldValue_);
 	}
 }
 
 void CEnvRestorer::Clear()
 {
-	mb_RestoreEnvVar = false;
-	ms_VarName.Release();
-	ms_OldValue.Release();
+	restoreEnvVar_ = false;
+	varName_.Release();
+	oldValue_.Release();
 }
 
 void CEnvRestorer::SavePathVar(const wchar_t* asCurPath)
 {
 	// Will restore environment variable "PATH" in destructor
-	if (ms_OldValue.Set(asCurPath))
+	if (oldValue_.Set(asCurPath))
 	{
-		ms_VarName = L"PATH";
-		mb_RestoreEnvVar = true;
+		varName_ = L"PATH";
+		restoreEnvVar_ = true;
 	}
 }
 
@@ -160,10 +230,10 @@ void CEnvRestorer::SaveEnvVar(const wchar_t*  asVarName, const wchar_t*  asNewVa
 	if (!asVarName || !*asVarName)
 		return;
 
-	_ASSERTE(!mb_RestoreEnvVar);
-	ms_VarName = asVarName;
-	ms_OldValue.Attach(GetEnvVar(asVarName));
-	mb_RestoreEnvVar = true;
+	_ASSERTE(!restoreEnvVar_);
+	varName_ = asVarName;
+	oldValue_ = GetEnvVar(asVarName);
+	restoreEnvVar_ = true;
 
-	SetEnvironmentVariable(asVarName, asNewValue);
+	SetEnvironmentVariableW(asVarName, asNewValue);
 }

@@ -31,31 +31,45 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CEStr.h"
 
-wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
-wchar_t* GetEnvVar(LPCWSTR VarName);
+CEStr ExpandEnvStr(const wchar_t* command);
+CEStrA ExpandEnvStr(const char* command);
+
+CEStr GetEnvVar(const wchar_t* varName);
+CEStrA GetEnvVar(const char* varName);
 
 
-class CEnvStrings
+class CEnvStrings final
 {
 public:
-	LPWSTR ms_Strings;
-	size_t mcch_Length;
-	size_t mn_Count; // Holds count of 'lines' like "name=value\0"
+	LPWSTR strings_{ nullptr };
+	size_t cchLength_{ 0 };
+	size_t count_{ 0 }; // Holds count of 'lines' like "name=value\0"
 public:
 	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
 	~CEnvStrings();
+
+	CEnvStrings(const CEnvStrings&) = delete;
+	CEnvStrings& operator=(const CEnvStrings&) = delete;
+	CEnvStrings(CEnvStrings&&) = default;
+	CEnvStrings& operator=(CEnvStrings&&) = default;
 };
 
 
-class CEnvRestorer
+class CEnvRestorer final
 {
 private:
-	bool mb_RestoreEnvVar = false;
-	CEStr ms_VarName, ms_OldValue;
+	bool restoreEnvVar_ = false;
+	CEStr varName_, oldValue_;
 
 public:
+	CEnvRestorer() = default;
 	~CEnvRestorer();
 	void Clear();
 	void SavePathVar(const wchar_t*  asCurPath);
 	void SaveEnvVar(const wchar_t*  asVarName, const wchar_t*  asNewValue);
+
+	CEnvRestorer(const CEnvRestorer&) = delete;
+	CEnvRestorer& operator=(const CEnvRestorer&) = delete;
+	CEnvRestorer(CEnvRestorer&&) = default;
+	CEnvRestorer& operator=(CEnvRestorer&&) = default;
 };
