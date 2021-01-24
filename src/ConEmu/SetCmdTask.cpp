@@ -172,16 +172,16 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 				break;
 			if (*szArg)
 			{
-				wchar_t* pszExpand = nullptr;
+				CEStr expanded;
 
 				// e.g. "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
 				{
-					pszExpand = ExpandEnvStr(szArg);
+					expanded = ExpandEnvStr(szArg);
 				}
 
 				SafeFree(pArgs->pszStartupDir);
-				pArgs->pszStartupDir = pszExpand ? pszExpand : lstrdup(szArg);
+				pArgs->pszStartupDir = expanded ? expanded.Detach() : lstrdup(szArg);
 			}
 		}
 		else if (szArg.IsSwitch(L"-icon"))
@@ -190,16 +190,16 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 				break;
 			if (*szArg)
 			{
-				wchar_t* pszExpand = nullptr;
+				CEStr expanded;
 
 				// e.g. "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
 				{
-					pszExpand = ExpandEnvStr(szArg);
+					expanded = ExpandEnvStr(szArg);
 				}
 
 				SafeFree(pArgs->pszIconFile);
-				pArgs->pszIconFile = pszExpand ? pszExpand : lstrdup(szArg);
+				pArgs->pszIconFile = expanded ? expanded.Detach() : lstrdup(szArg);
 			}
 		}
 		else if (szArg.OneOfSwitches(L"-single", L"-reuse"))

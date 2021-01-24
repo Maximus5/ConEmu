@@ -431,23 +431,21 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 		CEnvStrings strs(GetEnvironmentStringsW());
 
 		DWORD nCmdLen = lstrlen(asCmdLine) + 1;
-		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD) + ((nCmdLen + strs.mcch_Length) * sizeof(wchar_t)));
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD) + ((nCmdLen + strs.cchLength_) * sizeof(wchar_t)));
 		if (pIn)
 		{
 			pIn->NewCmd.hFromConWnd = hConWnd;
 
 			// hConWnd may differ from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
-			wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
+			const CEStr pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
 			if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
 			{
-				wchar_t* pszEnd = nullptr;
-				pIn->NewCmd.hFromDcWnd.u = wcstoul(pszDcWnd + 2, &pszEnd, 16);
+				pIn->NewCmd.hFromDcWnd.u = wcstoul(pszDcWnd.c_str() + 2, nullptr, 16);
 			}
-			SafeFree(pszDcWnd);
 
 			GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 			pIn->NewCmd.SetCommand(asCmdLine);
-			pIn->NewCmd.SetEnvStrings(strs.ms_Strings, static_cast<DWORD>(strs.mcch_Length));
+			pIn->NewCmd.SetEnvStrings(strs.strings_, static_cast<DWORD>(strs.cchLength_));
 
 			CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, hConWnd);
 			if (pOut)

@@ -688,11 +688,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									// For example, "%USERPROFILE%"
 									if (wcschr(pszStartupDir, L'%'))
 									{
-										wchar_t* pszExpand = nullptr;
-										if (((pszExpand = ExpandEnvStr(pszStartupDir)) != nullptr))
+										CEStr expanded = ExpandEnvStr(pszStartupDir);
+										if (expanded)
 										{
 											SafeFree(pszStartupDir);
-											pszStartupDir = pszExpand;
+											pszStartupDir = expanded.Detach();
 										}
 									}
 									break;

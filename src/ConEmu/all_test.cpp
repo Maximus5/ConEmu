@@ -222,20 +222,21 @@ void UnitExpandTest()
 	_ASSERTE(gpConEmu!=nullptr);
 	CEStr szExe;
 	wchar_t szChoc[MAX_PATH] = L"powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin";
-	wchar_t* pszExpanded = ExpandEnvStr(szChoc);
-	int nLen = pszExpanded ? lstrlen(pszExpanded) : 0;
+	const CEStr pszExpanded = ExpandEnvStr(szChoc);
+	const auto nLen = pszExpanded.GetLen();
 	BOOL bFound = FileExistsSearch(szChoc, szExe, false);
 	wcscpy_c(szChoc, gpConEmu->ms_ConEmuExeDir);
 	wcscat_c(szChoc, L"\\Tests\\Executables\\abcd");
 	bFound = FileExistsSearch(szChoc, szExe, false);
 	// TakeCommand
-	ConEmuComspec tcc = {cst_AutoTccCmd};
+	ConEmuComspec tcc = {};
+	tcc.csType = cst_AutoTccCmd;
 	FindComspec(&tcc, false);
 }
 
 void UnitModuleTest()
 {
-	CEStr pszConEmuCD(gpConEmu->ms_ConEmuBaseDir, L"\\", ConEmuCD_DLL_3264);
+	const CEStr pszConEmuCD(gpConEmu->ms_ConEmuBaseDir, L"\\", ConEmuCD_DLL_3264);
 	HMODULE hMod, hGetMod;
 	bool bTest;
 

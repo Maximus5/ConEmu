@@ -545,13 +545,12 @@ protected:
 		else
 		{
 			// Environment string? Expand it
-			wchar_t* pszExp = ExpandEnvStr(szCmdStringFormat);
+			CEStr pszExp = ExpandEnvStr(szCmdStringFormat);
 
 			// "curl -L %1 -o %2"
 			// "wget %1 -O %2"
 			LPCWSTR Values[] = {asSource, asTarget};
-			pszCommand = ExpandMacroValues((pszExp && *pszExp) ? pszExp : szCmdStringFormat, Values, countof(Values));
-			SafeFree(pszExp);
+			pszCommand = ExpandMacroValues(!pszExp.IsEmpty() ? pszExp : szCmdStringFormat, Values, countof(Values));
 
 			if (!pszCommand)
 			{

@@ -73,7 +73,7 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound);
 class CEnvRestorer;
 typedef bool (*SearchAppPaths_t)(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore /*= NULL*/);
 extern SearchAppPaths_t gfnSearchAppPaths /*= NULL*/;
-bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath = true, bool abRegSearch = true);
+bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath = true);
 
 bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE);
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);

@@ -2308,10 +2308,10 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 		asCmd = pszCmdCopy;
 	}
 
-	wchar_t* pszExpand = ExpandEnvStr(pszCmdCopy ? pszCmdCopy : asCmd);
+	CEStr pszExpand = ExpandEnvStr(pszCmdCopy ? pszCmdCopy : asCmd);
 
 	SafeFree(pszCmdCopy);
-	return pszExpand;
+	return pszExpand.Detach();
 }
 
 BOOL SetTitle(LPCWSTR lsTitle)

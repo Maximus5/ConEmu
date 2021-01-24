@@ -166,7 +166,7 @@ class CConEmuMain
 		CEStr ms_PostRConMacro;
 		void AddPostGuiRConMacro(LPCWSTR asGuiMacro);
 		void ExecPostGuiMacro();
-		wchar_t *mps_IconPath = nullptr;
+		CEStr ms_IconPath;
 		HICON mh_TaskbarIcon = nullptr;
 		void SetWindowIcon(LPCWSTR asNewIcon);
 		void SetTaskbarIcon(HICON ahNewIcon);

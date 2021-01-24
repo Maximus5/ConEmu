@@ -693,56 +693,55 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 
 void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 {
-	BYTE md5ok = 0;
-	wchar_t szID[40] = L"";
-	CEStr lsFull(ms_ConEmuExeDir, asExtraArgs);
+	BYTE md5Ok = 0;
+	wchar_t szId[40] = L"";
+	const CEStr lsFull(ms_ConEmuExeDir, asExtraArgs);
 
 	if (!lsFull.IsEmpty())
 	{
-		wchar_t* pszData = lsFull.ms_Val;
-		UINT iLen = wcslen(pszData);
-		CharUpperBuff(pszData, iLen);
+		const auto iLen = lsFull.GetLen();
+		CharUpperBuff(lsFull.data(), iLen);
 
 		if (gpSet->isLogging())
 		{
-			CEStr lsLog(L"Creating AppID from data: `", pszData, L"`");
+			const CEStr lsLog(L"Creating AppID from data: `", lsFull, L"`");
 			LogString(lsLog);
 		}
 
 		unsigned char data[16] = {};
 		MD5_CTX ctx = {};
 		MD5_Init(&ctx);
-		MD5_Update(&ctx, pszData, iLen*sizeof(pszData[0]));
+		MD5_Update(&ctx, lsFull.data(), iLen * sizeof(lsFull[0]));
 		MD5_Final(data, &ctx);
 
 		for (int i = 0; i < 16; i++)
 		{
-			BYTE bt = (BYTE)data[i];
-			md5ok |= bt;
-			msprintf(szID+i*2, 3, L"%02x", (UINT)bt);
+			const BYTE bt = static_cast<BYTE>(data[i]);
+			md5Ok |= bt;
+			msprintf(szId+i*2, 3, L"%02x", static_cast<UINT>(bt));
 		}
 	}
 
-	if (!md5ok || (szID[0] == 0))
+	if (!md5Ok || (szId[0] == 0))
 	{
-		_ASSERTE(md5ok && (szID[0] != 0)); // Must be filled already
-		lstrcpyn(szID, ms_ConEmuBuild, countof(szID));
+		_ASSERTE(md5Ok && (szId[0] != 0)); // Must be filled already
+		lstrcpyn(szId, ms_ConEmuBuild, countof(szId));
 	}
 
-	wcscpy_c(ms_AppID, szID);
+	wcscpy_c(ms_AppID, szId);
 
 	// This suffix isn't passed to Win7+ TaskBar AppModelID, but we need to stored it,
 	// because it's used in Mappings when ConEmu tries to find existing instance for
 	// passing command line in single-instance mode for example...
 	wchar_t szSuffix[64] = L"";
-	swprintf_c(szSuffix, L"::%u", (UINT)CESERVER_REQ_VER);
+	swprintf_c(szSuffix, L"::%u", static_cast<UINT>(CESERVER_REQ_VER));
 	// hash - 32char, + 5..6 for Protocol ID, quite be enough
 	_ASSERTE((lstrlen(ms_AppID) + lstrlen(szSuffix)) < countof(ms_AppID));
 	wcscat_c(ms_AppID, szSuffix);
 
 	if (gpSet->isLogging())
 	{
-		CEStr lsLog(L"New AppID: ", ms_AppID);
+		const CEStr lsLog(L"New AppID: ", ms_AppID);
 		LogString(lsLog);
 	}
 }
@@ -1242,18 +1241,17 @@ LPWSTR CConEmuMain::ConEmuIni()
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
-	LPWSTR pszSearchIni[] = {
+	CEStr searchIni[] = {
 		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.ini"),
 		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.ini"),
 		ExpandEnvStr(L"%APPDATA%\\ConEmu.ini"),
-		nullptr
 	};
 
-	for (size_t i = 0; pszSearchIni[i]; i++)
+	for (const auto& ini : searchIni)
 	{
-		if (FileExists(pszSearchIni[i]))
+		if (FileExists(ini))
 		{
-			wcscpy_c(ms_ConEmuIni, pszSearchIni[i]);
+			wcscpy_c(ms_ConEmuIni, ini);
 			goto fin;
 		}
 	}
@@ -1262,10 +1260,6 @@ LPWSTR CConEmuMain::ConEmuIni()
 	wcscpy_c(ms_ConEmuIni, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuIni, L"\\ConEmu.ini");
 
 fin:
-	for (size_t i = 0; i < countof(pszSearchIni); i++)
-	{
-		SafeFree(pszSearchIni[i]);
-	}
 	return ms_ConEmuIni;
 }
 
@@ -1280,7 +1274,8 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=nullptr*/)
 
 	//LPCWSTR pszServer = ms_ConEmuC32Full;
 	bool lbCmd = false, lbFound = false;
-	int Bits = IsWindows64() ? 64 : 32;
+	int bits = IsWindows64() ? 64 : 32;
+	CEStr expanded;
 
 	if (!asCmdLine || !*asCmdLine)
 	{
@@ -1295,7 +1290,6 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=nullptr*/)
 		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
 		// и корректной битности запускаемого процессора по настройке
 		CmdArg szTemp;
-		wchar_t* pszExpand = nullptr;
 		if (!FileExists(asCmdLine))
 		{
 			const wchar_t *psz = asCmdLine;
@@ -1305,9 +1299,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=nullptr*/)
 
 		if (wcschr(asCmdLine, L'%'))
 		{
-			pszExpand = ExpandEnvStr(asCmdLine);
-			if (pszExpand)
-				asCmdLine = pszExpand;
+			expanded = ExpandEnvStr(asCmdLine);
+			if (expanded)
+				asCmdLine = expanded.c_str();
 		}
 
 		// Если путь указан полностью - берем битность из него, иначе - проверяем "на cmd"
@@ -1317,7 +1311,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=nullptr*/)
 		}
 		else
 		{
-			LPCWSTR pszExt = PointToExt(asCmdLine);
+			const auto* pszExt = PointToExt(asCmdLine);
 			if (pszExt && (lstrcmpi(pszExt, L".exe") != 0) && (lstrcmpi(pszExt, L".com") != 0))
 			{
 				// Если указано расширение, и это не .exe и не .com - считаем, что запуск через ComProcessor
@@ -1328,72 +1322,71 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=nullptr*/)
 				CEStr szFind;
 				if (szFind.Set(asCmdLine))
 					CharUpperBuff(szFind.ms_Val, lstrlen(szFind));
-				// По хорошему, нужно бы проверить еще и начало на соответствие в "%WinDir%". Но это не критично.
+				// We don't care if "%windir% is actual start
 				if (!szFind.IsEmpty() && (wcsstr(szFind, L"\\SYSNATIVE\\") || wcsstr(szFind, L"\\SYSWOW64\\")))
 				{
-					// Если "SysNative" - считаем что 32-bit, иначе, 64-битный сервер просто "не увидит" эту папку
-					// С "SysWow64" все понятно, там только 32-битное
-					Bits = 32;
+					// For "SysNative" we need 32-bit server, the 64-bit applications just does not see this folder.
+					// The "SysWow64" folder contains only 32-bit application.
+					bits = 32;
 				}
 				else
 				{
-					MWow64Disable wow; wow.Disable();
-					DWORD ImageSubsystem = 0, ImageBits = 0, FileAttrs = 0;
-					lbFound = GetImageSubsystem(asCmdLine, ImageSubsystem, ImageBits, FileAttrs);
-					// Если не нашли и путь не был указан
-					// Даже если указан путь - это может быть путь к файлу без расширения. Его нужно "добавить".
-					if (!lbFound /*&& !wcschr(asCmdLine, L'\\')*/)
+					MWow64Disable wow;
+					wow.Disable();
+					DWORD imageSubsystem = 0;
+					DWORD imageBits = 0;
+					DWORD fileAttrs = 0;
+					lbFound = GetImageSubsystem(asCmdLine, imageSubsystem, imageBits, fileAttrs);
+					// Try to search for the file in any case.
+					// Moreover, if we didn't found the file, asCmdLine could miss the file extension, try to add it.
+					if (!lbFound)
 					{
-						LPCWSTR pszSearchFile = asCmdLine;
-						LPCWSTR pszSlash = PointToName(asCmdLine);
-						wchar_t* pszSearchPath = nullptr;
-						if (pszSlash && (pszSlash > asCmdLine))
+						const auto* pszSearchFile = asCmdLine;
+						const auto* const filePtr = PointToName(asCmdLine);
+						CEStr pszSearchPath;
+						if (filePtr && (filePtr > asCmdLine))
 						{
-							if ((pszSearchPath = lstrdup(asCmdLine)) != nullptr)
+							const ssize_t fileNameIndex = filePtr - asCmdLine;
+							pszSearchPath.Set(asCmdLine);
+							if (pszSearchPath)
 							{
-								pszSearchFile = pszSlash;
-								pszSearchPath[pszSearchFile - asCmdLine] = 0;
+								pszSearchFile = filePtr;
+								pszSearchPath.SetAt(fileNameIndex, 0);
 							}
 						}
 
-						// попытаемся найти
 						bool bSearchRc = (apiSearchPath(pszSearchPath, pszSearchFile, pszExt ? nullptr : L".exe", szFind) > 0);
 						if (!bSearchRc && !pszSearchPath)
 						{
-							wchar_t szRoot[MAX_PATH+1];
-							wcscpy_c(szRoot, ms_ConEmuExeDir);
+							const CEStr szRoot(ms_ConEmuExeDir);
 							// One folder above ConEmu's directory
-							wchar_t* pszRootSlash = wcsrchr(szRoot, L'\\');
+							wchar_t* pszRootSlash = wcsrchr(szRoot.data(), L'\\');
 							if (pszRootSlash)
 								*pszRootSlash = 0;
 							bSearchRc = (apiSearchPath(szRoot, pszSearchFile, pszExt ? nullptr : L".exe", szFind) > 0);
 						}
 						if (bSearchRc)
 						{
-							lbFound = GetImageSubsystem(szFind, ImageSubsystem, ImageBits, FileAttrs);
+							lbFound = GetImageSubsystem(szFind, imageSubsystem, imageBits, fileAttrs);
 						}
-
-						SafeFree(pszSearchPath);
 					}
 
 					if (lbFound)
-						Bits = ImageBits;
+						bits = imageBits;
 				}
 			}
 		}
-
-		SafeFree(pszExpand);
 	}
 
 	if (lbCmd)
 	{
 		if (gpSet->ComSpec.csBits == csb_SameApp)
-			Bits = WIN3264TEST(32,64);
+			bits = WIN3264TEST(32,64);
 		else if (gpSet->ComSpec.csBits == csb_x32)
-			Bits = 32;
+			bits = 32;
 	}
 
-	return (Bits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
+	return (bits == 64) ? ms_ConEmuC64Full : ms_ConEmuC32Full;
 }
 
 BOOL CConEmuMain::Init()
@@ -3753,23 +3746,25 @@ void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 	if (gpSet->isTaskbarOverlay)
 		return;
 
-	HICON hOldClassIcon = hClassIcon, hOldClassIconSm = hClassIconSm;
+	auto* hOldClassIcon = hClassIcon;
+	auto* hOldClassIconSm = hClassIconSm;
 	hClassIcon = nullptr; hClassIconSm = nullptr;
-	SafeFree(mps_IconPath);
-	mps_IconPath = ExpandEnvStr(asNewIcon);
+
+	ms_IconPath = ExpandEnvStr(asNewIcon);
 
 	LoadIcons();
 
 	if (hClassIcon)
 	{
-		SetClassLongPtr(ghWnd, GCLP_HICON, (LONG_PTR)hClassIcon);
-		SetClassLongPtr(ghWnd, GCLP_HICONSM, (LONG_PTR)hClassIconSm);
-		SendMessage(ghWnd, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+		SetClassLongPtr(ghWnd, GCLP_HICON, reinterpret_cast<LONG_PTR>(hClassIcon));
+		SetClassLongPtr(ghWnd, GCLP_HICONSM, reinterpret_cast<LONG_PTR>(hClassIconSm));
+		SendMessage(ghWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 	}
 	else
 	{
-		hClassIcon = hOldClassIcon; hClassIconSm = hOldClassIconSm;
+		hClassIcon = hOldClassIcon;
+		hClassIconSm = hOldClassIconSm;
 	}
 }
 
@@ -3779,27 +3774,26 @@ void CConEmuMain::LoadIcons()
 	if (hClassIcon)
 		return; // Уже загружены
 
-	wchar_t *lpszExt = nullptr;
 	CEStr szIconPath;
 	CEStr lsLog;
 
-	if (mps_IconPath)
+	if (ms_IconPath)
 	{
-		if (FileExists(mps_IconPath))
+		if (FileExists(ms_IconPath))
 		{
-			szIconPath.Set(mps_IconPath);
-			lsLog.Attach(lstrmerge(L"Loading icon from '/icon' switch `", mps_IconPath, L"`"));
+			szIconPath.Set(ms_IconPath);
+			lsLog = CEStr(L"Loading icon from '/icon' switch `", ms_IconPath, L"`");
 		}
 		else
 		{
-			if (!apiSearchPath(nullptr, mps_IconPath, nullptr, szIconPath))
+			if (!apiSearchPath(nullptr, ms_IconPath, nullptr, szIconPath))
 			{
 				szIconPath.Clear();
-				lsLog.Attach(lstrmerge(L"Icon specified with '/icon' switch `", mps_IconPath, L"` was not found"));
+				lsLog = CEStr(L"Icon specified with '/icon' switch `", ms_IconPath, L"` was not found");
 			}
 			else
 			{
-				lsLog.Attach(lstrmerge(L"Icon specified with '/icon' was found at `", szIconPath, L"`"));
+				lsLog = CEStr(L"Icon specified with '/icon' was found at `", szIconPath, L"`");
 			}
 		}
 	}
@@ -3816,18 +3810,19 @@ void CConEmuMain::LoadIcons()
 		}
 	}
 
-	if (!lsLog.IsEmpty()) LogString(lsLog);
+	if (!lsLog.IsEmpty())
+		LogString(lsLog);
 
 	if (!szIconPath.IsEmpty())
 	{
-		lpszExt = (wchar_t*)PointToExt(szIconPath);
+		const auto* lpszExt = PointToExt(szIconPath);
 
 		if (lpszExt && (lstrcmpi(lpszExt, L".ico") == 0))
 		{
-			hClassIcon = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
-			                              GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
-			hClassIconSm = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
-			                                GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+			hClassIcon = static_cast<HICON>(LoadImage(nullptr, szIconPath, IMAGE_ICON,
+				GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR | LR_LOADFROMFILE));
+			hClassIconSm = static_cast<HICON>(LoadImage(nullptr, szIconPath, IMAGE_ICON,
+				GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_LOADFROMFILE));
 		}
 		else
 		{
@@ -6718,7 +6713,7 @@ void CConEmuMain::OnMainCreateFinished()
 	UpdateWin7TaskList(mb_UpdateJumpListOnStartup);
 	mb_UpdateJumpListOnStartup = false;
 
-	UINT n = SetKillTimer(true, TIMER_MAIN_ID, TIMER_MAIN_ELAPSE/*gpSet->nMainTimerElapse*/);
+	UINT_PTR n = SetKillTimer(true, TIMER_MAIN_ID, TIMER_MAIN_ELAPSE/*gpSet->nMainTimerElapse*/);
 	DEBUGTEST(DWORD dw = GetLastError());
 	n = SetKillTimer(true, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT * 2);
 	UNREFERENCED_PARAMETER(n);
@@ -7143,7 +7138,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (messg == WM_SETFOCUS)
 	{
 		lbSetFocus = true;
-		swprintf_c(szDbg, L"WM_SETFOCUS(From=0x%08X)", (DWORD)wParam);
+		swprintf_c(szDbg, L"WM_SETFOCUS(From=0x%08X)", LODWORD(wParam));
 		LogFocusInfo(szDbg);
 		pszMsgName = L"WM_SETFOCUS";
 	}
@@ -7154,7 +7149,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if (LOWORD(wParam)==WA_INACTIVE)
 		{
 			hForeground = GetForegroundWindow();
-			hNewFocus = lParam ? (HWND)lParam : hForeground;
+			hNewFocus = lParam ? reinterpret_cast<HWND>(lParam) : hForeground;
 			if (CVConGroup::isOurWindow(hNewFocus))
 			{
 				lbSetFocus = true; // Считать, что фокус мы не теряем!
@@ -7164,19 +7159,19 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (!CVConGroup::InCreateGroup())
 				{
 					POINT ptCur = {}; GetCursorPos(&ptCur);
-					for (size_t i = 0;; i++)
+					for (int i = 0;; i++)
 					{
-						CVConGuard VCon;
-						if (!CVConGroup::GetVCon(i, &VCon))
+						CVConGuard vCon;
+						if (!CVConGroup::GetVCon(i, &vCon))
 							break;
-						if (!VCon->isVisible())
+						if (!vCon->isVisible())
 							continue;
 
-						HWND hGuiWnd = VCon->GuiWnd();
+						HWND hGuiWnd = vCon->GuiWnd();
 						RECT rcChild = {}; GetWindowRect(hGuiWnd, &rcChild);
 						if (PtInRect(&rcChild, ptCur))
 						{
-							Activate(VCon.VCon());
+							Activate(vCon.VCon());
 						}
 					}
 				}
@@ -10797,8 +10792,8 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 			//держали зажатой <.3
 			//убьем таймер, кликнем правой кнопкой
 			//KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
-			DWORD dwCurTick = TimeGetTime(); //GetTickCount();
-			DWORD dwDelta=dwCurTick-mouse.RClkTick;
+			const DWORD dwCurTick = TimeGetTime(); //GetTickCount();
+			const DWORD dwDelta = dwCurTick - mouse.RClkTick;
 
 			// Если держали дольше .3с, но не слишком долго :)
 			if ((gpSet->isRClickSendKey==1)
@@ -10823,7 +10818,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 				// А теперь можно и Apps нажать
 				mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
 				//POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
-				DWORD dwFarPID = pVCon->RCon()->GetFarPID();
+				const DWORD dwFarPID = pVCon->RCon()->GetFarPID();
 
 				if (dwFarPID)
 				{
@@ -10837,25 +10832,30 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 					{
 						//DWORD cbWritten=0;
 						DebugStep(_T("EMenu: Waiting for result (10 sec)"));
-						int nLen = 0;
-						int nSize = sizeof(crMouse) + sizeof(wchar_t);
+						size_t nLen = 0;
+						unsigned nSize = sizeof(crMouse) + sizeof(wchar_t);
 
-						if (gpSet->sRClickMacro && *gpSet->sRClickMacro)
+						if (gpSet->sRClickMacro && gpSet->sRClickMacro[0])
 						{
-							nLen = _tcslen(gpSet->sRClickMacro);
-							nSize += nLen*2;
-							// -- заменено на перехват функции ScreenToClient
-							//pVCon->RCon()->RemoveFromCursor();
+							nLen = wcslen(gpSet->sRClickMacro);
+							if (nLen > 0x8000)
+							{
+								const std::wstring errorInfo = L"EMenu: sRClickMacro is too long (" + std::to_wstring(nLen) + L" chars)";
+								LogString(errorInfo.c_str());
+							}
+							nSize += nLen * sizeof(gpSet->sRClickMacro[0]);
 						}
 
-						LPBYTE pcbData = (LPBYTE)calloc(nSize,1);
-						_ASSERTE(pcbData);
-						memmove(pcbData, &crMouse, sizeof(crMouse));
+						const std::unique_ptr<BYTE> pcbData(new BYTE[nSize]);
+						_ASSERTE(pcbData.get() != nullptr);
+						memmove_s(pcbData.get(), nSize, &crMouse, sizeof(crMouse));
 
-						if (nLen)
-							lstrcpy((wchar_t*)(pcbData+sizeof(crMouse)), gpSet->sRClickMacro);
+						if (nLen > 0)
+						{
+							wcscpy_s(reinterpret_cast<wchar_t*>(pcbData.get() + sizeof(crMouse)), nLen + 1, gpSet->sRClickMacro);
+						}
 
-						if (!pipe.Execute(CMD_EMENU, pcbData, nSize))
+						if (!pipe.Execute(CMD_EMENU, pcbData.get(), nSize))
 						{
 							LogString("RightClicked, but pipe.Execute(CMD_EMENU) failed");
 						}
@@ -10882,7 +10882,6 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 						}
 
 						DebugStep(nullptr);
-						free(pcbData);
 					}
 					else
 					{

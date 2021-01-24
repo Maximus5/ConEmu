@@ -703,30 +703,24 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		pArgs->RunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0) ? crb_On : crb_Off;
 
 		// StartupDir (may be specified as argument)
-		wchar_t* pszDir = GetDlgItemTextPtr(hDlg, IDC_STARTUP_DIR);
-		wchar_t* pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : nullptr;
-		LPCWSTR pszDirResult = pszExpand ? pszExpand : pszDir;
+		CEStr pszDir = GetDlgItemTextPtr(hDlg, IDC_STARTUP_DIR);
+		CEStr pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : CEStr();
+		const auto* pszDirResult = pszExpand ? pszExpand.c_str() : pszDir.c_str();
 		// Another user? We may fail with access denied. Check only for "current user" account
 		if (!pArgs->pszUserName && pszDirResult && *pszDirResult && !DirectoryExists(pszDirResult))
 		{
 			wchar_t* pszErrInfo = lstrmerge(L"Specified directory does not exists!\n", pszDirResult, L"\n" L"Do you want to choose another directory?\n\n");
-			DWORD nErr = GetLastError();
-			int iDirBtn = DisplayLastError(pszErrInfo, nErr, MB_ICONEXCLAMATION|MB_YESNO, nullptr, hDlg);
+			const DWORD nErr = GetLastError();
+			const int iDirBtn = DisplayLastError(pszErrInfo, nErr, MB_ICONEXCLAMATION|MB_YESNO, nullptr, hDlg);
 			if (iDirBtn == IDYES)
 			{
-				SafeFree(pszDir);
-				SafeFree(pszExpand);
 				SafeFree(pszErrInfo);
 				return 1;
 			}
 			// User want to run "as is". Most likely it will fail, but who knows...
 		}
 		SafeFree(pArgs->pszStartupDir);
-		pArgs->pszStartupDir = pszExpand ? pszExpand : pszDir;
-		if (pszExpand)
-		{
-			SafeFree(pszDir)
-		}
+		pArgs->pszStartupDir = pszExpand ? pszExpand.Detach() : pszDir.Detach();
 
 		// Command
 		// pszSpecialCmd мог быть передан аргументом - умолчание для строки ввода
@@ -754,7 +748,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			&& (pArgs->eSplit != RConStartArgsEx::eSplitNone))
 		{
 			BOOL bOk = FALSE;
-			int nPercent = GetDlgItemInt(hDlg, tRecreateSplit, &bOk, FALSE);
+			const int nPercent = GetDlgItemInt(hDlg, tRecreateSplit, &bOk, FALSE);
 			if (bOk && (nPercent >= 1) && (nPercent <= 99))
 			{
 				pArgs->nSplitValue = (100-nPercent) * 10;

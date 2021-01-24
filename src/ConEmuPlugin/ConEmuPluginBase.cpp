@@ -158,8 +158,8 @@ DWORD gnSelfPID = 0; //GetCurrentProcessId();
 HANDLE ghFarInfoMapping = nullptr;
 CEFAR_INFO_MAPPING *gpFarInfo = nullptr, *gpFarInfoMapping = nullptr;
 HANDLE ghFarAliveEvent = nullptr;
-PanelViewRegInfo gPanelRegLeft = {nullptr};
-PanelViewRegInfo gPanelRegRight = {nullptr};
+PanelViewRegInfo gPanelRegLeft = {};
+PanelViewRegInfo gPanelRegRight = {};
 // Для плагинов PicView & MMView нужно знать, нажат ли CtrlShift при F3
 HANDLE ghConEmuCtrlPressed = nullptr, ghConEmuShiftPressed = nullptr;
 BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitConsoleInputPeek = FALSE;
@@ -813,7 +813,8 @@ bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
 
 	if (wcschr(pszCommand, L'%'))
 	{
-		szExpand.ms_Val = ExpandEnvStr(pszCommand);
+		// ReSharper disable once CppJoinDeclarationAndAssignment
+		szExpand = ExpandEnvStr(pszCommand);
 		if (szExpand.ms_Val)
 			pszCommand = szExpand.ms_Val;
 	}
@@ -5331,11 +5332,12 @@ BOOL /*WINAPI*/ CPluginBase::OnConsoleDetaching(HookCallbackArg* pArgs)
 		// Нужно уведомить ТЕКУЩИЙ сервер, что закрываться по окончании команды не нужно
 		if (gdwServerPID == 0)
 		{
-			_ASSERTE(gdwServerPID != nullptr);
+			_ASSERTE(gdwServerPID != 0);
 		}
 		else
 		{
-			CESERVER_REQ In, *pOut = nullptr;
+			CESERVER_REQ In = {};
+			CESERVER_REQ* pOut = nullptr;
 			ExecutePrepareCmd(&In, CECMD_FARDETACHED, sizeof(CESERVER_REQ_HDR));
 			pOut = ExecuteSrvCmd(gdwServerPID, &In, FarHwnd);
 

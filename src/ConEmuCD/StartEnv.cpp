@@ -159,7 +159,7 @@ void CStartEnv::Set(LPCWSTR asName, LPCWSTR asValue)
 				{
 					CEStr lsNewSuffix;
 					lsNewSuffix.Set(pchName+iSelfLen);
-					INT_PTR iSLen = lsNewSuffix.GetLen();
+					const INT_PTR iSLen = lsNewSuffix.GetLen();
 					iCmp = (iCurLen >= iSLen && iSLen > 0)
 						? wcsncmp(lsCurValue.c_str() + iCurLen - iSLen, lsNewSuffix, iSLen)
 						: -1;
@@ -176,10 +176,9 @@ void CStartEnv::Set(LPCWSTR asName, LPCWSTR asValue)
 	}
 
 	// Expand value
-	wchar_t* pszExpanded = ExpandEnvStr(asValue);
-	LPCWSTR pszSet = pszExpanded ? pszExpanded : asValue;
-	SetEnvironmentVariable(asName, (pszSet && *pszSet) ? pszSet : nullptr);
-	SafeFree(pszExpanded);
+	const CEStr pszExpanded = ExpandEnvStr(asValue);
+	const auto pszSet = pszExpanded ? pszExpanded.c_str() : asValue;
+	SetEnvironmentVariableW(asName, (pszSet && *pszSet) ? pszSet : nullptr);
 }
 
 void CStartEnv::Title(LPCWSTR asTitle)
@@ -193,6 +192,6 @@ void CStartEnv::Title(LPCWSTR asTitle)
 
 void CStartEnv::Type(LPCWSTR asSwitches, LPCWSTR asFile)
 {
-	CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : nullptr, L"\"", asFile, L"\"");
+	const CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : nullptr, L"\"", asFile, L"\"");
 	DoOutput(ConEmuExecAction::OutType, lsFull);
 }

@@ -510,27 +510,27 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 		}
 		else
 		{
-			wchar_t* pszCur = GetEnvVar(L"PATH");
+			CEStr szCur = GetEnvVar(L"PATH");
 
-			if (!pszCur)
-				pszCur = lstrdup(L"");
+			if (!szCur)
+				szCur.Set(L"");
 
-			DWORD n = lstrlen(pszCur);
-			wchar_t* pszUpr = lstrdup(pszCur);
-			wchar_t* pszDirUpr = (wchar_t*)malloc(MAX_PATH*sizeof(*pszCur));
+			const auto curLen = szCur.GetLen();
+			const CEStr szUpr(szCur.c_str());
+			CEStr szDirUpr;
 
 			MCHKHEAP;
 
-			if (!pszUpr || !pszDirUpr)
+			if (!szUpr || !szDirUpr.GetBuffer(MAX_PATH))
 			{
-				_ASSERTE(pszUpr && pszDirUpr);
+				_ASSERTE(!szUpr.IsEmpty() && szDirUpr.data());
 			}
 			else
 			{
 				bool bChanged = false;
 				wchar_t* pszAdd = nullptr;
 
-				CharUpperBuff(pszUpr, n);
+				CharUpperBuff(szUpr.data(), LODWORD(szUpr.GetLen()));
 
 				for (int i = 0; i <= 1; i++)
 				{
@@ -549,41 +549,43 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 							continue; // второй раз ту же директорию не добавляем
 						pszAdd = pOpt->ConEmuBaseDir;
 						break;
+					default:
+						_ASSERTE(FALSE && "should not get here");
+						continue;
 					}
 
-					int nDirLen = lstrlen(pszAdd);
-					lstrcpyn(pszDirUpr, pszAdd, MAX_PATH);
-					CharUpperBuff(pszDirUpr, nDirLen);
+					const int addDirLen = lstrlen(pszAdd);
+					szDirUpr.Set(pszAdd);
+					CharUpperBuff(szDirUpr.data(), addDirLen);
 
 					MCHKHEAP;
 
 					// Need to find exact match!
 					bool bFound = false;
 
-					LPCWSTR pszFind = wcsstr(pszUpr, pszDirUpr);
+					LPCWSTR pszFind = wcsstr(szUpr, szDirUpr);
 					while (pszFind)
 					{
-						if (pszFind[nDirLen] == L';' || pszFind[nDirLen] == 0)
+						if (pszFind[addDirLen] == L';' || pszFind[addDirLen] == 0)
 						{
 							// OK, found
 							bFound = true;
 							break;
 						}
 						// Next try (may be partial match of subdirs...)
-						pszFind = wcsstr(pszFind+nDirLen, pszDirUpr);
+						pszFind = wcsstr(pszFind + addDirLen, szDirUpr);
 					}
 
 					if (!bFound)
 					{
-						wchar_t* pszNew = lstrmerge(pszAdd, L";", pszCur);
-						if (!pszNew)
+						CEStr szNew(pszAdd, L";", szCur);
+						if (!szNew)
 						{
-							_ASSERTE(pszNew && "Failed to reallocate PATH variable");
+							_ASSERTE(!szNew.IsEmpty() && "Failed to reallocate PATH variable");
 							break;
 						}
 						MCHKHEAP;
-						SafeFree(pszCur);
-						pszCur = pszNew;
+						szCur = std::move(szNew);
 						bChanged = true; // Set flag, check next dir
 					}
 				}
@@ -592,17 +594,11 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 
 				if (bChanged)
 				{
-					SetEnvironmentVariable(L"PATH", pszCur);
+					SetEnvironmentVariable(L"PATH", szCur);
 				}
 			}
 
 			MCHKHEAP;
-
-			SafeFree(pszUpr);
-			SafeFree(pszDirUpr);
-
-			MCHKHEAP;
-			SafeFree(pszCur);
 		}
 	}
 }

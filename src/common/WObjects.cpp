@@ -144,6 +144,12 @@ int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr
 		}
 	}
 	#endif
+
+	if (!lpFileName || !*lpFileName)
+	{
+		_ASSERTE(lpFileName && *lpFileName);
+		return 0;
+	}
 	
 	bool bFound = false;
 	wchar_t *pszFilePart = nullptr, *pszBuffer = nullptr;
@@ -190,6 +196,12 @@ int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr
 
 int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath)
 {
+	if (!lpFileName || !*lpFileName)
+	{
+		_ASSERTE(lpFileName && *lpFileName);
+		return 0;
+	}
+
 	int iFoundLen = 0;
 	wchar_t* pszFilePart = nullptr;
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
@@ -229,6 +241,12 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 	// Possibilities
 	// a) asFilePath does not contain path, only: "far"
 	// b) asFilePath contains path, but without extension: "C:\\Program Files\\Far\\Far"
+
+	if (!asFilePath || !*asFilePath)
+	{
+		_ASSERTE(asFilePath && *asFilePath);
+		return false;
+	}
 
 	LPCWSTR pszSearchFile = asFilePath;
 	const auto* pszSlash = wcsrchr(asFilePath, L'\\');
@@ -275,7 +293,7 @@ bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 
 SearchAppPaths_t gfnSearchAppPaths = nullptr;
 
-bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
+bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true*/)
 {
 	if (!asFilePath || !*asFilePath)
 	{
@@ -319,7 +337,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 
 	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
 	// а о его параметрах должно заботиться вызывающее (текущее) приложение
-	if (abRegSearch && gfnSearchAppPaths && !wcschr(asFilePath, L'\\'))
+	if (gfnSearchAppPaths && !wcschr(asFilePath, L'\\'))
 	{
 		// Если в asFilePath НЕ указан путь - искать приложение в реестре,
 		// и там могут быть указаны доп. параметры (пока только добавка в %PATH%)

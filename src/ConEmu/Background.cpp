@@ -1252,25 +1252,22 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 
 	if (!pBkImgData)
 	{
-		wchar_t* exPath = ExpandEnvStr(ms_BgImage);
+		const CEStr exPath = ExpandEnvStr(ms_BgImage);
 
-		if (!exPath || !*exPath)
+		if (exPath.IsEmpty())
 		{
 			if (abShowErrors)
 			{
-				wchar_t szError[MAX_PATH*2];
-				DWORD dwErr = GetLastError();
+				wchar_t szError[MAX_PATH * 2] = L"";
+				const DWORD dwErr = GetLastError();
 				swprintf_c(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
 				          ms_BgImage, dwErr);
 				MBoxA(szError);
 			}
-
-			SafeFree(exPath);
 			return false;
 		}
 
 		pBkImgData = LoadImageEx(exPath, inf);
-		SafeFree(exPath);
 	}
 
 	if (pBkImgData)

@@ -1807,7 +1807,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t* pszUrl = NULL;
 	size_t iFiles = 0;
 	CEDownloadErrorArg args[4];
-	wchar_t* pszExpanded = NULL;
+	CEStr pszExpanded;
 	wchar_t szFullPath[MAX_PATH*2];
 	wchar_t szResult[80];
 	DWORD nFullRc;
@@ -1983,11 +1983,11 @@ int DoDownload(LPCWSTR asCmdLine)
 		args[2].uintArg = TRUE;  args[2].argType = at_Uint;
 
 		// May be file name was specified relatively or even with env.vars?
-		SafeFree(pszExpanded);
+		pszExpanded.Clear();
 		if (lstrcmp(szArg, L"-") != 0)
 		{
 			pszExpanded = ExpandEnvStr(szArg);
-			nFullRc = GetFullPathName((pszExpanded && *pszExpanded) ? pszExpanded : (LPCWSTR)szArg, countof(szFullPath), szFullPath, NULL);
+			nFullRc = GetFullPathName(!pszExpanded .IsEmpty() ? pszExpanded.c_str() : szArg.c_str(), countof(szFullPath), szFullPath, nullptr);
 			if (nFullRc && nFullRc < countof(szFullPath))
 				args[1].strArg = szFullPath;
 		}
@@ -2024,7 +2024,6 @@ wrap:
 	DownloadLog(dc_LogCallback, szResult);
 	// Finalize internet service
 	DownloadCommand(dc_Deinit, 0, NULL);
-	SafeFree(pszExpanded);
 	for (size_t i = 0; KnownArgs[i].pszArgName; i++)
 	{
 		if (KnownArgs[i].ppszValue)

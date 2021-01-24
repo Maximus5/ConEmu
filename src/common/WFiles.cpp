@@ -32,11 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MStrDup.h"
 #include "WFiles.h"
 #include "WObjects.h"
+#include "WRegistry.h"
 
 // Returns true, if application was found in registry:
 // [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
-// Also, function may change local process %PATH% variable
-bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore /*= nullptr*/)
+// Also, function may change local process %PATH% variable if rpsPathRestore is specified.
+bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, const bool abSetPath, CEnvRestorer* rpsPathRestore /*= nullptr*/)
 {
 	#if defined(CONEMU_MINIMAL)
 	PRAGMA_ERROR("Must not be included in ConEmuHk");
@@ -48,43 +49,49 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 	if (!asFilePath || !*asFilePath)
 		return false;
 
-	LPCWSTR pszSearchFile = PointToName(asFilePath);
-	LPCWSTR pszExt = PointToExt(pszSearchFile);
+	const auto* pszSearchFile = PointToName(asFilePath);
+	const auto* pszExt = PointToExt(pszSearchFile);
 
 	// Lets try find it in "App Paths"
 	// "HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\"
 	// "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"
-	LPCWSTR pszRoot = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
-	HKEY hk; LONG lRc;
-	CEStr lsName(pszRoot, pszSearchFile, pszExt ? nullptr : L".exe");
+	wchar_t pszRoot[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
+	HKEY hk;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	LONG lRc;
+	const CEStr lsName(pszRoot, pszSearchFile, pszExt ? nullptr : L".exe");
 	// Seems like 32-bit and 64-bit registry branches are the same now, but just in case - will check both
-	DWORD nWOW[2] = {WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY)};
+	DWORD nWOW[2] = { WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY) };
 	for (int i = 0; i < 3; i++)
 	{
 		bool bFound = false;
-		DWORD nFlags = ((i && IsWindows64()) ? nWOW[i-1] : 0);
+		const DWORD nFlags = ((i && IsWindows64()) ? nWOW[i - 1] : 0);
 		if ((i == 2) && !nFlags)
 			break; // This is 32-bit OS
 		lRc = RegOpenKeyEx(i ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER, lsName, 0, KEY_READ|nFlags, &hk);
-		if (lRc != 0) continue;
-		wchar_t szVal[MAX_PATH+1] = L"";
-		DWORD nType, nSize = sizeof(szVal)-sizeof(szVal[0]);
-		lRc = RegQueryValueEx(hk, nullptr, nullptr, &nType, (LPBYTE)szVal, &nSize);
+		if (lRc != 0)
+			continue;
+		wchar_t szVal[MAX_PATH + 1] = L"";
+		DWORD nType = 0;
+		DWORD nSize = sizeof(szVal) - sizeof(szVal[0]);
+		lRc = RegQueryValueEx(hk, nullptr, nullptr, &nType, reinterpret_cast<LPBYTE>(szVal), &nSize);
 		if (lRc == 0)
 		{
 			wchar_t *pszCheck = nullptr;
+			CEStr expanded;
 			if (nType == REG_SZ)
 			{
 				pszCheck = szVal;
 			}
 			else if (nType == REG_EXPAND_SZ)
 			{
-				pszCheck = ExpandEnvStr(szVal);
+				expanded = ExpandEnvStr(szVal);
+				pszCheck = expanded.data();
 			}
 			// May be quoted
-			if (pszCheck)
+			if (pszCheck && *pszCheck)
 			{
-				LPCWSTR pszPath = Unquote(pszCheck, true);
+				const auto pszPath = Unquote(pszCheck, true);
 				if (FileExists(pszPath))
 				{
 					// asFilePath will be invalid after .Set
@@ -98,50 +105,39 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 					if (abSetPath)
 					{
 						nSize = 0;
-						lRc = RegQueryValueEx(hk, L"PATH", nullptr, &nType, nullptr, &nSize);
-						if (lRc == 0 && nSize)
+						CEStr szAddPath;
+						const auto iAddLen = RegGetStringValue(hk, nullptr, L"PATH", szAddPath);
+						if (iAddLen > 0)
 						{
-							wchar_t* pszCurPath = GetEnvVar(L"PATH");
-							wchar_t* pszAddPath = (wchar_t*)calloc(nSize+4,1);
-							wchar_t* pszNewPath = nullptr;
-							if (pszAddPath)
+							CEStr szCurPath = GetEnvVar(L"PATH");
+
+							// If "%PATH%" does not contain szAddPath (at the beginning) - force add it
+							const auto iCurLen = szCurPath.GetLen();
+							bool bNeedAdd = true;
+							if ((iCurLen >= iAddLen) && (szCurPath[iAddLen] == L';' || szCurPath[iAddLen] == 0))
 							{
-								lRc = RegQueryValueEx(hk, L"PATH", nullptr, &nType, (LPBYTE)pszAddPath, &nSize);
-								if (lRc == 0 && *pszAddPath)
+								const wchar_t ch = szCurPath[iAddLen]; szCurPath.SetAt(iAddLen, 0);
+								if (szCurPath.Compare(szAddPath) == 0)
+									bNeedAdd = false;
+								szCurPath.SetAt(iAddLen, ch);
+							}
+
+							if (bNeedAdd)
+							{
+								if (rpsPathRestore)
 								{
-									// Если в "%PATH%" этого нет (в начале) - принудительно добавить
-									int iCurLen = pszCurPath ? lstrlen(pszCurPath) : 0;
-									int iAddLen = lstrlen(pszAddPath);
-									bool bNeedAdd = true;
-									if ((iCurLen >= iAddLen) && (pszCurPath[iAddLen] == L';' || pszCurPath[iAddLen] == 0))
-									{
-										wchar_t ch = pszCurPath[iAddLen]; pszCurPath[iAddLen] = 0;
-										if (lstrcmpi(pszCurPath, pszAddPath) == 0)
-											bNeedAdd = false;
-										pszCurPath[iAddLen] = ch;
-									}
-									// Если пути еще нет
-									if (bNeedAdd)
-									{
-										if (rpsPathRestore)
-										{
-											rpsPathRestore->SavePathVar(pszCurPath);
-										}
-										pszNewPath = lstrmerge(pszAddPath, L";", pszCurPath);
-										if (pszNewPath)
-										{
-											SetEnvironmentVariable(L"PATH", pszNewPath);
-										}
-										else
-										{
-											_ASSERTE(pszNewPath!=nullptr && "Allocation failed?");
-										}
-									}
+									rpsPathRestore->SavePathVar(szCurPath);
+								}
+								const CEStr szNewPath(szAddPath, L";", szCurPath);
+								if (szNewPath)
+								{
+									SetEnvironmentVariable(L"PATH", szNewPath);
+								}
+								else
+								{
+									_ASSERTE(!szNewPath.IsEmpty() && "Allocation failed?");
 								}
 							}
-							SafeFree(pszAddPath);
-							SafeFree(pszCurPath);
-							SafeFree(pszNewPath);
 						}
 					}
 				}
@@ -160,13 +156,14 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRest
 wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 {
 	wchar_t* pszResult = nullptr;
-	wchar_t* pszTemp = nullptr;
+	CEStr szTemp;
 
 	if (wcschr(asPath, L'%'))
 	{
-		if ((pszTemp = ExpandEnvStr(asPath)) != nullptr)
+		szTemp = ExpandEnvStr(asPath);
+		if (szTemp)
 		{
-			asPath = pszTemp;
+			asPath = szTemp.c_str();
 		}
 	}
 
@@ -187,7 +184,6 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 		pszResult = lstrdup(asPath);
 	}
 
-	SafeFree(pszTemp);
 	return pszResult;
 }
 

@@ -3170,13 +3170,12 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										if (bRunOutside)
 										{
 											// Need to check registry for 'App Paths' and set up '%PATH%'
-											LPCWSTR pszTemp = args.pszSpecialCmd;
-											CmdArg szExe;
+											pszTemp = args.pszSpecialCmd;
+											szExe.Release();
 											CEnvRestorer szPrevPath;
-											wchar_t* pszPrevPath = nullptr;
 											if ((pszTemp = NextArg(pszTemp, szExe)))
 											{
-												if (SearchAppPaths((LPCWSTR)szExe, szExe, true, &szPrevPath))
+												if (SearchAppPaths(szExe.c_str(), szExe, true, &szPrevPath))
 												{
 													wchar_t* pszChanged = MergeCmdLine(szExe, pszTemp);
 													if (pszChanged)

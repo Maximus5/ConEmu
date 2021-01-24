@@ -602,7 +602,7 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 		if (!szTemp.IsEmpty()
 			&& ((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
 				// or file/dir may be found via env.var. substitution or searching in %PATH%
-				|| FileExistsSearch(szTemp.c_str(), szTemp))
+				|| FileExistsSearch(szTemp.c_str(), szTemp, true))
 			// Than check if it is a FILE (not a directory)
 			&& FileExists(szTemp, &nTempSize) && nTempSize)
 		{
@@ -732,7 +732,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			CEStr expanded;
 			const wchar_t* exeToCheck = nullptr;
 			// file/dir may be found via env.var. substitution or searching in %PATH%
-			if (FileExistsSearch(szExe.c_str(), expanded))
+			if (FileExistsSearch(szExe.c_str(), expanded, true))
 				exeToCheck = expanded.IsEmpty() ? szExe.c_str() : expanded.c_str();
 			// or it's already a full specified file path
 			else if (IsFilePath(szExe, true))
@@ -787,7 +787,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			_ASSERTE(lstrcmpiW(szExe, L"start") != 0);
 
 			// Expand environment variables and search in the %PATH%
-			if (FileExistsSearch(szExe.c_str(), szExe))
+			if (FileExistsSearch(szExe.c_str(), szExe, true))
 			{
 				rsArguments = SkipNonPrintable(pwszCopy);
 			}

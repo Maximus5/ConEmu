@@ -226,7 +226,7 @@ wrap:
 
 int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir)
 {
-	wchar_t* pszExpanded = ExpandEnvStr(asIconDescr);
+	CEStr pszExpanded = ExpandEnvStr(asIconDescr);
 
 	// Need to be created!
 	int iIconIdx = -1;
@@ -262,7 +262,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (lstrcmpi(lpszExt, L".ico") == 0)
 	{
-		hFileIcon = (HICON)LoadImage(0, szLoadFile, IMAGE_ICON, mn_CxIcon, mn_CyIcon, LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+		hFileIcon = static_cast<HICON>(LoadImage(nullptr, szLoadFile, IMAGE_ICON, mn_CxIcon, mn_CyIcon, LR_DEFAULTCOLOR | LR_LOADFROMFILE));
 	}
 	else if ((lstrcmpi(lpszExt, L".exe") == 0) || (lstrcmpi(lpszExt, L".dll") == 0))
 	{
@@ -270,19 +270,23 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		const UINT extracted = ExtractIconEx(szLoadFile, nIndex, &hIconLarge, &hIconSmall, 1);
 		if (!(hIconLarge || hIconSmall))
 		{
-			_ASSERTE(!extracted || (extracted == (UINT)-1));
+			_ASSERTE(!extracted || (extracted == static_cast<UINT>(-1)));
 			CEStr rsFound;
-			if (SearchAppPaths(szLoadFile, rsFound, false/*abSetPath*/))
+			if (SearchAppPaths(szLoadFile, rsFound, false))
+			{
 				ExtractIconEx(rsFound, nIndex, &hIconLarge, &hIconSmall, 1);
+			}
 		}
-		bool bUseLargeIcon = ((mn_CxIcon > 16) && (hIconLarge != nullptr)) || (hIconSmall == nullptr);
+		const bool bUseLargeIcon = ((mn_CxIcon > 16) && (hIconLarge != nullptr)) || (hIconSmall == nullptr);
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HICON hDestroyIcon = bUseLargeIcon ? hIconSmall : hIconLarge;
-		if (hDestroyIcon) DestroyIcon(hDestroyIcon);
+		if (hDestroyIcon)
+			DestroyIcon(hDestroyIcon);
 		hFileIcon = bUseLargeIcon ? hIconLarge : hIconSmall;
 	}
 	else
 	{
-		//TODO: Shell icons for registered files (cmd, bat, sh, pl, py, ...)
+		//#TODO: Shell icons for registered files (cmd, bat, sh, pl, py, ...)
 	}
 
 	if (hFileIcon)
@@ -292,29 +296,30 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 		if (gpSet->isLogging())
 		{
-			CEStr lsLog(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo);
+			const CEStr lsLog(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo);
 			gpConEmu->LogString(lsLog);
 		}
 
 		int iIconIdxAdm = -1;
 		iIconIdx = ImageList_ReplaceIcon(mh_TabIcons, -1, hFileIcon);
 
-		TabIconCache NewIcon = {lstrdup(asIconDescr), iIconIdx, false};
-		m_Icons.push_back(NewIcon);
+		const TabIconCache newIcon = {lstrdup(asIconDescr), iIconIdx, false, false};
+		m_Icons.push_back(newIcon);
 
 		if (mn_AdminOverlayIndex >= 0)
 		{
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HICON hNewIcon = ImageList_GetIcon(mh_TabIcons, iIconIdx, ILD_TRANSPARENT | INDEXTOOVERLAYMASK(mn_AdminOverlayIndex));
 			if (hNewIcon)
 			{
-				CEStr lsLog(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo));
+				const CEStr lsLog(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo));
 				gpConEmu->LogString(lsLog);
 
 				iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
 				DestroyIcon(hNewIcon);
 
-				TabIconCache AdmIcon = {lstrdup(asIconDescr), iIconIdxAdm, true};
-				m_Icons.push_back(AdmIcon);
+				const TabIconCache admIcon = {lstrdup(asIconDescr), iIconIdxAdm, true, false};
+				m_Icons.push_back(admIcon);
 
 				if (bAdmin && (iIconIdxAdm > 0))
 				{
@@ -335,10 +340,9 @@ wrap:
 	{
 		gpConEmu->ChangeWorkDir(nullptr);
 	}
-	SafeFree(pszExpanded);
 	if (gpSet->isLogging() && (iIconIdx < 0))
 	{
-		CEStr lsLog(L"Icon `", asIconDescr, L"` loading was failed");
+		const CEStr lsLog(L"Icon `", asIconDescr, L"` loading was failed");
 		gpConEmu->LogString(lsLog);
 	}
 	return iIconIdx;

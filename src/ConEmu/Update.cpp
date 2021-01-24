@@ -1811,7 +1811,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 	if (mp_Set->UpdateDownloadSetup() == 1)
 		return true; // Инсталлер, архиватор не требуется!
 
-	LPCWSTR pszCmd = mp_Set->UpdateArcCmdLine();
+	const auto* pszCmd = mp_Set->UpdateArcCmdLine();
 	CmdArg sz7zip;
 	if (!NextArg(pszCmd, sz7zip))
 	{
@@ -1819,7 +1819,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 		return false;
 	}
 
-	if (FileExistsSearch((LPCWSTR)sz7zip, sz7zip, false))
+	if (FileExistsSearch(sz7zip.c_str(), sz7zip, false))
 		return true;
 
 	WARNING("TODO: Suggest to download 7zip");

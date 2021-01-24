@@ -311,12 +311,12 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	SettingsStorage Storage = gpSet->GetSettingsType();
 
 	// Same priority as in CConEmuMain::ConEmuXml (reverse order)
-	wchar_t* pszSettingsPlaces[] = {
-		lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
+	CEStr pszSettingsPlaces[] = {
+		CEStr(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
 		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
 		GetFullPathNameEx(L"%ConEmuBaseDir%\\ConEmu.xml"), // compact "C:\ConEmu\src\..\Debug\ConEmu.xml" to "C:\ConEmu\Debug\ConEmu.xml"
 		GetFullPathNameEx(L"%ConEmuDir%\\ConEmu.xml"),
-		nullptr
+		CEStr()
 	};
 	// Lets find first allowed item
 	int iAllowed = 0;
@@ -334,8 +334,7 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				// Directly specified with "/LoadCfgFile ..."
-				SafeFree(pszSettingsPlaces[3]);
-				pszSettingsPlaces[3] = lstrdup(Storage.File);
+				pszSettingsPlaces[3].Set(Storage.File);
 				iAllowed = 3; // Most prioritized
 			}
 		}
@@ -371,19 +370,12 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Populate lbStorageLocation
-	while (pszSettingsPlaces[iAllowed])
+	while (!pszSettingsPlaces[iAllowed].IsEmpty())
 	{
-		SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, (LPARAM)pszSettingsPlaces[iAllowed]);
+		SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, static_cast<LPARAM>(pszSettingsPlaces[iAllowed]));
 		iAllowed++;
 	}
 	SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, iDefault, 0);
-
-	// Release memory
-	for (int i = 0; pszSettingsPlaces[i]; i++)
-	{
-		SafeFree(pszSettingsPlaces[i]);
-	}
-
 
 	// Tasks
 	const CommandTasks* pGrp = nullptr;
@@ -406,7 +398,7 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	const ColorPalette* pPal = nullptr;
 	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != nullptr; nPal++)
 	{
-		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pPal->pszName));
 	}
 	// Show active (default) palette
 	gp_DefaultPalette = gpSet->PaletteFindCurrent(true);
@@ -421,7 +413,7 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	// Show its colors in box
 	HWND hChild = GetDlgItem(hDlg, stPalettePreviewFast);
 	if (hChild)
-		gpfn_DefaultColorBoxProc = (WNDPROC)SetWindowLongPtr(hChild, GWLP_WNDPROC, (LONG_PTR)ColorBoxProc);
+		gpfn_DefaultColorBoxProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(hChild, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(ColorBoxProc)));
 
 
 	// Single instance
@@ -482,18 +474,18 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 		RECT rcGroup, rcBtn, rcWnd;
 		if (GetWindowRect(GetDlgItem(hDlg, gbDisableConImeFast), &rcGroup))
 		{
-			int nShift = (rcGroup.bottom-rcGroup.top);
+			const int nShift = (rcGroup.bottom - rcGroup.top);
 
 			HWND h = GetDlgItem(hDlg, IDOK);
-			GetWindowRect(h, &rcBtn); MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcBtn, 2);
+			GetWindowRect(h, &rcBtn); MapWindowPoints(nullptr, hDlg, reinterpret_cast<LPPOINT>(&rcBtn), 2);
 			SetWindowPos(h, nullptr, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 			h = GetDlgItem(hDlg, IDCANCEL);
-			GetWindowRect(h, &rcBtn); MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcBtn, 2);
+			GetWindowRect(h, &rcBtn); MapWindowPoints(nullptr, hDlg, reinterpret_cast<LPPOINT>(&rcBtn), 2);
 			SetWindowPos(h, nullptr, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 			h = GetDlgItem(hDlg, stHomePage);
-			GetWindowRect(h, &rcBtn); MapWindowPoints(nullptr, hDlg, (LPPOINT)&rcBtn, 2);
+			GetWindowRect(h, &rcBtn); MapWindowPoints(nullptr, hDlg, reinterpret_cast<LPPOINT>(&rcBtn), 2);
 			SetWindowPos(h, nullptr, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 			SetWindowText(h, gsFirstStart);
 
@@ -1024,7 +1016,6 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 {
 	_ASSERTE(foundFiles.size() == 0);
 	bool bFound = false;
-	wchar_t* pszExpanded = nullptr;
 	wchar_t szDrive[4]; // L"C:"
 	CEStr szTemp;
 
@@ -1133,7 +1124,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 	// Using environment variables?
 	if (wcschr(asSearchPath, L'%'))
 	{
-		pszExpanded = ExpandEnvStr(asSearchPath);
+		const CEStr pszExpanded = ExpandEnvStr(asSearchPath);
 		if (pszExpanded && FileExists(pszExpanded))
 		{
 			foundFiles.Add(asSearchPath, pszExpanded);
@@ -1152,7 +1143,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 			bFound = true;
 		}
 		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
-		else if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
+		else if (SearchAppPaths(asSearchPath, rsFound, false))
 		{
 			// If app exists in "App Paths" we don't need to store its full path
 			foundFiles.Add(asSearchPath, rsFound);
@@ -1188,7 +1179,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 	{
 		if ((asFirstDrive && *asFirstDrive) && (lstrcmpi(szDrive, asFirstDrive) == 0))
 			continue;
-		UINT nType = GetDriveType(szDrive);
+		const UINT nType = GetDriveType(szDrive);
 		if (nType != DRIVE_FIXED)
 			continue;
 		rsFound.Attach(JoinPath(szDrive, asSearchPath));
@@ -1201,12 +1192,14 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 	}
 
 wrap:
-	SafeFree(pszExpanded);
 	_ASSERTE(bFound == (foundFiles.size() != 0));
 	return foundFiles.size();
 }
 
-class CVarDefs
+
+static class CVarDefs *spVars = nullptr;
+
+class CVarDefs final
 {
 public:
 	struct VarDef
@@ -1216,7 +1209,7 @@ public:
 	};
 	MArray<VarDef> Vars;
 
-	void Store(wchar_t* asName, wchar_t* psValue)
+	void Store(wchar_t*&& asName, wchar_t*&& psValue)
 	{
 		if (!asName || !*asName || !psValue || !*psValue)
 		{
@@ -1225,42 +1218,43 @@ public:
 		}
 
 		VarDef v = {asName, psValue};
-		Vars.push_back(v);
+		Vars.push_back(std::move(v));
 	};
 
 	void Process(int nBackSteps, LPCWSTR asName)
 	{
-		wchar_t szName[80] = L"%"; wcscat_c(szName, asName); wcscat_c(szName, L"%");
-		wchar_t* psVal = GetEnvVar(asName);
-		while (psVal && *psVal)
+		CEStr szName(L"%", asName, L"%");
+		const CEStr expanded = GetEnvVar(asName);
+		while (!expanded.IsEmpty())
 		{
-			wchar_t* pszSlash = wcsrchr(psVal, L'\\');
-			while (pszSlash && (*(pszSlash+1) == 0))
+			wchar_t* pszSlash = wcsrchr(expanded.data(), L'\\');
+			while (pszSlash && (*(pszSlash + 1) == 0))
 			{
-				_ASSERTE(*(pszSlash+1) != 0 && "Must not be the trailing slash!");
+				_ASSERTE(*(pszSlash + 1) != 0 && "Must not be the trailing slash!");
 				*pszSlash = 0;
-				pszSlash = wcsrchr(psVal, L'\\');
+				pszSlash = wcsrchr(expanded.data(), L'\\');
 			}
 
-			Store(lstrdup(szName), lstrdup(psVal));
+			Store(lstrdup(szName), lstrdup(expanded));
 
+			// If we want to try something like "%windir%\.."
 			if ((--nBackSteps) < 0)
 				break;
 			if (!pszSlash)
 				break;
 			*pszSlash = 0;
-			if (!wcsrchr(psVal, L'\\'))
+			if (!wcsrchr(expanded, L'\\'))
 				break;
-			wcscat_c(szName, L"\\..");
+			szName = CEStr(szName, L"\\..");
 		}
-		SafeFree(psVal);
 	}
 
 	CVarDefs()
 	{
+		spVars = this;
 		Process(0, L"ConEmuBaseDir");
-		Process(3, L"ConEmuDir");
-		Process(0, L"WinDir");
+		Process(0, L"ConEmuDir");
+		Process(1, L"WinDir");
 		Process(0, L"ConEmuDrive");
 	};
 
@@ -1272,6 +1266,10 @@ public:
 			SafeFree(v.pszName);
 			SafeFree(v.pszValue);
 		}
+		if (spVars == this)
+		{
+			spVars = nullptr;
+		}
 	};
 
 	CVarDefs(const CVarDefs&) = delete;
@@ -1279,8 +1277,6 @@ public:
 	CVarDefs& operator=(const CVarDefs&) = delete;
 	CVarDefs& operator=(CVarDefs&&) = delete;
 };
-
-static CVarDefs *spVars = nullptr;
 
 static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR cchMax)
 {
@@ -1296,7 +1292,7 @@ static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR 
 	if (!IsFilePath(asSource, true))
 		return false;
 
-	CEStr szTemp((LPCWSTR)asSource);
+	CEStr szTemp(asSource);
 	wchar_t* ptrSrc = szTemp.ms_Val;
 	if (!ptrSrc)
 		return false;
@@ -1366,7 +1362,7 @@ protected:
 		wchar_t ErrText[512];
 		DWORD FileAttrs = 0;
 		_ASSERTE(!pszOptFull || *pszOptFull);
-		LPCWSTR pszPath = pszOptFull ? pszOptFull : szPath;
+		const auto* pszPath = pszOptFull ? pszOptFull : szPath;
 
 		// Use GetImageSubsystem as condition because many exe-s may not have VersionInfo at all
 		if (GetImageSubsystem(pszPath, FI.dwSubsystem, FI.dwBits, FileAttrs))
@@ -1378,12 +1374,11 @@ protected:
 
 			// App instance found, add it to Installed array?
 			bool bAlready = false;
-			for (INT_PTR a = 0; a < Installed.size(); a++)
+			for (auto& ai : Installed)
 			{
-				AppInfo& ai = Installed[a];
 				bool path_match = false;
 				if (lstrcmpi(ai.szFullPath, szPath) == 0)
-				{
+				{  // NOLINT(bugprone-branch-clone)
 					path_match = true;
 				}
 				else if (pszOptFull && (lstrcmpi(ai.szFullPath, pszOptFull) == 0))
@@ -1399,7 +1394,7 @@ protected:
 				}
 				// Do not add twice same path + args
 				if (path_match
-						&& (lstrcmp(ai.szArgs ? ai.szArgs : L"", asArgs ? asArgs : L"") == 0))
+					&& (lstrcmp(ai.szArgs ? ai.szArgs : L"", asArgs ? asArgs : L"") == 0))
 				{
 					bAlready = true; break;
 				}
@@ -1410,7 +1405,7 @@ protected:
 				lstrcpyn(FI.szTaskName, asName, countof(FI.szTaskName));
 				lstrcpyn(FI.szTaskBaseName, asName, countof(FI.szTaskBaseName));
 				FI.szFullPath = lstrdup(szPath);
-				FI.szExpanded = pszOptFull ? lstrdup(pszOptFull) : ExpandEnvStr(szPath);
+				FI.szExpanded = pszOptFull ? lstrdup(pszOptFull) : ExpandEnvStr(szPath).Detach();
 				FI.bForceQuot = bForceQuot;
 				FI.szArgs = asArgs ? lstrdup(asArgs) : nullptr;
 				FI.szPrefix = asPrefix ? lstrdup(asPrefix) : nullptr;
@@ -2154,19 +2149,19 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 			break;
 	}
 
-	int iVer = wcstol(pszVer, nullptr, 10);
-	CEStr pszPrefix(L"cmd /k \"");
+	const int iVer = wcstol(pszVer, nullptr, 10);
+	const CEStr pszPrefix(L"cmd /k \"");
 	CEStr pszSuffix(L"-new_console:t:\"VS ", pszVer, L"\"");
 
-	CEStr lsIcon; LPCWSTR pszIconSource = nullptr;
+	LPCWSTR pszIconSource = nullptr;
 	LPCWSTR pszIconSources[] = {
 		L"%CommonProgramFiles(x86)%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
 		L"%CommonProgramFiles%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
 		nullptr};
 	for (int i = 0; pszIconSources[i]; i++)
 	{
-		if (lsIcon.Attach(ExpandEnvStr(pszIconSources[i]))
-			&& FileExists(lsIcon))
+		CEStr lsIcon = ExpandEnvStr(pszIconSources[i]);
+		if (lsIcon && FileExists(lsIcon))
 		{
 			pszIconSource = pszIconSources[i];
 			break;
@@ -2658,8 +2653,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 			giCreatIdx++;
 	}
 
-	CVarDefs Vars;
-	spVars = &Vars;
+	CVarDefs varsToUnexpand;
 
 	AppFoundList App;
 

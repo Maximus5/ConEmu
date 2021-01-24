@@ -1151,7 +1151,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					if (!gpConEmu->opt.IconPrm.Exists && !szNext.IsEmpty())
 					{
 						gpConEmu->opt.IconPrm = true;
-						gpConEmu->mps_IconPath = ExpandEnvStr(szNext);
+						gpConEmu->ms_IconPath = ExpandEnvStr(szNext);
 					}
 				}
 				else if (szArg.IsSwitch(L"-dir"))
