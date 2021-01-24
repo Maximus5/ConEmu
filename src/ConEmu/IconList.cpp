@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ToolImg.h"
 #include "../common/EnvVar.h"
 #include "../common/MSectionSimple.h"
+#include "../common/MWow64Disable.h"
 #include "../common/WFiles.h"
 
 #ifdef _DEBUG
@@ -212,7 +213,15 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 		goto wrap;
 	}
 
-	iCreatedIcon = mh_TabIcons ? CreateTabIconInt(asIconDescr, bAdmin, asWorkDir) : -1;
+	if (mh_TabIcons)
+	{
+		iCreatedIcon = CreateTabIconInt(asIconDescr, bAdmin, asWorkDir);
+		if (iCreatedIcon == -1)
+		{
+			MWow64Disable wow; wow.Disable();
+			iCreatedIcon = CreateTabIconInt(asIconDescr, bAdmin, asWorkDir);
+		}
+	}
 
 	if (iCreatedIcon == -1)
 	{
