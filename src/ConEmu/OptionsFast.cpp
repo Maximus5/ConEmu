@@ -2596,6 +2596,59 @@ static void CreateBashTask()
 	App.Commit();
 }
 
+static void CreateWslTask()
+{
+	// New Windows 10 feature (build 14316 and higher)
+	//   User have to
+	//   a) Turn on Windows' feature ‘Windows Subsystem for Linux’
+	//      Control Panel / Programs / Turn Windows features on or off
+	//   b) Select ‘Developer mode’
+	//      Settings / Update & Security / For Developers
+	if (!IsWin10())
+		return;
+
+	AppFoundList App;
+	#ifndef _WIN64
+	MWow64Disable wow; wow.Disable(); // We need 64-bit version of system32
+	#endif
+	wchar_t wslLoader[] = L"%windir%\\system32\\wsl.exe";
+	const CEStr expanded(ExpandEnvStr(wslLoader));
+	const bool wslExists = FileExists(expanded);
+	if (wslExists)
+	{
+		// #TODO Find the appropriate icon of WSL distro
+		struct WslCreator
+		{
+			const CEStr& wslLoader;
+			AppFoundList& taskCreator;
+
+			static bool WINAPI WslTaskCallback(HKEY hkDistr, const wchar_t* pszSubkeyName, LPARAM lParam)
+			{
+				auto* obj = reinterpret_cast<WslCreator*>(lParam);
+				if (!obj)
+					return false;
+				// e.g. "Ubuntu-20.04"
+				CEStr distrName;
+				if (RegGetStringValue(hkDistr, nullptr, L"DistributionName", distrName) > 0)
+				{
+					const CEStr taskName(L"WSL::", distrName);
+					const CEStr params(L" -cur_console:pm:/mnt --distribution ", distrName);
+					obj->taskCreator.Add(taskName, params, nullptr, nullptr, obj->wslLoader, nullptr);
+				}
+				return true;
+			}
+		};
+
+		App.Add(L"WSL::WSL", L" -cur_console:pm:/mnt", nullptr, nullptr, wslLoader, nullptr);
+
+		WslCreator wslCreator{ wslLoader, App };
+		RegEnumKeys(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Lxss)", &WslCreator::WslTaskCallback, reinterpret_cast<LPARAM>(&wslCreator));
+	}
+
+	// Create all wsl tasks
+	App.Commit();
+}
+
 // Docker Toolbox
 static void CreateDockerTask()
 {
@@ -2697,6 +2750,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 
 	// Miscellaneous BASH tasks (Git, Cygwin, Msys, whatever)
 	CreateBashTask();
+	CreateWslTask();
 
 	// Putty
 	CreatePuttyTask();
