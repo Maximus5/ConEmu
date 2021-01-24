@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "MAssert.h"
 #include "MStrSafe.h"
+#include "CEStr.h"
 
 // Используется в ConEmuC.exe, и для минимизации кода
 // менеджер памяти тут использоваться не должен!
@@ -479,78 +480,87 @@ wrap:
 	return lpOut;
 }
 
+static int CompareStringPointers(const void* asStr1, const void* asStr2)
+{
+	if (asStr1 == nullptr && asStr2)
+		return -1; // str1 is lesser than str2
+	if (asStr1 && asStr2 == nullptr)
+		return 1; // str1 is greater than str2
+	return 0;
+}
+
 int lstrcmpni(LPCSTR asStr1, LPCSTR asStr2, int cchMax)
 {
-	char sz1[64], sz2[64];
-	char *ptr1, *ptr2;
+	if (!asStr1 || !asStr2 || cchMax <= 0)
+	{
+		return CompareStringPointers(asStr1, asStr2);
+	}
+
+	const int stackMaxLen = 64;
+	char sz1[stackMaxLen], sz2[stackMaxLen];
+	const char* ptr1; const char* ptr2;
+	CEStrA buf1, buf2;
 
 	int nCmp = 0;
 
-	if (cchMax >= 64)
+	if (cchMax >= stackMaxLen)
 	{
-		ptr1 = new char[cchMax+1];
-		ptr2 = new char[cchMax+1];
+		ptr1 = buf1.Set(asStr1, cchMax);
+		ptr2 = buf2.Set(asStr2, cchMax);
 	}
 	else
 	{
-		ptr1 = sz1;
-		ptr2 = sz2;
+		ptr1 = lstrcpynA(sz1, asStr1, cchMax + 1);
+		ptr2 = lstrcpynA(sz2, asStr2, cchMax + 1);
 	}
 
 	if (!ptr1 || !ptr2)
 	{
 		_ASSERTE(ptr1 && ptr2);
-		nCmp = 0;
+		nCmp = CompareStringPointers(ptr1, ptr2);
 	}
 	else
 	{
-		lstrcpynA(ptr1, asStr1, cchMax+1);
-		lstrcpynA(ptr2, asStr2, cchMax+1);
 		nCmp = lstrcmpiA(ptr1, ptr2);
 	}
-
-	if (ptr1 && ptr1 != sz1)
-		delete[] ptr1;
-	if (ptr2 && ptr2 != sz2)
-		delete[] ptr2;
 
 	return nCmp;
 }
 
 int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax)
 {
-	wchar_t sz1[64], sz2[64];
-	wchar_t *ptr1, *ptr2;
+	if (!asStr1 || !asStr2 || cchMax <= 0)
+	{
+		return CompareStringPointers(asStr1, asStr2);
+	}
+
+	const int stackMaxLen = 64;
+	wchar_t sz1[stackMaxLen], sz2[stackMaxLen];
+	const wchar_t* ptr1; const wchar_t* ptr2;
+	CEStr buf1, buf2;
 
 	int nCmp = 0;
 
-	if (cchMax >= 64)
+	if (cchMax >= stackMaxLen)
 	{
-		ptr1 = new wchar_t[cchMax+1];
-		ptr2 = new wchar_t[cchMax+1];
+		ptr1 = buf1.Set(asStr1, cchMax);
+		ptr2 = buf2.Set(asStr2, cchMax);
 	}
 	else
 	{
-		ptr1 = sz1;
-		ptr2 = sz2;
+		ptr1 = lstrcpynW(sz1, asStr1, cchMax + 1);
+		ptr2 = lstrcpynW(sz2, asStr2, cchMax + 1);
 	}
 
 	if (!ptr1 || !ptr2)
 	{
 		_ASSERTE(ptr1 && ptr2);
-		nCmp = 0;
+		nCmp = CompareStringPointers(ptr1, ptr2);
 	}
 	else
 	{
-		lstrcpyn(ptr1, asStr1, cchMax+1);
-		lstrcpyn(ptr2, asStr2, cchMax+1);
 		nCmp = lstrcmpi(ptr1, ptr2);
 	}
-
-	if (ptr1 && ptr1 != sz1)
-		delete[] ptr1;
-	if (ptr2 && ptr2 != sz2)
-		delete[] ptr2;
 
 	return nCmp;
 }
