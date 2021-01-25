@@ -106,6 +106,9 @@ public:
 
 		SetEnvironmentVariableW(L"ConEmuBaseDirTest", srvMap.ComSpec.ConEmuBaseDir);
 		SetEnvironmentVariableW(L"ConEmuLogTest", srvMap.nLogLevel ? L"/LOG " : L"");
+		wchar_t processId[32] = L"";
+		const auto pid = GetCurrentProcessId();
+		SetEnvironmentVariableW(L"ConEmuTestPid", ltow_s(pid, processId, 10));
 
 		setRoot = std::make_unique<VarSet<HWND>>(ghConEmuWnd, srvMap.hConEmuRoot);
 		setBack = std::make_unique<VarSet<HWND>>(ghConEmuWndBack, srvMap.hConEmuWndBack);
@@ -140,6 +143,7 @@ public:
 	{
 		SetEnvironmentVariableW(L"ConEmuBaseDirTest", nullptr);
 		SetEnvironmentVariableW(L"ConEmuLogTest", nullptr);
+		SetEnvironmentVariableW(L"ConEmuTestPid", nullptr);
 
 		mappingMock.CloseMap();
 
@@ -199,17 +203,17 @@ TEST_F(ShellProcessor, Far300)
 	TestInfo tests[] = {
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"(mingw32-make "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
 
 		{Function::CreateW,
 			nullptr, LR"("C:\1 @\a.cmd")",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 
 		// #TODO: Add DosBox mock/test
 		{Function::CreateW,
@@ -234,10 +238,7 @@ TEST_F(ShellProcessor, Far300)
 		auto* psi = &si;
 		si.cb = sizeof(si);
 
-		wchar_t expectedParamBuff[1024] = L"";
-		const auto pid = GetCurrentProcessId();
 		CEStr expanded(ExpandEnvStr(test.expectParam));
-		msprintf(expectedParamBuff, countof(expectedParamBuff), expanded.c_str(), pid);
 
 		const CEStr testInfo(L"file=", test.file ? test.file : L"<null>",
 			L"; param=", test.param ? test.param : L"<null>", L";");
@@ -247,12 +248,12 @@ TEST_F(ShellProcessor, Far300)
 		case Function::CreateW:
 			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
 			break;
 		case Function::ShellW:
 			EXPECT_TRUE(sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
 			break;
 		default:
 			break;
@@ -288,19 +289,19 @@ TEST_F(ShellProcessor, Far175)
 	TestInfo tests[] = {
 		{Function::CreateA,
 			nullptr, R"("C:\1 @\a.cmd")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd""  )",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C ""C:\1 @\a.cmd""  )"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd""  )"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /C "set > res.log")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%u /C "set > res.log")"},
+			nullptr, R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "set > res.log")"},
 	};
 
 	for (const auto& test : tests)
@@ -313,10 +314,7 @@ TEST_F(ShellProcessor, Far175)
 		auto* psi = &si;
 		si.cb = sizeof(si);
 
-		char expectedParamBuff[1024] = "";
-		const auto pid = GetCurrentProcessId();
 		CEStrA expanded(ExpandEnvStr(test.expectParam));
-		msprintf(expectedParamBuff, countof(expectedParamBuff), expanded.c_str(), pid);
 
 		const CEStrA testInfo("file=", test.file ? test.file : "<null>",
 			"; param=", test.param ? test.param : "<null>", ";");
@@ -326,12 +324,12 @@ TEST_F(ShellProcessor, Far175)
 		case Function::CreateA:
 			EXPECT_TRUE(sp->OnCreateProcessA(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
 			break;
 		case Function::ShellA:
 			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, expectedParamBuff) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
 			break;
 		default:
 			break;
