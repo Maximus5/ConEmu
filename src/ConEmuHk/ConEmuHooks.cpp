@@ -337,6 +337,7 @@ bool InitHooksConsole()
 		HOOK_ITEM_BY_NAME(AllocConsole,			KERNEL32),
 		HOOK_ITEM_BY_NAME(FreeConsole,			KERNEL32),
 		HOOK_ITEM_BY_NAME(SetConsoleKeyShortcuts, KERNEL32),
+		HOOK_ITEM_BY_NAME(GetConsoleProcessList,KERNEL32),
 		/* ************************ */
 		HOOK_ITEM_BY_NAME(SetConsoleTextAttribute, KERNEL32),
 		HOOK_ITEM_BY_NAME(WriteConsoleOutputW,  KERNEL32),

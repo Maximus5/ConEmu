@@ -567,7 +567,7 @@ DWORD WINAPI OnGetConsoleProcessList(LPDWORD lpdwProcessList, DWORD dwProcessCou
 
 	// VsDebugConsole.exe waits while it's the only process in the console,
 	// if there are other processes - it does not return control to VS.
-	if (result && lpdwProcessList)
+	if (result && lpdwProcessList && gbIsVSDebugConsole)
 	{
 		for (DWORD i = 0; i < result; ++i)
 		{
