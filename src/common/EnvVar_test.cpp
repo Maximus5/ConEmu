@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "../UnitTests/gtest.h"
 #include "EnvVar.h"
+
+#include "WObjects.h"
 #include "WRegistry.h"
 
 TEST(EnvVar, EmptyW)
@@ -91,6 +93,7 @@ TEST(EnvVar, RegTest)
 {
 	CEStr regProgramFiles;
 	EXPECT_GT(RegGetStringValue(nullptr, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", L"ProgramFilesDir", regProgramFiles), 0);
-	const CEStr envProgramFiles = GetEnvVar(L"ProgramFiles");
+	const CEStr envProgramFiles = GetEnvVar(IsWindows64() ? L"ProgramW6432" : L"ProgramFiles");
+	EXPECT_FALSE(envProgramFiles.IsEmpty());
 	EXPECT_STREQ(envProgramFiles.c_str(), regProgramFiles.c_str());
 }
