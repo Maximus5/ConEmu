@@ -344,6 +344,7 @@
       "ja": "'計算された' ComSpecパスを表示する",
       "es": "Mostrar la ruta ComSpec 'calculada'",
       "pl": "Pokaż „obliczoną” ścieżkę ComSpec",
+      "it_IT": "Mostra percorso ComSpec 'calcolato'",
       "id": 2162 }
     ,
     "cbComspecUpdateEnv": {
@@ -354,6 +355,7 @@
       "ja": "ConEmuは %ComSpec% 変数を選択されたコマンドプロセッサに更新することがあります",
       "es": "ConEmu puede actualizar la variable %ComSpec% para el intérprete de comandos seleccionado",
       "pl": "ConEmu może zaktualizować zmienną %ComSpec% do wybranego procesora poleceń",
+      "it_IT": "ConEmu può aggiornare la variabile %ComSpec% al comando selezionato",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
@@ -444,6 +446,8 @@
             , "3er-estado indica 'intentar detectar si el terminal está en modo ReadConsole', si quieres usar esto con bash - activa la casilla (no uses el 3er-estado)" ],
       "pl": [ "Usuń słowo kursor w lewo do kursora (ignorowane w Dalekim),\n"
             , "3-stan oznacza „spróbuj wykryć, czy konsola jest w ReadConsole”, jeśli chcesz używać tego z bash - zaznacz pole wyboru „Włącz” (nie używaj trzeciego stanu)" ],
+      "it_IT": [ "Eliminare la parola verso sinistra nel cursore (ignorata in Far),\r\n"
+            , "3° stato significa 'prova a rilevare se la console è in ReadConsole', se vuoi usarlo con bash - spunta la casella su 'On' (non usare il terzo stato)" ],
       "id": 2526 }
     ,
     "cbCTSDetectLineEnd": {
@@ -483,6 +487,8 @@
             , "Cuando está ‘activa’ - cualquier tecla finaliza la selección (Flechas, RePag, Fin, etc.)" ],
       "pl": [ "Kiedy „Off” - tylko znaki kończą wybór\n"
             , "Kiedy „On” - dowolny klawisz kończy wybór (strzałki, PgUp, End, itp.)" ],
+      "it_IT": [ "Quando 'Off' - solo i caratteri terminano la selezione\r\n"
+            , "Quando 'On' - qualsiasi tasto termina la selezione (Frecce, PgUp, Fine, ecc.)" ],
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
@@ -515,6 +521,9 @@
       "pl": [ "Spróbuj skasować wybrany region, jeśli to możliwe\n"
             , "wysyłając sekwencję Del / BS do konsoli\n"
             , "Zaimplementuj „zwykłe” skróty klawiszowe Ctrl + X, Shift + Del, BS i Del." ],
+      "it_IT": [ "Prova a cancellare l'area selezionata, se possibile\r\n"
+            , "registrando la sequenza di Del/BS su console.\r\n"
+            , "Implementare i tasti di scelta rapida 'usuali' Ctrl+X, Maiusc+Canc, BS e Canc." ],
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -598,7 +607,8 @@
             , "con la velocidad de parpadeo estándar." ],
       "pl": [ "Gdy „Miga” jest WŁĄCZONE - kursor miga\n"
             , "ze standardową częstotliwością migania kursora." ],
-      "it_IT": "Quando \"Lampeggio\" è attivo il cursore lampeggia\rcon il ritmo standard di lampeggio del cursore.",
+      "it_IT": [ "Quando \"Lampeggio\" è attivo il cursore lampeggia\r\n"
+            , "con il ritmo standard di lampeggio del cursore." ],
       "id": 1522 }
     ,
     "cbCursorColor": {
@@ -718,6 +728,9 @@
       "pl": [ "Wymuszone działanie „Kopiuj” jako domyślne,\n"
             , "Możesz użyć Ctrl, Shift lub Alt\n"
             , "podczas przeciągania, aby zmienić akcję" ],
+      "it_IT": [ "Azione \"Copia\" forzata come predefinita,\r\n"
+            , "È possibile utilizzare Ctrl, Maiusc o Alt\r\n"
+            , "durante il trascinamento per modificare l'azione" ],
       "id": 2287 }
     ,
     "cbDosBox": {
@@ -750,6 +763,7 @@
       "ja": "ファイルのオーバーレイ透明スナップショットを作成して表示する",
       "es": "Crear y visualizar una imagen transparente de los archivos arrastrados",
       "pl": "Utwórz i wyświetl przezroczystą nakładkę migawki plików \"przeciągnij\"",
+      "it_IT": "Crea e visualizza un'anteprima trasparente dei file trascinati",
       "id": 1548 }
     ,
     "cbDragL": {
@@ -778,6 +792,8 @@
             , "3er-estado - redimensionar al soltar botón con macros." ],
       "pl": [ "Włącz zmianę rozmiaru lewego i prawego panelu, przeciągając myszką.\n"
             , "3. stan - zmiana rozmiaru po zwolnieniu przycisku za pomocą makr." ],
+      "it_IT": [ "Abilita il ridimensionamento del pannello sinistro e destro trascinandolo con il mouse.\r\n"
+            , "3 ° stato - ridimensionare al rilascio del pulsante con macro." ],
       "id": 1568 }
     ,
     "cbDragR": {
@@ -1114,6 +1130,7 @@
       "ja": "Win Number,Win Arrows,Alt Esc,Alt Tabなどの傍受を許可します.",
       "es": "Permite interceptar combinaciones Win+Número, Win+Cursores, Alt+Esc, Alt+Tab, etc...",
       "pl": "Umożliwia przechwytywanie Win + Number, Win + strzałki, Alt + Esc, Alt + Tab itp.",
+      "it_IT": "Abilita intercettazione di Win+Numero, Win+Frecce, ALt+Esc. Alt+Tab, ecc.",
       "id": 1649 }
     ,
     "cbItalic": {
@@ -1576,6 +1593,7 @@
       "ja": "設定ダイアログでツールチップが気に入らないのですか？この機能を無効にします.",
       "es": "Si no te gustan las etiquetas informativas en el diálogo de opciones, desactiva esta característica.",
       "pl": "Nie lubisz podpowiedzi w oknie ustawień? Wyłącz tę funkcję.",
+      "it_IT": "Non ti piacciono i suggerimenti nella finestra Impostazioni? Disabilita questa caratteristica.",
       "id": 2592 }
     ,
     "cbShowWasHiddenMsg": {
@@ -1784,6 +1802,8 @@
             , "en la zona superior de la ventana de ConEmu" ],
       "pl": [ "Pokaż zakładki (wszystkie otwarte panele, edytory i przeglądarki)\n"
             , "w górnej części okna ConEmu" ],
+      "it_IT": [ "Mostra schede (tutti i pannelli aperti, gli editor e viewers)\r\n"
+            , "sulla parte superiore della finestra di ConEmu" ],
       "id": 2288 }
     ,
     "cbTabSelf": {
@@ -1832,6 +1852,8 @@
             , "3er-estado - Windows 7 o superior" ],
       "pl": [ "Reprezentuj każdą konsolę na pasku zadań\n"
             , "3. stan - Windows 7 i wyższy" ],
+      "it_IT": [ "Rappresentare ogni console sulla barra delle applicazioni\r\n"
+            , "3° stato - Windows 7 e versione successiva" ],
       "id": 2048 }
     ,
     "cbThumbLoadFiles": {
@@ -1842,6 +1864,7 @@
       "ja": "ファイルのプレビューを生成する",
       "es": "Generar previsualización de archivos",
       "pl": "Generuj podgląd plików",
+      "it_IT": "Generare anteprime per i file",
       "id": 1664 }
     ,
     "cbThumbLoadFolders": {
@@ -1852,6 +1875,7 @@
       "ja": "フォルダのプレビューを生成する(最初の4つのファイル)",
       "es": "Generar previsualización para carpetas (por los primeros 4 archivos)",
       "pl": "Generuj podgląd folderów (według pierwszych 4 plików)",
+      "it_IT": "Genera anteprime per le cartelle (dai primi 4 file)",
       "id": 1663 }
     ,
     "cbThumbRestoreOnStartup": {
@@ -1888,6 +1912,8 @@
       "es": [ "Activar soporte TrueColor (XTerm-256)\r\n"
             , "https://conemu.github.io/en/Xterm256Colors.html" ],
       "pl": [ "Włącz obsługę TrueColor (znany jako XTerm-256)\n"
+            , "https://conemu.github.io/en/Xterm256Colors.html" ],
+      "it_IT": [ "Abilitare il supporto TrueColor (XTerm-256)\r\n"
             , "https://conemu.github.io/en/Xterm256Colors.html" ],
       "id": 1578 }
     ,
@@ -1950,6 +1976,8 @@
             , "https://chrisant996.github.io/clink/" ],
       "pl": [ "Użyj klinknięcia, aby rozszerzyć wiersz polecenia (cmd.exe)\n"
             , "https://chrisant996.github.io/clink/" ],
+      "it_IT": [ "Utilizzare clink per estendere il prompt dei comandi (cmd.exe)\r\n"
+            , "https://mridgers.github.io/clink/" ],
       "id": 2418 }
     ,
     "cbUseInjects": {
@@ -1997,6 +2025,7 @@
       "ja": "矢印キーでConEmuウィンドウのサイズを変更する",
       "es": "Redimensionar ventana de ConEmu con las teclas del cursor",
       "pl": "Zmień rozmiar okna ConEmu za pomocą klawiszy strzałek",
+      "it_IT": "Ridimensiona finestra ConEmu con tasti di direzione",
       "id": 1768 }
     ,
     "cbUseWinNumber": {
@@ -2017,6 +2046,7 @@
       "ja": "ConEmuがフォアグラウンドのときにWindows 7 Aeroスイッチ(Winタブ)を無効にする",
       "es": "Desactivar el cambio de tareas de Windows 7 Aero (Win+Tab) cuando ConEmu está en primer plano",
       "pl": "Wyłącz przełącznik Aero systemu Windows 7 (Win+Tab), gdy ConEmu na pierwszym planie",
+      "it_IT": "Disattiva Cambio programma di Win 7 (Win+Tab) quando ConEmu è attivo",
       "id": 1764 }
     ,
     "cbVisible": {
@@ -3055,6 +3085,11 @@
             , "Renderowanie: średni czas renderowania tekstu do pamięci DC\n"
             , "Blt: średni czas trwania operacji blit od pamięci DC do ekranu DC\n"
             , "RPS: Średnia liczba odczytów rzeczywistych danych konsoli na sekundę" ],
+      "it_IT": [ "FPS: Fotogrammi al secondo\r\n"
+            , "Data: Durata media del trasferimento dei dati dalla console reale a virtuale\r\n"
+            , "Render: Durata media del rendering del testo in memoria\r\n"
+            , "Blt: Durata media dell'operazione blit tra memoria e schermo\r\n"
+            , "RPS: conteggi medi delle letture dei dati reali della console al secondo" ],
       "id": 2602 }
     ,
     "tQuakeAnimation": {
@@ -3108,6 +3143,8 @@
             , "Altura x Anchura" ],
       "pl": [ "Rzeczywiste rozmiary \"Zmień czcionkę pseudograficzną\":\n"
             , "Wysokość x szerokość" ],
+      "it_IT": [ "Dimensioni reali font alternativo:\n"
+            , "Altezza x Larghezza" ],
       "id": 1518 }
     ,
     "tRealFontMain": {
@@ -3125,6 +3162,8 @@
             , "Alto x Ancho x AnchoMed" ],
       "pl": [ "Rzeczywiste rozmiary głównej czcionki:\n"
             , "Wysokość x szerokość x AveWidth" ],
+      "it_IT": [ "Dimensioni reali font principale:\r\n"
+            , "Altezza x Larghezza x LargMedia" ],
       "id": 1517 }
     ,
     "tSafeFarCloseMacro": {
@@ -3185,6 +3224,7 @@
       "ja": "Far PIDと Far プラグイン PID",
       "es": "PID de Far y PID de Far con plugin",
       "pl": "Far PID i Far z wtyczką PID",
+      "it_IT": "PID di Far e dei suoi plugin",
       "id": 1510 }
     ,
     "tStorage": {
@@ -3209,6 +3249,9 @@
       "pl": [ "Bieżące przechowywanie ustawień ConEmu\n"
             , "Możesz zmienić lokalizację, tworząc / usuwając plik \"ConEmu.xml\"\n"
             , "Można również użyć przełącznika wiersza polecenia / config \"Name (ConEmu.exe) do wielu konfiguracji" ],
+      "it_IT": [ "Archiviazione corrente delle impostazioni di ConEmu\r\n"
+            , "È possibile modificare la posizione creando/eliminando il file \"ConEmu.xml\"\r\n"
+            , "È inoltre possibile utilizzare l'opzione della riga di comando /config \"Nome\" (ConEmu.exe) per più configurazioni" ],
       "id": 2571 }
     ,
     "tTabBarDblClickAction": {
@@ -4317,6 +4360,7 @@
       "ja": "テキスト選択修飾子",
       "es": "Modificador para selección de texto",
       "pl": "Modyfikator wyboru tekstu",
+      "it_IT": "Modificatore selezione testo",
       "id": 2008 }
     ,
     "vkCTSVkTextStart": {
@@ -4327,6 +4371,7 @@
       "ja": "テキスト選択を開始する(テキストエディタのように)",
       "es": "Iniciar selección de texto (como en editores de texto)",
       "pl": "Rozpocznij zaznaczanie tekstu (podobnie jak edytory tekstu)",
+      "it_IT": "Avvia la selezione del testo (come gli editor di testo)",
       "id": 2113 }
     ,
     "vkDebugProcess": {
@@ -4337,6 +4382,7 @@
       "ja": "アクティブなプロセスをデバッグする",
       "es": "Depurar proceso activo",
       "pl": "Debuguj aktywny proces",
+      "it_IT": "Debug del processo attivo",
       "id": 2874 }
     ,
     "vkDeleteLeftWord": {
@@ -4475,6 +4521,7 @@
       "ja": "可能であれば,TEXTフルスクリーンモードにします.そうでない場合 - 標準フルスクリーンと常に上に",
       "es": "Pasar a modo de TEXTO de pantalla completa, cuando esté disponible. Si no - modo de pantalla completa estándar y siempre en primer plano",
       "pl": "Przejdź do trybu pełnoekranowego TEXT, jeśli jest dostępny. Jeśli nie - standardowy pełny ekran i zawsze na wierzchu",
+      "it_IT": "Abilita modalità tutto schermo testuale, quando disponibile. Altrimenti modalità tutto schermo normale.",
       "id": 2260 }
     ,
     "vkGlobalRestore": {
@@ -5469,6 +5516,8 @@
             , "Mantén Shift para mostrar el diálogo de reinicio" ],
       "pl": [ "Uruchom ponownie bieżącą konsolę\n"
             , "Przytrzymaj Shift, aby wyskoczyć okno dialogowe Uruchom ponownie" ],
+      "it_IT": [ "Riavvia console corrente\r\n"
+            , "Premi Maiusc per aprire la finestra Riavvia" ],
       "id": 43986 }
     ,
     "IDM_RESTARTAS": {
@@ -5486,6 +5535,8 @@
             , "Mantener Shift para mostrar diálogo de Reinicio" ],
       "pl": [ "Uruchom ponownie bieżącą konsolę jako Administrator (Vista +) lub użytkownik (WinXP)\n"
             , "Przytrzymaj Shift, aby wyskoczyć okno dialogowe Uruchom ponownie" ],
+      "it_IT": [ "Riavvia console corrente come Amministratore (Vista+) o utenete (WinXp)\r\n"
+            , "Premi Maiusc per aprire la finestra Riavvia" ],
       "id": 43987 }
     ,
     "IDM_RESTARTDLG": {
@@ -5496,6 +5547,7 @@
       "ja": " '現在のコンソールを再起動' ダイアログを表示する",
       "es": "Mostrar el diálogo de 'Reiniciar terminal actual'",
       "pl": "Pokaż okno dialogowe \"Uruchom ponownie bieżącą konsolę\"",
+      "it_IT": "Mostra finestra 'Riavvia console corrente'",
       "id": 43998 }
     ,
     "IDM_TERMINATE2RIGHT": {
@@ -5506,6 +5558,7 @@
       "ja": "現在のタブの右側にあるすべてのタブを閉じる",
       "es": "Cerrar todas las pestañas a la derecha de la actual",
       "pl": "Zamknij wszystkie zakładki po prawej stronie bieżącego",
+      "it_IT": "Chiudi tutte le schede a destra dell''attuale",
       "id": 44008 }
     ,
     "IDM_TERMINATEALLCON": {
@@ -5516,6 +5569,7 @@
       "ja": "すべてのコンソール(タブとペイン)の通常のクローズを行う",
       "es": "Hacer un cierre normal en todas las terminales (pestañas y paneles)",
       "pl": "Wykonuj normalne zamykanie wszystkich konsol (kart i paneli)",
+      "it_IT": "Chiusura normale di tutte le console ( schede e pannelli)",
       "id": 44001 }
     ,
     "IDM_TERMINATEBUTSHELL": {
@@ -5548,6 +5602,7 @@
       "ja": "アクティブなコンソール/ペインを除くすべてのタブとペインを閉じる",
       "es": "Cierra todas las pestañas y paneles excepto los activos",
       "pl": "Zamknij wszystkie karty i panele z wyjątkiem aktywnej konsoli / panelu",
+      "it_IT": "Chiudi tuttle le schede e pannelli tranne quelle attive",
       "id": 44002 }
     ,
     "IDM_TERMINATEGROUP": {
@@ -5764,6 +5819,7 @@
       "en": "Close",
       "ru": "Закрыть",
       "zh": "关闭",
+      "de": "Schließen",
       "pl": "Zamknij",
       "it_IT": "Chiudi",
       "id": 202 }
@@ -5772,6 +5828,7 @@
       "en": "Close all",
       "ru": "Закрыть все",
       "zh": "全部关闭",
+      "de": "Alle schließen",
       "pl": "Zamknij wszystko",
       "it_IT": "Chiudi tutto",
       "id": 203 }
@@ -6155,6 +6212,7 @@
       "en": "Maximize window",
       "ru": "Развернуть окно",
       "zh": "最大化窗口",
+      "de": "Fenster maximieren",
       "pl": "Maksymalizuj okno",
       "it_IT": "Massimizza finestra",
       "id": 194 }
@@ -6279,6 +6337,7 @@
       "ru": "Копировать все",
       "zh": "复制全部（&a）",
       "pl": "Kopiuj &wszystko",
+      "it_IT": "Copi&a tutto",
       "id": 120 }
     ,
     "lng_MenuConCopyFmt0": {
@@ -6286,6 +6345,7 @@
       "ru": "Только обычный текст",
       "zh": "纯文字（&t）",
       "pl": "Zwykły &tylko tekst",
+      "it_IT": "Solo &testo semplice",
       "id": 123 }
     ,
     "lng_MenuConCopyFmt1": {
@@ -6293,6 +6353,7 @@
       "ru": "Копировать в HTML-формате",
       "zh": "复制 &HTML 格式",
       "pl": "Kopiuj &Format HTML",
+      "it_IT": "Copia formato &HTML",
       "id": 124 }
     ,
     "lng_MenuConCopyFmt2": {
@@ -6300,6 +6361,7 @@
       "ru": "Копировать как HTML",
       "zh": "复制成 HTML（&s）",
       "pl": "Kopiuj plik& HTML",
+      "it_IT": "Copia co&me HTML",
       "id": 125 }
     ,
     "lng_MenuConCopyFmt3": {
@@ -6336,6 +6398,7 @@
       "ru": "Вставить",
       "zh": "粘贴（&p）",
       "pl": "&Wklej",
+      "it_IT": "&Incolla",
       "id": 121 }
     ,
     "lng_MenuConProperties": {
@@ -6343,6 +6406,7 @@
       "ru": "Свойства...",
       "zh": "属性（&p）",
       "pl": "&Posiadłość",
+      "it_IT": "&Proprietà...",
       "id": 160 }
     ,
     "lng_MenuConToggleVisible": {
@@ -6351,6 +6415,7 @@
       "zh": "真实控制台(&R)",
       "de": "&Echtes Konsolenfenster anzeigen",
       "pl": "&Prawdziwa konsola",
+      "it_IT": "Console &reale",
       "id": 159 }
     ,
     "lng_MenuDebugActive": {
@@ -6359,6 +6424,7 @@
       "zh": "调试活动的进程...（&a）",
       "de": "&Aktiven Prozess untersuchen...",
       "pl": "Debugowanie &aktywny proces.",
+      "it_IT": "Debug processi &attivi...",
       "id": 170 }
     ,
     "lng_MenuDebugAssert": {
@@ -6548,6 +6614,7 @@
       "ru": "Редактировать",
       "zh": "离开",
       "pl": "Edytuj",
+      "it_IT": "Mod&ifica",
       "id": 142 }
     ,
     "lng_MenuPopupHelp": {
@@ -6555,6 +6622,7 @@
       "ru": "Помощь",
       "zh": "帮助",
       "pl": "Wsparcie",
+      "it_IT": "Aiu&to",
       "id": 146 }
     ,
     "lng_MenuPopupPalettes": {
@@ -6588,6 +6656,7 @@
       "zh": "编辑",
       "de": "B&earbeiten",
       "pl": "Edytuj",
+      "it_IT": "&Modifica",
       "id": 148 }
     ,
     "lng_MenuPopupTerminate": {
@@ -6629,6 +6698,7 @@
       "zh": "重启",
       "de": "Neu sta&rten",
       "pl": "Restart",
+      "it_IT": "&Riavvia",
       "id": 105 }
     ,
     "lng_MenuRestartAs": {
@@ -6637,6 +6707,7 @@
       "zh": "以管理员模式重启",
       "de": "Mit erhöhten Rechten neu starten",
       "pl": "Restart jako admin",
+      "it_IT": "Riavvia come Amministratore",
       "id": 106 }
     ,
     "lng_MenuRestartDlg": {
@@ -6645,6 +6716,7 @@
       "zh": "重启",
       "de": "Neu sta&rten (mit geänderten Einstellungen)",
       "pl": "Opcje restartu",
+      "it_IT": "&Riavvia...",
       "id": 104 }
     ,
     "lng_MenuRestoreFromTray": {
@@ -6661,6 +6733,7 @@
       "zh": "截图",
       "de": "Bild&schirmfoto erstellen...",
       "pl": "Utwórz zrzut ekranu ...",
+      "it_IT": "Fai &screenshot...",
       "id": 161 }
     ,
     "lng_MenuSettings": {
@@ -8276,6 +8349,7 @@
       "ja": "スペースに合うように長い文字列を圧縮する",
       "es": "Comprimir textos largos para que entren",
       "pl": "Kompresuj długie znaki, aby dopasować przestrzeń",
+      "it_IT": "Comprimi stringhe lunghe per adattarle allo spazio",
       "id": 3074 }
     ,
     "cbComspecTest": {
@@ -9046,6 +9120,7 @@
       "ja": "自動サイズ(セル内の固定コンソールサイズ)",
       "es": "Tamaño automático (tamaño de terminal en celdas)",
       "pl": "Rozmiar automat (naprawiono rozmiar w komórkach)",
+      "it_IT": "Dimensione automatica (dimensione console fissa in celle)",
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
@@ -9056,6 +9131,7 @@
       "ja": "モニタDPIのフォントサイズを調整する",
       "es": "Ajustar tamaño de letra al DPI del monitor",
       "pl": "Dostosuj rozmiar czcionki dla DPI monitora",
+      "it_IT": "Adatta dimensione font ai DPI del monitor",
       "id": 2691 }
     ,
     "cbFullscreenFixedConSize": {
@@ -9159,6 +9235,7 @@
       "ja": "未割り当ての非表示(&H)",
       "es": "&Ocultar no asignadas",
       "pl": "&Ukryj nieprzypisane",
+      "it_IT": "&Nascondi non assegnate",
       "id": 2514 }
     ,
     "cbInactiveCursor": {
@@ -9221,6 +9298,7 @@
       "ja": "ConEmuHk.dll を ConEmuタブで開始されたすべてのプロセスに注入する",
       "es": "Inyectar ConEmuHk.dll en todos los procesos iniciados en pestañas de ConEmu",
       "pl": "ConEmuHk.dll wstrzykuje do wszystkich procesów rozpoczętych na akordeonie ConEmu",
+      "it_IT": "Inietta ConEmuHk.dll in ogni processo avviato nelle schede di ConEmu",
       "id": 2098 }
     ,
     "cbInsideSyncDir": {
@@ -9241,6 +9319,7 @@
       "ja": "スペシャルホットキーをサポート",
       "es": "Soportar combinaciones epeciales",
       "pl": "Obsługa specjalnych skrótów klawiszowych",
+      "it_IT": "Supporta combinazioni tasti speciali",
       "id": 1649 }
     ,
     "cbIntegralSize": {
@@ -9362,6 +9441,7 @@
       "ja": "等幅(&Monospace)",
       "es": "&Monoespaciado",
       "pl": "&Monospace",
+      "it_IT": "&Monospazio",
       "id": 2283 }
     ,
     "cbMouseDragWindow": {
@@ -9777,6 +9857,7 @@
       "ja": "シングルインスタンスモード (新しいインスタンスを実行する代わりに既存のウィンドウを使用)",
       "es": "Instancia única (usar la ventana existente en vez de crear una nueva instancia)",
       "pl": "Tryb pojedynczego wystąpienia (użyj istniejącego okna zamiast uruchamiania nowego wystąpienia)",
+      "it_IT": "Modalità singola istanza (usa la finestra esistente anziché crearne una nuova)",
       "id": 2578 }
     ,
     "cbSkipActivation": {
@@ -10207,6 +10288,7 @@
       "ja": "ConEmuHk を注入する",
       "es": "Inyectar ConEmuHk",
       "pl": "wstrzyknąć CONEmuHk",
+      "it_IT": "Inietta ConEmuHk",
       "id": 1752 }
     ,
     "cbUseKeyboardHooksFast": {
@@ -10217,6 +10299,7 @@
       "ja": "スペシャルホットキーのサポート (Win+Num, Win+Tab, PrntScrn など)",
       "es": "Soporte de combinaciones especiales (Win+Número, Win+Tab, ImprPant, ...)",
       "pl": "Obsługa specjalnych skrótów klawiszowych (Win + Number, Win + Tab, PrntScrn i tak dalej)",
+      "it_IT": "Supporta combinazioni tasti speciali (Win+Numero, Win+Tab, Stamp, ecc.)",
       "id": 2086 }
     ,
     "cbUserScreenTransparent": {
@@ -10237,6 +10320,7 @@
       "ja": "Win+矢印 - ウィンドウのリサイズ",
       "es": "Win+Cursores - redimensionar ventana",
       "pl": "Win + Strzałki - okno zmiany rozmiaru",
+      "it_IT": "Wiin+Frecce - ridimensiona finestra",
       "id": 1768 }
     ,
     "cbUseWinNumber": {
@@ -10247,6 +10331,7 @@
       "ja": "Win+数字 - コンソールをアクティブにする",
       "es": "Win+Número - activar terminal",
       "pl": "Win + Numbers - aktywuj konsolę",
+      "it_IT": "Win+Numeri - attiva console",
       "id": 1648 }
     ,
     "cbUseWinTab": {
@@ -10257,6 +10342,7 @@
       "ja": "Win+Tab - コンソール(タブ)の切り替え",
       "es": "Win+Tab - cambiar terminal (pestañas)",
       "pl": "Win + Tab - przełącz konsole (Tabs)",
+      "it_IT": "Win+Tab - combia console (Schede)",
       "id": 1764 }
     ,
     "cbVisible": {
@@ -10287,6 +10373,7 @@
       "ja": "シェルの活動",
       "es": "Actividad de línea de comandos",
       "pl": "Aktywność powłoki",
+      "it_IT": "Attività shell",
       "id": 1744 }
     ,
     "gbAlphaTransparency": {
@@ -10316,6 +10403,7 @@
       "ja": "ANSIシーケンス",
       "es": "Secuencias ANSI",
       "pl": "Sekwencje ANSI",
+      "it_IT": "Sequenze ANSI",
       "id": 3072 }
     ,
     "gbAntiAliasing": {
@@ -10337,6 +10425,7 @@
       "ja": "アプリケーションの個別設定",
       "es": "Opciones de otras aplicaciones",
       "pl": "Różne ustawienia aplikacji",
+      "it_IT": "Impostazioni applicazioni specifiche",
       "id": 2317 }
     ,
     "gbChildGui": {
@@ -10478,6 +10567,7 @@
       "ja": "ホットキー処理",
       "es": "Procesado de combinaciones de teclas",
       "pl": "Przetwarzanie skrótów klawiszowych",
+      "it_IT": "Processazione combinazione tasti",
       "id": 3017 }
     ,
     "gbCtrlMisc": {
@@ -10741,6 +10831,7 @@
       "ja": "ホットキー, モデファイヤ, マクロ",
       "es": "Combinaciones, modificadores, macros",
       "pl": "Skróty klawiszowe, modyfikatory, makra",
+      "it_IT": "Combinazione tasti, modificatori, macro",
       "id": 3014 }
     ,
     "gbHyperlinks": {
@@ -10761,6 +10852,7 @@
       "ja": "カレントコマンドライン",
       "es": "Línea de comando actual",
       "pl": "Bieżąca linia poleceń",
+      "it_IT": "Linea di comando attuale",
       "id": 2944 }
     ,
     "gbInfoProcesses": {
@@ -10771,6 +10863,7 @@
       "ja": "プロセス",
       "es": "Procesos",
       "pl": "Procesy",
+      "it_IT": "Processi",
       "id": 2942 }
     ,
     "gbInfoSizes": {
@@ -10781,6 +10874,7 @@
       "ja": "サイズ",
       "es": "Tamaños",
       "pl": "Rozmiary",
+      "it_IT": "Dimensioni",
       "id": 2943 }
     ,
     "gbIntgrHere": {
@@ -12702,6 +12796,7 @@
       "ru": "Буфер (символы):",
       "zh": "缓存（字符）：",
       "pl": "Bufor (znaki):",
+      "it_IT": "Buffer (caratteri):",
       "id": 2954 }
     ,
     "stConsoleLeftTop": {
@@ -12709,6 +12804,7 @@
       "ru": "Слева x Сверху:",
       "zh": "左 x 高：",
       "pl": "Lewa x Góra:",
+      "it_IT": "Sinistra x Alto",
       "id": 2946 }
     ,
     "stConsoleSizeChars": {
@@ -12719,6 +12815,7 @@
       "ja": "コンソール(文字):",
       "es": "Terminar (cars.):",
       "pl": "Konsola (znaki):",
+      "it_IT": "Console (caratteri):",
       "id": 2945 }
     ,
     "stCopyFormat": {
@@ -12739,6 +12836,7 @@
       "ja": "バックグラウンド:",
       "es": "Fondo:",
       "pl": "Tło:",
+      "it_IT": "Sfondo:",
       "id": 2978 }
     ,
     "stCTSEOL": {
@@ -12800,6 +12898,7 @@
       "ja": "フォアグラウンド:",
       "es": "Primer plano:",
       "pl": "Pierwszoplanowy:",
+      "it_IT": "Testo:",
       "id": 2977 }
     ,
     "stCursorMinSize": {
@@ -12917,6 +13016,7 @@
       "ja": "太字:",
       "es": "Negrita:",
       "pl": "Pogrubienie:",
+      "it_IT": "Grassetto:",
       "id": 2241 }
     ,
     "stExtendFontItalicIdx": {
@@ -12927,6 +13027,7 @@
       "ja": "斜体:",
       "es": "Cursiva:",
       "pl": "Kursywa:",
+      "it_IT": "Corsivo:",
       "id": 2242 }
     ,
     "stExtendFontNormalIdx": {
@@ -12937,6 +13038,7 @@
       "ja": "置換:",
       "es": "Sustituir:",
       "pl": "Zastąpić:",
+      "it_IT": "Sostituisci:",
       "id": 2243 }
     ,
     "stExtendFonts": {
@@ -12957,6 +13059,7 @@
       "ja": "左:",
       "es": "Izquierda:",
       "pl": "Lewa:",
+      "it_IT": "Sinistra:",
       "id": 2949 }
     ,
     "stFarPanelRight": {
@@ -12978,6 +13081,7 @@
       "ja": "Far PID:",
       "es": "PID de Far:",
       "pl": "Daleki PID:",
+      "it_IT": "PID Far:",
       "id": 2940 }
     ,
     "stFarTabTemplates": {
@@ -13044,6 +13148,7 @@
       "ja": "セル:",
       "es": "Celda:",
       "pl": "Komórka: -Cell:-",
+      "it_IT": "Cella:",
       "id": 2669 }
     ,
     "stFontSizeY": {
@@ -13054,6 +13159,7 @@
       "ja": "サイズ:",
       "es": "Tam.:",
       "pl": "Rozmiar:",
+      "it_IT": "Dimensione:",
       "id": 2667 }
     ,
     "stFrameAppear": {
@@ -13130,6 +13236,7 @@
       "ja": "説明:",
       "es": "Descripción:",
       "pl": "Opis:",
+      "it_IT": "Descrizione:",
       "id": 2189 }
     ,
     "stHotKeySelect": {
@@ -13140,6 +13247,7 @@
       "ja": "ホットキーを選択:",
       "es": "Elegir combinación:",
       "pl": "Wybierz skrót:",
+      "it_IT": "Scegli tasto:",
       "id": 1769 }
     ,
     "stInactiveCursorMinSize": {
@@ -13171,6 +13279,7 @@
       "ja": "インターフェイス言語:",
       "es": "Idioma del interface:",
       "pl": "Język interfejsu:",
+      "it_IT": "Lingua interfaccia:",
       "id": 3093 }
     ,
     "stIntgrHereCfg": {
@@ -13279,6 +13388,7 @@
       "ja": "キー:",
       "es": "Tecla:",
       "pl": "Klucz:",
+      "it_IT": "Tasto:",
       "id": 2885 }
     ,
     "stKeySelectMod": {
@@ -13289,6 +13399,7 @@
       "ja": "モデファイヤ:",
       "es": "Modificadores:",
       "pl": "Modyfikatory:",
+      "it_IT": "Modificatore:",
       "id": 3025 }
     ,
     "stMoreConfont1": {
@@ -13299,6 +13410,7 @@
       "ja": "警告！！！",
       "es": "¡¡¡AVISO!!!",
       "pl": "OSTRZEŻENIE!!!",
+      "it_IT": "ATTENZIONE!!!",
       "id": 3006 }
     ,
     "stMoreConfont2": {
@@ -13309,6 +13421,7 @@
       "ja": "これらの設定は最新の注意を払って変更してください！",
       "es": "¡¡¡Cambia estas opciones con sumo cuidado!!!",
       "pl": "Zmień te ustawienia bardzo ostrożnie !!!",
+      "it_IT": "Cambia queste impostazioni con molta attenzione!!!",
       "id": 3007 }
     ,
     "stMoreConfont3": {
@@ -13425,6 +13538,7 @@
       "ja": "最小化 / 復元 ホットキー:",
       "es": "Combinación para Minimizar/Restaurar:",
       "pl": "Skrót minimalizuj / przywróć:",
+      "it_IT": "Combinazione tasti Minimizza/Ripristina:",
       "id": 3096 }
     ,
     "stRConCursorInfo": {
@@ -13435,6 +13549,7 @@
       "ja": "カーソル(x,y,h):",
       "es": "Cursor (x,y,h):",
       "pl": "Kursor (x, y, h):",
+      "it_IT": "Cursore (x,y,h):",
       "id": 2948 }
     ,
     "stRConStates": {
@@ -13445,6 +13560,7 @@
       "ja": "州:",
       "es": "Estados:",
       "pl": "Stany:",
+      "it_IT": "Stati:",
       "id": 2941 }
     ,
     "stRestartCmd": {
@@ -13483,7 +13599,7 @@
       "en": "Save all editors:",
       "ru": "Сохранить все редакторы:",
       "zh": "保存所有编辑器：",
-      "de": "Alle Editoren speichern:",
+      "de": "Alle editoren sichern:",
       "ja": "すべてのエディタを保存:",
       "es": "Guardar los editores:",
       "pl": "Zapisz wszystkich redaktorów: \"Save all editors:\"",
@@ -13574,6 +13690,7 @@
       "ru": "Выбрать задачу запуска",
       "zh": "选择你的启动任务：",
       "pl": "Wybierz zadanie startowe:",
+      "it_IT": "Scegli l'attività di avvio:",
       "id": 3110 }
     ,
     "stStatusAvailCol": {
@@ -13621,7 +13738,7 @@
       "en": "Charset:",
       "ru": "Символы:",
       "zh": "字符集：",
-      "de": "Zeichens.:",
+      "de": "Zeichensatz:",
       "ja": "Charset:",
       "es": "Juego de caracteres:",
       "pl": "Zestaw znaków:",
@@ -13666,6 +13783,7 @@
       "ja": "ストレージ:",
       "es": "Almacenamiento:",
       "pl": "Przechowywanie:",
+      "it_IT": "Archiviazione:",
       "id": 2573 }
     ,
     "stStorageLocation": {
@@ -13851,6 +13969,7 @@
       "ja": "読み込みタイムアウト(秒):",
       "es": "Timeout de carga (seg.):",
       "pl": "Limit czasu ładowania (sek.):",
+      "it_IT": "Timeout caricamento (sec.):",
       "id": 3004 }
     ,
     "stThumbMaxZoom": {
@@ -13861,6 +13980,7 @@
       "ja": "最大ズーム:",
       "es": "Zoom máx.:",
       "pl": "Max. Powiększenie:",
+      "it_IT": "Zoom max:",
       "id": 3003 }
     ,
     "stThumbsFontName": {
@@ -13893,6 +14013,7 @@
       "ja": "水平pad:",
       "es": "Separ.horiz.:",
       "pl": "Pozioma podkładka:",
+      "it_IT": "Pad oriz:",
       "id": 2998 }
     ,
     "stThumbsSpacing": {
@@ -13903,6 +14024,7 @@
       "ja": "垂直pad:",
       "es": "Separ.vert.:",
       "pl": "Pionowa podkładka:",
+      "it_IT": "Pad vert:",
       "id": 2997 }
     ,
     "stTilesFontName": {
@@ -13935,6 +14057,7 @@
       "ja": "右パッド:",
       "es": "Sep. derecha:",
       "pl": "Prawa podkładka:",
+      "it_IT": "Pad dx:",
       "id": 3002 }
     ,
     "stTilesSpacing": {
@@ -13945,6 +14068,7 @@
       "ja": "左パッド:",
       "es": "Sep. izquierda:",
       "pl": "Lewa podkładka:",
+      "it_IT": "Pad sx:",
       "id": 3001 }
     ,
     "stTransparentActive": {
@@ -13977,6 +14101,7 @@
       "ja": "Unicode範囲 デフォルトは \"2013-25C4;\"",
       "es": "Rangos Unicode, por defecto \"2013-25C4;\":",
       "pl": "Zakresy Unicode, domyślnie \"2013-25C4;\":",
+      "it_IT": "Range Unicode, di defualt è \"2013-25C4;\":",
       "id": 2837 }
     ,
     "stUpdateCheck": {
@@ -14017,26 +14142,29 @@
       "ja": "サーバポート",
       "es": "Servidor:puerto",
       "pl": "Port Serwera",
+      "it_IT": "Server:porta",
       "id": 2083 }
     ,
     "stUpdateProxyPassword": {
       "en": "Password",
       "ru": "Пароль",
       "zh": "密码",
-      "de": "Kennwort",
+      "de": "Passwort",
       "ja": "パスワード",
       "es": "Contraseña",
       "pl": "Hasło",
+      "it_IT": "Password",
       "id": 2085 }
     ,
     "stUpdateProxyUser": {
       "en": "User",
       "ru": "Логин",
       "zh": "账号",
-      "de": "Benutzer",
+      "de": "Benutzername",
       "ja": "ユーザー",
       "es": "Usuario",
       "pl": "Użytkownik",
+      "it_IT": "Utente",
       "id": 2084 }
     ,
     "stUpdateReleaseType": {
@@ -14077,6 +14205,7 @@
       "ja": "修正:",
       "es": "Fijo:",
       "pl": "Naprawa:",
+      "it_IT": "Fissa:",
       "id": 2953 }
     ,
     "stVConFontMain": {
@@ -14087,6 +14216,7 @@
       "ja": "メイン:",
       "es": "Principal:",
       "pl": "Główny:",
+      "it_IT": "Principale:",
       "id": 2952 }
     ,
     "stVConPadSize": {
@@ -14107,6 +14237,7 @@
       "ja": "高さ:",
       "es": "Altura:",
       "pl": "Wysokość:",
+      "it_IT": "Altezza:",
       "id": 2439 }
     ,
     "stWndWidth": {
@@ -14134,7 +14265,7 @@
       "en": "NOTE!!! Computer restart may be required to apply registry changes",
       "ru": "ПРИМЕЧАНИЕ!!! Для применения изменений реестра может потребоваться перезапуск компьютера",
       "zh": "注意！！！应用注册表改动可能需要计算机重启",
-      "de": "HINWEIS!!! Möglicherweise Rechnerneustart erforderlich um Registry-Änderungen anzuwenden",
+      "de": "WICHTIG! Ein Neustart des Computers könnte notwendig sein, um die Änderungen in der Registry anzuwenden.",
       "ja": "注意！！！レジストリの変更を適用するにはコンピュータの再起動が必要な場合があります",
       "es": "¡¡¡AVISO!!! puede que sea necesario reiniciar el PC para aplicar los cambios en el registro",
       "pl": "UWAGA!!! W celu zastosowania zmian rejestru może być konieczne ponowne uruchomienie komputera",
