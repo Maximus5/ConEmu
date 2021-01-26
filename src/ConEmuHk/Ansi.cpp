@@ -1986,18 +1986,27 @@ BOOL CEAnsi::ScrollLine(HANDLE hConsoleOutput, int nDir)
 	return lbRc;
 }
 
-BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir) const
+BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, const int nDir) const
 {
-	const auto srView = GetWorkingRegion(hConsoleOutput, true);
-	ExtScrollScreenParm scroll = {
-		sizeof(scroll), essf_Current | essf_Commit | essf_Region, hConsoleOutput, nDir, {}, L' ',
-		RECT{ srView.Left, srView.Top, srView.Right, srView.Bottom } };
+	auto srView = GetWorkingRegion(hConsoleOutput, true);
+
 	if (gDisplayOpt.ScrollRegion)
 	{
-		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		scroll.Region.top = gDisplayOpt.ScrollStart;
-		scroll.Region.bottom = gDisplayOpt.ScrollEnd;
+		_ASSERTEX(gDisplayOpt.ScrollStart >= 0 && gDisplayOpt.ScrollEnd >= gDisplayOpt.ScrollStart);
+		srView.Top = gDisplayOpt.ScrollStart;
+		srView.Bottom = gDisplayOpt.ScrollEnd;
 	}
+
+	return ScrollScreen(hConsoleOutput, nDir, false , srView);
+}
+
+BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, const int nDir, bool global, const SMALL_RECT& scrollRect) const
+{
+	ExtScrollScreenParm scroll = {
+		sizeof(scroll),
+		essf_Current | essf_Commit | essf_Region | (global ? essf_Global : essf_None),
+		hConsoleOutput, nDir, {}, L' ',
+		RECT{ scrollRect.Left, scrollRect.Top, scrollRect.Right, scrollRect.Bottom } };
 
 	const BOOL lbRc = ExtScrollScreen(&scroll);
 
@@ -2991,7 +3000,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			bool resetCursor = false;
 			COORD cr0 = {0, csbi.srWindow.Top};
 			int nChars = 0;
-			int nScroll = 0;
 
 			switch (nCmd)
 			{
@@ -3007,7 +3015,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					+ csbi.dwSize.X * (csbi.dwCursorPosition.Y - csbi.srWindow.Top);
 				break;
 			case 2:
-				// clear entire screen and moves cursor to upper left
+				// clear viewport and moves cursor to viewport's upper left
 				nChars = csbi.dwSize.X * (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
 				resetCursor = true;
 				break;
@@ -3015,10 +3023,17 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				// xterm: clear scrollback buffer entirely
 				if (csbi.srWindow.Top > 0)
 				{
-					nScroll = -csbi.srWindow.Top;
 					cr0.X = csbi.dwCursorPosition.X;
 					cr0.Y = static_cast<SHORT>(std::max(0, (csbi.dwCursorPosition.Y - csbi.srWindow.Top)));
 					resetCursor = true;
+
+					SMALL_RECT scroll{ 0, 0, static_cast<SHORT>(csbi.dwSize.X - 1),
+						static_cast<SHORT>(csbi.dwSize.Y - 1) };
+					ScrollScreen(hConsoleOutput, -csbi.srWindow.Top, true, scroll);
+
+					SMALL_RECT topLeft = { scroll.Left, scroll.Top, scroll.Right,
+						static_cast<SHORT>(csbi.srWindow.Bottom - csbi.srWindow.Top) };
+					SetConsoleWindowInfo(hConsoleOutput, TRUE, &topLeft);
 				}
 				break;
 			default:
@@ -3035,11 +3050,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			if (resetCursor)
 			{
 				SetConsoleCursorPosition(hConsoleOutput, cr0);
-			}
-
-			if (nScroll)
-			{
-				ScrollScreen(hConsoleOutput, nScroll);
 			}
 
 		} // case L'J':

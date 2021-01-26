@@ -1832,7 +1832,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			if (SrcLineBottom >= SrcLineTop)
 			{
 				const SMALL_RECT rcSrc = MakeSmallRect(0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom);
-				const SMALL_RECT* lpClip = (Info->Flags & essf_Region) ? &srView : nullptr;
+				const SMALL_RECT* lpClip = ((Info->Flags & essf_Region) && !(Info->Flags & essf_Global)) ? &srView : nullptr;
 				_ASSERTEX(DstLineTop == (SrcLineTop + nDir/*<0*/));
 				const COORD crDst = MakeCoord(0, DstLineTop);
 

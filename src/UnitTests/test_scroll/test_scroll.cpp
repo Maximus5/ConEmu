@@ -128,7 +128,6 @@ protected:
 		AddAction(VK_F4, "F4", "switch use arrows to scroll data/move cursor",
 			[this]()
 			{
-				//SetCursorTopLeft();
 				cursorAction = (cursorAction == CursorAction::ScrollData) ? CursorAction::MoveCursor : CursorAction::ScrollData;
 				UpdateTitle();
 			});
@@ -153,6 +152,11 @@ protected:
 			[this]()
 			{
 				Erase();
+			});
+		AddAction(VK_F9, "F9", "set cursor to upper/left viewport corner",
+			[this]()
+			{
+				SetCursorTopLeft();
 			});
 		AddAction(VK_F12, "F12", "run MS example https://docs.microsoft.com/en-us/windows/console/scrolling-a-screen-buffer-s-contents",
 			[this]()

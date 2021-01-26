@@ -219,6 +219,7 @@ public:
 	BOOL WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE, EXTREADWRITEFLAGS AddFlags = ewtf_None);
 	static BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);
 	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir) const;
+	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir, bool global, const SMALL_RECT& scrollRect) const;
 	//BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	BOOL FullReset(HANDLE hConsoleOutput) const;
 	BOOL ForwardLF(HANDLE hConsoleOutput, BOOL& bApply);
