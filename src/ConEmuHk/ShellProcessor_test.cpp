@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefTermHk.h"
 #include "DllOptions.h"
 #include <memory>
-
+#include <string>
 
 
 #ifndef __GNUC__
@@ -203,18 +203,22 @@ TEST_F(ShellProcessor, Far300)
 	TestInfo tests[] = {
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"(mingw32-make "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 
 		{Function::CreateW,
-			nullptr, LR"("C:\1 @\a.cmd")",
+			nullptr, LR"(""C:\1 @\a.cmd"")",
 			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 
+		{Function::CreateW,
+			LR"(C:\1 @\a.cmd)", nullptr, // important to have two double quotes, otherwise cmd will strip one and fail to find the file
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+		
 		// #TODO: Add DosBox mock/test
 		{Function::CreateW,
 			LR"(C:\DosGames\Prince\PRINCE.EXE)", LR"(prince megahit)",
@@ -228,9 +232,9 @@ TEST_F(ShellProcessor, Far300)
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"( "1.cpp" )"},
 	};
 
-	for (const auto& test : tests)
+	for (size_t i = 0; i < countof(tests); ++i)
 	{
-		MCHKHEAP;
+		const auto& test = tests[i];
 		auto sp = std::make_shared<CShellProc>();
 		LPCWSTR pszFile = test.file, pszParam = test.param;
 		DWORD nCreateFlags = CREATE_DEFAULT_ERROR_MODE, nShowCmd = 0;
@@ -240,8 +244,9 @@ TEST_F(ShellProcessor, Far300)
 
 		CEStr expanded(ExpandEnvStr(test.expectParam));
 
-		const CEStr testInfo(L"file=", test.file ? test.file : L"<null>",
-			L"; param=", test.param ? test.param : L"<null>", L";");
+		const std::wstring testInfo(L"#" + std::to_wstring(i + 1)
+			+ L": file=" + (test.file ? test.file : L"<null>")
+			+ L"; param=" + (test.param ? test.param : L"<null>") + L";");
 
 		switch (test.function)
 		{
@@ -258,7 +263,6 @@ TEST_F(ShellProcessor, Far300)
 		default:
 			break;
 		}
-		MCHKHEAP;
 	}
 }
 
@@ -288,7 +292,7 @@ TEST_F(ShellProcessor, Far175)
 
 	TestInfo tests[] = {
 		{Function::CreateA,
-			nullptr, R"("C:\1 @\a.cmd")",
+			nullptr, R"(""C:\1 @\a.cmd"")",
 			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")",
@@ -304,9 +308,9 @@ TEST_F(ShellProcessor, Far175)
 			nullptr, R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "set > res.log")"},
 	};
 
-	for (const auto& test : tests)
+	for (size_t i = 0; i < countof(tests); ++i)
 	{
-		MCHKHEAP;
+		const auto& test = tests[i];
 		auto sp = std::make_shared<CShellProc>();
 		LPCSTR pszFile = test.file, pszParam = test.param;
 		DWORD nCreateFlags = CREATE_DEFAULT_ERROR_MODE, nShowCmd = 0;
@@ -316,8 +320,9 @@ TEST_F(ShellProcessor, Far175)
 
 		CEStrA expanded(ExpandEnvStr(test.expectParam));
 
-		const CEStrA testInfo("file=", test.file ? test.file : "<null>",
-			"; param=", test.param ? test.param : "<null>", ";");
+		const std::string testInfo("#" + std::to_string(i + 1)
+			+ ": file=" + (test.file ? test.file : "<null>")
+			+ "; param=" + (test.param ? test.param : "<null>") + ";");
 
 		switch (test.function)
 		{
@@ -334,7 +339,6 @@ TEST_F(ShellProcessor, Far175)
 		default:
 			break;
 		}
-		MCHKHEAP;
 	}
 }
 

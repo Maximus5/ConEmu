@@ -490,7 +490,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	CEStr szDosBoxExe, szDosBoxCfg;
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	size_t nCchSize = 0;
-	BOOL lbEndQuote = FALSE;
+	BOOL addDoubleQuote = FALSE;
 	#if 0
 	bool lbNewGuiConsole = false;
 	#endif
@@ -960,8 +960,12 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
-	_ASSERTE(lbEndQuote == FALSE); // Must not be set yet
+	_ASSERTE(addDoubleQuote == FALSE); // Must not be set yet
 	*psParam = static_cast<wchar_t*>(malloc(nCchSize*sizeof(wchar_t)));
+	if (*psParam == nullptr)
+	{
+		goto wrap;
+	}
 	(*psParam)[0] = 0;
 	if (aCmd == eCreateProcess)
 	{
@@ -970,34 +974,13 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		_wcscat_c((*psParam), nCchSize, L"\"");
 	}
 
-
-	if (aCmd == eShellExecute)
+	// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
+	// if we don't quotate, cmd.exe may cut first and last quote mark and fail
+	// C:\Windows\system32\cmd.exe /C ""F:\Batches\!!Save&SetNewCFG.cmd" "
+	// C:\1 @\check.cmd
+	if (asFile && *asFile)
 	{
-		// C:\Windows\system32\cmd.exe /C ""F:\Batches\!!Save&SetNewCFG.cmd" "
-		lbEndQuote = (asFile && *asFile); // #execute: Check this иначе некоторые имена обрабатываются некорректно
-	}
-	else if (aCmd == eCreateProcess)
-	{
-		// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
-		// if we don't quotate, cmd.exe may cut first and last quote mark and fail
-		if (asFile && *asFile == L'"')
-		{
-			lbEndQuote = true;
-		}
-		else if (!asFile && asParam && *SkipNonPrintable(asParam) == L'"')
-		{
-			const auto* paramStart = SkipNonPrintable(asParam);
-			const auto paramLen = wcslen(paramStart);
-			const auto* paramEnd = paramStart + paramLen - 1;
-			while ((paramEnd > (paramStart + 1)) && IsNonPrintable(*paramEnd))
-				--paramEnd;
-
-			lbEndQuote = !(paramLen >= 3 && *paramEnd == L'"');
-		}
-		else
-		{
-			lbEndQuote = false;
-		}
+		addDoubleQuote = true;
 	}
 
 	if (lbUseDosBox)
@@ -1071,7 +1054,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	if (lbUseDosBox)
 	{
 		_ASSERTEX(!gbPrepareDefaultTerminal);
-		lbEndQuote = TRUE;
+		addDoubleQuote = true;
 		_wcscat_c((*psParam), nCchSize, L"\"\"");
 		_wcscat_c((*psParam), nCchSize, szDosBoxExe);
 		_wcscat_c((*psParam), nCchSize, L"\" -noconsole ");
@@ -1190,7 +1173,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	}
 	else //NOT lbUseDosBox
 	{
-		if (lbEndQuote)
+		if (addDoubleQuote)
 			_wcscat_c((*psParam), nCchSize, L"\"");
 
 		if (asFile && *asFile)
@@ -1241,7 +1224,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		}
 	}
 
-	if (lbEndQuote)
+	if (addDoubleQuote)
 	{
 		// [conemu_ml:254] TCC fails while executing: ""F:\program files\take command\tcc.exe" /C "alias where" "
 		//--_wcscat_c((*psParam), nCchSize, L" \"");
