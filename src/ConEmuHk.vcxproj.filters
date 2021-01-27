@@ -39,6 +39,9 @@
     <ClInclude Include="ConEmuHk\Ansi.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuHk\AsyncCmdQueue.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuHk\ConEmuHooks.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -156,6 +159,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmuHk\Ansi.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\AsyncCmdQueue.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuHk\ConEmuHooks.cpp">

@@ -38,6 +38,7 @@ struct CEStartupEnv;
 struct HookModeFar;
 struct InQueue;
 class CDefTermHk;
+class AsyncCmdQueue;
 
 extern HMODULE ghOurModule;
 
@@ -143,6 +144,7 @@ extern bool gbIsVsCode; // code.exe
 extern int  gnVsHostStartConsole;
 extern bool gbIsGdbHost; // gdb.exe
 extern CDefTermHk* gpDefTerm;
+extern AsyncCmdQueue* gpAsyncCmdQueue;
 /* ************ Globals for "Default terminal ************ */
 
 

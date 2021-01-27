@@ -291,6 +291,7 @@
     <ClInclude Include="ConEmu\ConsoleMessages.h" />
     <ClInclude Include="ConEmu\DebugMsgLog.h" />
     <ClInclude Include="ConEmuHk\Ansi.h" />
+    <ClInclude Include="ConEmuHk\AsyncCmdQueue.h" />
     <ClInclude Include="ConEmuHk\ConEmuHooks.h" />
     <ClInclude Include="ConEmuHk\Connector.h" />
     <ClInclude Include="ConEmuHk\DbgHooks.h" />
@@ -332,6 +333,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmuHk\Ansi.cpp" />
+    <ClCompile Include="ConEmuHk\AsyncCmdQueue.cpp" />
     <ClCompile Include="ConEmuHk\ConEmuHooks.cpp" />
     <ClCompile Include="ConEmuHk\Connector.cpp" />
     <ClCompile Include="ConEmuHk\DefTermHk.cpp" />

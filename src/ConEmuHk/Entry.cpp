@@ -102,6 +102,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // _CrtCheckMemory can't be used in DLL_PROCESS_ATTACH
 #undef MCHKHEAP
+#include "AsyncCmdQueue.h"
 #include "DllOptions.h"
 #include "../common/MArray.h"
 
@@ -1264,6 +1265,7 @@ void InitExeName()
 	else if (IsVsDebugConsoleExe(gsExeName))
 	{
 		gbIsVSDebugConsole = true;
+		AsyncCmdQueue::Initialize();
 	}
 	else if (lstrcmpi(gsExeName, L"code.exe") == 0)
 	{
@@ -1416,6 +1418,13 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		DLOGEND1();
 	}
 
+	if (bFinal)
+	{
+		DLOG1("AsyncCmdQueue::Terminate",0);
+		AsyncCmdQueue::Terminate();
+		DLOGEND1();
+	}
+	
 	DLL_STOP_STEP(4);
 
 	// Issue 689: Progress stuck at 100%
@@ -1518,7 +1527,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	if (bFinal && gpAppMap && gpAppMap->IsValid())
 	{
 		CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap->Ptr();
-		DWORD nSelfPID = GetCurrentProcessId();
+		const DWORD nSelfPID = GetCurrentProcessId();
 		InterlockedCompareZero(&pAppMap->nReadConsolePID, nSelfPID);
 		InterlockedCompareZero(&pAppMap->nReadConsoleInputPID, nSelfPID);
 		InterlockedCompareZero(&pAppMap->nLastReadInputPID, nSelfPID);

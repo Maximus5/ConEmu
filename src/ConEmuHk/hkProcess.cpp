@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "DefTermHk.h"
 #include "hkProcess.h"
+
+#include "AsyncCmdQueue.h"
 #include "MainThread.h"
 #include "ShellProcessor.h"
 #include "DllOptions.h"
@@ -325,6 +327,11 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	if ((ldwCreationFlags & CREATE_SUSPENDED) == 0)
 	{
 		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
+	}
+
+	if (gbIsVSDebugConsole && gpAsyncCmdQueue)
+	{
+		gpAsyncCmdQueue->AsyncActivateConsole();
 	}
 
 	#ifdef _DEBUG
