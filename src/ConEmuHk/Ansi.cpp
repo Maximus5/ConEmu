@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Connector.h"
 #include "ExtConsole.h"
 #include "hlpConsole.h"
+#include "hlpProcess.h"
 #include "SetHook.h"
 
 #include "hkConsole.h"
@@ -3031,9 +3032,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 						static_cast<SHORT>(csbi.dwSize.Y - 1) };
 					ScrollScreen(hConsoleOutput, -csbi.srWindow.Top, true, scroll);
 
-					SMALL_RECT topLeft = { scroll.Left, scroll.Top, scroll.Right,
+					SMALL_RECT topLeft = { 0, 0, scroll.Right,
 						static_cast<SHORT>(csbi.srWindow.Bottom - csbi.srWindow.Top) };
 					SetConsoleWindowInfo(hConsoleOutput, TRUE, &topLeft);
+
+					UpdateAppMapRows(0, true);
 				}
 				break;
 			default:

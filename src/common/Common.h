@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    167
+#define CESERVER_REQ_VER    168
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1850,6 +1850,7 @@ struct CESERVER_REQ_CONSOLE_STATE
 	TOPLEFTCOORD TopLeft;
 	COORD crWindow;
 	SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
+	LONG lastConsoleRow; // Last observed CESERVER_CONSOLE_APP_MAPPING::nLastConsoleRow, may have lags
 	COORD crMaxSize; // Максимальный размер консоли в символах (для текущего выбранного шрифта)
 	CECI_FLAGS Flags;
 	DWORD nDataCount; // Для удобства - количество ячеек (data)

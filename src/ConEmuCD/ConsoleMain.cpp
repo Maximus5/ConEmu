@@ -3848,6 +3848,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			}
 		}
 
+		const auto lastConsoleRow = (gpSrv->pAppMap && gpSrv->pAppMap->IsValid()) ? gpSrv->pAppMap->Ptr()->nLastConsoleRow : -1;
+
 		// Eсли
 		// a) в прошлый раз курсор БЫЛ видим, а сейчас нет, И
 		// b) TopLeft не был изменен с тех пор (GUI не прокручивали)
@@ -3857,6 +3859,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		// и то же самое нужно сделать в GUI
 		if (gpSrv->pConsole && gpSrv->TopLeft.isLocked())
 		{
+			bool needResetTopLeft = false;
+
 			// Был видим в той области, которая ушла в GUI
 			if (CoordInSmallRect(gpSrv->pConsole->ConState.sbi.dwCursorPosition, gpSrv->pConsole->ConState.sbi.srWindow)
 				// и видим сейчас в RealConsole
@@ -3867,6 +3871,21 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 				&& gpSrv->TopLeft.Equal(gpSrv->pConsole->ConState.TopLeft))
 			{
 				// Сбросить блокировку и вернуть реальное положение в консоли
+				needResetTopLeft = true;
+			}
+
+			if (!needResetTopLeft
+				&& (lastConsoleRow < gpSrv->pConsole->ConState.lastConsoleRow)
+				&& (lastConsoleRow < srRealWindow.Bottom))
+			{
+				// Buffer was cleared by console application? (cmd /c cls)
+				needResetTopLeft = true;
+			}
+
+			gpSrv->pConsole->ConState.lastConsoleRow = lastConsoleRow;
+
+			if (needResetTopLeft)
+			{
 				gpSrv->TopLeft.Reset();
 				csbi.srWindow = srRealWindow;
 			}

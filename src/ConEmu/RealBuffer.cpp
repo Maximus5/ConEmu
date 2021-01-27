@@ -2525,14 +2525,16 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			#endif
 
 
-			LONG nLastConsoleRow = mp_RCon->m_AppMap.IsValid() ? mp_RCon->m_AppMap.Ptr()->nLastConsoleRow : -1;
+			const LONG nLastConsoleRow = mp_RCon->m_AppMap.IsValid() ? mp_RCon->m_AppMap.Ptr()->nLastConsoleRow : -1;
 
 			int newDynamicHeight = 0;
 			bool lbRealTurnedOn = IsBufferHeightTurnedOn(sbi);
 			con.srRealWindow = pInfo->ConState.srRealWindow;
 			// if (nLastConsoleRow > 0) -- even if nLastConsoleRow is zero (no hooks in console application), try to deal with srWindow
 			{
-				LONG maxRow = std::max<LONG>(nLastConsoleRow, std::max<LONG>(sbi.srWindow.Bottom, std::max<LONG>(con.srRealWindow.Bottom, sbi.dwCursorPosition.Y)));
+				const LONG maxRow = std::max<LONG>(nLastConsoleRow,
+					std::max<LONG>(sbi.srWindow.Bottom,
+						std::max<LONG>(con.srRealWindow.Bottom, sbi.dwCursorPosition.Y)));
 				if (maxRow > 0 && maxRow < sbi.dwSize.Y)
 					newDynamicHeight = maxRow + 1;
 			}
@@ -2546,6 +2548,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			#endif
 			con.m_sbi = sbi;
 			con.nDynamicHeight = newDynamicHeight;
+			con.nLastReportedConsoleRow = nLastConsoleRow;
 
 			// Если мышкой тащат ползунок скроллера - не менять TopVisible
 			if (!mp_RCon->InScroll()

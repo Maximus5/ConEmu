@@ -294,6 +294,7 @@ protected:
 		// Sizes
 		int nTextWidth, nTextHeight, nBufferHeight;
 		int nDynamicHeight;
+		int nLastReportedConsoleRow;
 		// Resize (srv) in progress
 		bool bLockChange2Text;
 		int nChange2TextWidth, nChange2TextHeight;
