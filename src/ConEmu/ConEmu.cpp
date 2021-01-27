@@ -10850,9 +10850,14 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 						_ASSERTE(pcbData.get() != nullptr);
 						memmove_s(pcbData.get(), nSize, &crMouse, sizeof(crMouse));
 
+						wchar_t* ptrSendMacro = reinterpret_cast<wchar_t*>(pcbData.get() + sizeof(crMouse));
 						if (nLen > 0)
 						{
-							wcscpy_s(reinterpret_cast<wchar_t*>(pcbData.get() + sizeof(crMouse)), nLen + 1, gpSet->sRClickMacro);
+							wcscpy_s(ptrSendMacro, nLen + 1, gpSet->sRClickMacro);
+						}
+						else
+						{
+							*ptrSendMacro = 0;
 						}
 
 						if (!pipe.Execute(CMD_EMENU, pcbData.get(), nSize))
