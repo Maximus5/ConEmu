@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.1.28
+* gh-2212: Far 1.75 executor - fix run cmd scripts with space in the path, redirections
+  or asFile specified in CreateProcess.
+* Create default tasks for all found WSL distributions.
+* Support loading tab icons for 64-bit system32 apps in 32-bit ConEmu (e.g. wsl.exe).
+* gh-2253: Fix 'Run as current user' radio box l10n.
+* DefTerm: Support manual attach of the VsDebugConsole.exe console.
+  If VsDebugConsole.exe was started outside of ConEmu without DefTerm,
+  the process does not have ConEmuHk injected and after manual attach
+  it could behave incorrectly on debugging program termination.
+* gh-2250: Fix sequence `ESC[3J` to clear backscroll buffer.
+* l10n: translations were updated
+* DefTerm: Activate VsDebugConsole tab when new session (run/debug) is starting.
+* Reset dynamic scroll range after `cls` command.
+
+
 2021.1.12
 * gh-2243: Fix arrow key issue in cygwin pseudo console. (#2245)
 * Add `ConEmuC -verbose` switch to force called functions printing to stdout (debugging purposes).
