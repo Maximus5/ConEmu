@@ -38,6 +38,8 @@ Test/
 *.bak
 
 *.7z
+.x32_build_flag
+.x64_build_flag
 
 /.idea
 /CMakeLists.txt

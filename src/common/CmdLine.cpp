@@ -1049,7 +1049,7 @@ bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
 			return false;
 	}
 
-	int iCmp = lstrcmpi(pszName1, pszName2);
+	const int iCmp = lstrcmpi(pszName1, pszName2);
 	return (iCmp == 0);
 }
 

@@ -474,10 +474,10 @@ void CShellProc::CheckHooksDisabled()
 }
 
 BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
-				LPCWSTR asFile, LPCWSTR asParam,
-				ChangeExecFlags Flags, const RConStartArgs& args,
-				DWORD& ImageBits, DWORD& ImageSubsystem,
-				LPWSTR* psFile, LPWSTR* psParam)
+	LPCWSTR asFile, LPCWSTR asParam,
+	ChangeExecFlags Flags, const RConStartArgs& args,
+	DWORD& ImageBits, DWORD& ImageSubsystem,
+	LPWSTR* psFile, LPWSTR* psParam)
 {
 	if (!LoadSrvMapping())
 		return FALSE;
@@ -491,20 +491,21 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	size_t nCchSize = 0;
 	BOOL addDoubleQuote = FALSE;
-	#if 0
+#if 0
 	bool lbNewGuiConsole = false;
-	#endif
+#endif
 	bool lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 	CEStr szDefTermArg, szDefTermArg2;
 	CEStr fileUnquote;
+	CEStr bufferReplacedExe;
 
-	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
+	_ASSERTEX(m_SrvMapping.sConEmuExe[0] != 0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0] != 0);
 	if (gbPrepareDefaultTerminal)
 	{
 		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
 	}
-	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
+	_ASSERTE(aCmd == eShellExecute || aCmd == eCreateProcess);
 
 	if (aCmd == eCreateProcess)
 	{
@@ -521,95 +522,79 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			asFile = fileUnquote.c_str();
 		}
 
-		// Для простоты - сразу откинем asFile если он совпадает с первым аргументом в asParam
+		// if asFile matches with first arg in asParam
 		if (asFile && *asFile && asParam && *asParam)
 		{
 			LPCWSTR pszParam = SkipNonPrintable(asParam);
-			if (pszParam && ((*pszParam != L'"') || (pszParam[0] == L'"' && pszParam[1] != L'"')))
+			const ssize_t nLen = wcslen(asFile);
+			const ssize_t cchMax = std::max<ssize_t>(nLen, MAX_PATH);
+			CEStr testBuffer;
+			if (testBuffer.GetBuffer(cchMax))
 			{
-				//BOOL lbSkipEndQuote = FALSE;
-				//if (*pszParam == L'"')
-				//{
-				//	pszParam++;
-				//	lbSkipEndQuote = TRUE;
-				//}
-				int nLen = lstrlen(asFile)+1;
-				int cchMax = std::max(nLen,(MAX_PATH+1));
-				CEStr testBuffer;
-				if (testBuffer.GetBuffer(cchMax))
+				// check for full match first
+				if (asFile)
 				{
-					// Сначала пробуем на полное соответствие
-					if (asFile)
+					const auto* firstChar = pszParam;
+					while (*firstChar == L'"')
+						++firstChar;
+					testBuffer.Set(firstChar, nLen);
+					// compare with first arg
+					if (lstrcmp(testBuffer.c_str(), asFile) == 0)
 					{
-						_wcscpyn_c(testBuffer.data(), nLen, (*pszParam == L'"') ? (pszParam+1) : pszParam, nLen); //-V501
-						testBuffer.SetAt(nLen - 1, 0);
-						// Сравнить asFile с первым аргументом в asParam
-						if (lstrcmpi(testBuffer.c_str(), asFile) == 0)
-						{
-							// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-							asFile = nullptr;
-						}
+						// exe already exists in param, exact match
+						// no need to add asFile
+						asFile = nullptr;
 					}
-					// Если не сошлось - в asParam может быть только имя или часть пути запускаемого файла
-					// например CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make.exe makefile",...)
-					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make makefile",...)
-					// или      CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"\\GCC\\mingw32-make.exe makefile",...)
-					// Эту часть нужно выкинуть из asParam
-					if (asFile)
-					{
-						LPCWSTR pszFileOnly = PointToName(asFile);
+				}
+			}
+			// asParam could contain only the name or part of path
+			// e.g.  CreateProcess(L"C:\\windows\\system32\\cmd.exe", L"cmd /c batch.cmd args",...)
+			// or    CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make.exe makefile",...)
+			// or    CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"mingw32-make makefile",...)
+			// or    CreateProcess(L"C:\\GCC\\mingw32-make.exe", L"\\GCC\\mingw32-make.exe makefile",...)
+			// Replace in asParam
+			if (asFile)
+			{
+				LPCWSTR pszFileOnly = PointToName(asFile);
 
-						if (pszFileOnly)
+				_ASSERTE(bufferReplacedExe.IsEmpty());
+				if (pszFileOnly)
+				{
+					bool replace = false;
+					LPCWSTR pszCopy = pszParam;
+					CmdArg  szFirst;
+					if (!((pszCopy = NextArg(pszCopy, szFirst))))
+					{
+						_ASSERTE(FALSE && "NextArg failed?");
+					}
+					else
+					{
+						replace = CompareProcessNames(szFirst, pszFileOnly);
+					}
+
+					if (replace)
+					{
+						const auto* paramPtr = wcsstr(asParam, szFirst);
+						if (!paramPtr)
 						{
-							LPCWSTR pszCopy = pszParam;
-							CmdArg  szFirst;
-							if (!((pszCopy = NextArg(pszCopy, szFirst))))
-							{
-								_ASSERTE(FALSE && "NextArg failed?");
-							}
+							_ASSERTE(FALSE && "string should be found in asParam");
+						}
+						else
+						{
+							const bool hasSpecials = IsQuotationNeeded(asFile);
+							const bool hasQuotes = ((asParam < paramPtr) && (*(paramPtr - 1) == L'"'))
+								&& (paramPtr[szFirst.GetLen()] == L'"');
+							if (hasSpecials && !hasQuotes)
+								bufferReplacedExe = CEStr(asParam).Replace(szFirst.c_str(),  CEStr(L"\"", asFile, L"\""));
 							else
-							{
-								LPCWSTR pszFirstName = PointToName(szFirst);
-								// Сравнить asFile с первым аргументом в asParam
-								if (lstrcmpi(pszFirstName, pszFileOnly) == 0)
-								{
-									// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-									// -- asFile = nullptr; -- трогать нельзя, только он содержит полный путь!
-									asParam = pszCopy;
-									pszFileOnly = nullptr;
-								}
-								else
-								{
-									// Пробуем asFile без расширения
-									wchar_t szTmpFileOnly[MAX_PATH+1]; szTmpFileOnly[0] = 0;
-									_wcscpyn_c(szTmpFileOnly, countof(szTmpFileOnly), pszFileOnly, countof(szTmpFileOnly)); //-V501
-									wchar_t* pszExt = wcsrchr(szTmpFileOnly, L'.');
-									if (pszExt)
-									{
-										*pszExt = 0;
-										if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
-										{
-											// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-											// -- asFile = nullptr; -- трогать нельзя, только он содержит полный путь!
-											asParam = pszCopy;
-											pszFileOnly = nullptr;
-										}
-										else if (wcsrchr(szFirst, L'.'))
-										{
-											if (lstrcmpi(pszFirstName, szTmpFileOnly) == 0)
-											{
-												// exe-шник уже указан в asParam, добавлять дополнительно НЕ нужно
-												// -- asFile = nullptr; -- трогать нельзя, только он содержит полный путь!
-												asParam = pszCopy;
-												pszFileOnly = nullptr;
-											}
-										}
-									}
-								}
-							}
+								bufferReplacedExe = CEStr(asParam).Replace(szFirst.c_str(), asFile);
+							asFile = nullptr;
+							asParam = bufferReplacedExe.c_str();
 						}
 					}
 				}
+
+				std::ignore = pszFileOnly;
 			}
 		}
 	}
@@ -702,7 +687,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 						if (pszCmdLeft && pszCmdLeft[0] == L'/' && wcschr(L"CcKk", pszCmdLeft[1]))
 						{
 							// не добавлять в измененную команду asFile (это отбрасываемый cmd.exe)
-							lbComSpecK = (psz[1] == L'K' || psz[1] == L'k');
+							lbComSpecK = (pszCmdLeft[1] == L'K' || pszCmdLeft[1] == L'k');
 							_ASSERTE(asFile == nullptr); // уже должен быть nullptr
 							asParam = pszCmdLeft+2; // /C или /K добавляется к ConEmuC.exe
 							lbNewCmdCheck = TRUE;

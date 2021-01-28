@@ -93,6 +93,7 @@ public:
 				srvMap.hConEmuWndDc = ghConWnd;
 				srvMap.nServerPID = GetCurrentProcessId();
 				srvMap.useInjects = ConEmuUseInjects::Use;
+				srvMap.Flags = ConEmu::ConsoleFlags::ProcessNewCon;
 				srvMap.nProtocolVersion = CESERVER_REQ_VER;
 				wcscpy_s(srvMap.sConEmuExe, L"C:\\Tools\\ConEmu.exe");
 				wcscpy_s(srvMap.ComSpec.Comspec32, L"C:\\Windows\\System32\\cmd.exe");
@@ -203,10 +204,10 @@ TEST_F(ShellProcessor, Far300)
 	TestInfo tests[] = {
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"(mingw32-make "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\mingw\bin\mingw32-make.exe "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\mingw\bin\mingw32-make.exe" "1.cpp" ")"},
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
 			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
@@ -333,6 +334,80 @@ TEST_F(ShellProcessor, Far175)
 			break;
 		case Function::ShellA:
 			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
+			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+TEST_F(ShellProcessor, Cmd)
+{
+	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
+	{
+		cdbg() << "Test is not functional, hConEmuWndDc is nullptr";
+		return;
+	}
+
+	farMode = std::make_unique<VarSet<HookModeFar>>(gFarMode, HookModeFar{});
+
+	const CEStr comspec = GetEnvVar(L"ComSpec");
+
+	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use
+	fileMock->MockFile(LR"(C:\1 @\util.exe)", 128, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+
+	enum class Function { CreateW, ShellW };
+	struct TestInfo
+	{
+		Function function;
+		const wchar_t* file;
+		const wchar_t* param;
+		const wchar_t* expectFile;
+		const wchar_t* expectParam;
+	};
+
+	TestInfo tests[] = {
+		{Function::CreateW,
+			comspec.c_str(), LR"(cmd /k ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /K ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			LR"(C:\1 @\util.exe)", LR"(util ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 @\util.exe" ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			LR"(C:\1 @\util.exe)", LR"("util" ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 @\util.exe" ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			LR"(C:\1 @\util.exe)", LR"(util.exe ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 @\util.exe" ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")"},
+	};
+
+	for (size_t i = 0; i < countof(tests); ++i)
+	{
+		const auto& test = tests[i];
+		auto sp = std::make_shared<CShellProc>();
+		LPCWSTR pszFile = test.file, pszParam = test.param;
+		DWORD nCreateFlags = CREATE_DEFAULT_ERROR_MODE, nShowCmd = 0;
+		STARTUPINFOW si = {};
+		auto* psi = &si;
+		si.cb = sizeof(si);
+
+		CEStr expanded(ExpandEnvStr(test.expectParam));
+
+		const std::wstring testInfo(L"#" + std::to_wstring(i + 1)
+			+ L": file=" + (test.file ? test.file : L"<null>")
+			+ L"; param=" + (test.param ? test.param : L"<null>") + L";");
+
+		switch (test.function)
+		{
+		case Function::CreateW:
+			EXPECT_TRUE(sp->OnCreateProcessW(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
+			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
+			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
+			break;
+		case Function::ShellW:
+			EXPECT_TRUE(sp->OnShellExecuteW(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
 			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
 			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
 			break;
