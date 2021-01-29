@@ -512,7 +512,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	if (args_.BufHeight == crb_On)
 	{
 		TODO("gcrBufferSize - и ширину буфера");
-		gnBufferHeight = args_.nBufHeight;
+		gnBufferHeight = static_cast<SHORT>(std::max<UINT>(args_.nBufHeight, MAX_CON_BUFFER_HEIGHT));
 		gbParmBufSize = TRUE;
 	}
 
