@@ -583,32 +583,38 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 		++command; ++wasQuoted;
 	}
 
+	// Empty string - nothing to do
+	if (!*command)
+		return false;
+
+	const auto* validEnd = wcspbrk(command, ILLEGAL_CHARACTERS);
+	if (!validEnd)
+		validEnd = command + wcslen(command);
+
 	const wchar_t breakChars[] = L" \"\t\r\n";
 	LPCWSTR nextBreak = wcspbrk(command, breakChars);
 	if (!nextBreak)
-		nextBreak = command + lstrlenW(command);
+		nextBreak = validEnd;
 
 	CEStr szTemp;
 	uint64_t nTempSize;
-	const auto* firstIllegalChar = wcspbrk(command, ILLEGAL_CHARACTERS);
-	while (nextBreak)
+	bool repeat = true; // at least once, even if *nextBreak == 0
+	while (repeat)
 	{
+		// ReSharper disable once CppAssignedValueIsNeverUsed
+		repeat = false;
+		_ASSERTE(nextBreak > command);
+		if (*nextBreak == L'"')
+		{
+			// If we reached the '"' - we don't care about this string,
+			// reason is that executable is already properly quoted.
+			// Or the string is completely malformed.
+			break;
+		}
+
+		_ASSERTE(command && *command != L'"');
 		szTemp.Set(command, (nextBreak - command));
 		_ASSERTE(szTemp[(nextBreak - command)] == 0);
-
-		// Argument was quoted?
-		if (!szTemp.IsEmpty())
-		{
-			const auto len = szTemp.GetLen();
-			if ((len > 2) && (szTemp[0] == L'"') && (szTemp[len - 1] == L'"'))
-			{
-				memmove(szTemp.ms_Val, szTemp.ms_Val + 1, (len - 2) * sizeof(*szTemp.ms_Val));
-				szTemp.ms_Val[len - 2] = 0;
-			}
-
-			if (wcschr(szTemp.c_str(), '"') != nullptr)
-				break;
-		}
 
 		// If this is a full path without environment variables
 		if (!szTemp.IsEmpty()
@@ -619,10 +625,6 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 			&& FileExists(szTemp, &nTempSize) && nTempSize)
 		{
 			// OK, it an our executable
-			for (size_t i = 0; i < wasQuoted && *nextBreak == L'"'; ++i)
-			{
-				++nextBreak;
-			}
 			rsArguments = SkipNonPrintable(nextBreak);
 			szExe.Set(szTemp);
 			result = !szExe.IsEmpty();
@@ -633,20 +635,18 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 		if (!*nextBreak)
 			break;
 		// Find next non-space
-		while (*nextBreak && wcschr(breakChars, *nextBreak))
+		while (*nextBreak && (*nextBreak != L'"') && wcschr(breakChars, *nextBreak))
 			nextBreak++;
-		// If quoted string starts from here - it's supposed to be an argument
+		// If quoted string starts from here - it's supposed to be an argument, no valid exe found.
 		if (*nextBreak == L'"')
-		{
-			// And we must not get here, because the executable must be already processed above
-			// _ASSERTE(*pchEnd != L'"');
 			break;
-		}
+
+		if (nextBreak >= validEnd)
+			break;
 		nextBreak = wcspbrk(nextBreak, breakChars);
 		if (!nextBreak)
-			nextBreak = command + lstrlenW(command);
-		if (firstIllegalChar && nextBreak >= firstIllegalChar)
-			break;
+			nextBreak = validEnd;
+		repeat = true;
 	}
 
 	return result;

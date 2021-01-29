@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../UnitTests/test_mock_file.h"
 
 #include "CmdLine.h"
+
+#include "execute.h"
 #include "MStrDup.h"
 #include "RConStartArgsEx.h"
 
@@ -343,18 +345,34 @@ TEST(CmdLine, FromSpaceDelimitedString)
 	fileMock.MockFile(LR"(C:\Far\Far.exe)");
 	fileMock.MockFile(LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe)");
 	fileMock.MockFile(LR"(C:\Program Files\Internet Explorer\iexplore.exe)");
+	fileMock.MockFile(LR"(C:\Some   Tools\some  tool.exe)");
 	fileMock.MockDirectory(LR"(C:\Program)");
 
 	testWithMock(LR"(C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)", true,
 		LR"(C:\Far\Far.exe)", LR"(/w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My)");
+	testWithMock(LR"("C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My")", true,
+		LR"(C:\Far\Far.exe)", LR"(/w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My")");
+
 	testWithMock(LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe")", true,
 			LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe)", LR"("C:\sources\app.exe")");
-	testWithMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe" "C:\sources\app.exe")", true,
-			LR"(C:\Program Files\CodeBlocks\cb_console_runner.exe)", LR"("C:\sources\app.exe")");
+	testWithMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe" "C:\sources\app.exe")", false,
+			nullptr, nullptr); // This command is already properly quoted for CreateProcess
 	testWithMock(LR"("C:\Program Files\CodeBlocks\cb_console_runner.exe C:\sources\app.exe")", true,
 			LR"(C:\Program Files\CodeBlocks\cb_console_runner.exe)", LR"(C:\sources\app.exe")");
+
 	testWithMock(LR"(C:\Program Files\Internet Explorer\iexplore.exe http://google.com)", true,
 		LR"(C:\Program Files\Internet Explorer\iexplore.exe)", LR"(http://google.com)");
+
+	testWithMock(LR"(C:\Some   Tools\some  tool.exe)", true,
+		LR"(C:\Some   Tools\some  tool.exe)", LR"()");
+	testWithMock(LR"(C:\Some   Tools\some  tool.exe > nul)", true,
+		LR"(C:\Some   Tools\some  tool.exe)", LR"(> nul)");
+	testWithMock(LR"(C:\Some   Tools\some  tool.exe  "some arguments")", true,
+		LR"(C:\Some   Tools\some  tool.exe)", LR"("some arguments")");
+	testWithMock(LR"(C:\Some   Tools\some  tool.exe  some arguments)", true,
+		LR"(C:\Some   Tools\some  tool.exe)", LR"(some arguments)");
+	testWithMock(LR"("C:\Some   Tools\some  tool.exe  some arguments")", true,
+		LR"(C:\Some   Tools\some  tool.exe)", LR"(some arguments")");
 
 
 	fileMock.Reset();

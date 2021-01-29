@@ -67,13 +67,13 @@ bool IsVsDebugConsoleExe(LPCWSTR processName);
 bool IsVsDebugger(LPCWSTR processName);
 bool IsGDB(LPCWSTR processName);
 
-/// <summary>
-/// Try to extract valid file-path-name of starting executable from space-delimited string with lack of double quotes
-/// </summary>
-/// <param name="commandLine">Command line to parse, it could be not properly double quoted</param>
-/// <param name="szExe">[OUT] the path to found executable</param>
-/// <param name="rsArguments">[OUT] the rest of command line, arguments</param>
-/// <returns>true - if file-path is found and szExe is not empty, false - on error</returns>
+/// @brief Try to extract valid file-path-name of starting executable from space-delimited string with lack of double quotes
+/// @param commandLine [IN] Command line to parse, it could be not properly double quoted. Examples:
+///   `C:\\Program Files\\Internet Explorer\\iexplore.exe http://google.com`
+///   or `"C:\\Program Files\\Internet Explorer\\iexplore.exe http://google.com\"`.
+/// @param szExe [OUT] the path to found executable
+/// @param rsArguments [OUT] pointer to the rest of command line, arguments
+/// @returns true - if file-path is found and szExe is not empty, false - on error
 bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szExe, const wchar_t*& rsArguments);
 
 /// <summary>
