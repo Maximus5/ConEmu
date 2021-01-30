@@ -3323,7 +3323,7 @@ bool LogString(LPCSTR asText)
 		fflush(stdout);
 	}
 	#endif
-	
+
 	if (!gpLogSize)
 	{
 		#ifdef _DEBUG
@@ -3356,7 +3356,7 @@ bool LogString(LPCWSTR asText)
 		fflush(stdout);
 	}
 	#endif
-	
+
 	if (!gpLogSize)
 	{
 		DEBUGSTR(asText);

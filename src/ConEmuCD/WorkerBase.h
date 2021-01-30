@@ -194,6 +194,8 @@ protected:
 	// To access "Sysnative" from 32-bit builds - don't disable redirection
 	static void CheckNeedSkipWowChange(LPCWSTR asCmdLine);
 
+	int GenerateCmdLine(const wchar_t* asCmdLine, CEStr& result);
+
 	// ReSharper disable once CppRedundantAccessSpecifier
 protected:
 	MModule kernel32;

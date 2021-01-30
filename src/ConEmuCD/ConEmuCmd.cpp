@@ -428,9 +428,15 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 		int iNewConRc = CERR_RUNNEWCONSOLE;
 
 		// Query current environment
-		CEnvStrings strs(GetEnvironmentStringsW());
+		const CEnvStrings strs(GetEnvironmentStringsW());
 
-		DWORD nCmdLen = lstrlen(asCmdLine) + 1;
+		CEStr runCmd;
+		if (0 == GenerateCmdLine(asCmdLine, runCmd))
+		{
+			asCmdLine = runCmd.c_str();
+		}
+
+		const DWORD nCmdLen = lstrlen(asCmdLine) + 1;
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD) + ((nCmdLen + strs.cchLength_) * sizeof(wchar_t)));
 		if (pIn)
 		{

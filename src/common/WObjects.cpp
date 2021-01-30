@@ -84,7 +84,7 @@ bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/)
 		if (nErrCode == ERROR_FILE_NOT_FOUND)
 		{
 			wow.Disable();
-			
+
 			hFile.SetHandle(CreateFileW(asFilePath, GENERIC_READ, FILE_SHARE_READ,
 				nullptr, OPEN_EXISTING, 0, nullptr), CloseHandle);
 		}
@@ -150,7 +150,7 @@ int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr
 		_ASSERTE(lpFileName != nullptr);
 		return 0;
 	}
-	
+
 	bool bFound = false;
 	wchar_t *pszFilePart = nullptr, *pszBuffer = nullptr;
 	wchar_t szFind[MAX_PATH+1];
@@ -1122,7 +1122,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 
 	if (pszComspec[0] && !FileExists(pszComspec))
 	{
-		_ASSERTE("Comspec not found! File not exists!");
+		_ASSERTE(FALSE && "Comspec not found! File not exists!");
 		pszComspec[0] = 0;
 	}
 
