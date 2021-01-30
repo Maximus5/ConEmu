@@ -2133,12 +2133,18 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 		switch (i)
 		{
 		case 0:
+			if (!pszPlatform)
+				continue;
 			pszVcVarsBat.Attach(JoinPath(pszDir, L"vcvarsall.bat"));
 			break;
 		case 1:
+			if (!pszPlatform)
+				continue;
 			pszVcVarsBat.Attach(JoinPath(pszDir, L"VC\\Auxiliary\\Build\\vcvarsall.bat"));
 			break;
 		case 2:
+			if (pszPlatform)
+				continue;
 			pszVcVarsBat.Attach(JoinPath(pszDir, L"Common7\\Tools\\VsDevCmd.bat"));
 			break;
 		default:
@@ -2185,8 +2191,8 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 		lstrmerge(&pszSuffix.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
 	}
 
-	CEStr pszName(L"SDK::VS ", pszVer, L" ", pszPlatform, L" tools prompt");
-	CEStr pszSuffixReady(L"\" ", pszPlatform, L" ", pszSuffix);
+	const CEStr pszName(L"SDK::VS ", pszVer, pszPlatform ? L" " : nullptr, pszPlatform, L" tools prompt");
+	const CEStr pszSuffixReady(L"\" ", pszPlatform, pszPlatform ? L" " : nullptr, pszSuffix);
 	App.Add(pszName, pszSuffixReady, pszPrefix, nullptr/*asGuiArg*/, pszVcVarsBat, nullptr);
 }
 
@@ -2255,6 +2261,7 @@ static bool EnumVisualStudioEditions(const CEStr& directory, const WIN32_FIND_DA
 		return true;
 
 	auto* params = static_cast<VisualStudioEditions*>(context);
+	CreateVCTask(params->appList[0], nullptr, params->version, directory);
 	CreateVCTask(params->appList[0], L"x86", params->version, directory);
 	CreateVCTask(params->appList[1], L"x64", params->version, directory);
 	return true;
