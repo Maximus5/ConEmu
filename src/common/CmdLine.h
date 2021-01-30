@@ -76,16 +76,26 @@ bool IsGDB(LPCWSTR processName);
 /// @returns true - if file-path is found and szExe is not empty, false - on error
 bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szExe, const wchar_t*& rsArguments);
 
-/// <summary>
-/// Output arguments for IsNeedCmd function
-/// </summary>
+/// @brief Describes should we do anything with double quotes around the command.
+enum class StartEndQuot : int32_t
+{
+	/// @brief Execute command line as is
+	DontChange = 0,
+	/// @brief Remove quotation around the command.
+	/// E.g. CreateProcess(L"\"\"c:\\program files\\arc\\7z.exe\" -?\"") will fail otherwise.
+	NeedCut = 1,
+	/// @brief Add quotation around the command.
+	/// E.g. CreateProcess(L"cmd /c \"c:\\my tools\\script.cmd\" args") will fail otherwise.
+	NeedAdd = 2,
+};
+
+/// @brief Output arguments for IsNeedCmd function
 struct NeedCmdOptions
 {
 	bool isNeedCmd = false;
-	bool needCutStartEndQuot = false;
+	StartEndQuot startEndQuot = StartEndQuot::DontChange;
 	bool rootIsCmdExe = false;
 	bool alwaysConfirmExit = false;
-	LPCWSTR arguments = nullptr;
 };
 
 /// <summary>

@@ -4290,7 +4290,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx& args, bool abAllowScript
 			// Start/End quotes need to be removed
 			CEStr szExe; NeedCmdOptions opt{};
 			const bool bNeedCmd = IsNeedCmd(FALSE, args.pszSpecialCmd, szExe, &opt);
-			if (!bNeedCmd && opt.needCutStartEndQuot)
+			if (!bNeedCmd && opt.startEndQuot == StartEndQuot::NeedCut)
 			{
 				const int nLen = lstrlen(args.pszSpecialCmd);
 				_ASSERTE(nLen > 4);
@@ -4300,6 +4300,15 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx& args, bool abAllowScript
 				// And trim one end quote
 				_ASSERTE(args.pszSpecialCmd[nLen-2] == L'"' && args.pszSpecialCmd[nLen-1] == 0);
 				args.pszSpecialCmd[nLen-2] = 0;
+			}
+			else if (bNeedCmd && opt.startEndQuot == StartEndQuot::NeedAdd)
+			{
+				CEStr quotedCommand(L"\"", args.pszSpecialCmd, L"\"");
+				if (quotedCommand)
+				{
+					SafeFree(args.pszSpecialCmd);
+					args.pszSpecialCmd = quotedCommand.Detach();
+				}
 			}
 		}
 	}

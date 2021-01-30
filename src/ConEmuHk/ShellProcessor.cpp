@@ -1089,7 +1089,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 				if (ms_ExeTmp[0])
 				{
 					LPCWSTR pszQuot = SkipNonPrintable(asParam);
-					if (opt.needCutStartEndQuot)
+					if (opt.startEndQuot == StartEndQuot::NeedCut)
 					{
 						while (*pszQuot == L'"') pszQuot++;
 						pszQuot += lstrlen(ms_ExeTmp);

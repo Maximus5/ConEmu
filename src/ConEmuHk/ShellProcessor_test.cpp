@@ -357,6 +357,8 @@ TEST_F(ShellProcessor, Cmd)
 
 	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use
 	fileMock->MockFile(LR"(C:\1 @\util.exe)", 128, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
+	fileMock->MockFile(LR"(C:\1 &\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use
+	fileMock->MockFile(LR"(C:\1 &\util.exe)", 128, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
 
 	enum class Function { CreateW, ShellW };
 	struct TestInfo
@@ -381,6 +383,18 @@ TEST_F(ShellProcessor, Cmd)
 		{Function::CreateW,
 			LR"(C:\1 @\util.exe)", LR"(util.exe ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")",
 			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 @\util.exe" ""C:\1 @\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			comspec.c_str(), LR"(cmd /k ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /K ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			LR"(C:\1 &\util.exe)", LR"(util ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 &\util.exe" ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			LR"(C:\1 &\util.exe)", LR"("util" ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 &\util.exe" ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")"},
+		{Function::CreateW,
+			LR"(C:\1 &\util.exe)", LR"(util.exe ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")",
+			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" /C "C:\1 &\util.exe" ""C:\1 &\a.cmd" arg1 arg2" -new_console:t:"test")"},
 	};
 
 	for (size_t i = 0; i < countof(tests); ++i)

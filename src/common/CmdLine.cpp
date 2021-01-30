@@ -443,6 +443,7 @@ int AddEndSlash(wchar_t* rsPath, int cchMax)
 
 bool IsNonPrintable(const wchar_t chr)
 {
+	// Don't add 0xA0 here as it's not a "real" spacing character
 	return (chr == L' ' || chr == L'\t' || chr == L'\r' || chr == L'\n');
 }
 
@@ -654,15 +655,21 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 
 bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options /*= nullptr*/)
 {
+	// do we need to add leading "cmd.exe /c "
 	bool isNeedCmd = false;
-	bool rbNeedCutStartEndQuot = false;
-	bool rbRootIsCmdExe = false;
-	bool rbAlwaysConfirmExit = false;
-	LPCWSTR rsArguments = nullptr;
+	// the command is already or should be started via "cmd.exe"
+	bool rootIsCmdExe = false;
+	// do we need to change quotation?
+	StartEndQuot startEndQuot = StartEndQuot::DontChange;
+	// if it's suggested to confirm console termination
+	bool alwaysConfirmExit = false;
+	// pointer to rest of the commands line
+	LPCWSTR argumentsPtr = nullptr;
 
 	wchar_t *pwszEndSpace;
 
-	BOOL lbFirstWasGot = FALSE;
+	size_t leadingQuotes = 0;
+	bool firstObtained = false;
 	LPCWSTR pwszCopy;
 	int nLastChar;
 	#ifdef _DEBUG
@@ -674,6 +681,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	{
 		_ASSERTE(asCmdLine && *asCmdLine);
 		szExe.Clear();
+		alwaysConfirmExit = true;
 		isNeedCmd = true;
 		goto wrap;
 	}
@@ -682,7 +690,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	// Это минимальные проверки, собственно к коду - не относятся
 	{
 		NextArg(asCmdLine, szDbgFirst);
-		LPCWSTR psz = PointToExt(szDbgFirst);
+		const auto* psz = PointToExt(szDbgFirst);
 		if (lstrcmpi(psz, L".cmd")==0 || lstrcmpi(psz, L".bat")==0)
 			bIsBatch = true;
 	}
@@ -701,6 +709,14 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
 	// cmd /c "dir c:\"
 	nLastChar = lstrlenW(pwszCopy) - 1;
+	while (nLastChar > 0 && IsNonPrintable(pwszCopy[nLastChar]))
+	{
+		--nLastChar;
+	}
+	while (pwszCopy[leadingQuotes] == L'"')
+	{
+		++leadingQuotes;
+	}
 
 	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
 	{
@@ -725,7 +741,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			isNeedCmd = true; goto wrap;
+			alwaysConfirmExit = true;
+			isNeedCmd = true;
+			goto wrap;
 		}
 		szExe.Set(arg);
 
@@ -735,7 +753,8 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			isNeedCmd = true; goto wrap;
+			isNeedCmd = true;
+			goto wrap;
 		}
 
 		if (arg.m_pszDequoted)
@@ -755,44 +774,47 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			{
 				_ASSERTE(*pwszCopy == L'"' && pwszCopy == asCmdLine); // should be still
 				++pwszCopy; // skip first double quote
-				lbFirstWasGot = true;
+				firstObtained = true;
 
 				if (!expanded.IsEmpty())
 					szExe = std::move(expanded);
 				// #TODO remove ending quote
-				rsArguments = SkipNonPrintable(nextArg);
+				argumentsPtr = SkipNonPrintable(nextArg);
 
-				rbNeedCutStartEndQuot = true;
+				startEndQuot = StartEndQuot::NeedCut;
 			}
 		}
 	}
 
 	// Get the first argument (the executable?)
-	if (!lbFirstWasGot)
+	if (!firstObtained)
 	{
 		szExe.Clear();
 
 		// `start` command must be processed by processor itself
 		if ((lstrcmpni(pwszCopy, L"start", 5) == 0)
-			&& (!pwszCopy[5] || isSpace(pwszCopy[5])))
+			&& (!pwszCopy[5] || IsNonPrintable(pwszCopy[5])))
 		{
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			isNeedCmd = true; goto wrap;
+			isNeedCmd = true;
+			goto wrap;
 		}
 
 		// will return true if we found a real existing file path
-		if (!GetFilePathFromSpaceDelimitedString(pwszCopy, szExe, rsArguments))
+		if (!GetFilePathFromSpaceDelimitedString(pwszCopy, szExe, argumentsPtr))
 		{
 			CmdArg arg;
 			if (!((pwszCopy = NextArg(pwszCopy, arg))))
 			{
-				//Parsing command line failed
+				// Parsing command line failed
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				isNeedCmd = true; goto wrap;
+				alwaysConfirmExit = true;
+				isNeedCmd = true;
+				goto wrap;
 			}
 			szExe.Set(arg);
 
@@ -801,7 +823,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			// Expand environment variables and search in the %PATH%
 			if (FileExistsSearch(szExe.c_str(), szExe, true))
 			{
-				rsArguments = SkipNonPrintable(pwszCopy);
+				argumentsPtr = SkipNonPrintable(pwszCopy);
 			}
 		}
 	}
@@ -816,8 +838,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		// We can't run the program as it's path is invalid, so let's try it to "cmd.exe /c ..."
 		if (wcspbrk(szExe, ILLEGAL_CHARACTERS))
 		{
-			rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
-			isNeedCmd = true; goto wrap; // force add "cmd.exe"
+			rootIsCmdExe = true;
+			isNeedCmd = true;
+			goto wrap;
 		}
 
 		// If there is no "path"
@@ -836,15 +859,16 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 						isCommand = true;
 						break;
 					}
-					internalCommand += lstrlen(internalCommand) + 1;
+					internalCommand += wcslen(internalCommand) + 1;
 				}
 				if (isCommand)
 				{
 					#ifdef WARN_NEED_CMD
 					_ASSERTE(FALSE);
 					#endif
-					rbRootIsCmdExe = TRUE; // it's running via "cmd.exe"
-					isNeedCmd = true; goto wrap; // force add "cmd.exe"
+					rootIsCmdExe = true;
+					isNeedCmd = true;
+					goto wrap;
 				}
 			}
 
@@ -866,8 +890,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		#ifdef WARN_NEED_CMD
 		_ASSERTE(FALSE);
 		#endif
-		rbRootIsCmdExe = true; // run the command via processor (e.g. "cmd.exe /c ...")
-		isNeedCmd = true; goto wrap; // add leading "cmd.exe"
+		rootIsCmdExe = true;
+		isNeedCmd = true;
+		goto wrap;
 	}
 
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
@@ -888,12 +913,13 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0
 		|| lstrcmpiW(pwszCopy, L"tcc")==0 || lstrcmpiW(pwszCopy, L"tcc.exe")==0)
 	{
-		rbRootIsCmdExe = true; // it IS cmd.exe
-		rbAlwaysConfirmExit = true;
+		rootIsCmdExe = true; // it IS cmd.exe
+		alwaysConfirmExit = true;
 		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
 		#endif
-		isNeedCmd = false; goto wrap; // cmd.exe already exists in the command line, no need to add
+		isNeedCmd = false; // as it's already cmd.exe, we don't need to add "cmd /c"
+		goto wrap;
 	}
 
 
@@ -929,7 +955,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 
 		if (bFound)
 		{
-			rbRootIsCmdExe = false; // FAR!
+			rootIsCmdExe = false; // FAR!
 			#ifdef _DEBUG // due to unittests
 			_ASSERTE(!bIsBatch);
 			#endif
@@ -939,7 +965,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 
 	if (IsExecutable(szExe))
 	{
-		rbRootIsCmdExe = false;
+		rootIsCmdExe = false;
 		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
 		#endif
@@ -951,7 +977,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	#ifdef WARN_NEED_CMD
 	_ASSERTE(FALSE);
 	#endif
-	rbRootIsCmdExe = true;
+	rootIsCmdExe = true;
 #ifndef __GNUC__
 #pragma warning( pop )
 #endif
@@ -960,12 +986,19 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 wrap:
 	if (options)
 	{
+		// validate cmd quotation rules
+		if (isNeedCmd && !szExe.IsEmpty())
+		{
+			if (leadingQuotes == 1)
+				startEndQuot = IsQuotationNeeded(szExe) ? StartEndQuot::NeedAdd : StartEndQuot::DontChange;
+			else if (leadingQuotes >= 2)
+				startEndQuot = StartEndQuot::DontChange;
+		}
+		// result
 		options->isNeedCmd = isNeedCmd;
-		options->needCutStartEndQuot = rbNeedCutStartEndQuot;
-		options->rootIsCmdExe = rbRootIsCmdExe || isNeedCmd;
-		options->alwaysConfirmExit = rbAlwaysConfirmExit;
-		// #IsNeedCmd return arguments as CEStr, so we don't need needCutStartEndQuot processing
-		options->arguments = rsArguments;
+		options->startEndQuot = startEndQuot;
+		options->rootIsCmdExe = rootIsCmdExe || isNeedCmd;
+		options->alwaysConfirmExit = alwaysConfirmExit;
 	}
 	return isNeedCmd;
 }

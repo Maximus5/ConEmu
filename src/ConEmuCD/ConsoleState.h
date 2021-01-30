@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
+#include "../common/CmdLine.h"
 #include "RunMode.h"
 
 typedef DWORD AttachModeEnum;
@@ -92,7 +93,7 @@ struct ConsoleState final
 	/// if true - triggers bufferheight during sst_ServerStart
 	bool rootIsCmdExe_ = true;
 	/// if command line is double-double-quoted: ""file" ... args"
-	bool needCutStartEndQuot_ = false;
+	StartEndQuot startEndQuot_ = StartEndQuot::DontChange;
 	/// if true - we need to run the command through cmd.exe
 	bool runViaCmdExe_ = false;
 

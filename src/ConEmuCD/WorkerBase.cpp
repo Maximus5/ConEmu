@@ -315,7 +315,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	xf_check();
 
-	LPCWSTR lsCmdLine = gpConsoleArgs->command_.c_str(L"");
+	LPCWSTR lsCmdLine = SkipNonPrintable(gpConsoleArgs->command_.c_str(L""));
 
 	bool needSetEnv = false;
 	if (gState.runMode_ == RunMode::Server)
@@ -380,7 +380,6 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
 	}
 	
-	LPCWSTR pszArguments4EnvVar = nullptr;
 	CEStr szExeTest;
 
 	if (gState.runMode_ == RunMode::Comspec && (!lsCmdLine || !*lsCmdLine))
@@ -402,19 +401,18 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	else
 	{
 		NeedCmdOptions opt{};
-		opt.alwaysConfirmExit = gState.alwaysConfirmExit_;
 
 		pszCheck4NeedCmd_ = lsCmdLine;
 
 		gState.runViaCmdExe_ = IsNeedCmd((gState.runMode_ == RunMode::Server), lsCmdLine, szExeTest, &opt);
 
-		pszArguments4EnvVar = opt.arguments;
-		gState.needCutStartEndQuot_ = opt.needCutStartEndQuot;
+		gState.startEndQuot_ = opt.startEndQuot;
 		gState.rootIsCmdExe_ = opt.rootIsCmdExe;
 
-		if (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault)
+		if (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault
+			&& opt.alwaysConfirmExit)
 		{
-			gState.alwaysConfirmExit_ = opt.alwaysConfirmExit;
+			gState.alwaysConfirmExit_ = true;
 		}
 	}
 
@@ -425,15 +423,11 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	CheckNeedSkipWowChange(lsCmdLine);
 	#endif
 
-	int nCmdLine = lsCmdLine ? lstrlenW(lsCmdLine) : 0;
+	size_t nCchLen = 5 // '\0' termination + quotation
+		+ (lsCmdLine ? wcslen(lsCmdLine) : 0)
+		;
 
-	if (!gState.runViaCmdExe_)
-	{
-		nCmdLine += 1; // '\0' termination
-		if (pszArguments4EnvVar && *szExeTest)
-			nCmdLine += lstrlen(szExeTest) + 3;
-	}
-	else
+	if (gState.runViaCmdExe_)
 	{
 		gszComSpec[0] = 0;
 		// ReSharper disable once CppLocalVariableMayBeConst
@@ -445,62 +439,62 @@ int WorkerBase::PostProcessPrepareCommandLine()
 			return CERR_CMDEXENOTFOUND;
 		}
 
-		nCmdLine += lstrlenW(gszComSpec) + 15; // "/C" + quotation + possible "/U"
+		nCchLen += wcslen(gszComSpec) + 15; // "/C" + quotation + possible "/U"
 	}
 
 	// nCmdLine counts length of lsCmdLine + gszComSpec + something for "/C" and things
-	const size_t nCchLen = size_t(nCmdLine) + 1;
 	SafeFree(gpszRunCmd);
 	gpszRunCmd = static_cast<wchar_t*>(calloc(nCchLen, sizeof(wchar_t)));
 
 	if (!gpszRunCmd)
 	{
-		_printf("Can't allocate %i wchars!\n", (DWORD)nCmdLine);
+		_printf("Can't allocate %i wchars!\n", static_cast<int>(nCchLen));
 		return CERR_NOTENOUGHMEM1;
 	}
 
-	// это нужно для смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
-	if (pszArguments4EnvVar && *szExeTest && !gState.runViaCmdExe_)
+	// Need to add `cmd /c`?
+	if (gState.runViaCmdExe_)
 	{
-		gpszRunCmd[0] = L'"';
-		_wcscat_c(gpszRunCmd, nCchLen, szExeTest);
-		if (*pszArguments4EnvVar)
-		{
-			_wcscat_c(gpszRunCmd, nCchLen, L"\" ");
-			_wcscat_c(gpszRunCmd, nCchLen, pszArguments4EnvVar);
-		}
-		else
-		{
-			_wcscat_c(gpszRunCmd, nCchLen, L"\"");
-		}
+		// ComSpec (cmd, tcc, etc.) always quote
+
+		_wcscpy_c(gpszRunCmd, nCchLen, L"\"");
+		_wcscat_c(gpszRunCmd, nCchLen, gszComSpec);
+		_wcscat_c(gpszRunCmd, nCchLen, gpWorker->IsCmdK() ? L"\" /K " : L"\" /C ");
+
+		// #ComSpec: "/U" is never added?
 	}
 	else
 	{
-		_wcscpy_c(gpszRunCmd, nCchLen, lsCmdLine);
+		_ASSERTE(*gpszRunCmd == 0);
+		*gpszRunCmd = 0;
 	}
-	// !!! gpszRunCmd может поменяться ниже!
 
-	// ====
-	if (gState.runViaCmdExe_)
+
+	// The command line itself
+	if (gState.startEndQuot_ == StartEndQuot::NeedAdd)
 	{
-		// -- always quote
-		gpszRunCmd[0] = L'"';
-		_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
-
-		_wcscat_c(gpszRunCmd, nCchLen, gpWorker->IsCmdK() ? L"\" /K " : L"\" /C ");
-
-		// The command line itself
-		_wcscat_c(gpszRunCmd, nCchLen, lsCmdLine);
+		_wcscat_c(gpszRunCmd, nCchLen, L"\"");
 	}
-	else if (gState.needCutStartEndQuot_)
+
+	const wchar_t* const newCmdStart = gpszRunCmd + wcslen(gpszRunCmd);
+	_wcscat_c(gpszRunCmd, nCchLen, lsCmdLine);
+
+	if (gState.startEndQuot_ == StartEndQuot::NeedAdd)
 	{
-		// ""c:\arc\7z.exe -?"" - would not start!
-		_wcscpy_c(gpszRunCmd, nCchLen, lsCmdLine+1);
-		wchar_t *pszEndQ = gpszRunCmd + lstrlenW(gpszRunCmd) - 1;
-		_ASSERTE(pszEndQ && *pszEndQ == L'"');
-
-		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
+		_wcscat_c(gpszRunCmd, nCchLen, L"\"");
 	}
+	else if (gState.startEndQuot_ == StartEndQuot::NeedCut)
+	{
+		wchar_t *pszEndQ = gpszRunCmd + wcslen(gpszRunCmd) - 1;
+		while (pszEndQ > newCmdStart && IsNonPrintable(*pszEndQ))
+			--pszEndQ;
+
+		if (pszEndQ > newCmdStart && *pszEndQ == L'"')
+			*pszEndQ = L' ';
+		else
+			_ASSERTE(pszEndQ > newCmdStart && *pszEndQ == L'"');
+	}
+
 
 	// If working folder was specified
 	if (args_.pszStartupDir && *args_.pszStartupDir)
