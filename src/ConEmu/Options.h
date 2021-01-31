@@ -151,7 +151,7 @@ struct TabBtnDblClick
 #define TABBTN_DEFAULT_CLICK_ACTION  TabBtnDblClick::RenameTab
 
 // ‘%1’ - line number, ‘%2’ - column number, ‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
-#define HI_GOTO_EDITOR_FAR     L"far.exe /e%1:%2 \"%3\""
+#define HI_GOTO_EDITOR_FAR     L"{Far} /e%1:%2 \"%3\""
 #define HI_GOTO_EDITOR_VIMW    L"vim.exe +%1 \"%3\""
 // Use '#' prefix to run GUI editor outside of ConEmu
 #define HI_GOTO_EDITOR_SCITE   L"#scite.exe \"-open:%4\" -goto:%1,%2"

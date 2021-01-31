@@ -72,6 +72,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE2(s) DEBUGSTR(s) // Warning level
 #define DEBUGSTRDYNAMIC(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
+#define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRTOPLEFT(s) //DEBUGSTR(s)
@@ -2948,6 +2949,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 	if (!mp_RCon->IsFarHyperlinkAllowed(false))
 		return false;
 
+	if (!isDataValid())
+		return false;
+
 	bool lbProcessed = false;
 
 	// переходим на абсолютные координаты
@@ -3241,7 +3245,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										}
 										else
 										{
-											gpConEmu->CreateCon(args);
+											gpConEmu->CreateCon(args, true);
 										}
 									}
 								}
@@ -5586,6 +5590,12 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 // pszChars may be nullptr
 bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
+	if (!mp_RCon->isConsoleReady())
+	{
+		DEBUGSTRKEY(L"CRealBuffer::OnKeyboard skipped - RCon is not ready yet");
+		return false;
+	}
+
 	// Обработка Left/Right/Up/Down при выделении
 
 	if (con.m_sel.dwFlags && messg == WM_KEYDOWN
