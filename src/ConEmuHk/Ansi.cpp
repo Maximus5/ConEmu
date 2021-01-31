@@ -659,7 +659,7 @@ CEAnsi::DisplayCursorPos CEAnsi::gDisplayCursor = {};
 //	BOOL  WrapWasSet;
 //	SHORT WrapAt; // Rightmost X coord (1-based)
 //	//
-//	BOOL  AutoLfNl; // LF/NL (default on): Automatically follow echo of LF, VT or FF with CR.
+//	BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
 //	//
 //	BOOL  ScrollRegion;
 //	SHORT ScrollStart, ScrollEnd; // 0-based absolute line indexes
@@ -1171,7 +1171,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, L
 		write.Region.left = write.Region.right = -1; // not used yet
 	}
 
-	if (gbWasXTermOutput && !gDisplayOpt.AutoLfNl)
+	if (!IsAutoLfNl())
 		write.Flags |= ewtf_NoLfNl;
 
 	DWORD nWriteFrom = 0, nWriteTo = nNumberOfCharsToWrite;
@@ -3273,7 +3273,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			case 20:
 				if (Code.PvtLen == 0)
 				{
-					gDisplayOpt.AutoLfNl = (Code.Action == L'h');
+					SetAutoLfNl(Code.Action == L'h');
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 				}
 				else
@@ -4446,6 +4446,17 @@ void CEAnsi::RefreshXTermModes()
 		_ASSERTE(i != tmc_ConInMode);
 		ChangeTermMode(static_cast<TermModeCommand>(i), gWasXTermModeSet[i].value, gWasXTermModeSet[i].pid);
 	}
+}
+
+void CEAnsi::SetAutoLfNl(const bool autoLfNl)
+{
+	gDisplayOpt.AutoLfNl = autoLfNl;
+}
+
+bool CEAnsi::IsAutoLfNl()
+{
+	// #TODO check for gbWasXTermOutput?
+	return gDisplayOpt.AutoLfNl;
 }
 
 // This is useful when user press Shift+Home,

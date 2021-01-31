@@ -129,9 +129,20 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	// gh-1291: Support wsl.exe and ubuntu.exe
 	if (IsWin10())
 	{
+		bool outputChecked = false, outputCheckResult = false;
+		auto isOutput = [&outputChecked, &outputCheckResult, hConsoleHandle]()
+		{
+			if (!outputChecked)
+			{
+				outputCheckResult = HandleKeeper::IsOutputHandle(hConsoleHandle);
+				outputChecked = true;
+			}
+			return outputCheckResult;
+		};
+
 		if ((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) || (CEAnsi::gbWasXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)))
 		{
-			if (!HandleKeeper::IsOutputHandle(hConsoleHandle))
+			if (!isOutput())
 			{
 				static MHandle xtermEnabledFor;  // NOLINT(clang-diagnostic-exit-time-destructors)
 				const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0;
@@ -157,14 +168,21 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			}
 		}
 
-		// don't use "else" here! first "if" could be executed.
-		if ((!CEAnsi::gbWasXTermOutput && (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-			|| (CEAnsi::gbWasXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)))
+		// don't use "else if" here! first "if" could be executed.
+		const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;
+		if (CEAnsi::gbWasXTermOutput != enableXterm)
 		{
-			const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;
-			if (HandleKeeper::IsOutputHandle(hConsoleHandle))
+			if (isOutput())
 			{
 				CEAnsi::StartXTermOutput(enableXterm);
+			}
+		}
+		const bool autoLfNl = (dwMode & DISABLE_NEWLINE_AUTO_RETURN) == 0;
+		if (CEAnsi::IsAutoLfNl() != autoLfNl)
+		{
+			if (isOutput())
+			{
+				CEAnsi::SetAutoLfNl(autoLfNl);
 			}
 		}
 	}

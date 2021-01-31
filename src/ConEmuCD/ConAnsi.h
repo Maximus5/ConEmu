@@ -152,11 +152,11 @@ protected:
 	struct DisplayCursorPos
 	{
 		// Internal
-		bool bCursorPosStored;
-		condata::Coord StoredCursorPos;
+		bool bCursorPosStored{ false };
+		condata::Coord StoredCursorPos{};
 		// ESC[?1h 	Set cursor key to application 	DECCKM
 		// ESC[?1l 	Set cursor key to cursor 	DECCKM
-		bool CursorKeysApp; // "?1h"
+		bool CursorKeysApp{ false }; // "?1h"
 	}; // gDisplayCursor = {};
 
 	DisplayCursorPos gDisplayCursor = {};
@@ -166,8 +166,8 @@ protected:
 	{
 		BOOL  WrapWasSet = FALSE;
 		SHORT WrapAt = 0; // Rightmost X coord (1-based)
-		//
-		BOOL  AutoLfNl = TRUE; // LF/NL (default on): Automatically follow echo of LF, VT or FF with CR.
+		// #condata implement set (automatically on startup?)
+		BOOL  AutoLfNl = FALSE; // LF/NL (default on): Automatically follow echo of LF, VT or FF with CR.
 		//
 		BOOL  ShowRawAnsi = FALSE; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
 	}; // gDisplayOpt;

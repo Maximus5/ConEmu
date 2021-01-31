@@ -1185,7 +1185,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				ForceDumpX = x2-1;
 			if (bAutoLfNl)
 				x2 = 0;
-			else if (x2)
+			if (x2 > 0 || bAutoLfNl)
 				bIntCursorOp = true;
 			y2++;
 			if (y2 >= scrollBottom)
@@ -1328,7 +1328,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		// '\b': move cursor backward by one cell, don't erase cell, don't move cursor upward
 		if (bIntCursorOp)
 		{
-			_ASSERTE(x2 > 0 || (static_cast<int>(controlChars) & static_cast<int>(ControlChars::Backspace)));
+			_ASSERTE(x2 > 0 || (static_cast<int>(controlChars) & (static_cast<int>(ControlChars::Backspace) | static_cast<int>(ControlChars::NewLine))));
 			_ASSERTE(pCur < pEnd && (*pCur == L'\n' || *pCur == L'\t' || *pCur == L'\b') && (pFrom == pCur || pFrom == pCur+1));
 			bIntCursorOp = false;
 			crScrollCursor.X = x2;
