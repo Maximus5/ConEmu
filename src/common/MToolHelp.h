@@ -162,10 +162,30 @@ public:
 	{
 		Close();
 
-		mh_Snapshot = CreateToolhelp32Snapshot(m_Flags, m_ByProcessId);
-		mb_Opened = true;
-		mb_Valid = (mh_Snapshot && (mh_Snapshot != INVALID_HANDLE_VALUE));
-		_ASSERTE(!mb_EndOfList && !mb_Started && (mn_Position == 0));
+		const DWORD startTick = GetTickCount();
+		bool doOpen = true;
+		DWORD errCode = -1, wait = 0;
+		const DWORD maxWait = 5000;
+		while (doOpen)
+		{
+			doOpen = false;
+			mh_Snapshot = CreateToolhelp32Snapshot(m_Flags, m_ByProcessId);
+			mb_Opened = true;
+			mb_Valid = (mh_Snapshot && (mh_Snapshot != INVALID_HANDLE_VALUE));
+			if (mb_Valid)
+				break; // OK
+			_ASSERTE(!mb_EndOfList && !mb_Started && (mn_Position == 0));
+			// If the function fails with ERROR_BAD_LENGTH, retry the function until it succeeds.
+			if (m_Flags & (TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32))
+			{
+				errCode = GetLastError();
+				if (errCode == ERROR_BAD_LENGTH)
+				{
+					wait = GetTickCount() - startTick;
+					doOpen = (wait <= maxWait);
+				}
+			}
+		}
 
 		return mb_Valid;
 	}
