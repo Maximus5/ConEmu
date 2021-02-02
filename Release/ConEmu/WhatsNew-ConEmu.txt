@@ -20,6 +20,17 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.2.2
+* gh-2212: Fix executer in Far 3.0.
+* gh-2220: Fix default task generation for VsDevCmd.bat.
+* gh-2256: Fix run `cmd /k ...` with `-new_console` switch.
+* gh-2257: Fix exception 0xC0000005 on fresh run.
+* gh-2249: Fix newline mode change using connector.
+* Hyperlinks: Allow use tasks in ‘goto editor’ command. E.g. `{Far} /e%1:%2 %3`.
+* DefTerm: Fix injects error -113:0x00000018 which could occurs during infiltrating program initialization.
+* l10n: translations were updated
+
+
 2021.1.28
 * gh-2212: Far 1.75 executor - fix run cmd scripts with space in the path, redirections
   or asFile specified in CreateProcess.
