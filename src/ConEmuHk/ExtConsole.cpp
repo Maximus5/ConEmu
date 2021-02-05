@@ -1329,7 +1329,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		if (bIntCursorOp)
 		{
 			_ASSERTE(x2 > 0 || (static_cast<int>(controlChars) & (static_cast<int>(ControlChars::Backspace) | static_cast<int>(ControlChars::NewLine))));
-			_ASSERTE(pCur < pEnd && (*pCur == L'\n' || *pCur == L'\t' || *pCur == L'\b') && (pFrom == pCur || pFrom == pCur+1));
+			_ASSERTE(pCur < pEnd && (*pCur == L'\n' || *pCur == L'\t' || *pCur == L'\b') && ((pFrom == pCur) || (pFrom == pCur+1) || (*pFrom == L'\r' && (pFrom+1 == pCur))));
 			bIntCursorOp = false;
 			crScrollCursor.X = x2;
 			crScrollCursor.Y = y2;
