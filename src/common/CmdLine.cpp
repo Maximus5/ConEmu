@@ -821,10 +821,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			_ASSERTE(lstrcmpiW(szExe, L"start") != 0);
 
 			// Expand environment variables and search in the %PATH%
-			if (FileExistsSearch(szExe.c_str(), szExe, true))
-			{
-				argumentsPtr = SkipNonPrintable(pwszCopy);
-			}
+			FileExistsSearch(szExe.c_str(), szExe, true);
+
+			argumentsPtr = SkipNonPrintable(pwszCopy);
 		}
 	}
 
@@ -990,9 +989,16 @@ wrap:
 		if (isNeedCmd && !szExe.IsEmpty())
 		{
 			if (leadingQuotes == 1)
-				startEndQuot = IsQuotationNeeded(szExe) ? StartEndQuot::NeedAdd : StartEndQuot::DontChange;
+			{
+				if (IsQuotationNeeded(szExe) || (argumentsPtr && wcschr(argumentsPtr, L'"') != nullptr))
+					startEndQuot = StartEndQuot::NeedAdd;
+				else
+					startEndQuot = StartEndQuot::DontChange;
+			}
 			else if (leadingQuotes >= 2)
+			{
 				startEndQuot = StartEndQuot::DontChange;
+			}
 		}
 		// result
 		options->isNeedCmd = isNeedCmd;
