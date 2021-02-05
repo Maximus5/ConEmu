@@ -475,7 +475,8 @@ FARPROC WINAPI GetLoadLibraryW()
 	}
 	else
 	{
-		_ASSERTEX(fnLoadLibraryW && "Failed to find function address in Kernel32");
+		// fnLoadLibraryW could be nullptr if we don't have to hook LoadLibraryW at all
+		_ASSERTEX(gnLdrDllNotificationUsed == ldr_FullSupport && "Failed to find function address in Kernel32");
 	}
 	return static_cast<FARPROC>(fnLoadLibraryW);
 }
