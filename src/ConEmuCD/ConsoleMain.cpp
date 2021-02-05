@@ -147,10 +147,10 @@ WARNING("В некоторых случаях не срабатывает ни E
 CEStartupEnv* gpStartEnv = nullptr;
 HMODULE ghOurModule = nullptr; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
-wchar_t gsModuleName[32] = L"";
+wchar_t gsModuleName[32] = L""; // ConEmuC, ConEmuCD, ConEmuC64, ConEmuCD64 (precompiled)
 wchar_t gsVersion[20] = L"";
-wchar_t gsSelfExe[MAX_PATH] = L"";  // Full path+exe to our executable
-wchar_t gsSelfPath[MAX_PATH] = L""; // Directory of our executable
+wchar_t gsExePathName[MAX_PATH] = L"";  // Full path+exe to executable we were loaded in.
+wchar_t gsSelfPath[MAX_PATH] = L""; // Dir of our dll. Expanded %ConEmuBaseDir%, no trailing slash.
 DWORD   gnMainServerPID = 0;
 DWORD   gnAltServerPID = 0;
 BOOL    gbLogProcess = FALSE;
@@ -613,20 +613,25 @@ void ShowStartedAssert()
 void LoadExePath()
 {
 	// Already loaded?
-	if (gsSelfExe[0] && gsSelfPath[0])
+	if (gsExePathName[0] && gsSelfPath[0])
 		return;
 
 	_ASSERTE(ghOurModule != nullptr);
 
-	const DWORD nSelfLen = GetModuleFileNameW(ghOurModule, gsSelfExe, countof(gsSelfExe));
-	if (!nSelfLen || (nSelfLen >= countof(gsSelfExe)))
+	const DWORD exeLen = GetModuleFileNameW(nullptr, gsExePathName, countof(gsExePathName));
+	if (!exeLen || (exeLen >= countof(gsExePathName)))
 	{
 		_ASSERTE(FALSE && "GetModuleFileNameW(nullptr) failed");
-		gsSelfExe[0] = 0;
+		gsExePathName[0] = 0;
 	}
-	else
+
+	const DWORD selfPathLen = GetModuleFileNameW(ghOurModule, gsSelfPath, countof(gsSelfPath));
+	if (!selfPathLen || (selfPathLen >= countof(gsSelfPath)))
 	{
-		lstrcpyn(gsSelfPath, gsSelfExe, countof(gsSelfPath));
+		_ASSERTE(FALSE && "GetModuleFileNameW(ghOurModule) failed");
+		gsSelfPath[0] = 0;
+	}
+	{
 		wchar_t* pszSlash = const_cast<wchar_t*>(PointToName(gsSelfPath));
 		if (pszSlash && (pszSlash > gsSelfPath))
 			*pszSlash = 0;
@@ -1250,9 +1255,9 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		if (!lbRc && (gState.runMode_ == RunMode::Server) && dwErr == ERROR_FILE_NOT_FOUND)
 		{
 			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
-			if (gsSelfExe[0] != 0)
+			if (gsExePathName[0] != 0)
 			{
-				wcscpy_c(szSelf, gsSelfExe);
+				wcscpy_c(szSelf, gsExePathName);
 
 				wchar_t* pszSlash = wcsrchr(szSelf, L'\\');
 
@@ -2733,7 +2738,13 @@ void SendStarted()
 
 	if (bSent)
 	{
-		_ASSERTE(FALSE && "SendStarted repetition");
+		#ifdef _DEBUG
+		LPCWSTR ourTestExeNames[] = {L"Tests_Debug_Win32.exe", L"Tests_Debug_x64.exe",
+			L"Tests_Release_Win32.exe", L"Tests_Release_x64.exe", nullptr};
+		const auto* exeName = PointToName(gsExePathName);
+		// Multiple init/deinit are possible during tests
+		_ASSERTE(CheckProcessName(exeName, ourTestExeNames) && "SendStarted repetition");
+		#endif
 		return; // отсылать только один раз
 	}
 

@@ -84,7 +84,7 @@ bool isConEmuTerminated();
 extern DWORD   gnSelfPID;
 extern wchar_t gsModuleName[32];
 extern wchar_t gsVersion[20];
-extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
+extern wchar_t gsExePathName[MAX_PATH];  // Full path+exe to our executable
 extern wchar_t gsSelfPath[MAX_PATH]; // Directory of our executable
 //HANDLE  ghConIn = nullptr, ghConOut = nullptr;
 extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
