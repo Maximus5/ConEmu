@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // show a MsgBox when we are loaded into known exe-process (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"|xxx.exe|yyy.exe|" // !!! lower-case-names !!!
+	#define SHOW_EXE_MSGBOX_NAME L"|xxx.exe|yyy.exe|"
 //	#define SLEEP_EXE_UNTIL_DEBUGGER
 //	#define SHOW_EXE_TIMINGS
 //	#define PRINT_EXE_TIMINGS
@@ -1082,9 +1082,11 @@ void InitExeName()
 	}
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg[0]);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		const auto* nameFound = wcsstr(SHOW_EXE_MSGBOX_NAME, gsExeName);
+		const CEStr lowerList(SHOW_EXE_MSGBOX_NAME);
+		if (lowerList)
+			CharLowerBuffW(lowerList.data(), static_cast<DWORD>(lowerList.GetLen()));
+		const auto* nameFound = wcsstr(lowerList ? lowerList.c_str() : SHOW_EXE_MSGBOX_NAME, gsExeName);
 		if (nameFound && *(nameFound - 1) == L'|' && nameFound[lstrlen(gsExeName)] == L'|')
 		{
 			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
