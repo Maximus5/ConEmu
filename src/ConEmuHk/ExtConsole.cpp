@@ -1153,7 +1153,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		};
 
 		SHORT ForceDumpX = 0;
-		bool bForceDumpScroll = false;
+		bool dumpBuffer = false;
 		bool bSkipBELL = false;
 		bool bAdvanceCur = false;
 
@@ -1163,33 +1163,52 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		switch (*pCur)
 		{
 		case L'\t':
-			if (x2>x)
-				ForceDumpX = x2;
+			if (x2 > x)
+			{
+				if ((ForceDumpX = x2) > 0)
+					dumpBuffer = true;
+			}
 			x2 = static_cast<SHORT>(((x2 + 8) >> 3) << 3);
 			setCtrlChar(ControlChars::Tab);
 			bIntCursorOp = true;
 			break;
 		case L'\r':
 			if (x2 > 0)
-				ForceDumpX = x2-1;
+			{
+				ForceDumpX = x2 - 1;
+				dumpBuffer = true;
+			}
 			x2 = 0;
 			bIntCursorOp = false;
 			setCtrlChar(ControlChars::Return);
 			// "\r\n"? Do not break in two physical writes
-			if (((pCur+1) < pEnd) && (*(pCur+1) == L'\n'))
-				pCur++; // continue to L'\n' section
+			if (((pCur + 1) < pEnd) && (*(pCur + 1) == L'\n'))
+			{
+				++pCur; // continue to L'\n' section
+			}
 			else
+			{
 				break;
+			}
 		case L'\n':
 			if (x2 > 0)
-				ForceDumpX = x2-1;
+			{
+				ForceDumpX = x2 - 1;
+				dumpBuffer = true;
+			}
 			if (bAutoLfNl)
+			{
 				x2 = 0;
+			}
 			if (x2 > 0 || bAutoLfNl)
+			{
 				bIntCursorOp = true;
-			y2++;
+			}
+			++y2;
 			if (y2 >= scrollBottom)
-				bForceDumpScroll = true;
+			{
+				dumpBuffer = true;
+			}
 			_ASSERTE(bWrap);
 			setCtrlChar(ControlChars::NewLine);
 			CEAnsi::StorePromptReset();
@@ -1199,8 +1218,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if ((Info->Flags & ewtf_NoBells))
 			{
 				LogBeepSkip(L"--- Skipped ExtWriteText(7)\n");
-				bForceDumpScroll = bSkipBELL = true;
-				bAdvanceCur = true; --pCur;
+				dumpBuffer = true;
+				bSkipBELL = true;
+				bAdvanceCur = true;
+				--pCur;
 			}
 			else
 			{
@@ -1209,10 +1230,15 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			break;
 		case 8: // L'\b'
 			//BS
-			if (x2>x)
-				ForceDumpX = x2;
-			if (x2>0)
-				x2--;
+			if (x2 > x)
+			{
+				if ((ForceDumpX = x2) > 0)
+					dumpBuffer = true;
+			}
+			if (x2 > 0)
+			{
+				--x2;
+			}
 			setCtrlChar(ControlChars::Backspace);
 			bIntCursorOp = true;
 			// Don't pass '\b' to WriteText (problem in Win10 build)
@@ -1226,13 +1252,15 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if ((x2 >= WrapAtCol)
 				&& (!bRevertMode || ((pCur+1) < pEnd)))
 			{
-				ForceDumpX = std::min(x2, WrapAtCol)-1;
-				x2 = 0; y2++;
+				if ((ForceDumpX = std::min(x2, WrapAtCol) - 1) > 0)
+					dumpBuffer = true;
+				x2 = 0;
+				++y2;
 			}
 		}
 
 
-		if (ForceDumpX || bForceDumpScroll)
+		if (dumpBuffer)
 		{
 			// Printing (including pCur) using extended attributes
 			if (pCur >= pFrom)
