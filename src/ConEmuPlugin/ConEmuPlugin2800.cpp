@@ -1384,13 +1384,14 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 			// That was GuiMacro call?
 			if (bGuiMacroCall)
 			{
-				static FarMacroCall rc = {sizeof(rc)};
-				static FarMacroValue val;
+				static FarMacroCall rc{};
+				static FarMacroValue val{};
+				rc.StructSize = sizeof(rc);
 				rc.Count = 1;
 				rc.Values = &val;
 				rc.Callback = FreeMacroResult;
 				val.Type = FMVT_STRING;
-				val.String = GetEnvVar(CEGUIMACRORETENVVAR);
+				val.String = GetEnvVar(CEGUIMACRORETENVVAR).Detach();
 				h = (HANDLE)&rc;
 			}
 			else
