@@ -314,7 +314,7 @@ TEST_F(ServerDllTest, RunGuiMacro_CMD_NoPrint)
 TEST_F(ServerDllTest, RunGuiMacro_CMD_Print)
 {
 	const ConsoleOutputCapture capture;
-	
+
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
 	if (!consoleMain3)
@@ -347,7 +347,7 @@ TEST_F(ServerDllTest, RunGuiMacro_API)
 		return; // nothing to check more, test failed
 	}
 
-	
+
 	wchar_t szInstance[128] = L"";
 
 	// Expected to be execute in CURRENT ConEmu instance
@@ -419,7 +419,7 @@ TEST_F(ServerDllTest, RunCmdExe)
 			break;
 	}
 	*/
-	
+
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
 	if (!consoleMain3)
@@ -461,37 +461,81 @@ TEST_F(ServerDllTest, RunCmdExe)
 				return (iCmp == 0);
 			}, pi))
 		{
-			const MHandle process(OpenProcess(MY_PROCESS_ALL_ACCESS|PROCESS_TERMINATE|SYNCHRONIZE, false, pi.th32ProcessID), CloseHandle);
+			const MHandle process(OpenProcess(MY_PROCESS_ALL_ACCESS | PROCESS_TERMINATE | SYNCHRONIZE, false, pi.th32ProcessID), CloseHandle);
 			cdbg() << "Terminating cmd.exe PID=" << pi.th32ProcessID << std::endl;
 			if (!TerminateProcess(process, 255))
 				cdbg() << "TerminateProcess PID=" << pi.th32ProcessID << " failed, code=" << GetLastError() << std::endl;
 		}
 	};
 
-	guardStop.store(false);
-	std::thread hangGuard1(hungGuardFn);
-	const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo echo from cmd.exe");
-	EXPECT_EQ(0, cmdRc1);
-	try
+	CEStr testExe;
+	GetModulePathName(nullptr, testExe);
+	auto* namePtr = const_cast<wchar_t*>(PointToName(testExe.c_str()));
+	if (namePtr && namePtr > testExe.c_str())
 	{
-		const auto prevString = ConsoleOutputCapture::GetPrevString();
-		EXPECT_EQ(std::wstring(L"echo from cmd.exe"), prevString);
+		*(namePtr - 1) = 0;
+		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, testExe);
+		const CEStr baseDir(testExe, L"\\ConEmu");
+		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, baseDir);
 	}
-	catch (const OutputWasRedirected& ex)
+	else
 	{
-		cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
+		cdbg() << "GetModulePathName failed, name is null" << std::endl;
 	}
-	catch (const std::exception& ex)
-	{
-		FAIL() << ex.what();
-	}
-	guardStop.store(true);
-	hangGuard1.join();
+	SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, L"0");
+	SetEnvironmentVariableW(ENV_CONEMUDRAW_VAR_W, L"0");
+	SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, L"0");
+	SetEnvironmentVariableW(ENV_CONEMUWORKDIR_VAR_W, L"C:\\");
 
-	guardStop.store(false);
-	std::thread hangGuard2(hungGuardFn);
-	const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");
-	EXPECT_EQ(3, cmdRc2);
-	guardStop.store(true);
-	hangGuard2.join();
+	auto executeRun = [&](const std::function<void()>& worker)
+	{
+		guardStop.store(false);
+		std::thread hangGuard2(hungGuardFn);
+
+		worker();
+
+		guardStop.store(true);
+		hangGuard2.join();
+	};
+
+	executeRun([&]() {
+		const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo echo from cmd.exe");
+		EXPECT_EQ(0, cmdRc1);
+		try
+		{
+			const auto prevString = ConsoleOutputCapture::GetPrevString();
+			EXPECT_EQ(std::wstring(L"echo from cmd.exe"), prevString);
+		}
+		catch (const OutputWasRedirected& ex)
+		{
+			cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
+		}
+		catch (const std::exception& ex)
+		{
+			FAIL() << ex.what();
+		}
+		});
+
+	executeRun([&]() {
+		const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c \"%ConEmuBaseDir%\\cecho.cmd\" \"Hello\" \"World\"");
+		EXPECT_EQ(0, cmdRc1);
+		try
+		{
+			const auto prevString = ConsoleOutputCapture::GetPrevString();
+			EXPECT_EQ(std::wstring(L"Hello"), prevString);
+		}
+		catch (const OutputWasRedirected& ex)
+		{
+			cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
+		}
+		catch (const std::exception& ex)
+		{
+			FAIL() << ex.what();
+		}
+		});
+
+	executeRun([&]() {
+		const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");
+		EXPECT_EQ(3, cmdRc2);
+		});
 }
