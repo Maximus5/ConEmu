@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MStrSafe.h"
 #include <string>
+#include <limits>
 
 TEST(MStrSafe, CompareIgnoreCaseNullsA)
 {
@@ -98,4 +99,39 @@ TEST(MStrSafe, CompareIgnoreCaseW)
 	EXPECT_GT(lstrcmpni((upper64 + L"XYZ").c_str(), (lower64 + L"abc").c_str(), 80), 0);
 	EXPECT_LT(lstrcmpni((upper64 + L"ABC").c_str(), (lower64 + L"xyz").c_str(), 80), 0);
 	EXPECT_EQ(lstrcmpni(upper64.c_str(), lower64.c_str(), 80), 0);
+}
+
+TEST(MStrSafe, msprintf)
+{
+	char aBuf[100];
+	wchar_t wBuf[100];
+
+	msprintf(aBuf, countof(aBuf), "Simple %c %s %S %u %i %%tail", 'X', "ansi", L"WIDE", 102U, -102);
+	EXPECT_STREQ(aBuf, "Simple X ansi WIDE 102 -102 %tail");
+	msprintf(wBuf, countof(aBuf), L"Simple %c %s %S %u %i %%tail", L'X', L"wide", "ANSI", 102U, -102);
+	EXPECT_STREQ(wBuf, L"Simple X wide ANSI 102 -102 %tail");
+
+	msprintf(aBuf, countof(aBuf), "%u %u %i %i %i",
+		0U, (std::numeric_limits<uint32_t>::max)(),
+		0, (std::numeric_limits<int32_t>::min)(), (std::numeric_limits<int32_t>::max)());
+	EXPECT_STREQ(aBuf, "0 4294967295 0 -2147483648 2147483647");
+	msprintf(wBuf, countof(wBuf), L"%u %u %i %i %i",
+		0U, (std::numeric_limits<uint32_t>::max)(),
+		0, (std::numeric_limits<int32_t>::min)(), (std::numeric_limits<int32_t>::max)());
+	EXPECT_STREQ(wBuf, L"0 4294967295 0 -2147483648 2147483647");
+
+	msprintf(aBuf, countof(aBuf), "%x %X", 0xF1E2B3A1, 0xF1E2B3A1);
+	EXPECT_STREQ(aBuf, "f1e2b3a1 F1E2B3A1");
+	msprintf(wBuf, countof(wBuf), L"%x %X", 0xF1E2B3A1, 0xF1E2B3A1);
+	EXPECT_STREQ(wBuf, L"f1e2b3a1 F1E2B3A1");
+
+	msprintf(aBuf, countof(aBuf), "%02x %02X %04x %04X %08x %08X", 15, 15, 14, 14, 13, 13);
+	EXPECT_STREQ(aBuf, "0f 0F 000e 000E 0000000d 0000000D");
+	msprintf(wBuf, countof(wBuf), L"%02x %02X %04x %04X %08x %08X", 15, 15, 14, 14, 13, 13);
+	EXPECT_STREQ(wBuf, L"0f 0F 000e 000E 0000000d 0000000D");
+
+	msprintf(aBuf, countof(aBuf), "%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC);
+	EXPECT_STREQ(aBuf, "07 12 013 7654 FABC");
+	msprintf(wBuf, countof(wBuf), L"%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC);
+	EXPECT_STREQ(wBuf, L"07 12 013 7654 FABC");
 }

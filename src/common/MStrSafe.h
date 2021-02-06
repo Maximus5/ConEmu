@@ -377,8 +377,8 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 //	return StringCchCatW(Dst, size, Src);
 //}
 
-LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...);
-LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...);
+const wchar_t* msprintf(wchar_t* lpOut, size_t cchOutMax, const wchar_t* lpFmt, ...);
+const char* msprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, ...);
 
 int lstrcmpni(LPCSTR asStr1, LPCSTR asStr2, int cchMax);
 int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax);
