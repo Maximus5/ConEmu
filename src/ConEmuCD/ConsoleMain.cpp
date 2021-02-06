@@ -4064,18 +4064,27 @@ void _printf(LPCSTR asBuffer)
 	UNREFERENCED_PARAMETER(dwWritten);
 }
 
-void print_error(DWORD dwErr/*= 0*/, LPCSTR asFormat/*= nullptr*/)
+void print_error(const CEStr& message, DWORD dwErr)
 {
 	if (!dwErr)
 		dwErr = GetLastError();
 
 	wchar_t* lpMsgBuf = nullptr;
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, nullptr);
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr);
 
-	_printf(asFormat ? asFormat : "\nErrCode=0x%08X, Description:\n", dwErr);
-	_wprintf((!lpMsgBuf || !*lpMsgBuf) ? L"<Unknown error>" : lpMsgBuf);
+	wchar_t errorCode[32];
+	msprintf(errorCode, countof(errorCode), (dwErr <= 0xFFFF) ? L"%u" : L"0x%08X", dwErr);
+	const CEStr errorMsg(
+		message.c_str(),
+		L"\nConEmu: ErrCode=", errorCode, L", Description:\n",
+		(lpMsgBuf && *lpMsgBuf) ? lpMsgBuf : L"<Unknown error>",
+		L"\n");
 
-	if (lpMsgBuf) LocalFree(lpMsgBuf);
+	_wprintf(errorMsg.c_str());
+
+	if (lpMsgBuf)
+		LocalFree(lpMsgBuf);
 	SetLastError(dwErr);
 }
 

@@ -3826,10 +3826,9 @@ void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	{
 		if (!MyCreateDirectory(log_file.ms_Val))
 		{
-			DWORD dwErr = GetLastError();
-			_printf("Failed to create AnsiLog-files directory:\n");
-			_wprintf(log_file);
-			print_error(dwErr);
+			const DWORD dwErr = GetLastError();
+			const CEStr message(L"ConEmu: Failed to create AnsiLog-files directory:\n", log_file);
+			print_error(message, dwErr);
 			return;
 		}
 	}
@@ -3838,10 +3837,9 @@ void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	HANDLE hLog = CreateFile(log_file, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (!hLog || hLog == INVALID_HANDLE_VALUE)
 	{
-		DWORD dwErr = GetLastError();
-		_printf("Failed to create new AnsiLog-file:\n");
-		_wprintf(log_file);
-		print_error(dwErr);
+		const DWORD dwErr = GetLastError();
+		const CEStr message(L"ConEmu: Failed to create new AnsiLog-file:\n", log_file);
+		print_error(message, dwErr);
 		return;
 	}
 	CloseHandle(hLog);

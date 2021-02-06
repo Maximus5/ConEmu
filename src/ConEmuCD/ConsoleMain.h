@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CSECTION_NON_RAISE
 
+struct CEStr;
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
 enum SetTerminateEventPlace
@@ -188,7 +189,7 @@ void _printf(LPCSTR asBuffer);
 void _printf(LPCSTR asFormat, DWORD dwErr);
 void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine = nullptr);
-void print_error(DWORD dwErr = 0, LPCSTR asFormat = nullptr);
+void print_error(const CEStr& message, DWORD dwErr);
 
 int ParseCommandLine(LPCWSTR asCmdLine);
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
