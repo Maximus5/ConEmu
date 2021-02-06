@@ -48,6 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "Downloader.h"
+#include "../common/MHandle.h"
+
+#ifdef _DEBUG
+#include <tuple>
+#endif
 
 PHANDLER_ROUTINE gfHandlerRoutine = nullptr;
 
@@ -72,26 +77,31 @@ void UnitTests()
 	} UNICODE_STRING;
 	UNICODE_STRING str = {};
 	WCHAR buf[MAX_PATH];
-	str.Buffer = (PWSTR)(((((DWORD_PTR)buf)+7)>>3)<<3);
+	str.Buffer = reinterpret_cast<PWSTR>(((reinterpret_cast<DWORD_PTR>(buf) + 7) >> 3) << 3);
 	lstrcpy(str.Buffer, L"kernel32.dll");
-	str.Length = lstrlen(str.Buffer)*2;
-	str.MaximumLength = str.Length+2;
+	str.Length = static_cast<USHORT>(wcslen(str.Buffer) * 2U);
+	str.MaximumLength = str.Length + 2;
 
 	typedef LONG (__stdcall* LdrGetDllHandleByName_t)(UNICODE_STRING* BaseDllName, UNICODE_STRING* FullDllName, PVOID *DllHandle);
-	HMODULE hNtDll = LoadLibrary(L"ntdll.dll");
-	HMODULE hKernel = GetModuleHandle(str.Buffer);
-	LdrGetDllHandleByName_t LdrGetDllHandleByName_f = (LdrGetDllHandleByName_t)GetProcAddress(hNtDll, "LdrGetDllHandleByName");
-	LONG ntStatus = -1; LPBYTE ptrProc = NULL;
-	if (LdrGetDllHandleByName_f)
+	const MModule hNtDll(L"ntdll.dll");
+	const MModule hKernel(GetModuleHandle(str.Buffer));
+	LdrGetDllHandleByName_t fnLdrGetDllHandleByName = nullptr;
+	hNtDll.GetProcAddress("LdrGetDllHandleByName", fnLdrGetDllHandleByName);
+	LONG ntStatus = -1; LPBYTE ptrProc = nullptr; LONG_PTR nShift = -1;
+	if (fnLdrGetDllHandleByName)
 	{
-		DWORD_PTR nShift = ((LPBYTE)GetProcAddress(hKernel,"LoadLibraryW")) - (LPBYTE)hKernel;
-		if (!LdrGetDllHandleByName_f(&str, NULL, (PVOID*)&ptrProc))
+		FARPROC fnLoadLibraryW = nullptr;
+		if (!hKernel.GetProcAddress("LoadLibraryW", fnLoadLibraryW))
 			goto err;
-		ntStatus = LdrGetDllHandleByName_f(&str, NULL, (PVOID*)&ptrProc);
-		ptrProc += 0x12345;
+		nShift = reinterpret_cast<LPBYTE>(fnLoadLibraryW) - reinterpret_cast<LPBYTE>(static_cast<HMODULE>(hKernel));
+		if (!fnLdrGetDllHandleByName(&str, nullptr, reinterpret_cast<PVOID*>(&ptrProc)))
+			goto err;
+		ntStatus = fnLdrGetDllHandleByName(&str, nullptr, reinterpret_cast<PVOID*>(&ptrProc));
 	}
 err:
-	return;
+	std::ignore = ntStatus;
+	std::ignore = ptrProc;
+	std::ignore = nShift;
 }
 #endif
 
@@ -134,11 +144,11 @@ void _wprintf(LPCWSTR asBuffer)
 	else
 	{
 		UINT  cp = GetConsoleOutputCP();
-		int cchMax = WideCharToMultiByte(cp, 0, asBuffer, -1, NULL, 0, NULL, NULL) + 1;
-		char* pszOem = (cchMax > 1) ? (char*)malloc(cchMax) : NULL;
+		int cchMax = WideCharToMultiByte(cp, 0, asBuffer, -1, nullptr, 0, nullptr, nullptr) + 1;
+		char* pszOem = (cchMax > 1) ? (char*)malloc(cchMax) : nullptr;
 		if (pszOem)
 		{
-			int nWrite = WideCharToMultiByte(cp, 0, asBuffer, -1, pszOem, cchMax, NULL, NULL);
+			int nWrite = WideCharToMultiByte(cp, 0, asBuffer, -1, pszOem, cchMax, nullptr, nullptr);
 			if (nWrite > 1)
 			{
 				// Don't write terminating '\0' to redirected output
@@ -187,7 +197,7 @@ void Help()
 }
 
 static int gn_argc = 0;
-static char** gp_argv = NULL;
+static char** gp_argv = nullptr;
 
 // The function exists in both "ConEmuC/ConEmuC.cpp" and "ConEmuCD/Actions.cpp"
 // Version in "ConEmuC/ConEmuC.cpp" shows arguments from main(int argc, char** argv)
@@ -208,11 +218,11 @@ int DoParseArgs(LPCWSTR asCmdLine)
 			: hOut(ahOut), defAttr(adefAttr)
 		{
 			SetConsoleTextAttribute(hOut, fore|(defAttr & 0xF0));
-		};
+		}
 		~Highlighter()
 		{
 			SetConsoleTextAttribute(hOut, defAttr);
-		};
+		}
 	};
 	#undef HL
 	#define HL(fore) Highlighter hl(hOut, csbi.wAttributes, fore)
@@ -411,7 +421,7 @@ int main(int argc, char** argv)
 	ConsoleMain2_t lfConsoleMain2 = nullptr;
 
 	#ifdef _DEBUG
-	MModule hConEmuHk{ GetModuleHandle(ConEmuHk_DLL_3264) };
+	const MModule hConEmuHk{ GetModuleHandle(ConEmuHk_DLL_3264) };
 	_ASSERTE(!hConEmuHk.IsValid() && "Hooks must not be loaded into ConEmuC[64].exe!");
 	#endif
 
@@ -420,7 +430,7 @@ int main(int argc, char** argv)
 	{
 		wchar_t szTitle[100]; swprintf_c(szTitle, WIN3264TEST(L"ConEmuC",L"ConEmuC64") L" Loaded (PID=%i)", GetCurrentProcessId());
 		const wchar_t* pszCmdLine = GetCommandLineW();
-		MessageBox(NULL,pszCmdLine,szTitle,0);
+		MessageBox(nullptr,pszCmdLine,szTitle,0);
 	}
 	#endif
 
