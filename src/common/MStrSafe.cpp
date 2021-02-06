@@ -49,16 +49,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ReSharper disable once CppInconsistentNaming
 const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* lpFmt, ...)
 {
+	if (!lpOut || !cchOutMax)
+		return nullptr;
 	va_list argptr;
 	va_start(argptr, lpFmt);
 	
 	const wchar_t* pszSrc = lpFmt;
 	wchar_t* pszDst = lpOut;
+	const wchar_t* endPtr = lpOut + (cchOutMax - 1); // maximum available write position ('\0')
+	bool overflow = false;
 	wchar_t  szValue[16];
 	wchar_t* pszValue;
 
 	while (*pszSrc)
 	{
+		if (pszDst >= endPtr)
+		{
+			_ASSERTE(FALSE && "output buffer overflow");
+			overflow = true;
+			break;
+		}
+		
 		if (*pszSrc == L'%')
 		{
 			pszSrc++;
@@ -85,6 +96,12 @@ const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* l
 					{
 						while (*pszValue)
 						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = *(pszValue++);
 						}
 					}
@@ -96,10 +113,15 @@ const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* l
 					char* pszValueA = va_arg( argptr, char* );
 					if (pszValueA)
 					{
-						// по хорошему, тут бы MultiByteToWideChar звать, но
-						// эта ветка должна по идее только для отладки использоваться
 						while (*pszValueA)
 						{
+							_ASSERTE(*pszValueA <= 0x7F); // Should be used only for debugging purposes
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = static_cast<wchar_t>(*(pszValueA++));
 						}
 					}
@@ -137,9 +159,15 @@ const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* l
 					}
 					if (pszValue == szValue)
 						*(pszValue++) = L'0';
-					// Теперь перекинуть в szGuiPipeName
+					// Move data to output buffer
 					while (pszValue > szValue)
 					{
+						if (pszDst >= endPtr)
+						{
+							_ASSERTE(FALSE && "output buffer overflow");
+							overflow = true;
+							break;
+						}
 						*(pszDst++) = *(--pszValue);
 					}
 					continue;
@@ -228,6 +256,12 @@ const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* l
 						// move result to Dest
 						while (pszValue > szValue)
 						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = *(--pszValue);
 						}
 					}
@@ -243,9 +277,25 @@ const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* l
 							nGetLen++;
 						}
 						while ((nGetLen++) < nLen)
+						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = L'0';
+						}
 						while ((--pszValue) >= szValue)
+						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = *pszValue;
+						}
 					}
 					continue;
 				}
@@ -259,24 +309,36 @@ const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* l
 		}
 	}
 wrap:
+	_ASSERTE(pszDst <= endPtr);
 	*pszDst = 0;
 	_ASSERTE(lstrlen(lpOut) < static_cast<int>(cchOutMax));
 	va_end(argptr);
-	return lpOut;
+	return overflow ? nullptr : lpOut;
 }
 
 const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...)
 {
+	if (!lpOut || !cchOutMax)
+		return nullptr;
 	va_list argptr;
 	va_start(argptr, lpFmt);
 	
 	const char* pszSrc = lpFmt;
 	char* pszDst = lpOut;
+	const char* endPtr = lpOut + (cchOutMax - 1); // maximum available write position ('\0')
+	bool overflow = false;
 	char  szValue[16];
 	char* pszValue;
 
 	while (*pszSrc)
 	{
+		if (pszDst >= endPtr)
+		{
+			_ASSERTE(FALSE && "output buffer overflow");
+			overflow = true;
+			break;
+		}
+		
 		if (*pszSrc == '%')
 		{
 			pszSrc++;
@@ -303,6 +365,12 @@ const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...
 					{
 						while (*pszValue)
 						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = *(pszValue++);
 						}
 					}
@@ -314,10 +382,15 @@ const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...
 					wchar_t* pszValueW = va_arg( argptr, wchar_t* );
 					if (pszValueW)
 					{
-						// по хорошему, тут бы MultiByteToWideChar звать, но
-						// эта ветка должна по идее только для отладки использоваться
 						while (*pszValueW)
 						{
+							_ASSERTE(*pszValueW <= 0x7F); // Should be used only for debugging purposes
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = static_cast<char>(*(pszValueW++));
 						}
 					}
@@ -355,9 +428,15 @@ const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...
 					}
 					if (pszValue == szValue)
 						*(pszValue++) = '0';
-					// Теперь перекинуть в szGuiPipeName
+					// Move data to result buffer
 					while (pszValue > szValue)
 					{
+						if (pszDst >= endPtr)
+						{
+							_ASSERTE(FALSE && "output buffer overflow");
+							overflow = true;
+							break;
+						}
 						*(pszDst++) = *(--pszValue);
 					}
 					continue;
@@ -446,6 +525,12 @@ const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...
 						// move result to Dest
 						while (pszValue > szValue)
 						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = *(--pszValue);
 						}
 					}
@@ -461,9 +546,25 @@ const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...
 							nGetLen++;
 						}
 						while ((nGetLen++) < nLen)
+						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = '0';
+						}
 						while ((--pszValue) >= szValue)
+						{
+							if (pszDst >= endPtr)
+							{
+								_ASSERTE(FALSE && "output buffer overflow");
+								overflow = true;
+								break;
+							}
 							*(pszDst++) = *pszValue;
+						}
 					}
 					continue;
 				}
@@ -477,10 +578,11 @@ const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...
 		}
 	}
 wrap:
+	_ASSERTE(pszDst <= endPtr);
 	*pszDst = 0;
 	_ASSERTE(lstrlenA(lpOut) < static_cast<int>(cchOutMax));
 	va_end(argptr);
-	return lpOut;
+	return overflow ? nullptr : lpOut;
 }
 
 static int CompareStringPointers(const void* asStr1, const void* asStr2)

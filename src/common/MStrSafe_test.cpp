@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <limits>
 
+extern bool gbVerifyIgnoreAsserts;
+
 TEST(MStrSafe, CompareIgnoreCaseNullsA)
 {
 	EXPECT_EQ(-1, lstrcmpni("", "test", 1));
@@ -106,32 +108,79 @@ TEST(MStrSafe, msprintf)
 	char aBuf[100];
 	wchar_t wBuf[100];
 
-	msprintf(aBuf, countof(aBuf), "Simple %c %s %S %u %i %%tail", 'X', "ansi", L"WIDE", 102U, -102);
+	gbVerifyIgnoreAsserts = true;
+
+	EXPECT_EQ(nullptr, msprintf(aBuf, 0, "Simple %s", "ansi"));
+	EXPECT_EQ(nullptr, msprintf(nullptr, countof(aBuf), "Simple %s", "ansi"));
+	EXPECT_EQ(nullptr, msprintf(wBuf, 0, L"Simple %s", L"wide"));
+	EXPECT_EQ(nullptr, msprintf(nullptr, countof(wBuf), L"Simple %s", L"wide"));
+
+	EXPECT_NE(nullptr, msprintf(aBuf, countof(aBuf), "Simple %c %s %S %u %i %%tail", 'X', "ansi", L"WIDE", 102U, -102));
 	EXPECT_STREQ(aBuf, "Simple X ansi WIDE 102 -102 %tail");
-	msprintf(wBuf, countof(aBuf), L"Simple %c %s %S %u %i %%tail", L'X', L"wide", "ANSI", 102U, -102);
+	EXPECT_NE(nullptr, msprintf(wBuf, countof(aBuf), L"Simple %c %s %S %u %i %%tail", L'X', L"wide", "ANSI", 102U, -102));
 	EXPECT_STREQ(wBuf, L"Simple X wide ANSI 102 -102 %tail");
 
-	msprintf(aBuf, countof(aBuf), "%u %u %i %i %i",
+	EXPECT_NE(nullptr, msprintf(aBuf, countof(aBuf), "%u %u %i %i %i",
 		0U, (std::numeric_limits<uint32_t>::max)(),
-		0, (std::numeric_limits<int32_t>::min)(), (std::numeric_limits<int32_t>::max)());
+		0, (std::numeric_limits<int32_t>::min)(), (std::numeric_limits<int32_t>::max)()));
 	EXPECT_STREQ(aBuf, "0 4294967295 0 -2147483648 2147483647");
-	msprintf(wBuf, countof(wBuf), L"%u %u %i %i %i",
+	EXPECT_NE(nullptr, msprintf(wBuf, countof(wBuf), L"%u %u %i %i %i",
 		0U, (std::numeric_limits<uint32_t>::max)(),
-		0, (std::numeric_limits<int32_t>::min)(), (std::numeric_limits<int32_t>::max)());
+		0, (std::numeric_limits<int32_t>::min)(), (std::numeric_limits<int32_t>::max)()));
 	EXPECT_STREQ(wBuf, L"0 4294967295 0 -2147483648 2147483647");
 
-	msprintf(aBuf, countof(aBuf), "%x %X", 0xF1E2B3A1, 0xF1E2B3A1);
+	EXPECT_NE(nullptr, msprintf(aBuf, countof(aBuf), "%x %X", 0xF1E2B3A1, 0xF1E2B3A1));
 	EXPECT_STREQ(aBuf, "f1e2b3a1 F1E2B3A1");
-	msprintf(wBuf, countof(wBuf), L"%x %X", 0xF1E2B3A1, 0xF1E2B3A1);
+	EXPECT_NE(nullptr, msprintf(wBuf, countof(wBuf), L"%x %X", 0xF1E2B3A1, 0xF1E2B3A1));
 	EXPECT_STREQ(wBuf, L"f1e2b3a1 F1E2B3A1");
 
-	msprintf(aBuf, countof(aBuf), "%02x %02X %04x %04X %08x %08X", 15, 15, 14, 14, 13, 13);
+	EXPECT_NE(nullptr, msprintf(aBuf, countof(aBuf), "%02x %02X %04x %04X %08x %08X", 15, 15, 14, 14, 13, 13));
 	EXPECT_STREQ(aBuf, "0f 0F 000e 000E 0000000d 0000000D");
-	msprintf(wBuf, countof(wBuf), L"%02x %02X %04x %04X %08x %08X", 15, 15, 14, 14, 13, 13);
+	EXPECT_NE(nullptr, msprintf(wBuf, countof(wBuf), L"%02x %02X %04x %04X %08x %08X", 15, 15, 14, 14, 13, 13));
 	EXPECT_STREQ(wBuf, L"0f 0F 000e 000E 0000000d 0000000D");
 
-	msprintf(aBuf, countof(aBuf), "%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC);
+	EXPECT_NE(nullptr, msprintf(aBuf, countof(aBuf), "%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC));
 	EXPECT_STREQ(aBuf, "07 12 013 7654 FABC");
-	msprintf(wBuf, countof(wBuf), L"%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC);
+	EXPECT_NE(nullptr, msprintf(wBuf, countof(wBuf), L"%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC));
 	EXPECT_STREQ(wBuf, L"07 12 013 7654 FABC");
+
+	EXPECT_NE(nullptr, msprintf(aBuf, countof(aBuf), "%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC));
+	EXPECT_STREQ(aBuf, "07 12 013 7654 FABC");
+	EXPECT_NE(nullptr, msprintf(wBuf, countof(wBuf), L"%02u %02u %03u %03u %02X", 7, 12, 13, 7654, 0xFABC));
+	EXPECT_STREQ(wBuf, L"07 12 013 7654 FABC");
+
+	// overflow check
+	EXPECT_NE(nullptr, msprintf(aBuf, 10, "%xz", 0xF1E2B3A1));
+	EXPECT_STREQ(aBuf, "f1e2b3a1z");
+	EXPECT_NE(nullptr, msprintf(wBuf, 10, L"%xz", 0xF1E2B3A1));
+	EXPECT_STREQ(wBuf, L"f1e2b3a1z");
+	EXPECT_EQ(nullptr, msprintf(aBuf, 7, "%x %X", 0xF1E2B3A1));
+	EXPECT_STREQ(aBuf, "f1e2b3");
+	EXPECT_EQ(nullptr, msprintf(wBuf, 7, L"%x %X", 0xF1E2B3A1));
+	EXPECT_STREQ(wBuf, L"f1e2b3");
+
+	EXPECT_EQ(nullptr, msprintf(aBuf, 5, "%i", -123456));
+	EXPECT_STREQ(aBuf, "-123");
+	EXPECT_EQ(nullptr, msprintf(wBuf, 5, L"%i", -123456));
+	EXPECT_STREQ(wBuf, L"-123");
+
+	EXPECT_EQ(nullptr, msprintf(aBuf, 3, "%03u", 51));
+	EXPECT_STREQ(aBuf, "05");
+	EXPECT_EQ(nullptr, msprintf(wBuf, 3, L"%03u", 51));
+	EXPECT_STREQ(wBuf, L"05");
+	
+	EXPECT_NE(nullptr, msprintf(aBuf, 9, "%s", "Abcdefgh"));
+	EXPECT_STREQ(aBuf, "Abcdefgh");
+	EXPECT_NE(nullptr, msprintf(wBuf, 9, L"%s", L"Abcdefgh"));
+	EXPECT_STREQ(wBuf, L"Abcdefgh");
+	EXPECT_EQ(nullptr, msprintf(aBuf, 4, "%s", "Abcdefgh"));
+	EXPECT_STREQ(aBuf, "Abc");
+	EXPECT_EQ(nullptr, msprintf(wBuf, 4, L"%s", L"Abcdefgh"));
+	EXPECT_STREQ(wBuf, L"Abc");
+	EXPECT_EQ(nullptr, msprintf(aBuf, 5, "%S", L"Abcdefgh"));
+	EXPECT_STREQ(aBuf, "Abcd");
+	EXPECT_EQ(nullptr, msprintf(wBuf, 5, L"%S", "Abcdefgh"));
+	EXPECT_STREQ(wBuf, L"Abcd");
+	
+	gbVerifyIgnoreAsserts = false;
 }
