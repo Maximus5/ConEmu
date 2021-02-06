@@ -102,6 +102,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tuple>
 #include <chrono>
 
+#include "../common/MHandle.h"
+
 
 #ifndef __GNUC__
 #pragma comment(lib, "shlwapi.lib")
@@ -4091,25 +4093,23 @@ void print_error(const CEStr& message, DWORD dwErr)
 bool IsOutputRedirected()
 {
 	static int isRedirected = 0;
-	if (isRedirected)
+	if (!isRedirected)
 	{
-		return (isRedirected == 2);
+		const MHandle hOut{ GetStdHandle(STD_OUTPUT_HANDLE) };
+
+		CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+		const BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
+		if (bIsConsole)
+		{
+			isRedirected = 1;
+		}
+		else
+		{
+			isRedirected = 2;
+		}
 	}
 
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
-	BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
-	if (bIsConsole)
-	{
-		isRedirected = 1;
-		return false;
-	}
-	else
-	{
-		isRedirected = 2;
-		return true;
-	}
+	return (isRedirected == 2);
 }
 
 void _wprintf(LPCWSTR asBuffer)
