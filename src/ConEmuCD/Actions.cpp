@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InjectRemote.h"
 #include "MapDump.h"
 #include "UnicodeTest.h"
+#include "../common/MWnd.h"
 
 
 // ConEmuC -OsVerInfo
@@ -134,31 +135,30 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 	LogFunction(L"DoStateCheck");
 
 	bool bOn = false;
+	const char* checkName;
 
 	switch (eStateCheck)
 	{
 	case ConEmuStateCheck::IsConEmu:
 	case ConEmuStateCheck::IsAnsi:
+		checkName = (eStateCheck == ConEmuStateCheck::IsConEmu) ? "IsConEmu" : "IsAnsi";
 		if (gState.realConWnd_)
 		{
-			CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
+			CESERVER_CONSOLE_MAPPING_HDR* pInfo = static_cast<CESERVER_CONSOLE_MAPPING_HDR*>(malloc(sizeof(*pInfo)));
 			if (pInfo && LoadSrvMapping(gState.realConWnd_, *pInfo))
 			{
 				_ASSERTE(pInfo->ComSpec.ConEmuExeDir[0] && pInfo->ComSpec.ConEmuBaseDir[0]);
 
-				HWND hWnd = pInfo->hConEmuWndDc;
+				const MWnd hWnd = static_cast<HWND>(pInfo->hConEmuWndDc);
 				if (hWnd && IsWindow(hWnd))
 				{
-					switch (eStateCheck)
+					if (eStateCheck == ConEmuStateCheck::IsConEmu)
 					{
-					case ConEmuStateCheck::IsConEmu:
 						bOn = true;
-						break;
-					case ConEmuStateCheck::IsAnsi:
+					}
+					else if (eStateCheck == ConEmuStateCheck::IsAnsi)
+					{
 						bOn = ((pInfo->Flags & ConEmu::ConsoleFlags::ProcessAnsi) != 0);
-						break;
-					default:
-						;
 					}
 				}
 			}
@@ -166,16 +166,21 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 		}
 		break;
 	case ConEmuStateCheck::IsAdmin:
+		checkName = "IsAdmin";
 		bOn = IsUserAdmin();
 		break;
 	case ConEmuStateCheck::IsRedirect:
+		checkName = "IsRedirect";
 		bOn = IsOutputRedirected();
 		break;
 	case ConEmuStateCheck::IsTerm:
+		checkName = "IsTerm";
 		bOn = isTerminalMode();
 		break;
+	case ConEmuStateCheck::None:
 	default:
 		_ASSERTE(FALSE && "Unsupported StateCheck code");
+		checkName = "UnknownCheck";
 	}
 
 	return bOn;

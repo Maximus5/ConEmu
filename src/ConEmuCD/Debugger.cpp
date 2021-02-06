@@ -48,11 +48,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WObjects.h"
 #include "../common/WThreads.h"
 #include "../ConEmu/version.h"
-#include "../ConEmuHk/hkWindow.h"
 
 #if !defined(__GNUC__) || defined(__MINGW32__)
 	#pragma warning(disable: 4091)
-	#include <dbghelp.h>
+	#include <DbgHelp.h>
 	#pragma warning(default: 4091)
 #else
 	#include "../common/DbgHlpGcc.h"

@@ -1231,7 +1231,7 @@ bool WorkerBase::IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*
 				{
 					char szInfo[128]; wchar_t szWide[128];
 					swprintf_c(szWide, L"ConsKeybLayout changed from '%s' to '%s'", this->szKeybLayout, szCurKeybLayout);
-					WideCharToMultiByte(CP_ACP,0,szWide,-1,szInfo,128,0,0);
+					WideCharToMultiByte(CP_ACP, 0, szWide, -1, szInfo, 128, nullptr, nullptr);
 					LogFunction(szInfo);
 				}
 
@@ -1679,7 +1679,7 @@ int WorkerBase::CheckAttachProcess()
 			gsVersion, WIN3264TEST(32,64), nSelfPID, liArgsFailed,
 			self.th32ParentProcessID, parent.szExeFile[0] ? parent.szExeFile : L"<terminated>");
 
-		CEStr lsMsg = lstrmerge(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
+		const CEStr lsMsg = lstrmerge(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
 
 		// Avoid automatic termination of ExitWaitForKey
 		gbInShutdown = FALSE;
