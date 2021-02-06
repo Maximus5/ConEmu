@@ -49,10 +49,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ReSharper disable once CppInconsistentNaming
 const wchar_t* msprintf(wchar_t* lpOut, const size_t cchOutMax, const wchar_t* lpFmt, ...)
 {
-	if (!lpOut || !cchOutMax)
-		return nullptr;
 	va_list argptr;
 	va_start(argptr, lpFmt);
+	const auto* result = mvsprintf(lpOut, cchOutMax, lpFmt, argptr);
+	va_end(argptr);
+	return result;
+}
+
+const wchar_t* mvsprintf(wchar_t* lpOut, size_t cchOutMax, const wchar_t* lpFmt, va_list argptr)
+{
+	if (!lpOut || !cchOutMax)
+		return nullptr;
 	
 	const wchar_t* pszSrc = lpFmt;
 	wchar_t* pszDst = lpOut;
@@ -312,16 +319,22 @@ wrap:
 	_ASSERTE(pszDst <= endPtr);
 	*pszDst = 0;
 	_ASSERTE(lstrlen(lpOut) < static_cast<int>(cchOutMax));
-	va_end(argptr);
 	return overflow ? nullptr : lpOut;
 }
 
 const char* msprintf(char* lpOut, const size_t cchOutMax, const char* lpFmt, ...)
 {
-	if (!lpOut || !cchOutMax)
-		return nullptr;
 	va_list argptr;
 	va_start(argptr, lpFmt);
+	const auto* result = mvsprintf(lpOut, cchOutMax, lpFmt, argptr);
+	va_end(argptr);
+	return result;
+}
+
+const char* mvsprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, va_list argptr)
+{
+	if (!lpOut || !cchOutMax)
+		return nullptr;
 	
 	const char* pszSrc = lpFmt;
 	char* pszDst = lpOut;
@@ -581,7 +594,6 @@ wrap:
 	_ASSERTE(pszDst <= endPtr);
 	*pszDst = 0;
 	_ASSERTE(lstrlenA(lpOut) < static_cast<int>(cchOutMax));
-	va_end(argptr);
 	return overflow ? nullptr : lpOut;
 }
 

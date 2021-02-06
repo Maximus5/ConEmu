@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// ReSharper disable once CppUnusedIncludeDirective
 #include "defines.h"
 #include "MAssert.h"
 
@@ -379,6 +380,8 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 
 const wchar_t* msprintf(wchar_t* lpOut, size_t cchOutMax, const wchar_t* lpFmt, ...);
 const char* msprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, ...);
+const wchar_t* mvsprintf(wchar_t* lpOut, size_t cchOutMax, const wchar_t* lpFmt, va_list argptr);
+const char* mvsprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, const va_list argptr);
 
 int lstrcmpni(LPCSTR asStr1, LPCSTR asStr2, int cchMax);
 int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax);
