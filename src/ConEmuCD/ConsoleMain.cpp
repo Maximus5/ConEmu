@@ -480,7 +480,7 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	if (gState.runMode_ == RunMode::Server)
 	{
 		_printf("Starting root: ");
-		_wprintf(lpCommandLine ? lpCommandLine : lpApplicationName ? lpApplicationName : L"<nullptr>");
+		PrintBuffer(lpCommandLine ? lpCommandLine : lpApplicationName ? lpApplicationName : L"<nullptr>");
 	}
 #endif
 
@@ -584,7 +584,7 @@ void ShowMainStartedMsgBox(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	wchar_t szPath[MAX_PATH]; GetModuleFileNameW(nullptr, szPath, countof(szPath));
 	wchar_t szDbgMsg[MAX_PATH*2];
 	swprintf_c(szDbgMsg, L"%s started, PID=%u\n", PointToName(szPath), GetCurrentProcessId());
-	_wprintf(szDbgMsg);
+	PrintBuffer(szDbgMsg);
 	gbDumpServerInitStatus = TRUE;
 #endif
 }
@@ -723,9 +723,9 @@ bool CheckAndWarnHookSetters()
 				L"         Please add ConEmuC.exe and ConEmuC64.exe\r\n"
 				L"         to the exclusion list to avoid crashes!\r\n"
 				L"         " CEMACTYPEWARN L"\r\n\r\n";
-			_wprintf(szMessage);
-			_wprintf(szPath);
-			_wprintf(pszTail);
+			PrintBuffer(szMessage);
+			PrintBuffer(szPath);
+			PrintBuffer(pszTail);
 
 			perf.Stop(c_write);
 		}
@@ -875,14 +875,14 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		return argsRc;
 	case CERR_CMDLINEEMPTY:
 		Help();
-		_printf("\n\nParsing command line failed (/C argument not found):\n");
-		_wprintf(GetCommandLineW());
-		_printf("\n");
+		PrintBuffer("\n\nParsing command line failed (/C argument not found):\n");
+		PrintBuffer(GetCommandLineW());
+		PrintBuffer("\n");
 		return argsRc;
 	default:
-		_printf("Parsing command line failed:\n");
-		_wprintf(asCmdLine);
-		_printf("\n");
+		PrintBuffer("Parsing command line failed:\n");
+		PrintBuffer(asCmdLine);
+		PrintBuffer("\n");
 		return argsRc;
 	}
 
@@ -1043,9 +1043,9 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 			wchar_t szMsg[128];
 			msprintf(szMsg, countof(szMsg), L"ConEmuC Started, Wine detected\r\nConHWND=x%08X(%u), PID=%u\r\nCmdLine: ",
 				LODWORD(gState.realConWnd_), LODWORD(gState.realConWnd_), gnSelfPID);
-			_wprintf(szMsg);
-			_wprintf(asCmdLine);
-			_wprintf(L"\r\n");
+			PrintBuffer(szMsg);
+			PrintBuffer(asCmdLine);
+			PrintBuffer(L"\r\n");
 		}
 		#endif
 
@@ -1538,9 +1538,9 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 					gbTerminateOnCtrlBreak = TRUE;
 					gbCtrlBreakStopWaitingShown = TRUE;
 					//_printf("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
-					//_wprintf(gpszRunCmd);
+					//PrintBuffer(gpszRunCmd);
 					PrintExecuteError(gpszRunCmd, 0, L"Process was not attached to console. Is it GUI?\n");
-					_printf("\n\nPress Ctrl+Break to stop waiting\n");
+					PrintBuffer("\n\nPress Ctrl+Break to stop waiting\n");
 
 					while (!gbInShutdown && (nWait != WAIT_OBJECT_0))
 					{
@@ -1747,7 +1747,7 @@ wrap:
 		if (gpConsoleArgs && gpConsoleArgs->printRetErrLevel_)
 		{
 			wcscat_c(szInfo, L"\n");
-			_wprintf(szInfo);
+			PrintBuffer(szInfo);
 		}
 
 		// Post information to GUI
@@ -2171,7 +2171,7 @@ void PrintVersion()
 	sprintf_c(szProgInfo,
 		"ConEmuC build %s %s. " CECOPYRIGHTSTRING_A "\n",
 		CONEMUVERS, WIN3264TEST("x86","x64"));
-	_printf(szProgInfo);
+	PrintBuffer(szProgInfo);
 }
 
 void Help()
@@ -2179,8 +2179,8 @@ void Help()
 	PrintVersion();
 
 	// See definition in "ConEmuCD/ConsoleHelp.h"
-	_wprintf(pConsoleHelp);
-	_wprintf(pNewConsoleHelp);
+	PrintBuffer(pConsoleHelp);
+	PrintBuffer(pNewConsoleHelp);
 
 	// Don't ask keypress before exit
 	gbInShutdown = TRUE;
@@ -2189,7 +2189,7 @@ void Help()
 void DosBoxHelp()
 {
 	// See definition in "ConEmuCD/ConsoleHelp.h"
-	_wprintf(pDosBoxHelp);
+	PrintBuffer(pDosBoxHelp);
 }
 
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=nullptr*/)
@@ -2197,7 +2197,7 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=nullp
 	if (asSpecialInfo)
 	{
 		if (*asSpecialInfo)
-			_wprintf(asSpecialInfo);
+			PrintBuffer(asSpecialInfo);
 	}
 	else
 	{
@@ -2219,7 +2219,7 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=nullp
 		}
 
 		_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
-		_wprintf((lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
+		PrintBuffer((lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
 		if (lpMsgBuf) LocalFree(lpMsgBuf);
 		UNREFERENCED_PARAMETER(nFmtErr);
 	}
@@ -2240,13 +2240,13 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=nullp
 			GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
 		}
 		_wcscat_c(lpInfo, nCchMax, L"\n");
-		_wprintf(lpInfo);
+		PrintBuffer(lpInfo);
 		free(lpInfo);
 	}
 
-	_printf("\nCommand to be executed:\n");
-	_wprintf(asCmd ? asCmd : L"<null>");
-	_printf("\n");
+	PrintBuffer("\nCommand to be executed:\n");
+	PrintBuffer(asCmd ? asCmd : L"<null>");
+	PrintBuffer("\n");
 }
 
 // 1. Substitute vars like: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
@@ -2490,7 +2490,7 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 	//
 	if (asConfirm && *asConfirm)
 	{
-		_wprintf(asConfirm);
+		PrintBuffer(asConfirm);
 	}
 
 	nStartTick = GetTickCount();
@@ -2579,7 +2579,7 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 	//MessageBox(0,L"Debug message...............1",L"ConEmuC",0);
 	//int nCh = _getch();
 	if (abNewLine)
-		_printf("\n");
+		PrintBuffer("\n");
 
 wrap:
 	#if defined(_DEBUG) && defined(SHOW_EXITWAITKEY_MSGBOX)
@@ -4025,12 +4025,12 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
 {
 	char szError[MAX_PATH];
 	sprintf_c(szError, asFormat, dw1, dw2);
-	_printf(szError);
+	PrintBuffer(szError);
 
 	if (asAddLine)
 	{
-		_wprintf(asAddLine);
-		_printf("\n");
+		PrintBuffer(asAddLine);
+		PrintBuffer("\n");
 	}
 }
 
@@ -4038,12 +4038,12 @@ void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine)
 {
 	char szError[MAX_PATH];
 	sprintf_c(szError, asFormat, dwErr);
-	_printf(szError);
+	PrintBuffer(szError);
 
 	if (asAddLine)
 	{
-		_wprintf(asAddLine);
-		_printf("\n");
+		PrintBuffer(asAddLine);
+		PrintBuffer("\n");
 	}
 }
 
@@ -4051,12 +4051,13 @@ void _printf(LPCSTR asFormat, DWORD dwErr)
 {
 	char szError[MAX_PATH];
 	sprintf_c(szError, asFormat, dwErr);
-	_printf(szError);
+	PrintBuffer(szError);
 }
 
-void _printf(LPCSTR asBuffer)
+void PrintBuffer(LPCSTR asBuffer)
 {
-	if (!asBuffer) return;
+	if (!asBuffer || !*asBuffer)
+		return;
 
 	int nAllLen = lstrlenA(asBuffer);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -4083,7 +4084,7 @@ void print_error(const CEStr& message, DWORD dwErr)
 		(lpMsgBuf && *lpMsgBuf) ? lpMsgBuf : L"<Unknown error>",
 		L"\n");
 
-	_wprintf(errorMsg.c_str());
+	PrintBuffer(errorMsg.c_str());
 
 	if (lpMsgBuf)
 		LocalFree(lpMsgBuf);
@@ -4112,8 +4113,9 @@ bool IsOutputRedirected()
 	return (isRedirected == 2);
 }
 
-void _wprintf(LPCWSTR asBuffer)
+void PrintBuffer(LPCWSTR asBuffer)
 {
-	if (!asBuffer) return;
+	if (!asBuffer || !*asBuffer)
+		return;
 	WriteOutput(asBuffer);
 }

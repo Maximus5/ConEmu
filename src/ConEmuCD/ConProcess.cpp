@@ -72,7 +72,7 @@ ConProcess::ConProcess(const MModule& kernel32)
 				wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
 				GetModuleFileName(nullptr, szFile, countof(szFile));
 				msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
-				_wprintf(szDbgMsg);
+				PrintBuffer(szDbgMsg);
 				pfnGetConsoleProcessList = nullptr;
 			}
 		}
@@ -690,7 +690,7 @@ void ConProcess::DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID) const
 		msprintf(szDbgMsg+nLen, countof(szDbgMsg)-nLen, L" %u", pPID[i]);
 	}
 	wcscat_c(szDbgMsg, L"\r\n");
-	_wprintf(szDbgMsg);
+	PrintBuffer(szDbgMsg);
 #endif
 }
 

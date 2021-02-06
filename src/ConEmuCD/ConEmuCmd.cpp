@@ -159,7 +159,7 @@ int WorkerComspec::Init()
 			{
 				if (pszPreAliases)
 				{
-					_wprintf(pszPreAliases);
+					PrintBuffer(pszPreAliases);
 					free(pszPreAliases);
 					pszPreAliases = nullptr;
 				}
@@ -197,7 +197,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 		if (!GetAliases(szComSpecName, &pszPostAliases, &nPostAliasSize))
 		{
 			if (pszPostAliases)
-				_wprintf(pszPostAliases);
+				PrintBuffer(pszPostAliases);
 		}
 		else
 		{

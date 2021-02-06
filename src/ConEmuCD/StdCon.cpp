@@ -167,7 +167,7 @@ void StdCon::SetWin32TermMode()
 	//_ASSERTE(FALSE && "Continue to CECMD_STARTXTERM");
 	if (!gnMainServerPID)
 	{
-		_wprintf(L"ERROR: ConEmuC was unable to detect console server PID\n");
+		PrintBuffer(L"ERROR: ConEmuC was unable to detect console server PID\n");
 		return;
 	}
 
@@ -196,7 +196,7 @@ void StdCon::ReopenConsoleHandles(STARTUPINFO* si)
 	if (!gReopenedHandles)
 		gReopenedHandles = new ReopenedHandles();
 	if (!gReopenedHandles->Reopen(si))
-		_wprintf(L"ERROR: ConEmuC was unable to set STD console mode\n");
+		PrintBuffer(L"ERROR: ConEmuC was unable to set STD console mode\n");
 	else
 		SetWin32TermMode();
 	// #CONNECTOR On exit we shall return current mode (retrieved from server?)
@@ -250,7 +250,7 @@ bool ReopenedHandles::Reopen(STARTUPINFO* si)
 			msprintf(szError, countof(szError),
 				L"ConEmuC: AttachConsole failed, code=%u (x%04X), can't initialize ConIn/ConOut\n",
 				err, err);
-			_wprintf(szError);
+			PrintBuffer(szError);
 		}
 	}
 	if (success)

@@ -914,7 +914,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			{
 				iResult = CERR_CMDLINEEMPTY;
 				_ASSERTE(FALSE && "Config name was not specified!");
-				_wprintf(L"Config name was not specified!\r\n");
+				PrintBuffer(L"Config name was not specified!\r\n");
 				break;
 			}
 			configName_.SetStr(szArg);
@@ -930,7 +930,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			{
 				iResult = CERR_CMDLINEEMPTY;
 				_ASSERTE(FALSE && "Xml file name was not specified!");
-				_wprintf(L"Xml file name was not specified!\r\n");
+				PrintBuffer(L"Xml file name was not specified!\r\n");
 				break;
 			}
 			configFile_.SetStr(szArg);
@@ -1004,9 +1004,9 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			_ASSERTE(FALSE && "Unknown switch!");
 			// Show error on unknown switch
 			unknownSwitch_.SetStr(szArg);
-			//_wprintf(L"Unknown switch: ");
-			//_wprintf(szArg);
-			//_wprintf(L"\r\n");
+			//PrintBuffer(L"Unknown switch: ");
+			//PrintBuffer(szArg);
+			//PrintBuffer(L"\r\n");
 		}
 
 		// Avoid assertions in NextArg

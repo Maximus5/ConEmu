@@ -1391,7 +1391,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			swprintf_c(szInfo, L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
 				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFilePathName);
-			_wprintf(szInfo);
+			PrintBuffer(szInfo);
 		}
 
 		if (in.AttachGuiApp.hAppWindow && (gState.attachMode_ || (gpWorker->RootProcessGui() != in.AttachGuiApp.hAppWindow)))
@@ -1403,7 +1403,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 			swprintf_c(szInfo,
 				L"\nWindow (x%08X,Style=x%08X,Ex=x%X,Flags=x%X) was attached to ConEmu:\nTitle: \"%s\"\nClass: \"%s\"\n",
 				(DWORD)in.AttachGuiApp.hAppWindow, in.AttachGuiApp.Styles.nStyle, in.AttachGuiApp.Styles.nStyleEx, in.AttachGuiApp.nFlags, szTitle, szClass);
-			_wprintf(szInfo);
+			PrintBuffer(szInfo);
 		}
 
 		if (in.AttachGuiApp.hAppWindow == NULL)

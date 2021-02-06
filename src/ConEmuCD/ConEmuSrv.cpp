@@ -149,7 +149,7 @@ WorkerServer& WorkerServer::Instance()
 	{
 		_ASSERTE(server != nullptr);
 		LogString("!!! WorkerServer was not initialized !!!");
-		_printf("\n!!! WorkerServer was not initialized !!!\n\n");
+		PrintBuffer("\n!!! WorkerServer was not initialized !!!\n\n");
 		ExitProcess(CERR_SERVER_WAS_NOT_INITIALIZED);
 	}
 	return *server;
@@ -540,7 +540,7 @@ int WorkerServer::ServerInitCheckExisting(bool abAlternative)
 				ExecuteFreeResult(pOut);
 				wchar_t szErr[127];
 				msprintf(szErr, countof(szErr), L"\nServer (PID=%u) already exist in console! Current PID=%u\n", test.nServerPID, GetCurrentProcessId());
-				_wprintf(szErr);
+				PrintBuffer(szErr);
 				iRc = CERR_SERVER_ALREADY_EXISTS;
 				goto wrap;
 			}
@@ -1087,7 +1087,7 @@ int WorkerServer::Init()
 	wchar_t szName[64];
 	DWORD nTick = GetTickCount();
 
-	if (gbDumpServerInitStatus) { _printf("ServerInit: started"); }
+	if (gbDumpServerInitStatus) { PrintBuffer("ServerInit: started"); }
 	#define DumpInitStatus(fmt) if (gbDumpServerInitStatus) { DWORD nCurTick = GetTickCount(); _printf(" - %ums" fmt, (nCurTick-nTick)); nTick = nCurTick; }
 
 	if (gState.runMode_ == RunMode::Server)
@@ -3021,7 +3021,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 
 		if (!bExeFound)
 		{
-			_printf("ConEmu.exe not found!\n");
+			PrintBuffer("ConEmu.exe not found!\n");
 			return nullptr;
 		}
 
@@ -3417,11 +3417,11 @@ int WorkerServer::CreateMapHeader()
 		_ASSERTE(FALSE && "Failed to create/open mapping!");
 		if (!gpSrv->pConsoleMap->IsValid())
 		{
-			_wprintf(gpSrv->pConsoleMap->GetErrorText());
+			PrintBuffer(gpSrv->pConsoleMap->GetErrorText());
 		}
 		else if (!gpSrv->pAppMap->IsValid())
 		{
-			_wprintf(gpSrv->pAppMap->GetErrorText());
+			PrintBuffer(gpSrv->pAppMap->GetErrorText());
 		}
 
 		SafeDelete(gpSrv->pConsoleMap);
@@ -3695,7 +3695,7 @@ int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 	{
 		_ASSERTE(lhConWnd != nullptr);
 		dwErr = GetLastError();
-		_printf("Can't create console data file mapping. ConEmu DC window is nullptr.\n");
+		PrintBuffer("Can't create console data file mapping. ConEmu DC window is nullptr.\n");
 		//iRc = CERR_COLORERMAPPINGERR; -- ошибка не критическая и не обрабатывается
 		iRc = 0;
 		goto wrap;

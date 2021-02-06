@@ -336,7 +336,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 		if (bPrintError)
 		{
 			if (bRedirect) wcscat_c(szErrInst, L"\n"); // PowerShell... it does not insert linefeed
-			_wprintf(szErrInst);
+			PrintBuffer(szErrInst);
 		}
 
 		return CERR_GUIMACRO_FAILED;
@@ -402,11 +402,11 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 				LogString(L"DoGuiMacro: printing result");
 
 				// Show macro result in StdOutput
-				_wprintf(pszResult);
+				PrintBuffer(pszResult);
 
 				// PowerShell... it does not insert linefeed
 				if (!IsOutputRedirected())
-					_wprintf(L"\n");
+					PrintBuffer(L"\n");
 			}
 		}
 

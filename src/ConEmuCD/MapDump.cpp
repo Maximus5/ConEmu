@@ -56,7 +56,7 @@ void DumpMember(const T& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32];
 	CEStr lsLine(szIndent, szName, L": ", ltow_s(static_cast<int>(data), szData, 10), L"\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 template<>
@@ -65,7 +65,7 @@ void DumpMember<WORD>(const WORD& data, LPCWSTR szName, LPCWSTR szIndent)
 	wchar_t szData[32];
 	CEStr lsLine;
 	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 template<>
@@ -74,14 +74,14 @@ void DumpMember<DWORD>(const DWORD& data, LPCWSTR szName, LPCWSTR szIndent)
 	wchar_t szData[32];
 	CEStr lsLine;
 	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 template<typename T, size_t N>
 void DumpMember(const T (&data)[N], LPCWSTR szName, LPCWSTR szIndent)
 {
 	CEStr lsLine(szIndent, szName, L": `", data, L"`\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 template<>
@@ -90,7 +90,7 @@ void DumpMember<uint64_t>(const uint64_t& data, LPCWSTR szName, LPCWSTR szIndent
 	wchar_t szData[64];
 	swprintf_c(szData, L"0x%p", reinterpret_cast<LPCVOID>(data));
 	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 template<>
@@ -99,7 +99,7 @@ void DumpMember<const HWND2&>(const HWND2& data, LPCWSTR szName, LPCWSTR szInden
 	wchar_t szData[32];
 	swprintf_c(szData, L"0x%08X", LODWORD(data));
 	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 template<>
@@ -111,7 +111,7 @@ void DumpMember<CONSOLE_SCREEN_BUFFER_INFO>(const CONSOLE_SCREEN_BUFFER_INFO& da
 		szIndent, szName, data.dwSize.X, data.dwSize.Y, data.dwCursorPosition.X, data.dwCursorPosition.Y,
 		data.wAttributes, data.srWindow.Left, data.srWindow.Top, data.srWindow.Right, data.srWindow.Bottom,
 		data.dwMaximumWindowSize.X, data.dwMaximumWindowSize.Y);
-	_wprintf(szText);
+	PrintBuffer(szText);
 }
 
 template<>
@@ -121,13 +121,13 @@ void DumpMember<COORD>(const COORD& data, LPCWSTR szName, LPCWSTR szIndent)
 	swprintf_c(
 		szText, L"%s%s: {%i,%i}\r\n",
 		szIndent, szName, data.X, data.Y);
-	_wprintf(szText);
+	PrintBuffer(szText);
 }
 }
 
 static void DumpConsoleInfo(const ConEmuConsoleInfo& con, LPCWSTR szIndent)
 {
-	_wprintf(szIndent);
+	PrintBuffer(szIndent);
 
 	wchar_t szFlags[64] = L"";
 	if (con.Flags & ccf_Active)
@@ -142,7 +142,7 @@ static void DumpConsoleInfo(const ConEmuConsoleInfo& con, LPCWSTR szIndent)
 	wchar_t szLine[128];
 	swprintf_c(szLine, L" ConWnd=0x%08X DCWnd=0x%08X ChildGui=0x%08X SrvPID=%u %s\r\n",
 		(DWORD)con.Console, (DWORD)con.DCWindow, (DWORD)con.ChildGui, con.ServerPID, szFlags+1);
-	_wprintf(szLine);
+	PrintBuffer(szLine);
 }
 
 struct FlagList
@@ -166,7 +166,7 @@ static void DumpFlags(const DWORD Flags, FlagList* flags, size_t flagsCount, LPC
 		}
 	}
 	lstrmerge(&lsLine.ms_Val, L"\r\n");
-	_wprintf(lsLine);
+	PrintBuffer(lsLine);
 }
 
 static void DumpConsoleFlags(const ConEmu::ConsoleFlags flags, LPCWSTR szName, LPCWSTR szIndent)
@@ -212,7 +212,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 	{
 	case mde_GuiMapping:
 		{
-			_wprintf(L"{struct ConEmuGuiMapping}\r\n");
+			PrintBuffer(L"{struct ConEmuGuiMapping}\r\n");
 			ConEmuGuiMapping* p = (ConEmuGuiMapping*)ptrData;
 			dumpMember(cbSize);
 			dumpMember(nProtocolVersion);
@@ -227,7 +227,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 			dumpMember(bGuiActive);
 			dumpMember(dwActiveTick);
 			// ConEmuConsoleInfo Consoles[MAX_CONSOLE_COUNT];
-			_wprintf(szIndent); _wprintf(L"Consoles\r\n");
+			PrintBuffer(szIndent); PrintBuffer(L"Consoles\r\n");
 			for (size_t i = 0; i < countof(p->Consoles); i++)
 			{
 				if (!p->Consoles[i].ServerPID && !p->Consoles[i].Console && !p->Consoles[i].DCWindow && !p->Consoles[i].ChildGui)
@@ -241,7 +241,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 		} break;
 	case mde_ConMapping:
 		{
-			_wprintf(L"{struct CESERVER_CONSOLE_MAPPING_HDR}\r\n");
+			PrintBuffer(L"{struct CESERVER_CONSOLE_MAPPING_HDR}\r\n");
 			CESERVER_CONSOLE_MAPPING_HDR* p = (CESERVER_CONSOLE_MAPPING_HDR*)ptrData;
 			dumpMember(cbSize);
 			dumpMember(nProtocolVersion);
@@ -269,7 +269,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 		} break;
 	case mde_AppMapping:
 		{
-			_wprintf(L"{struct CESERVER_CONSOLE_APP_MAPPING}\r\n");
+			PrintBuffer(L"{struct CESERVER_CONSOLE_APP_MAPPING}\r\n");
 			CESERVER_CONSOLE_APP_MAPPING* p = (CESERVER_CONSOLE_APP_MAPPING*)ptrData;
 			dumpMember(cbSize);
 			dumpMember(nProtocolVersion);
@@ -278,7 +278,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 			dumpMember(nLastReadInputPID);
 			// WORD nPreReadRowID[2]
 			swprintf_c(szText, L"%snPreReadRowID[]: [%u, %u]\r\n", szIndent, (DWORD)p->nPreReadRowID[0], (DWORD)p->nPreReadRowID[1]);
-			_wprintf(szText);
+			PrintBuffer(szText);
 			dumpMember(csbiPreRead);
 			DumpAppFlags(p->nActiveAppFlags, L"nActiveAppFlags", szIndent);
 		} break;
@@ -329,12 +329,12 @@ int ProcessMapping(MFileMapping<T>& fileMap, MapDumpEnum type, LPCWSTR pszMapNam
 	if (!fileMap.Open(FALSE, strSize))
 	{
 		lsMsg = lstrmerge(L"Failed to open mapping: `", pszMapName, L"`\r\n", fileMap.GetErrorText(), L"\r\n");
-		_wprintf(lsMsg);
+		PrintBuffer(lsMsg);
 		return CERR_UNKNOWN_MAP_NAME;
 	}
 
 	lsMsg = lstrmerge(L"Mapping: `", pszMapName, L"`\r\n");
-	_wprintf(lsMsg);
+	PrintBuffer(lsMsg);
 	if (fileMap.Ptr()->cbSize != strSize)
 	{
 		wchar_t szReq[32] = L"", szGet[32] = L"";
@@ -342,7 +342,7 @@ int ProcessMapping(MFileMapping<T>& fileMap, MapDumpEnum type, LPCWSTR pszMapNam
 			L" ReqSize=", ultow_s(strSize, szReq, 10),
 			L" MapSize=", ultow_s(fileMap.Ptr()->cbSize, szGet, 10),
 			L"\r\n");
-		_wprintf(lsMsg);
+		PrintBuffer(lsMsg);
 	}
 
 	DumpStructPtr(fileMap.Ptr(), type, L"  ");
@@ -357,7 +357,7 @@ int DumpStructData(LPCWSTR asMappingName)
 	if (!asMappingName || !*asMappingName || wcschr(asMappingName, L'%'))
 	{
 		lsMsg = lstrmerge(L"Invalid mapping name: `", asMappingName, L"`\r\n");
-		_wprintf(lsMsg);
+		PrintBuffer(lsMsg);
 		return CERR_UNKNOWN_MAP_NAME;
 	}
 
@@ -367,7 +367,7 @@ int DumpStructData(LPCWSTR asMappingName)
 	{
 		_ASSERTE(type == mde_Unknown);
 		lsMsg = lstrmerge(L"Unknown mapping name: `", asMappingName, L"`\r\n");
-		_wprintf(lsMsg);
+		PrintBuffer(lsMsg);
 		return CERR_UNKNOWN_MAP_NAME;
 	}
 

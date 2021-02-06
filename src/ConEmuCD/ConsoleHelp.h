@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _DBGHLP(x)
 #endif
 
-// Used via SetWindowText && _wprintf. Need not escape of "%".
+// Used via SetWindowText && PrintBuffer. Need not escape of "%".
 #define pConsoleHelp \
 		L"This is a console part of ConEmu product.\r\n" \
 		L"Usage: ConEmuC [switches] -ROOT <program with arguments, far.exe for example>\r\n" \

@@ -135,18 +135,18 @@ int WorkerBase::ProcessCommandLineArgs()
 		if (gpConsoleArgs->command_.IsEmpty())
 		{
 			Help();
-			_printf("\n\nParsing command line failed (/C argument not found):\n");
-			_wprintf(gpConsoleArgs->fullCmdLine_.c_str(L""));
+			PrintBuffer("\n\nParsing command line failed (/C argument not found):\n");
+			PrintBuffer(gpConsoleArgs->fullCmdLine_.c_str(L""));
 
 		}
 		else
 		{
-			_printf("Parsing command line failed:\n");
-			_wprintf(gpConsoleArgs->fullCmdLine_.c_str(L""));
+			PrintBuffer("Parsing command line failed:\n");
+			PrintBuffer(gpConsoleArgs->fullCmdLine_.c_str(L""));
 		}
-		_printf("\nUnknown parameter:\n");
-		_wprintf(gpConsoleArgs->unknownSwitch_.GetStr());
-		_printf("\n");
+		PrintBuffer("\nUnknown parameter:\n");
+		PrintBuffer(gpConsoleArgs->unknownSwitch_.GetStr());
+		PrintBuffer("\n");
 		return CERR_CMDLINEEMPTY;
 	}
 
@@ -287,7 +287,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 		if (!gpszRunCmd)
 		{
-			_printf("Can't allocate 1 wchar!\n");
+			PrintBuffer("Can't allocate 1 wchar!\n");
 			return CERR_NOTENOUGHMEM1;
 		}
 
@@ -299,9 +299,9 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	if (gState.runMode_ == RunMode::Undefined)
 	{
 		LogString(L"CERR_CARGUMENT: Parsing command line failed (/C argument not found)");
-		_printf("Parsing command line failed (/C argument not found):\n");
-		_wprintf(gpConsoleArgs->fullCmdLine_.c_str(L""));
-		_printf("\n");
+		PrintBuffer("Parsing command line failed (/C argument not found):\n");
+		PrintBuffer(gpConsoleArgs->fullCmdLine_.c_str(L""));
+		PrintBuffer("\n");
 		_ASSERTE(FALSE);
 		return CERR_CARGUMENT;
 	}
@@ -478,7 +478,7 @@ int WorkerBase::GenerateCmdLine(const wchar_t* asCmdLine, CEStr& result)
 		if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 		{
 			_ASSERTE(FALSE && "cmd.exe not found!");
-			_printf("Can't find cmd.exe!\n");
+			PrintBuffer("Can't find cmd.exe!\n");
 			return CERR_CMDEXENOTFOUND;
 		}
 
@@ -604,7 +604,7 @@ int WorkerBase::PostProcessCanAttach() const
 			char szAutoRunMsg[128];
 			sprintf_c(szAutoRunMsg, "Starting attach autorun (NewWnd=%s)\n",
 				gpConsoleArgs->requestNewGuiWnd_ ? "YES" : "NO");
-			_printf(szAutoRunMsg);
+			PrintBuffer(szAutoRunMsg);
 		}
 	}
 
@@ -668,10 +668,10 @@ int WorkerBase::ParamConEmuGuiWnd() const
 		if (!isWnd)
 		{
 			LogString(L"CERR_CARGUMENT: Invalid GUI HWND was specified in /GHWND arg");
-			_printf("Invalid GUI HWND specified: /GHWND");
-			_printf("\n" "Command line:\n");
-			_wprintf(gpConsoleArgs->fullCmdLine_);
-			_printf("\n");
+			PrintBuffer("Invalid GUI HWND specified: /GHWND");
+			PrintBuffer("\n" "Command line:\n");
+			PrintBuffer(gpConsoleArgs->fullCmdLine_);
+			PrintBuffer("\n");
 			_ASSERTE(FALSE && "Invalid window was specified in /GHWND arg");
 			return CERR_CARGUMENT;
 		}
@@ -695,9 +695,9 @@ int WorkerBase::ParamConEmuGuiPid() const
 	if (gState.conemuPid_ == 0)
 	{
 		LogString(L"CERR_CARGUMENT: Invalid GUI PID specified");
-		_printf("Invalid GUI PID specified:\n");
-		_wprintf(gpConsoleArgs->fullCmdLine_);
-		_printf("\n");
+		PrintBuffer("Invalid GUI PID specified:\n");
+		PrintBuffer(gpConsoleArgs->fullCmdLine_);
+		PrintBuffer("\n");
 		_ASSERTE(FALSE);
 		return CERR_CARGUMENT;
 	}
@@ -828,9 +828,9 @@ int WorkerBase::ParamAlienAttachProcess()
 	else if (RootProcessId() == 0)
 	{
 		LogString("CERR_CARGUMENT: Attach to GUI was requested, but invalid PID specified");
-		_printf("Attach to GUI was requested, but invalid PID specified:\n");
-		_wprintf(gpConsoleArgs->fullCmdLine_);
-		_printf("\n");
+		PrintBuffer("Attach to GUI was requested, but invalid PID specified:\n");
+		PrintBuffer(gpConsoleArgs->fullCmdLine_);
+		PrintBuffer("\n");
 		_ASSERTE(FALSE && "Attach to GUI was requested, but invalid PID specified");
 		return CERR_CARGUMENT;
 	}
@@ -843,10 +843,10 @@ int WorkerBase::ParamAttachGuiApp()
 	if (!gpConsoleArgs->attachGuiAppWnd_.IsValid())
 	{
 		LogString(L"CERR_CARGUMENT: Invalid Child HWND was specified in /GuiAttach arg");
-		_printf("Invalid Child HWND specified: /GuiAttach");
-		_printf("\n" "Command line:\n");
-		_wprintf(gpConsoleArgs->fullCmdLine_);
-		_printf("\n");
+		PrintBuffer("Invalid Child HWND specified: /GuiAttach");
+		PrintBuffer("\n" "Command line:\n");
+		PrintBuffer(gpConsoleArgs->fullCmdLine_);
+		PrintBuffer("\n");
 		_ASSERTE(FALSE && "Invalid window was specified in /GuiAttach arg");
 		return CERR_CARGUMENT;
 	}
@@ -867,7 +867,7 @@ int WorkerBase::ParamAutoAttach() const
 	{
 		if (gState.realConWnd_ && IsWindowVisible(gState.realConWnd_))
 		{
-			_printf("AutoAttach was requested, but skipped\n");
+			PrintBuffer("AutoAttach was requested, but skipped\n");
 		}
 		gState.DisableAutoConfirmExit();
 		//_ASSERTE(FALSE && "AutoAttach was called while Update process is in progress?");
@@ -1042,9 +1042,9 @@ int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
 	{
 		// ReSharper disable twice StringLiteralTypo
 		LogString(L"CERR_CARGUMENT: Debug of process was requested, but invalid PID specified");
-		_printf("Debug of process was requested, but invalid PID specified:\n");
-		_wprintf(GetCommandLineW());
-		_printf("\n");
+		PrintBuffer("Debug of process was requested, but invalid PID specified:\n");
+		PrintBuffer(GetCommandLineW());
+		PrintBuffer("\n");
 		_ASSERTE(FALSE && "Invalid PID specified for debugging");
 		return CERR_CARGUMENT;
 	}
@@ -1084,7 +1084,7 @@ int WorkerBase::SetDebuggingExe(const wchar_t* const commandLine, const bool deb
 	{
 		// ReSharper disable twice StringLiteralTypo
 		LogString(L"CERR_CARGUMENT: Debug of process was requested, but command was not found");
-		_printf("Debug of process was requested, but command was not found\n");
+		PrintBuffer("Debug of process was requested, but command was not found\n");
 		_ASSERTE(FALSE && "Invalid command line for debugger was passed");
 		return CERR_CARGUMENT;
 	}

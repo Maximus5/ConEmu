@@ -28,4 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-void _wprintf(LPCWSTR asBuffer);
+#define CE_CONEMUC_NAME_W WIN3264TEST(L"ConEmuC[32]",L"ConEmuC[64]")
+#define CE_CONEMUC_NAME_A WIN3264TEST("ConEmuC[32]","ConEmuC[64]")
+
+void PrintBuffer(LPCSTR asBuffer);
+void PrintBuffer(LPCWSTR asBuffer);

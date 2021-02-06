@@ -91,7 +91,7 @@ int OsVerInfo()
 		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, osv.wProductType,
 		W5fam, WXPSP1, W6, W7, W10, Wx64, HWFS,
 		DBCS, WINE, WPE, TELNET);
-	_wprintf(szInfo);
+	PrintBuffer(szInfo);
 
 	return MAKEWORD(osv.dwMinorVersion, osv.dwMajorVersion);
 }
@@ -423,7 +423,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	{
 		_ASSERTE(gState.realConWnd_);
 		if (!bSilent)
-			_printf(ExpFailedPref ", gState.realConWnd was not set\n");
+			PrintBuffer(ExpFailedPref ", gState.realConWnd was not set\n");
 		goto wrap;
 	}
 
@@ -453,7 +453,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	if (!pIn)
 	{
 		if (!bSilent)
-			_printf(ExpFailedPref ", pIn allocation failed\n");
+			PrintBuffer(ExpFailedPref ", pIn allocation failed\n");
 		goto wrap;
 	}
 	pszBuffer = (wchar_t*)pIn->wData;
@@ -522,7 +522,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			if (!*szTest || *szTest == L'*')
 			{
 				if (!bSilent)
-					_printf(ExpFailedPref ", name masks can't be quoted\n");
+					PrintBuffer(ExpFailedPref ", name masks can't be quoted\n");
 				goto wrap;
 			}
 
@@ -552,7 +552,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 					{
 						*pszEq = L'=';
 						if (!bSilent)
-							_printf(ExpFailedPref ", too many variables\n");
+							PrintBuffer(ExpFailedPref ", too many variables\n");
 						goto wrap;
 					}
 					wmemmove(pszBuffer, pszName, cchAdd);
@@ -601,7 +601,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	if (pszBuffer == (wchar_t*)pIn->wData)
 	{
 		if (!bSilent)
-			_printf(ExpFailedPref ", nothing to export\n");
+			PrintBuffer(ExpFailedPref ", nothing to export\n");
 		goto wrap;
 	}
 	_ASSERTE(*pszBuffer==0 && *(pszBuffer-1)==0); // Must be ASCIIZZ
@@ -624,7 +624,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	if (!List.reserve(4096))
 	{
 		if (!bSilent)
-			_printf(ExpFailedPref ", List allocation failed\n");
+			PrintBuffer(ExpFailedPref ", List allocation failed\n");
 		goto wrap;
 	}
 
@@ -712,7 +712,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 					WIN3264TEST(L"ConEmuC",L"ConEmuC64")
 					L": process %s PID=%u was skipped: noninteractive or lack of ConEmuHk\n",
 					szName, nTestPID);
-				_wprintf(szInfo);
+				PrintBuffer(szInfo);
 			}
 
 			ExecuteFreeResult(pOut);
@@ -762,7 +762,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	if (!bSilent)
 	{
 		wcscat_c(szInfo, L"\n");
-		_wprintf(szInfo);
+		PrintBuffer(szInfo);
 	}
 
 	iRc = 0;
@@ -782,32 +782,32 @@ wrap:
 // Version in "ConEmuCD/Actions.cpp" perhaps would not be ever called
 int DoParseArgs(LPCWSTR asCmdLine)
 {
-	_printf("Parsing command\n  `");
-	_wprintf(asCmdLine);
-	_printf("`\n");
+	PrintBuffer("Parsing command\n  `");
+	PrintBuffer(asCmdLine);
+	PrintBuffer("`\n");
 
 	int iShellCount = 0;
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
 	int i = 0;
 	CmdArg szArg;
-	_printf("ConEmu `NextArg` splitter\n");
+	PrintBuffer("ConEmu `NextArg` splitter\n");
 	while ((asCmdLine = NextArg(asCmdLine, szArg)))
 	{
 		if (szArg.m_bQuoted)
 			DemangleArg(szArg, true);
 		_printf("  %u: `", ++i);
-		_wprintf(szArg);
-		_printf("`\n");
+		PrintBuffer(szArg);
+		PrintBuffer("`\n");
 	}
 	_printf("  Total arguments parsed: %u\n", i);
 
-	_printf("Standard shell splitter\n");
+	PrintBuffer("Standard shell splitter\n");
 	for (int j = 0; j < iShellCount; j++)
 	{
 		_printf("  %u: `", j);
-		_wprintf(ppszShl[j]);
-		_printf("`\n");
+		PrintBuffer(ppszShl[j]);
+		PrintBuffer("`\n");
 	}
 	_printf("  Total arguments parsed: %u\n", iShellCount);
 	LocalFree(ppszShl);

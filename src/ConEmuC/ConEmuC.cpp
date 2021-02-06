@@ -127,7 +127,7 @@ bool IsOutputRedirected()
 	return (isRedirected == 2);
 }
 
-void _wprintf(LPCWSTR asBuffer)
+void PrintBuffer(LPCWSTR asBuffer)
 {
 	if (!asBuffer) return;
 
@@ -157,7 +157,7 @@ void _wprintf(LPCWSTR asBuffer)
 	}
 }
 
-void _printf(LPCSTR asBuffer)
+void PrintBuffer(LPCSTR asBuffer)
 {
 	if (!asBuffer) return;
 
@@ -182,7 +182,7 @@ void PrintVersion()
 	swprintf_c(szProgInfo,
 		L"ConEmuC build %s %s. " CECOPYRIGHTSTRING_W L"\n",
 		szVer, WIN3264TEST(L"x86",L"x64"));
-	_wprintf(szProgInfo);
+	PrintBuffer(szProgInfo);
 }
 
 void Help()
@@ -190,8 +190,8 @@ void Help()
 	PrintVersion();
 
 	// See definition in "ConEmuCD/ConsoleHelp.h"
-	_wprintf(pConsoleHelp);
-	_wprintf(pNewConsoleHelp);
+	PrintBuffer(pConsoleHelp);
+	PrintBuffer(pNewConsoleHelp);
 }
 
 static int gn_argc = 0;
@@ -233,79 +233,79 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	strcpy(szCLVer, "<Unknown CL>");
 	#endif
 
-	{ HL(10); _printf("GetCommandLine():\n"); }
-	{ HL(2);  _printf("  *: "); }
-	{ HL(8); _printf("`"); }
-	{ HL(15); _wprintf(GetCommandLineW()); }
-	{ HL(8); _printf("`"); }
-	_printf("\n");
+	{ HL(10); PrintBuffer("GetCommandLine():\n"); }
+	{ HL(2);  PrintBuffer("  *: "); }
+	{ HL(8); PrintBuffer("`"); }
+	{ HL(15); PrintBuffer(GetCommandLineW()); }
+	{ HL(8); PrintBuffer("`"); }
+	PrintBuffer("\n");
 
 	sprintf_c(szLine, "main arguments (count %i) {%s}\n", gn_argc, szCLVer);
-	{ HL(10); _printf(szLine); }
+	{ HL(10); PrintBuffer(szLine); }
 	for (int j = 0; j < gn_argc; j++)
 	{
 		if (j >= 999)
 		{
 			HL(12);
-			_printf("*** TOO MANY ARGUMENTS ***\n");
+			PrintBuffer("*** TOO MANY ARGUMENTS ***\n");
 			break;
 		}
 		sprintf_c(szLine, "  %u: ", j + 1);
-		{ HL(2); _printf(szLine); }
+		{ HL(2); PrintBuffer(szLine); }
 		if (!gp_argv)
 		{
 			HL(12);
-			_printf("*NULL");
+			PrintBuffer("*NULL");
 		}
 		else if (!gp_argv[j])
 		{
 			HL(12);
-			_printf("<NULL>");
+			PrintBuffer("<NULL>");
 		}
 		else
 		{
-			{ HL(8); _printf("`"); }
-			{ HL(15); _printf(gp_argv[j]); }
-			{ HL(8); _printf("`"); }
+			{ HL(8); PrintBuffer("`"); }
+			{ HL(15); PrintBuffer(gp_argv[j]); }
+			{ HL(8); PrintBuffer("`"); }
 		}
-		_printf("\n");
+		PrintBuffer("\n");
 	}
 
-	{ HL(10); _printf("Parsing command"); }
-	{ HL(8); _printf("\n  `"); }
-	{ HL(15); _wprintf(asCmdLine); }
-	{ HL(8); _printf("`\n"); }
+	{ HL(10); PrintBuffer("Parsing command"); }
+	{ HL(8); PrintBuffer("\n  `"); }
+	{ HL(15); PrintBuffer(asCmdLine); }
+	{ HL(8); PrintBuffer("`\n"); }
 
 	int iShellCount = 0;
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
 	int i = 0;
 	CmdArg szArg;
-	{ HL(10); _printf("ConEmu `NextArg` splitter\n"); }
+	{ HL(10); PrintBuffer("ConEmu `NextArg` splitter\n"); }
 	while ((asCmdLine = NextArg(asCmdLine, szArg)))
 	{
 		if (szArg.m_bQuoted)
 			DemangleArg(szArg, true);
 		sprintf_c(szLine, "  %u: ", ++i);
-		{ HL(2); _printf(szLine); }
-		{ HL(8); _printf("`"); }
-		{ HL(15); _wprintf(szArg); }
-		{ HL(8); _printf("`\n"); }
+		{ HL(2); PrintBuffer(szLine); }
+		{ HL(8); PrintBuffer("`"); }
+		{ HL(15); PrintBuffer(szArg); }
+		{ HL(8); PrintBuffer("`\n"); }
 	}
 	sprintf_c(szLine, "  Total arguments parsed: %u\n", i);
-	{ HL(8); _printf(szLine); }
+	{ HL(8); PrintBuffer(szLine); }
 
-	{ HL(10); _printf("Standard shell splitter\n"); }
+	{ HL(10); PrintBuffer("Standard shell splitter\n"); }
 	for (int j = 0; j < iShellCount; j++)
 	{
 		sprintf_c(szLine, "  %u: ", j + 1);
-		{ HL(2); _printf(szLine); }
-		{ HL(8); _printf("`"); }
-		{ HL(15); _wprintf(ppszShl[j]); }
-		{ HL(8); _printf("`\n"); }
+		{ HL(2); PrintBuffer(szLine); }
+		{ HL(8); PrintBuffer("`"); }
+		{ HL(15); PrintBuffer(ppszShl[j]); }
+		{ HL(8); PrintBuffer("`\n"); }
 	}
 	sprintf_c(szLine, "  Total arguments parsed: %u\n", iShellCount);
-	{ HL(8); _printf(szLine); }
+	{ HL(8); PrintBuffer(szLine); }
 	LocalFree(ppszShl);
 
 	return i;
@@ -457,7 +457,7 @@ int main(int argc, char** argv)
 		           L"Can't load library \"%s\", ErrorCode=0x%08X\n",
 		           ConEmuCD_DLL_3264,
 		           dwErr);
-		_wprintf(szErrInfo);
+		PrintBuffer(szErrInfo);
 		_ASSERTE(FALSE && "LoadLibrary failed");
 		iRc = CERR_CONEMUHK_NOTFOUND;
 		goto wrap;
@@ -475,7 +475,7 @@ int main(int argc, char** argv)
 		           L"Procedure \"%s\"  not found in library \"%s\"",
 		           lfConsoleMain2 ? _CRT_WIDE(FN_CONEMUCD_HANDLER_ROUTINE_NAME) : _CRT_WIDE(FN_CONEMUCD_CONSOLE_MAIN_2_NAME),
 		           ConEmuCD_DLL_3264);
-		_wprintf(szErrInfo);
+		PrintBuffer(szErrInfo);
 		_ASSERTE(FALSE && "GetProcAddress failed");
 		hConEmu.Free();
 		iRc = CERR_CONSOLEMAIN_NOTFOUND;
