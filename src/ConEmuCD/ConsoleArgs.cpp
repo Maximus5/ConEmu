@@ -510,11 +510,13 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		else if (szArg.OneOfSwitches(L"/echo", L"/e"))
 		{
 			eExecAction_ = ConEmuExecAction::OutEcho;
+			command_.Set(cmdLineRest);
 			break;
 		}
 		else if (szArg.OneOfSwitches(L"/type", L"/t"))
 		{
 			eExecAction_ = ConEmuExecAction::OutType;
+			command_.Set(cmdLineRest);
 			break;
 		}
 			// **** Regular use ****
