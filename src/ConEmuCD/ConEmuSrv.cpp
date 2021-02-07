@@ -149,7 +149,7 @@ WorkerServer& WorkerServer::Instance()
 	{
 		_ASSERTE(server != nullptr);
 		LogString("!!! WorkerServer was not initialized !!!");
-		PrintBuffer("\n!!! WorkerServer was not initialized !!!\n\n");
+		PrintBuffer("\n" CE_CONEMUC_NAME_A ": !!! WorkerServer was not initialized !!!\n\n");
 		ExitProcess(CERR_SERVER_WAS_NOT_INITIALIZED);
 	}
 	return *server;
@@ -412,7 +412,7 @@ int WorkerServer::AttachRootProcess()
 
 		if (!dwParentPID)
 		{
-			_printf("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW()); //-V576
+			Printf(CE_CONEMUC_NAME_A ": Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW()); //-V576
 			_ASSERTE(FALSE);
 			return CERR_CARGUMENT;
 		}
@@ -423,12 +423,10 @@ int WorkerServer::AttachRootProcess()
 		if (!this->RootProcessHandle())
 		{
 			dwErr = GetLastError();
-			wchar_t* lpMsgBuf = nullptr;
-			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, nullptr);
-			_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
-			        dwParentPID, dwErr, (lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
+			wchar_t message[128];
+			msprintf(message, countof(message), CE_CONEMUC_NAME_W L": Can't open process (%i) handle", dwParentPID);
+			PrintError(message, dwErr);
 
-			if (lpMsgBuf) LocalFree(lpMsgBuf);
 			SetLastError(dwErr);
 
 			return CERR_CREATEPROCESS;
@@ -445,14 +443,14 @@ int WorkerServer::AttachRootProcess()
 		if (!GetModuleFileName(nullptr, szSelf, countof(szSelf)))
 		{
 			dwErr = GetLastError();
-			_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+			Printf(CE_CONEMUC_NAME_A ": GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
 			SetLastError(dwErr);
 			return CERR_CREATEPROCESS;
 		}
 
 		if (nParentBitness && (nParentBitness != WIN3264TEST(32,64)))
 		{
-			wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+			wchar_t* pszName = const_cast<wchar_t*>(PointToName(szSelf));
 			*pszName = 0;
 			wcscat_c(szSelf, (nParentBitness==32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 		}
@@ -1087,8 +1085,8 @@ int WorkerServer::Init()
 	wchar_t szName[64];
 	DWORD nTick = GetTickCount();
 
-	if (gbDumpServerInitStatus) { PrintBuffer("ServerInit: started"); }
-	#define DumpInitStatus(fmt) if (gbDumpServerInitStatus) { DWORD nCurTick = GetTickCount(); _printf(" - %ums" fmt, (nCurTick-nTick)); nTick = nCurTick; }
+	if (gbDumpServerInitStatus) { PrintBuffer(CE_CONEMUC_NAME_A ": ServerInit: started"); }
+	#define DumpInitStatus(fmt) if (gbDumpServerInitStatus) { DWORD nCurTick = GetTickCount(); Printf(" - %ums" fmt, (nCurTick-nTick)); nTick = nCurTick; }
 
 	if (gState.runMode_ == RunMode::Server)
 	{
@@ -1105,7 +1103,7 @@ int WorkerServer::Init()
 			UINT nConCP = GetConsoleOutputCP();
 			if (nConCP != nOemCP)
 			{
-				DumpInitStatus("\nServerInit: CreateThread(SetOemCpProc)");
+				DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: CreateThread(SetOemCpProc)");
 				DWORD nTID;
 				HANDLE h = apiCreateThread(
 					SetOemCpThreadProc, reinterpret_cast<LPVOID>(static_cast<DWORD_PTR>(nOemCP)),
@@ -1227,7 +1225,7 @@ int WorkerServer::Init()
 	// RunMode::RM_ALTSERVER - только создать (по факту - выполняется открытие созданного в RunMode::RM_SERVER)
 	if (gState.runMode_==RunMode::Server || gState.runMode_==RunMode::AltServer)
 	{
-		DumpInitStatus("\nServerInit: CmdOutputStore");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: CmdOutputStore");
 		CmdOutputStore(true/*abCreateOnly*/);
 	}
 	else
@@ -1262,7 +1260,7 @@ int WorkerServer::Init()
 	}
 	else
 	{
-		DumpInitStatus("\nServerInit: ServerInitCheckExisting");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: ServerInitCheckExisting");
 		iRc = ServerInitCheckExisting((gState.runMode_ != RunMode::Server));
 		if (iRc != 0)
 			goto wrap;
@@ -1296,7 +1294,7 @@ int WorkerServer::Init()
 
 	if (gpWorker->Processes().pnProcesses.empty() || gpWorker->Processes().pnProcessesGet.empty() || gpWorker->Processes().pnProcessesCopy.empty())
 	{
-		_printf("Can't allocate %i DWORDS!\n", gpWorker->Processes().nMaxProcesses);
+		Printf(CE_CONEMUC_NAME_A ": Can't allocate %i DWORDs!\n", gpWorker->Processes().nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
 
@@ -1316,7 +1314,7 @@ int WorkerServer::Init()
 
 		if (gpSrv->hInputEvent && gpSrv->hInputWasRead)
 		{
-			DumpInitStatus("\nServerInit: CreateThread(InputThread)");
+			DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: CreateThread(InputThread)");
 			gpSrv->hInputThread = apiCreateThread(InputThread, nullptr, &gpSrv->dwInputThread, "InputThread");
 
 		}
@@ -1324,21 +1322,21 @@ int WorkerServer::Init()
 		if (gpSrv->hInputEvent == nullptr || gpSrv->hInputWasRead == nullptr || gpSrv->hInputThread == nullptr)
 		{
 			dwErr = GetLastError();
-			_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr);
+			PrintError(CE_CONEMUC_NAME_W L": CreateThread(InputThread) failed", dwErr);
 			iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 		}
 
 		SetThreadPriority(gpSrv->hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
-		DumpInitStatus("\nServerInit: InputQueue.Initialize");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: InputQueue.Initialize");
 		gpSrv->InputQueue.Initialize(CE_MAX_INPUT_QUEUE_BUFFER, gpSrv->hInputEvent);
 
 		// Запустить пайп обработки событий (клавиатура, мышь, и пр.)
-		DumpInitStatus("\nServerInit: InputServerStart");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: InputServerStart");
 		if (!InputServerStart())
 		{
 			dwErr = GetLastError();
-			_printf("CreateThread(InputServerStart) failed, ErrCode=0x%08X\n", dwErr);
+			PrintError(CE_CONEMUC_NAME_W L": CreateThread(InputServerStart) failed", dwErr);
 			iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 		}
 	}
@@ -1346,11 +1344,11 @@ int WorkerServer::Init()
 	// Пайп возврата содержимого консоли
 	if ((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AltServer))
 	{
-		DumpInitStatus("\nServerInit: DataServerStart");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: DataServerStart");
 		if (!DataServerStart())
 		{
 			dwErr = GetLastError();
-			_printf("CreateThread(DataServerStart) failed, ErrCode=0x%08X\n", dwErr);
+			PrintError(CE_CONEMUC_NAME_W L": CreateThread(DataServerStart) failed", dwErr);
 			iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 		}
 	}
@@ -1362,7 +1360,7 @@ int WorkerServer::Init()
 
 	if (!gState.attachMode_ && !this->IsDebuggerActive())
 	{
-		DumpInitStatus("\nServerInit: ServerInitGuiTab");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: ServerInitGuiTab");
 		iRc = ServerInitGuiTab();
 		if (iRc != 0)
 			goto wrap;
@@ -1370,7 +1368,7 @@ int WorkerServer::Init()
 
 	if ((gState.runMode_ == RunMode::Server) && (gState.attachMode_ & ~am_Async) && !(gState.attachMode_ & am_Async))
 	{
-		DumpInitStatus("\nServerInit: ServerInitAttach2Gui");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: ServerInitAttach2Gui");
 		iRc = ServerInitAttach2Gui();
 		if (iRc != 0)
 			goto wrap;
@@ -1387,7 +1385,7 @@ int WorkerServer::Init()
 	// то нужно к нему "подцепиться" (открыть HANDLE процесса)
 	if (gState.noCreateProcess_ && (gState.attachMode_ || (this->IsDebuggerActive() && (this->RootProcessHandle() == nullptr))))
 	{
-		DumpInitStatus("\nServerInit: AttachRootProcess");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: AttachRootProcess");
 		iRc = AttachRootProcess();
 		if (iRc != 0)
 			goto wrap;
@@ -1421,7 +1419,7 @@ int WorkerServer::Init()
 	//}
 
 	// Сразу получить текущее состояние консоли
-	DumpInitStatus("\nServerInit: ReloadFullConsoleInfo");
+	DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: ReloadFullConsoleInfo");
 	ReloadFullConsoleInfo(TRUE);
 
 	//DumpInitStatus("\nServerInit: Creating events");
@@ -1431,7 +1429,7 @@ int WorkerServer::Init()
 	if (!gpSrv->hRefreshEvent)
 	{
 		dwErr = GetLastError();
-		_printf("CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateEvent(hRefreshEvent) failed", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
@@ -1442,7 +1440,7 @@ int WorkerServer::Init()
 	{
 		dwErr = GetLastError();
 		_ASSERTE(gpSrv->hFarCommitEvent!=nullptr);
-		_printf("CreateEvent(hFarCommitEvent) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateEvent(hFarCommitEvent) failed", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
@@ -1452,7 +1450,7 @@ int WorkerServer::Init()
 	{
 		dwErr = GetLastError();
 		_ASSERTE(gpSrv->hCursorChangeEvent!=nullptr);
-		_printf("CreateEvent(hCursorChangeEvent) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateEvent(hCursorChangeEvent) failed", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
@@ -1460,7 +1458,7 @@ int WorkerServer::Init()
 	if (!gpSrv->hRefreshDoneEvent)
 	{
 		dwErr = GetLastError();
-		_printf("CreateEvent(hRefreshDoneEvent) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateEvent(hRefreshDoneEvent) failed", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
@@ -1468,7 +1466,7 @@ int WorkerServer::Init()
 	if (!gpSrv->hDataReadyEvent)
 	{
 		dwErr = GetLastError();
-		_printf("CreateEvent(hDataReadyEvent) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateEvent(hDataReadyEvent) failed", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
@@ -1477,7 +1475,7 @@ int WorkerServer::Init()
 	if (!gpSrv->hReqSizeChanged)
 	{
 		dwErr = GetLastError();
-		_printf("CreateEvent(hReqSizeChanged) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateEvent(hReqSizeChanged) failed", dwErr);
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 	gpSrv->pReqSizeSection = new MSection();
@@ -1489,27 +1487,27 @@ int WorkerServer::Init()
 		{
 			if (this->RootProcessId())
 			{
-				DumpInitStatus("\nServerInit: InjectRemote (gpStatus->alienMode_)");
+				DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: InjectRemote (gpStatus->alienMode_)");
 				CINFILTRATE_EXIT_CODES iRemote = InjectRemote(this->RootProcessId());
 				if (iRemote != CIR_OK/*0*/ && iRemote != CIR_AlreadyInjected/*1*/)
 				{
-					_printf("ServerInit warning: InjectRemote PID=%u failed, Code=%i\n", this->RootProcessId(), iRemote);
+					Printf(CE_CONEMUC_NAME_A ": ServerInit warning: InjectRemote PID=%u failed, Code=%i\n", this->RootProcessId(), iRemote);
 				}
 			}
 			else
 			{
-				_printf("ServerInit warning: gpWorker->RootProcessId()==0\n", 0);
+				PrintBuffer(CE_CONEMUC_NAME_A ": ServerInit warning: gpWorker->RootProcessId()==0\n");
 			}
 		}
 	}
 
 	// Запустить нить наблюдения за консолью
-	DumpInitStatus("\nServerInit: CreateThread(RefreshThread)");
+	DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: CreateThread(RefreshThread)");
 	this->hRefreshThread = apiCreateThread(RefreshThreadProc, nullptr, &this->dwRefreshThread, "RefreshThread");
 	if (this->hRefreshThread == nullptr)
 	{
 		dwErr = GetLastError();
-		_printf("CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateThread(RefreshThread) failed", dwErr);
 		iRc = CERR_CREATEREFRESHTHREAD; goto wrap;
 	}
 
@@ -1526,16 +1524,16 @@ int WorkerServer::Init()
 	//#endif
 
 	// Запустить пайп обработки команд
-	DumpInitStatus("\nServerInit: CmdServerStart");
+	DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: CmdServerStart");
 	if (!CmdServerStart())
 	{
 		dwErr = GetLastError();
-		_printf("CreateThread(CmdServerStart) failed, ErrCode=0x%08X\n", dwErr);
+		PrintError(CE_CONEMUC_NAME_W L": CreateThread(CmdServerStart) failed", dwErr);
 		iRc = CERR_CREATESERVERTHREAD; goto wrap;
 	}
 
 	// Set up some environment variables
-	DumpInitStatus("\nServerInit: ServerInitEnvVars");
+	DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: ServerInitEnvVars");
 	ServerInitEnvVars();
 
 	// Пометить мэппинг, как готовый к отдаче данных
@@ -1549,7 +1547,7 @@ int WorkerServer::Init()
 		UpdateConsoleTitle();
 	}
 
-	DumpInitStatus("\nServerInit: SendStarted");
+	DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: SendStarted");
 	SendStarted();
 
 	CheckConEmuHwnd();
@@ -1578,7 +1576,7 @@ int WorkerServer::Init()
 		wchar_t szPipe[MAX_PATH];
 		_ASSERTE(this->RootProcessId()!=0);
 		swprintf_c(szPipe, CEHOOKSPIPENAME, L".", this->RootProcessId());
-		DumpInitStatus("\nServerInit: CECMD_ATTACHGUIAPP");
+		DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: CECMD_ATTACHGUIAPP");
 		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, gState.realConWnd_);
 		if (!pOut
 			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
@@ -1605,7 +1603,7 @@ int WorkerServer::Init()
 		SetEvent(this->hServerStartedEvent);
 	}
 wrap:
-	DumpInitStatus("\nServerInit: finished\n");
+	DumpInitStatus("\n" CE_CONEMUC_NAME_A ": ServerInit: finished\n");
 	#undef DumpInitStatus
 	return iRc;
 }
@@ -2976,7 +2974,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 		if (!GetModuleFileName(nullptr, szGuiExe, MAX_PATH))
 		{
 			dwErr = GetLastError();
-			_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+			PrintError(CE_CONEMUC_NAME_W L": GetModuleFileName failed", dwErr);
 			return nullptr;
 		}
 
@@ -2984,7 +2982,9 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 
 		if (!pszSlash)
 		{
-			_printf("Invalid GetModuleFileName, backslash not found!\n", 0, szGuiExe); //-V576
+			PrintBuffer(CE_CONEMUC_NAME_A ": Invalid GetModuleFileName, backslash not found!\n");
+			PrintBuffer(szGuiExe);
+			PrintBuffer("\n");
 			return nullptr;
 		}
 
@@ -3021,7 +3021,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 
 		if (!bExeFound)
 		{
-			PrintBuffer("ConEmu.exe not found!\n");
+			PrintBuffer(CE_CONEMUC_NAME_A ": ConEmu.exe not found!\n");
 			return nullptr;
 		}
 
@@ -3360,7 +3360,7 @@ int WorkerServer::CreateMapHeader()
 
 	if (!gpSrv->pConsoleDataCopy)
 	{
-		_printf("ConEmuC: calloc(%i) failed, pConsoleDataCopy is null", nMaxDataSize);
+		Printf(CE_CONEMUC_NAME_A ": calloc(%i) failed, pConsoleDataCopy is null", nMaxDataSize);
 		goto wrap;
 	}
 
@@ -3370,7 +3370,7 @@ int WorkerServer::CreateMapHeader()
 
 	if (!gpSrv->pConsole)
 	{
-		_printf("ConEmuC: calloc(%i) failed, pConsole is null", nTotalSize);
+		Printf(CE_CONEMUC_NAME_A ": calloc(%i) failed, pConsole is null", nTotalSize);
 		goto wrap;
 	}
 
@@ -3378,7 +3378,7 @@ int WorkerServer::CreateMapHeader()
 		gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
 	if (!gpSrv->pGuiInfoMap)
 	{
-		_printf("ConEmuC: calloc(MFileMapping<ConEmuGuiMapping>) failed, pGuiInfoMap is null", 0); //-V576
+		Printf(CE_CONEMUC_NAME_A ": calloc(MFileMapping<ConEmuGuiMapping>) failed, pGuiInfoMap is null", 0); //-V576
 		goto wrap;
 	}
 
@@ -3386,7 +3386,7 @@ int WorkerServer::CreateMapHeader()
 		gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 	if (!gpSrv->pConsoleMap)
 	{
-		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0); //-V576
+		Printf(CE_CONEMUC_NAME_A ": calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0); //-V576
 		goto wrap;
 	}
 
@@ -3394,7 +3394,7 @@ int WorkerServer::CreateMapHeader()
 		gpSrv->pAppMap = new MFileMapping<CESERVER_CONSOLE_APP_MAPPING>;
 	if (!gpSrv->pAppMap)
 	{
-		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_APP_MAPPING>) failed, pAppMap is null", 0); //-V576
+		Printf(CE_CONEMUC_NAME_A ": calloc(MFileMapping<CESERVER_CONSOLE_APP_MAPPING>) failed, pAppMap is null", 0); //-V576
 		goto wrap;
 	}
 
@@ -3695,7 +3695,7 @@ int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 	{
 		_ASSERTE(lhConWnd != nullptr);
 		dwErr = GetLastError();
-		PrintBuffer("Can't create console data file mapping. ConEmu DC window is nullptr.\n");
+		PrintBuffer(CE_CONEMUC_NAME_A ": Can't create console data file mapping. ConEmu DC window is nullptr.\n");
 		//iRc = CERR_COLORERMAPPINGERR; -- ошибка не критическая и не обрабатывается
 		iRc = 0;
 		goto wrap;
@@ -3827,8 +3827,8 @@ void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 		if (!MyCreateDirectory(log_file.ms_Val))
 		{
 			const DWORD dwErr = GetLastError();
-			const CEStr message(L"ConEmu: Failed to create AnsiLog-files directory:\n", log_file);
-			print_error(message, dwErr);
+			const CEStr message(CE_CONEMUC_NAME_W, L": Failed to create AnsiLog-files directory:\n", log_file);
+			PrintError(message, dwErr);
 			return;
 		}
 	}
@@ -3838,8 +3838,8 @@ void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	if (!hLog || hLog == INVALID_HANDLE_VALUE)
 	{
 		const DWORD dwErr = GetLastError();
-		const CEStr message(L"ConEmu: Failed to create new AnsiLog-file:\n", log_file);
-		print_error(message, dwErr);
+		const CEStr message(CE_CONEMUC_NAME_W, L": Failed to create new AnsiLog-file:\n", log_file);
+		PrintError(message, dwErr);
 		return;
 	}
 	CloseHandle(hLog);

@@ -417,7 +417,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 
 	//_ASSERTE(FALSE && "Continue with exporting environment");
 
-	#define ExpFailedPref WIN3264TEST("ConEmuC","ConEmuC64") ": can't export environment"
+	#define ExpFailedPref CE_CONEMUC_NAME_A ": can't export environment"
 
 	if (!gState.realConWnd_)
 	{
@@ -434,7 +434,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	if (!pszAllVars || !*pszAllVars)
 	{
 		if (!bSilent)
-			_printf(ExpFailedPref ", GetEnvironmentStringsW failed, code=%u\n", GetLastError());
+			Printf(ExpFailedPref ", GetEnvironmentStringsW failed, code=%u\n", GetLastError());
 		goto wrap;
 	}
 
@@ -731,7 +731,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 		if (!pOut)
 		{
 			if (!bSilent)
-				_printf(ExpFailedPref " to PID=%u, root server was terminated?\n", nSrvPID);
+				Printf(ExpFailedPref " to PID=%u, root server was terminated?\n", nSrvPID);
 		}
 		else
 		{
@@ -796,20 +796,20 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	{
 		if (szArg.m_bQuoted)
 			DemangleArg(szArg, true);
-		_printf("  %u: `", ++i);
+		Printf("  %u: `", ++i);
 		PrintBuffer(szArg);
 		PrintBuffer("`\n");
 	}
-	_printf("  Total arguments parsed: %u\n", i);
+	Printf("  Total arguments parsed: %u\n", i);
 
 	PrintBuffer("Standard shell splitter\n");
 	for (int j = 0; j < iShellCount; j++)
 	{
-		_printf("  %u: `", j);
+		Printf("  %u: `", j);
 		PrintBuffer(ppszShl[j]);
 		PrintBuffer("`\n");
 	}
-	_printf("  Total arguments parsed: %u\n", iShellCount);
+	Printf("  Total arguments parsed: %u\n", iShellCount);
 	LocalFree(ppszShl);
 
 	return i;

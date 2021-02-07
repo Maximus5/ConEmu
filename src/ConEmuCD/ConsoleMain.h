@@ -185,15 +185,13 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi = nullptr);
 
 bool IsOutputRedirected();
 
-#define CE_CONEMUC_NAME_W WIN3264TEST(L"ConEmuC[32]",L"ConEmuC[64]")
-#define CE_CONEMUC_NAME_A WIN3264TEST("ConEmuC[32]","ConEmuC[64]")
+#define CE_CONEMUC_NAME_W WIN3264TEST(L"ConEmuC",L"ConEmuC64")
+#define CE_CONEMUC_NAME_A WIN3264TEST("ConEmuC","ConEmuC64")
 
 void PrintBuffer(LPCWSTR asBuffer);
 void PrintBuffer(LPCSTR asBuffer);
-void _printf(LPCSTR asFormat, DWORD dwErr);
-void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
-void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine = nullptr);
-void print_error(const CEStr& message, DWORD dwErr);
+void Printf(LPCSTR asFormat, ...);
+void PrintError(const CEStr& message, DWORD dwErr);
 
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
 void UpdateConsoleTitle();

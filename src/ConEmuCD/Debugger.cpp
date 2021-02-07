@@ -76,7 +76,7 @@ DebuggerInfo::~DebuggerInfo()
 
 void DebuggerInfo::PrintDebugInfo() const
 {
-	_printf("Debugger successfully attached to PID=%u\n", gpWorker->RootProcessId());
+	Printf(CE_CONEMUC_NAME_A ": Debugger successfully attached to PID=%u\n", gpWorker->RootProcessId());
 	TODO("Вывести информацию о загруженных модулях, потоках, и стеке потоков");
 }
 
@@ -330,12 +330,12 @@ void DebuggerInfo::AttachConHost(DWORD nConHostPID) const
 
 	if (!hConHost)
 	{
-		_printf("Opening ConHost process handle failed, Code=%u\n", nErrCode);
+		Printf(CE_CONEMUC_NAME_A ": Opening ConHost process handle failed, Code=%u\n", nErrCode);
 	}
 	else if (!DebugActiveProcess(nConHostPID))
 	{
 		nErrCode = GetLastError();
-		_printf("Attaching to ConHost process handle failed, Code=%u\n", nErrCode);
+		Printf(CE_CONEMUC_NAME_A ": Attaching to ConHost process handle failed, Code=%u\n", nErrCode);
 	}
 
 	if (!nErrCode)
@@ -675,7 +675,7 @@ bool DebuggerInfo::GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpFi
 
 		if (FAILED(dwErr))
 		{
-			_printf("\nGetSaveDumpName called, get desktop folder failed, code=%u\n", DWORD(dwErr));
+			Printf("\n" CE_CONEMUC_NAME_A ": GetSaveDumpName called, get desktop folder failed, code=%u\n", DWORD(dwErr));
 		}
 		else
 		{
@@ -825,7 +825,7 @@ void DebuggerInfo::WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_
 			{
 				const DWORD nErr = GetLastError();
 				swprintf_c(szErrInfo, L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
-				_printf("\nFailed, ErrorCode=0x%08X\n", nErr);
+				Printf("\n" CE_CONEMUC_NAME_A ": Failed, ErrorCode=0x%08X\n", nErr);
 				MessageBoxW(nullptr, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
@@ -1298,7 +1298,7 @@ void DebuggerInfo::GenerateMiniDumpFromCtrlBreak()
 		{
 			dwErr = GetLastError();
 			//_ASSERTE(FALSE && dwErr==0);
-			_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
+			Printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
 			this->bDebuggerRequestDump = FALSE;
 			WriteMiniDump(gpWorker->RootProcessId(), gpWorker->RootThreadId(), nullptr);
 		}
@@ -1333,7 +1333,7 @@ void DebuggerInfo::GenerateTreeDebugBreak(DWORD nExcludePID)
 			{
 				if (pid != nExcludePID)
 				{
-					_printf(" %u", pid);
+					Printf(" %u", pid);
 
 					if (!pi.hProcess)
 					{
@@ -1347,7 +1347,7 @@ void DebuggerInfo::GenerateTreeDebugBreak(DWORD nExcludePID)
 					else
 					{
 						dwErr = GetLastError();
-						_printf("\nConEmuC: Sending DebugBreak event failed, Code=x%X\n", dwErr);
+						Printf("\n" CE_CONEMUC_NAME_A ": Sending DebugBreak event failed, Code=x%X\n", dwErr);
 					}
 				}
 

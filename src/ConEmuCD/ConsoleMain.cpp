@@ -786,13 +786,9 @@ int AttachRootProcessHandle()
 	if (!gpWorker->RootProcessHandle())
 	{
 		dwErr = GetLastError();
-		wchar_t* lpMsgBuf = nullptr;
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr);
-		_printf("\nCan't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
-		        gpWorker->RootProcessId(), dwErr, (lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
-
-		if (lpMsgBuf) LocalFree(lpMsgBuf);
+		wchar_t message[128];
+		msprintf(message, countof(message), L"\n" CE_CONEMUC_NAME_W L": Can't open process (%i) handle", gpWorker->RootProcessId());
+		PrintError(message, dwErr);
 		SetLastError(dwErr);
 
 		return CERR_CREATEPROCESS;
@@ -875,12 +871,12 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		return argsRc;
 	case CERR_CMDLINEEMPTY:
 		Help();
-		PrintBuffer("\n\nParsing command line failed (/C argument not found):\n");
+		PrintBuffer("\n\n" CE_CONEMUC_NAME_A ": Parsing command line failed (/C argument not found):\n");
 		PrintBuffer(GetCommandLineW());
 		PrintBuffer("\n");
 		return argsRc;
 	default:
-		PrintBuffer("Parsing command line failed:\n");
+		PrintBuffer(CE_CONEMUC_NAME_A ": Parsing command line failed:\n");
 		PrintBuffer(asCmdLine);
 		PrintBuffer("\n");
 		return argsRc;
@@ -1076,7 +1072,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	if (!ghExitQueryEvent)
 	{
 		dwErr = GetLastError();
-		_printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr);
+		Printf(CE_CONEMUC_NAME_A ": CreateEvent() failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_EXITEVENT; goto wrap;
 	}
 
@@ -1088,7 +1084,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	if (!ghQuitEvent)
 	{
 		dwErr = GetLastError();
-		_printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr);
+		Printf(CE_CONEMUC_NAME_A ": CreateEvent() failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_EXITEVENT; goto wrap;
 	}
 
@@ -1101,7 +1097,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE)
 		{
 			dwErr = GetLastError();
-			_printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr);
+			Printf(CE_CONEMUC_NAME_A ": CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr);
 			iRc = CERR_CONOUTFAILED; goto wrap;
 		}
 	}
@@ -1128,7 +1124,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	/* ****** Start child process ****** */
 	/* ********************************* */
 #ifdef SHOW_STARTED_PRINT
-	sprintf_c(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+	sprintf_c(szDbgString, CE_CONEMUC_NAME_A ": PID=%u", GetCurrentProcessId());
 	MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
 #endif
 
@@ -1539,7 +1535,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 					gbCtrlBreakStopWaitingShown = TRUE;
 					//_printf("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
 					//PrintBuffer(gpszRunCmd);
-					PrintExecuteError(gpszRunCmd, 0, L"Process was not attached to console. Is it GUI?\n");
+					PrintExecuteError(gpszRunCmd, 0, CE_CONEMUC_NAME_W L": Process was not attached to console. Is it GUI?\n");
 					PrintBuffer("\n\nPress Ctrl+Break to stop waiting\n");
 
 					while (!gbInShutdown && (nWait != WAIT_OBJECT_0))
@@ -2202,46 +2198,51 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=nullp
 	else
 	{
 		wchar_t* lpMsgBuf = nullptr;
-		DWORD nFmtRc, nFmtErr = 0;
+		DWORD nFmtRc = -1, nFmtErr = 0;
 
 		if (dwErr == 5)
 		{
-			lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 128*sizeof(wchar_t));
-			_wcscpy_c(lpMsgBuf, 128, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
+			lpMsgBuf = static_cast<wchar_t*>(LocalAlloc(LPTR, 128 * sizeof(wchar_t)));
+			if (lpMsgBuf)
+				_wcscpy_c(lpMsgBuf, 128, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
 		}
 		else
 		{
 			nFmtRc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, nullptr);
+				nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr);
 
 			if (!nFmtRc)
 				nFmtErr = GetLastError();
 		}
 
-		_printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
+		char errCode[16];
+		msprintf(errCode, countof(errCode), (dwErr <= 0xFFFF) ? "%u" : "0x%08X", dwErr);
+
+		Printf(CE_CONEMUC_NAME_A ": Can't create process, ErrCode=%s, Description:\n", errCode);
 		PrintBuffer((lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
-		if (lpMsgBuf) LocalFree(lpMsgBuf);
+		if (lpMsgBuf)
+			LocalFree(lpMsgBuf);
 		UNREFERENCED_PARAMETER(nFmtErr);
 	}
 
-	size_t nCchMax = MAX_PATH*2+32;
-	wchar_t* lpInfo = (wchar_t*)calloc(nCchMax,sizeof(*lpInfo));
-	if (lpInfo)
+	const size_t nCchMax = MAX_PATH * 2 + 32;
+	CEStr lpInfo;
+	if (lpInfo.GetBuffer(nCchMax))
 	{
-		_wcscpy_c(lpInfo, nCchMax, L"\nCurrent directory:\n");
-			_ASSERTE(nCchMax>=(MAX_PATH*2+32));
+		_wcscpy_c(lpInfo.data(), nCchMax, L"\nCurrent directory:\n");
+		_ASSERTE(nCchMax >= (MAX_PATH * 2 + 32));
 		if (gpStartEnv && gpStartEnv->pszWorkDir)
 		{
-			_wcscat_c(lpInfo, nCchMax, gpStartEnv->pszWorkDir);
+			_wcscat_c(lpInfo.data(), nCchMax, gpStartEnv->pszWorkDir);
 		}
 		else
 		{
 			_ASSERTE(gpStartEnv && gpStartEnv->pszWorkDir);
-			GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
+			const auto len = lpInfo.GetLen();
+			GetCurrentDirectory(lpInfo.GetMaxCount() - len - 1, lpInfo.data() + len);
 		}
-		_wcscat_c(lpInfo, nCchMax, L"\n");
+		_wcscat_c(lpInfo.data(), nCchMax, L"\n");
 		PrintBuffer(lpInfo);
-		free(lpInfo);
 	}
 
 	PrintBuffer("\nCommand to be executed:\n");
@@ -3244,7 +3245,7 @@ void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pCon
 	if (!GetModuleFileName(nullptr, szFile, MAX_PATH))
 	{
 		dwErr = GetLastError();
-		_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
+		Printf(CE_CONEMUC_NAME_A ": GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
 		return; // не удалось
 	}
 
@@ -3252,7 +3253,7 @@ void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pCon
 
 	if ((pszDot = wcsrchr(pszName, L'.')) == nullptr)
 	{
-		_printf("wcsrchr failed!\n", 0, szFile); //-V576
+		Printf(CE_CONEMUC_NAME_A ": wcsrchr failed!\n", 0, szFile); //-V576
 		return; // ошибка
 	}
 
@@ -3316,7 +3317,7 @@ void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pCon
 	dwErr = (DWORD)gpLogSize->CreateLogFile();
 	if (dwErr != 0)
 	{
-		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, gpLogSize->GetLogFileName()); //-V576
+		Printf(CE_CONEMUC_NAME_A ": Create console log file failed! ErrCode=0x%08X\n", dwErr, gpLogSize->GetLogFileName()); //-V576
 		_ASSERTE(FALSE && "gpLogSize->CreateLogFile failed");
 		SafeDelete(gpLogSize);
 		return;
@@ -4021,36 +4022,14 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	return TRUE;
 }
 
-void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
+void Printf(LPCSTR asFormat, ...)
 {
 	char szError[MAX_PATH];
-	sprintf_c(szError, asFormat, dw1, dw2);
-	PrintBuffer(szError);
+	va_list argptr;
+	va_start(argptr, asFormat);
+	const auto* result = mvsprintf(szError, countof(szError), asFormat, argptr);
+	va_end(argptr);
 
-	if (asAddLine)
-	{
-		PrintBuffer(asAddLine);
-		PrintBuffer("\n");
-	}
-}
-
-void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine)
-{
-	char szError[MAX_PATH];
-	sprintf_c(szError, asFormat, dwErr);
-	PrintBuffer(szError);
-
-	if (asAddLine)
-	{
-		PrintBuffer(asAddLine);
-		PrintBuffer("\n");
-	}
-}
-
-void _printf(LPCSTR asFormat, DWORD dwErr)
-{
-	char szError[MAX_PATH];
-	sprintf_c(szError, asFormat, dwErr);
 	PrintBuffer(szError);
 }
 
@@ -4059,15 +4038,15 @@ void PrintBuffer(LPCSTR asBuffer)
 	if (!asBuffer || !*asBuffer)
 		return;
 
-	int nAllLen = lstrlenA(asBuffer);
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	const int nAllLen = lstrlenA(asBuffer);
+	const MHandle hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dwWritten = 0;
 	DEBUGTEST(BOOL bWriteRC =)
-	WriteFile(hOut, asBuffer, nAllLen, &dwWritten, 0);
+	WriteFile(hOut, asBuffer, nAllLen, &dwWritten, nullptr);
 	UNREFERENCED_PARAMETER(dwWritten);
 }
 
-void print_error(const CEStr& message, DWORD dwErr)
+void PrintError(const CEStr& message, DWORD dwErr)
 {
 	if (!dwErr)
 		dwErr = GetLastError();
@@ -4080,7 +4059,7 @@ void print_error(const CEStr& message, DWORD dwErr)
 	msprintf(errorCode, countof(errorCode), (dwErr <= 0xFFFF) ? L"%u" : L"0x%08X", dwErr);
 	const CEStr errorMsg(
 		message.c_str(),
-		L"\nConEmu: ErrCode=", errorCode, L", Description:\n",
+		L"\n" CE_CONEMUC_NAME_A ": ErrCode=", errorCode, L", Description:\n",
 		(lpMsgBuf && *lpMsgBuf) ? lpMsgBuf : L"<Unknown error>",
 		L"\n");
 
