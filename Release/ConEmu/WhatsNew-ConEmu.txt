@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.2.6
+* gh-2259, gh-2269: Fix Far Manager crash using `ConEmu.Editor.lua`.
+* gh-2262: Fix executing batch scripts from Far if command contains quotes.
+* gh-2271: Fix single-char lines output in python.
+* gh-2272: Prefix console error messages with `ConEmuC:`.
+* gh-2212, gh-2262, gh-2267, gh-2270: Fix run commands from Far Manager (ErrCode=0x00000057).
+* Fix `ConEmuC -echo ...` and `ConEmuC -type ...` commands.
+* l10n: translations were updated
+
+
 2021.2.2
 * gh-2212: Fix executer in Far 3.0.
 * gh-2220: Fix default task generation for VsDevCmd.bat.
