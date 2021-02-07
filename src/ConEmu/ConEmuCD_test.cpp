@@ -406,7 +406,7 @@ TEST_F(ServerDllTest, RunGuiMacro_API)
 	}
 }
 
-TEST_F(ServerDllTest, RunCmdExe)
+TEST_F(ServerDllTest, RunCommand)
 {
 	/*
 	cdbg() << "Sleeping 15 sec" << std::endl;
@@ -487,55 +487,39 @@ TEST_F(ServerDllTest, RunCmdExe)
 	SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, L"0");
 	SetEnvironmentVariableW(ENV_CONEMUWORKDIR_VAR_W, L"C:\\");
 
-	auto executeRun = [&](const std::function<void()>& worker)
+	auto executeRun = [&](const wchar_t* command, const int expectedRc, const wchar_t* expectedOutput)
 	{
 		guardStop.store(false);
 		std::thread hangGuard2(hungGuardFn);
 
-		worker();
+		const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, command);
+		EXPECT_EQ(expectedRc, cmdRc1) << L"command=" << command;
+		if (expectedOutput)
+		{
+			try
+			{
+				const auto prevString = ConsoleOutputCapture::GetPrevString();
+				EXPECT_EQ(std::wstring(expectedOutput), prevString) << L"command=" << command;
+			}
+			catch (const OutputWasRedirected& ex)
+			{
+				cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
+			}
+			catch (const std::exception& ex)
+			{
+				FAIL() << L"command=" << command << "; exception=" << ex.what();
+			}
+		}
 
 		guardStop.store(true);
 		hangGuard2.join();
 	};
 
-	executeRun([&]() {
-		const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo echo from cmd.exe");
-		EXPECT_EQ(0, cmdRc1);
-		try
-		{
-			const auto prevString = ConsoleOutputCapture::GetPrevString();
-			EXPECT_EQ(std::wstring(L"echo from cmd.exe"), prevString);
-		}
-		catch (const OutputWasRedirected& ex)
-		{
-			cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
-		}
-		catch (const std::exception& ex)
-		{
-			FAIL() << ex.what();
-		}
-		});
+	executeRun(L"-c cmd.exe /c echo echo from cmd.exe", 0, L"echo from cmd.exe");
 
-	executeRun([&]() {
-		const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c \"%ConEmuBaseDir%\\cecho.cmd\" \"Hello\" \"World\"");
-		EXPECT_EQ(0, cmdRc1);
-		try
-		{
-			const auto prevString = ConsoleOutputCapture::GetPrevString();
-			EXPECT_EQ(std::wstring(L"Hello"), prevString);
-		}
-		catch (const OutputWasRedirected& ex)
-		{
-			cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
-		}
-		catch (const std::exception& ex)
-		{
-			FAIL() << ex.what();
-		}
-		});
+	executeRun(L"-c \"%ConEmuBaseDir%\\cecho.cmd\" \"Hello\" \"World\"", 0, L"Hello");
 
-	executeRun([&]() {
-		const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");
-		EXPECT_EQ(3, cmdRc2);
-		});
+	executeRun(L"-c \"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -echo Hello World\"", 0, L"Hello World");
+
+	executeRun(L"-c cmd.exe /c exit 3", 3, nullptr);
 }

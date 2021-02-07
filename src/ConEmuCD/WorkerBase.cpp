@@ -514,25 +514,40 @@ int WorkerBase::GenerateCmdLine(const wchar_t* asCmdLine, CEStr& result)
 	if (gState.startEndQuot_ == StartEndQuot::NeedAdd)
 	{
 		_wcscat_c(result.data(), nCchLen, L"\"");
-	}
-
-	const wchar_t* const newCmdStart = result.data() + result.GetLen();
-	_wcscat_c(result.data(), nCchLen, asCmdLine);
-
-	if (gState.startEndQuot_ == StartEndQuot::NeedAdd)
-	{
+		_wcscat_c(result.data(), nCchLen, asCmdLine);
 		_wcscat_c(result.data(), nCchLen, L"\"");
 	}
 	else if (gState.startEndQuot_ == StartEndQuot::NeedCut)
 	{
+		const wchar_t* startQuote = SkipNonPrintable(asCmdLine);
+		if (*startQuote == L'"')
+		{
+			++startQuote;
+		}
+		else
+		{
+			_ASSERTE(*startQuote == L'"');
+		}
+
+		const wchar_t* const newCmdStart = result.data() + result.GetLen();
+		_wcscat_c(result.data(), nCchLen, startQuote);
+
 		wchar_t *pszEndQ = result.data() + result.GetLen() - 1;
 		while (pszEndQ > newCmdStart && IsNonPrintable(*pszEndQ))
 			--pszEndQ;
 
 		if (pszEndQ > newCmdStart && *pszEndQ == L'"')
+		{
 			*pszEndQ = L' ';
+		}
 		else
+		{
 			_ASSERTE(pszEndQ > newCmdStart && *pszEndQ == L'"');
+		}
+	}
+	else
+	{
+		_wcscat_c(result.data(), nCchLen, asCmdLine);
 	}
 
 	return 0;
