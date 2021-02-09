@@ -101,8 +101,7 @@ struct ConProcess
 	bool  IsTelnet;  // может быть включен ВМЕСТЕ с IsFar, если удалось подцепиться к фару через сетевой пайп
 	bool  IsNtvdm;   // 16bit приложения
 	bool  IsCmd;     // значит фар выполняет команду
-	bool  NameChecked, RetryName;
-	bool  Alive, inConsole;
+	bool  inConsole;
 	int   Bits;
 	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
 };

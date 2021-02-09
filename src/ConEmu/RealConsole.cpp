@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef USE_SEH
 
 #include "Header.h"
-#include <tlhelp32.h>
 #include "../common/shlobj.h"
 
 #include "../common/ConEmuCheck.h"
@@ -51,12 +50,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"
 #include "../common/MStrEsc.h"
+#include "../common/MToolHelp.h"
 #include "../common/MWow64Disable.h"
 #include "../common/ProcessData.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -77,7 +76,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RConPalette.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
-
 #include "GlobalHotkeys.h"
 #include "RunQueue.h"
 #include "SetColorPalette.h"
@@ -89,6 +87,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
+
+#include <unordered_map>
+#include <unordered_set>
+
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
@@ -3924,24 +3926,22 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 	for (int s = 0; s <= 1; s++)
 	{
 		// Ищем новые процессы "conhost.exe"
-		MArray<PROCESSENTRY32> CreatedHost;
-		HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (h && (h != INVALID_HANDLE_VALUE))
+		MArray<PROCESSENTRY32W> CreatedHost;
+		MToolHelpProcess processes;
+		if (processes.Open())
 		{
-			PROCESSENTRY32 PI = {sizeof(PI)};
-			if (Process32First(h, &PI))
+			PROCESSENTRY32W pi{};
+			while (processes.Next(pi))
 			{
-				do {
-					if (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0)
+				if (lstrcmpi(pi.szExeFile, L"conhost.exe") == 0)
+				{
+					if (!search->data.Get(pi.th32ProcessID, nullptr))
 					{
-						if (!search->data.Get(PI.th32ProcessID, nullptr))
-						{
-							CreatedHost.push_back(PI);
-						}
+						CreatedHost.push_back(pi);
 					}
-				} while (Process32Next(h, &PI));
+				}
 			}
-			CloseHandle(h);
+			processes.Close();
 		}
 
 		if (CreatedHost.size() <= 0)
@@ -8817,9 +8817,6 @@ bool CRealConsole::ProcessUpdateFlags(bool abProcessChanged)
 // Возвращает TRUE если сменился статус (Far/не Far)
 bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 {
-	bool lbChanged = false;
-	TODO("OPTIMIZE: хорошо бы от секции вообще избавиться, да и не всегда обновлять нужно...");
-	MSectionLock SPRC; SPRC.Lock(&csPRC);
 	BOOL lbRecreateOk = FALSE;
 	bool bIsWin64 = IsWindows64();
 
@@ -8828,10 +8825,6 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 		// Раз сюда что-то пришло, значит мы получили пакет, значит консоль запустилась
 		lbRecreateOk = TRUE;
 	}
-
-	DWORD PID[40] = {0};
-	_ASSERTE(anCount<=countof(PID));
-	if (anCount>countof(PID)) anCount = countof(PID);
 
 	if (m_ConHostSearch)
 	{
@@ -8844,318 +8837,198 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 		}
 	}
 
-	if (mn_ConHost_PID)
+	// #TODO replace m_TerminatedPIDs with dedicated structure
+	std::unordered_map<DWORD, size_t> terminatedMap;
+	terminatedMap.reserve(countof(m_TerminatedPIDs));
+	for (UINT k = 0; k < countof(m_TerminatedPIDs); k++)
 	{
-		_ASSERTE(*apPID != mn_ConHost_PID);
-		UINT nCount = 0;
-		PID[nCount++] = *apPID;
-		PID[nCount++] = mn_ConHost_PID;
+		if (!m_TerminatedPIDs[k])
+			continue;
+		// PID was marked as "closing", don't add it again
+		terminatedMap.insert({ m_TerminatedPIDs[k], k });
+	}
 
-		for (UINT i = 1; i < anCount; i++)
+	std::unordered_map<DWORD, size_t> pidsMap;
+	std::vector<DWORD> pidsList;
+	if (apPID && anCount > 0)
+	{
+		_ASSERTE(mn_ConHost_PID == 0 || (apPID ? *apPID : 0) != mn_ConHost_PID);
+
+		pidsMap.reserve(anCount);
+		pidsList.reserve(anCount);
+		bool conhostAdded = false;
+		auto addPid = [&pidsMap, &pidsList, &terminatedMap](const DWORD pid)
 		{
-			if (apPID[i] && (apPID[i] != mn_ConHost_PID))
+			if (!pid)
+				return false;
+			if (terminatedMap.count(pid))
+				return false;
+			const auto inserted = pidsMap.insert({ pid, pidsList.size() });
+			if (inserted.second)
+				pidsList.push_back(pid);
+			return inserted.second;
+		};
+		for (UINT i = 0; i < anCount; ++i)
+		{
+			if (!addPid(apPID[i]))
+				continue;
+
+			if (mn_ConHost_PID && !conhostAdded)
 			{
-				PID[nCount++] = apPID[i];
+				// Let's show conhost.exe as second process in a console
+				std::ignore = addPid(mn_ConHost_PID);
+				conhostAdded = true;
 			}
 		}
 
-		_ASSERTE(nCount<=countof(PID));
-		anCount = nCount;
-	}
-	else
-	{
-		memmove(PID, apPID, anCount*sizeof(DWORD));
+		if (mn_ConHost_PID && !conhostAdded)
+		{
+			std::ignore = addPid(mn_ConHost_PID);
+		}
 	}
 
-	UINT i = 0;
-	//std::vector<ConProcess>::iterator iter, end;
-	//BOOL bAlive = FALSE;
-	bool bProcessChanged = false, bProcessNew = false, bProcessDel = false;
+	MSectionLock SPRC; SPRC.Lock(&csPRC);
+
 	CProcessData* pProcData = nullptr;
 
-	// Проверить, может какие-то процессы уже помечены как закрывающиеся - их не добавлять
-	for (UINT j = 0; j < anCount; j++)
-	{
-		for (UINT k = 0; k < countof(m_TerminatedPIDs); k++)
-		{
-			if (m_TerminatedPIDs[k] == PID[j])
-			{
-				PID[j] = 0; break;
-			}
-		}
-	}
-
-	// Проверить, может какие-то из запомненных в m_FarPlugPIDs процессов отвалились от консоли
+	// Drop Far processes, which aren't exist in our console
 	for (UINT j = 0; j < mn_FarPlugPIDsCount; j++)
 	{
 		if (m_FarPlugPIDs[j] == 0)
 			continue;
 
-		bool bFound = false;
-
-		for(i = 0; i < anCount; i++)
-		{
-			if (PID[i] == m_FarPlugPIDs[j])
-			{
-				bFound = true; break;
-			}
-		}
-
-		if (!bFound)
+		if (!pidsMap.count(m_FarPlugPIDs[j]))
 			m_FarPlugPIDs[j] = 0;
 	}
 
-	// поставить пометочку на все процессы, вдруг кто уже убился
-	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
+	// Check which processes already/still exists in our console
+	for (auto& proc : m_Processes)
 	{
-		m_Processes[ii].inConsole = false;
-	}
-	//iter = m_Processes.begin();
-	//end = m_Processes.end();
-	//while (iter != end)
-	//{
-	//	iter->inConsole = false;
-	//	++iter;
-	//}
-
-	// Проверяем, какие процессы уже есть в нашем списке
-	//iter = m_Processes.begin();
-	//while (iter != end)
-	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
-	{
-		ConProcess* iter = &(m_Processes[ii]);
-		for (i = 0; i < anCount; i++)
+		auto found = pidsMap.find(proc.ProcessID);
+		if (found != pidsMap.end())
 		{
-			if (PID[i] && PID[i] == iter->ProcessID)
-			{
-				iter->inConsole = true;
-				PID[i] = 0; // Его добавлять уже не нужно, мы о нем знаем
-				break;
-			}
+			proc.inConsole = true;
+			pidsList[found->second] = 0;
+			pidsMap.erase(found);
 		}
-
-		//++iter;
-	}
-
-	// Проверяем, есть ли изменения
-	for (i = 0; i < anCount; i++)
-	{
-		if (PID[i])
+		else
 		{
-			bProcessNew = TRUE; break;
+			proc.inConsole = false;
 		}
 	}
 
-	//iter = m_Processes.begin();
-	//while (iter != end)
-	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
-	{
-		ConProcess* iter = &(m_Processes[ii]);
+	// Are there new processes to add?
+	const bool bProcessNew = !pidsMap.empty();
+	// Some were terminated?
+	const bool bProcessDel = std::any_of(m_Processes.begin(), m_Processes.end(),
+		[](const ConProcess& proc) { return proc.inConsole == false;  });
 
-		if (iter->inConsole == false)
-		{
-			bProcessDel = TRUE; break;
-		}
-
-		//++iter;
-	}
-
-	// Теперь нужно добавить новый процесс
+	// Are there changes?
+	bool bProcessChanged = false;
 	if (bProcessNew || bProcessDel)
 	{
+		MArray<ConProcess> addProcesses;
+		addProcesses.reserve(pidsMap.size());
+		std::unordered_set<DWORD> notAlive;
+
 		// #PROCESS Mark somehow failed processes to avoid permanent calls to CreateToolhelp32Snapshot
 		// Now we assume that PID's came from Server are valid (retrieved from conhost)
-		ConProcess cp;
-		HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-		_ASSERTE(h!=INVALID_HANDLE_VALUE);
-
-		if (h==INVALID_HANDLE_VALUE)
+		MToolHelpProcess processes;
+		if (!processes.Open())
 		{
-			DWORD dwErr = GetLastError();
+			const DWORD dwErr = GetLastError();
+			_ASSERTE(FALSE && "Open processes snapshot failed");
 			wchar_t szError[255];
 			swprintf_c(szError, L"Can't create process snapshot, ErrCode=0x%08X", dwErr);
 			mp_ConEmu->DebugStep(szError);
 		}
 		else
 		{
-			//Snapshot создан, поехали
-			// Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился
-			for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
+			notAlive.reserve(m_Processes.size());
+			for (const auto& cp : m_Processes)
 			{
-				m_Processes[ii].Alive = false;
-			}
-			//iter = m_Processes.begin();
-			//end = m_Processes.end();
-			//while (iter != end)
-			//{
-			//	iter->Alive = false;
-			//	++iter;
-			//}
-
-			PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
-			BOOL TerminatedPIDsExist[128] = {};
-			_ASSERTE(countof(TerminatedPIDsExist)==countof(m_TerminatedPIDs));
-
-			if (Process32First(h, &p))
-			{
-				do
-				{
-					DWORD th32ProcessID = p.th32ProcessID;
-					// Если этот процесс был указан как sst_ComspecStop/sst_AppStop/sst_App16Stop
-					// - сбросить лок.переменную в 0 и continue;
-					// Иначе в массиве процессов могут оставаться "устаревшие", но еще не отвалившиеся от консоли
-					// Что в свою очередь, может приводить к глюкам отрисовки и определения текущего статуса (Far/не Far)
-					for (UINT k = 0; k < countof(m_TerminatedPIDs); k++)
-					{
-						if (m_TerminatedPIDs[k] == th32ProcessID)
-						{
-							th32ProcessID = 0;
-							TerminatedPIDsExist[k] = TRUE;
-							break;
-						}
-					}
-					if (!th32ProcessID)
-						continue; // следующий процесс
-
-					// Если он есть в PID[] - добавить в m_Processes
-					if (bProcessNew)
-					{
-						for (i = 0; i < anCount; i++)
-						{
-							if (PID[i] && PID[i] == p.th32ProcessID)
-							{
-								if (!bProcessChanged) bProcessChanged = TRUE;
-
-								memset(&cp, 0, sizeof(cp));
-								cp.ProcessID = PID[i]; cp.ParentPID = p.th32ParentProcessID;
-								ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, tcc, conemuc, и пр.
-								cp.Alive = true;
-								cp.inConsole = true;
-
-								if (cp.Bits)
-								{
-									// Bitness is already detected
-								}
-								else if (bIsWin64)
-								{
-									// We can't check bitness via TH32CS_SNAPMODULE if the CURRENT process is 32-bit
-									#if 0
-									bool bIsWowProcess = false;
-									MODULEENTRY32 mi = {sizeof(mi)};
-									HANDLE hMod = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, cp.ProcessID);
-									DWORD nErrCode = (hMod == INVALID_HANDLE_VALUE) ? GetLastError() : 0;
-									if (hMod != INVALID_HANDLE_VALUE)
-									{
-										if (Module32First(hMod, &mi))
-										{
-											do {
-												if (lstrcmpi(mi.szModule, L"wow64.dll") == 0)
-												{
-													bIsWowProcess = true; break;
-												}
-											} while (Module32Next(hMod, &mi));
-										}
-										SafeCloseHandle(hMod);
-									}
-									UNREFERENCED_PARAMETER(nErrCode);
-									#endif
-
-									cp.Bits = GetProcessBits(cp.ProcessID);
-									// Will fail with elevated consoles/processes
-									if (cp.Bits == 0)
-									{
-										if (!pProcData)
-											pProcData = new CProcessData();
-										if (pProcData)
-											pProcData->GetProcessName(cp.ProcessID, nullptr, 0, nullptr, 0, &cp.Bits);
-									}
-								}
-								else
-								{
-									cp.Bits = 32;
-								}
-
-
-								SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
-								m_Processes.push_back(cp);
-							}
-						}
-					}
-
-					// Перебираем запомненные процессы - поставить флажок Alive
-					// сохранить имя для тех процессов, которым ранее это сделать не удалось
-					//iter = m_Processes.begin();
-					//end = m_Processes.end();
-					//while (iter != end)
-					//{
-					for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
-					{
-						ConProcess* iter = &(m_Processes[ii]);
-						if (iter->ProcessID == p.th32ProcessID)
-						{
-							iter->Alive = true;
-
-							if (!iter->NameChecked)
-							{
-								// пометить, что сменился список (определилось имя процесса)
-								if (!bProcessChanged) bProcessChanged = TRUE;
-
-								//far, telnet, cmd, tcc, conemuc, и пр.
-								ProcessCheckName(*iter, p.szExeFile);
-								// запомнить родителя
-								iter->ParentPID = p.th32ParentProcessID;
-							}
-						}
-
-						//++iter;
-					}
-
-					// Следующий процесс
-				}
-				while(Process32Next(h, &p));
-
-				// Убрать из массива те процессы, которых уже нет
-				for (UINT k = 0; k < countof(m_TerminatedPIDs); k++)
-				{
-					if (m_TerminatedPIDs[k] && !TerminatedPIDsExist[k])
-						m_TerminatedPIDs[k] = 0;
-				}
+				notAlive.insert(cp.ProcessID);
 			}
 
-			// Закрыть snapshot
-			SafeCloseHandle(h);
+			PROCESSENTRY32W pi{};
+			while (processes.Next(pi))
+			{
+				if (!pi.th32ProcessID)
+					continue;
+
+				// It was reported, but still exists, waiting...
+				terminatedMap.erase(pi.th32ProcessID);
+
+				// Alive processes
+				notAlive.erase(pi.th32ProcessID);
+
+				// Is it new process?
+				if (!pidsMap.count(pi.th32ProcessID))
+					continue;
+
+				ConProcess cp{};
+				cp.ProcessID = pi.th32ProcessID;
+				cp.ParentPID = pi.th32ParentProcessID;
+				ProcessCheckName(cp, pi.szExeFile); //far, telnet, cmd, tcc, conemuc, и пр.
+				cp.inConsole = true;
+
+				if (!cp.Bits)
+				{
+					if (bIsWin64)
+					{
+						cp.Bits = GetProcessBits(cp.ProcessID);
+						// Will fail with elevated consoles/processes
+						if (cp.Bits == 0)
+						{
+							if (!pProcData)
+								pProcData = new CProcessData();
+							if (pProcData)
+								pProcData->GetProcessName(cp.ProcessID, nullptr, 0, nullptr, 0, &cp.Bits);
+						}
+					}
+					else
+					{
+						cp.Bits = 32;
+					}
+				}
+
+				addProcesses.push_back(std::move(cp));
+			}
+		}
+
+		if ((!terminatedMap.empty() || !addProcesses.empty() || !notAlive.empty() || bProcessDel)
+			&& SPRC.RelockExclusive(300))
+		{
+			for (auto& cp : addProcesses)
+			{
+				m_Processes.push_back(std::move(cp));
+				bProcessChanged = true;
+			}
+
+			for (const auto& iter : terminatedMap)
+			{
+				if (m_TerminatedPIDs[iter.second] == iter.first)
+					m_TerminatedPIDs[iter.second] = 0;
+			}
+
+			// Remove dead processes
+			for (ssize_t i = 0; i < m_Processes.size();)
+			{
+				ConProcess* iter = &(m_Processes[i]);
+				if (!iter->inConsole || notAlive.count(iter->ProcessID))
+				{
+					m_Processes.erase(i);
+					bProcessChanged = true;
+				}
+				else
+				{
+					++i;
+				}
+			}
 		}
 	}
 
-	// Убрать процессы, которых уже нет
-	//iter = m_Processes.begin();
-	//end = m_Processes.end();
-	//while (iter != end)
-	INT_PTR ii = 0;
-	while (ii < m_Processes.size())
-	{
-		ConProcess* iter = &(m_Processes[ii]);
-		if (!iter->Alive || !iter->inConsole)
-		{
-			if (!bProcessChanged) bProcessChanged = TRUE;
-
-			SPRC.RelockExclusive(300); // Если уже нами заблокирован - просто вернет FALSE
-			//iter = m_Processes.erase(iter);
-			//end = m_Processes.end();
-			m_Processes.erase(ii);
-		}
-		else
-		{
-			//if (mn_Far_PluginInputThreadId && mn_FarPID_PluginDetected
-			//    && iter->ProcessID == mn_FarPID_PluginDetected
-			//    && iter->InputTID == 0)
-			//    iter->InputTID = mn_Far_PluginInputThreadId;
-			//++iter;
-			ii++;
-		}
-	}
-
-	// Далее могут идти длительные операции, поэтому откатим "Exclusive"
+	// Undo exclusive locks, to continue probably long operations
 	if (SPRC.isLocked(TRUE))
 	{
 		SPRC.Unlock();
@@ -9164,38 +9037,31 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 
 	SafeDelete(pProcData);
 
-	// Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
-	if (ProcessUpdateFlags(bProcessChanged))
-		lbChanged = TRUE;
+	// Refresh running programs status, retrieve FAR PID, count processes
+	const auto farStateChanged = ProcessUpdateFlags(bProcessChanged);
 
-	//
 	if (lbRecreateOk)
 		mn_InRecreate = 0;
 
-	return lbChanged;
+	return farStateChanged;
 }
 
 void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName)
 {
-	wchar_t* pszSlash = _tcsrchr(asFullFileName, _T('\\'));
-	if (pszSlash) pszSlash++; else pszSlash=asFullFileName;
-
-	int nLen = _tcslen(pszSlash);
-
-	if (nLen>=63) pszSlash[63]=0;
-
-	lstrcpyW(ConPrc.Name, pszSlash);
+	const auto* name = PointToName(asFullFileName);
+	lstrcpynW(ConPrc.Name, name, countof(ConPrc.Name));
 
 	ConPrc.IsMainSrv = (ConPrc.ProcessID == mn_MainSrv_PID);
+	#ifdef _DEBUG
 	if (ConPrc.IsMainSrv)
 	{
-		//
 		_ASSERTE(lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0);
 	}
 	else if (lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0)
 	{
 		_ASSERTE(mn_MainSrv_PID!=0 && "Main server PID was not determined?");
 	}
+	#endif
 
 	// Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли
 	ConPrc.IsCmd = !ConPrc.IsMainSrv
@@ -9217,8 +9083,6 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	{
 		ConPrc.Bits = IsWindows64() ? 64 : 32;
 	}
-
-	ConPrc.NameChecked = true;
 
 	if (!mn_ConHost_PID && ConPrc.IsConHost)
 	{

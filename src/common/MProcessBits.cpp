@@ -34,22 +34,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 
 /// Check running process bitness - 32/64
-int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
+int GetProcessBits(DWORD nPID, HANDLE hProcess /*= nullptr*/)
 {
 	if (!IsWindows64())
 		return 32;
 
 	int ImageBits = WIN3264TEST(32,64); //-V112
 
-	static BOOL (WINAPI* IsWow64Process_f)(HANDLE, PBOOL) = NULL;
+	static BOOL (WINAPI* IsWow64Process_f)(HANDLE, PBOOL) = nullptr;
 
 	if (!IsWow64Process_f)
 	{
 		// Kernel32.dll is always loaded due to static link
-		MModule kernel(GetModuleHandle(L"kernel32.dll"));
+		const MModule kernel(GetModuleHandle(L"kernel32.dll"));
 		kernel.GetProcAddress("IsWow64Process", IsWow64Process_f);
 		// 64-bit OS must have this function
-		_ASSERTE(IsWow64Process_f != NULL);
+		_ASSERTE(IsWow64Process_f != nullptr);
 	}
 
 	if (IsWow64Process_f)
@@ -58,13 +58,13 @@ int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 		HANDLE h = hProcess ? hProcess : OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
 
 		// IsWow64Process would be succeessfull for PROCESS_QUERY_LIMITED_INFORMATION (Vista+)
-		if ((h == NULL) && IsWin6())
+		if ((h == nullptr) && IsWin6())
 		{
 			// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
 			h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, nPID);
 		}
 
-		if (h == NULL)
+		if (h == nullptr)
 		{
 			// If it is blocked due to access rights - try to find alternative ways (by path or PERF COUNTER)
 			ImageBits = 0;
