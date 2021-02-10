@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CmdLine.h"
 
+
+#include "EnvVar.h"
 #include "execute.h"
 #include "MStrDup.h"
 #include "RConStartArgsEx.h"
@@ -125,21 +127,26 @@ namespace
 {
 void TestIsNeedCmd(
 	// ReSharper disable CppParameterMayBeConst
-	LPCWSTR testCommand, LPCWSTR expectedExe,
-	const bool expectedResult, const bool isServer, const StartEndQuot expectedNeedCut, const bool expectedRootIsCmd, const bool expectedAlwaysConfirm)
+	const bool isServer, LPCWSTR testCommand, LPCWSTR expectedExeParam,
+	const bool expectedResult, const StartEndQuot expectedNeedCut, const bool expectedRootIsCmd, const bool expectedAlwaysConfirm)
 {
 	CEStr exe;
 	NeedCmdOptions opt{};
 	const auto isNeedCmd = IsNeedCmd(isServer, testCommand, exe, &opt);
 	EXPECT_EQ(isNeedCmd, expectedResult) << "cmd: " << testCommand << ", srv: " << isServer;
-	if (wcschr(expectedExe, L'\\') != nullptr)
-	{
-		EXPECT_STREQ(exe.c_str(L""), expectedExe) << "cmd: " << testCommand << ", srv: " << isServer;
-	}
-	else
-	{
-		EXPECT_STREQ(PointToName(exe.c_str(L"")), expectedExe) << "cmd: " << testCommand << ", srv: " << isServer;
-	}
+	const auto expandedExe = ExpandEnvStr(expectedExeParam);
+	const auto* expectedExe = expandedExe ? expandedExe.c_str() : expectedExeParam;
+	EXPECT_EQ(0, lstrcmpiW(exe.c_str(L""), expectedExe))
+		<< "cmd: " << testCommand << ", srv: " << isServer << ", result: "
+		<< exe.c_str(L"") << ", expected: " << expectedExe;
+	//if (wcschr(expectedExe, L'\\') != nullptr)
+	//{
+	//	EXPECT_STREQ(exe.c_str(L""), expectedExe) << "cmd: " << testCommand << ", srv: " << isServer;
+	//}
+	//else
+	//{
+	//	EXPECT_STREQ(PointToName(exe.c_str(L"")), expectedExe) << "cmd: " << testCommand << ", srv: " << isServer;
+	//}
 	EXPECT_EQ(opt.startEndQuot, expectedNeedCut) << "cmd: " << testCommand << ", srv: " << isServer;
 	EXPECT_EQ(opt.rootIsCmdExe, expectedRootIsCmd) << "cmd: " << testCommand << ", srv: " << isServer;
 	EXPECT_EQ(opt.alwaysConfirmExit, expectedAlwaysConfirm) << "cmd: " << testCommand << ", srv: " << isServer;
@@ -164,149 +171,155 @@ TEST(CmdLine, IsNeedCmd)
 	fileMock.MockPathFile(L"chkdsk.exe", LR"(C:\Windows\System32\chkdsk.exe)");
 	fileMock.MockPathFile(L"far.exe", LR"(c:\far\far.exe)");
 
-	TestIsNeedCmd(nullptr,
+	TestIsNeedCmd(false, nullptr,
 		L"",
-		true, false, StartEndQuot::DontChange, true, true);
-	TestIsNeedCmd(L" ",
+		true, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(false, L" ",
 		L"",
-		true, false, StartEndQuot::DontChange, true, true);
-	TestIsNeedCmd(L"\"\\\"", // NextArg failure expected
+		true, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(false, L"\"\\\"", // NextArg failure expected
 		L"",
-		true, false, StartEndQuot::DontChange, true, true);
-	TestIsNeedCmd(L"script.cmd arg1 arg2",
+		true, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(false, L"script.cmd arg1 arg2",
 		L"script.cmd",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
+		true, StartEndQuot::DontChange, true, false);
+
+	TestIsNeedCmd(false, L"set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
 		L"set",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"cmd.exe /c set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
-		L"cmd.exe",
-		false, false, StartEndQuot::DontChange, true, true);
-	TestIsNeedCmd(L"drive::path arg1 arg2",
-		L"drive::path",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"start",
-		L"",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"start explorer",
-		L"",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"\"\"start\" \"explorer\" C:\\\"",
-		L"start",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"start \"\" \"C:\\user data\\test.exe\"",
-		L"",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"start \"\" C:\\Utils\\Hiew32\\hiew32.exe C:\\00\\Far.exe",
-		L"",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"Call \"C:\\user scripts\\tool.cmd\" some args",
-		L"Call",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"tool.exe < input > output",
-		L"tool.exe",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"\"tool.exe\" < input > output",
-		L"tool.exe",
-		true, true, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"c:\\tool.exe < input > output",
-		L"tool.exe",
-		true, false, StartEndQuot::DontChange, true, false);
-	// As it's a *server* mode (root command) we don't check for pipelining and redirection
-	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output",
-		L"cacls.exe",
-		false, true, StartEndQuot::DontChange, false, false);
-	// But for ComSpec mode - the "cmd /c ..." is required
-	TestIsNeedCmd(L"%windir%\\system32\\cacls.exe < input > output",
-		L"cacls.exe",
-		true, false, StartEndQuot::DontChange, true, false);
+		true, StartEndQuot::DontChange, true, false);
+
+	TestIsNeedCmd(false, L"cmd.exe /c set var1=val1 & set var2=val2 & pwsh.exe -noprofile",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
 	// As it's a *server* mode (root command) we don't check for pipelining and redirection, even if there is no "/c"
-	TestIsNeedCmd(L"%comspec% < input > output",
-		L"cmd.exe",
-		false, true, StartEndQuot::DontChange, true, true);
-	TestIsNeedCmd(L"%comspec% /c < input > output",
-		L"cmd.exe",
-		false, false, StartEndQuot::DontChange, true, true);
-	TestIsNeedCmd(L"%comspec% /K < input > output",
-		L"cmd.exe",
-		false, true, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(true, L"%comspec% < input > output",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(false, L"%comspec% /c < input > output",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(true, L"%comspec% /K < input > output",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
+	// #IsNeedCmd expectedAlwaysConfirm?
+	TestIsNeedCmd(false, L"\"\"cmd\"\"",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::NeedCut, true, true);
+	// #IsNeedCmd expectedAlwaysConfirm?
+	TestIsNeedCmd(false, L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
+	// #IsNeedCmd expectedAlwaysConfirm?
+	TestIsNeedCmd(false, L"cmd /c \"dir c:\\\"",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
+	// we don't care if user explicitly specified wrong quotation
+	TestIsNeedCmd(false, L"cmd /c \"C:\\1 &\\check.cmd\"",
+		L"%windir%\\system32\\cmd.exe",
+		false, StartEndQuot::DontChange, true, true);
+	TestIsNeedCmd(false, L"\"dir > test.log\"",
+		L"",
+		true, StartEndQuot::DontChange, true, false);
+
+	TestIsNeedCmd(false, L"drive::path arg1 arg2",
+		L"drive::path",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"start",
+		L"",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"start explorer",
+		L"",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"\"\"start\" \"explorer\" C:\\\"",
+		L"start",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"start \"\" \"C:\\user data\\test.exe\"",
+		L"",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"start \"\" C:\\Utils\\Hiew32\\hiew32.exe C:\\00\\Far.exe",
+		L"",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"Call \"C:\\user scripts\\tool.cmd\" some args",
+		L"Call",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"tool.exe < input > output",
+		L"tool.exe",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(true, L"\"tool.exe\" < input > output",
+		L"tool.exe",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"c:\\tool.exe < input > output",
+		L"c:\\tool.exe",
+		true, StartEndQuot::DontChange, true, false);
+	// As it's a *server* mode (root command) we don't check for pipelining and redirection
+	TestIsNeedCmd(true, L"%windir%\\system32\\cacls.exe < input > output",
+		L"%windir%\\system32\\cacls.exe",
+		false, StartEndQuot::DontChange, false, false);
+	// But for ComSpec mode - the "cmd /c ..." is required
+	TestIsNeedCmd(false, L"%windir%\\system32\\cacls.exe < input > output",
+		L"%windir%\\system32\\cacls.exe",
+		true, StartEndQuot::DontChange, true, false);
 	// #IsNeedCmd expectedResult should be true
-	TestIsNeedCmd(L"chkdsk < input > output",
-		L"chkdsk.exe",
-		false, true, StartEndQuot::DontChange, false, false);
-	TestIsNeedCmd(L"\"\"%windir%\\system32\\cacls.exe\" a test.7z ConEmu.exe \"",
-		L"cacls.exe",
-		false, false, StartEndQuot::NeedCut, false, false);
-	TestIsNeedCmd(L"\"%windir%\\system32\\cacls.exe\" a test.7z ConEmu.exe ",
-		L"cacls.exe",
-		false, false, StartEndQuot::DontChange, false, false);
+	TestIsNeedCmd(true, L"chkdsk < input > output",
+		L"%windir%\\system32\\chkdsk.exe",
+		false, StartEndQuot::DontChange, false, false);
+	TestIsNeedCmd(false, L"\"\"%windir%\\system32\\cacls.exe\" a test.7z ConEmu.exe \"",
+		L"%windir%\\system32\\cacls.exe",
+		false, StartEndQuot::NeedCut, false, false);
+	TestIsNeedCmd(false, L"\"%windir%\\system32\\cacls.exe\" a test.7z ConEmu.exe ",
+		L"%windir%\\system32\\cacls.exe",
+		false, StartEndQuot::DontChange, false, false);
 	// #IsNeedCmd expectedArgs should not end with \"
-	TestIsNeedCmd(L"\"\"7z\" a test.7z ConEmu.exe \"",
-		L"7z.exe" /* via search */,
-		false, false, StartEndQuot::NeedCut, false, false);
-	TestIsNeedCmd(L"\"c:\\program files\\arc\\7z.exe\" -?",
+	TestIsNeedCmd(false, L"\"\"7z\" a test.7z ConEmu.exe \"",
+		L"C:\\Tools\\Arch\\7z.exe" /* via search */,
+		false, StartEndQuot::NeedCut, false, false);
+	TestIsNeedCmd(false, L"\"c:\\program files\\arc\\7z.exe\" -?",
 		L"c:\\program files\\arc\\7z.exe",
-		false, false, StartEndQuot::DontChange, false, false);
+		false, StartEndQuot::DontChange, false, false);
 	// #IsNeedCmd expectedArgs should not end with \"
-	TestIsNeedCmd(L"\"\"c:\\program files\\arc\\7z.exe\" -?\"",
+	TestIsNeedCmd(false, L"\"\"c:\\program files\\arc\\7z.exe\" -?\"",
 		L"c:\\program files\\arc\\7z.exe",
-		false, false, StartEndQuot::NeedCut, false, false);
+		false, StartEndQuot::NeedCut, false, false);
 	// #IsNeedCmd expectedArgs should not end with \"
-	TestIsNeedCmd(L"\"c:\\arc\\7z.exe -?\"",
+	TestIsNeedCmd(false, L"\"c:\\arc\\7z.exe -?\"",
 		L"c:\\arc\\7z.exe",
-		false, false, StartEndQuot::NeedCut, false, false);
+		false, StartEndQuot::NeedCut, false, false);
 	// #IsNeedCmd expectedArgs should not end with \"
-	TestIsNeedCmd(L"\"c:\\far\\far.exe -new_console\"",
+	TestIsNeedCmd(false, L"\"c:\\far\\far.exe -new_console\"",
 		L"c:\\far\\far.exe",
-		false, false, StartEndQuot::NeedCut, false, false);
+		false, StartEndQuot::NeedCut, false, false);
 	// #IsNeedCmd expectedArgs should not end with \"\"
 	// #IsNeedCmd expectedNeedCut should be true, but the command line is illegally quoted
-	TestIsNeedCmd(L"\"\"c:\\far\\far.exe -new_console\"\"",
+	TestIsNeedCmd(false, L"\"\"c:\\far\\far.exe -new_console\"\"",
 		L"c:\\far\\far.exe",
-		false, false, StartEndQuot::DontChange, false, false);
+		false, StartEndQuot::DontChange, false, false);
 	// #IsNeedCmd add test with "far" without ".exe", but we need to emulate apiSearchPath?
-	TestIsNeedCmd(L"far.exe -new_console /p:c:\\far /e:some.txt",
-		L"far.exe",
-		false, false, StartEndQuot::DontChange, false, false);
-	TestIsNeedCmd(L"far -new_console /p:c:\\far /e:some.txt",
-		L"far.exe",
-		false, false, StartEndQuot::DontChange, false, false);
+	TestIsNeedCmd(false, L"far.exe -new_console /p:c:\\far /e:some.txt",
+		L"c:\\far\\far.exe",
+		false, StartEndQuot::DontChange, false, false);
+	TestIsNeedCmd(false, L"far -new_console /p:c:\\far /e:some.txt",
+		L"c:\\far\\far.exe",
+		false, StartEndQuot::DontChange, false, false);
 	// #IsNeedCmd should work properly even without mock of "make.EXE"
-	TestIsNeedCmd(L"\"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"\"",
+	TestIsNeedCmd(false, L"\"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"\"",
 		L"C:\\msys\\bin\\make.EXE",
-		false, false, StartEndQuot::NeedCut, false, false);
-	TestIsNeedCmd(L"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"",
+		false, StartEndQuot::NeedCut, false, false);
+	TestIsNeedCmd(false, L"C:\\msys\\bin\\make.EXE -f \"makefile\" COMMON=\"/../plugins\"",
 		L"C:\\msys\\bin\\make.EXE",
-		false, false, StartEndQuot::DontChange, false, false);
-	// #IsNeedCmd expectedAlwaysConfirm?
-	TestIsNeedCmd(L"\"\"cmd\"\"",
-		L"cmd.exe",
-		false, false, StartEndQuot::NeedCut, true, true);
-	// #IsNeedCmd expectedAlwaysConfirm?
-	TestIsNeedCmd(L"cmd /c \"\"c:\\program files\\arc\\7z.exe\" -?\"",
-		L"cmd.exe",
-		false, false, StartEndQuot::DontChange, true, true);
-	// #IsNeedCmd expectedAlwaysConfirm?
-	TestIsNeedCmd(L"cmd /c \"dir c:\\\"",
-		L"cmd.exe",
-		false, false, StartEndQuot::DontChange, true, true);
-	// we don't care if user explicitly specified wrong quotation
-	TestIsNeedCmd(L"cmd /c \"C:\\1 &\\check.cmd\"",
-		L"cmd.exe",
-		false, false, StartEndQuot::DontChange, true, true);
+		false, StartEndQuot::DontChange, false, false);
 	// when executed from Far 3.0 build 5709+
-	TestIsNeedCmd(L"\"C:\\1 &\\check.cmd\" arg1 arg2", // we need to fix it, if that was CreateProcess' asParam (no asFile)
-		L"check.cmd",
-		true, false, StartEndQuot::NeedAdd, true, false);
-	TestIsNeedCmd(L"\"C:\\1 @\\check.cmd\" arg1 arg2", // we need to fix it, if that was CreateProcess' asParam (no asFile)
-		L"check.cmd",
-		true, false, StartEndQuot::NeedAdd, true, false);
-	TestIsNeedCmd(L"\"\"C:\\1 &\\check.cmd\" arg1 arg2\"",
-		L"check.cmd",
-		true, false, StartEndQuot::DontChange, true, false);
-	TestIsNeedCmd(L"\"\"C:\\1 @\\check.cmd\" arg1 arg2\"",
-		L"check.cmd",
-		true, false, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"\"C:\\1 &\\check.cmd\" arg1 arg2", // we need to fix it, if that was CreateProcess' asParam (no asFile)
+		L"C:\\1 &\\check.cmd",
+		true, StartEndQuot::NeedAdd, true, false);
+	TestIsNeedCmd(false, L"\"C:\\1 @\\check.cmd\" arg1 arg2", // we need to fix it, if that was CreateProcess' asParam (no asFile)
+		L"C:\\1 @\\check.cmd",
+		true, StartEndQuot::NeedAdd, true, false);
+	TestIsNeedCmd(false, L"\"\"C:\\1 &\\check.cmd\" arg1 arg2\"",
+		L"C:\\1 &\\check.cmd",
+		true, StartEndQuot::DontChange, true, false);
+	TestIsNeedCmd(false, L"\"\"C:\\1 @\\check.cmd\" arg1 arg2\"",
+		L"C:\\1 @\\check.cmd",
+		true, StartEndQuot::DontChange, true, false);
 
 	gbVerifyIgnoreAsserts = false; // restore default
 }
@@ -360,8 +373,8 @@ TEST(CmdLine, FromSpaceDelimitedString)
 		const auto result = GetFilePathFromSpaceDelimitedString(commandLine, exe, args);
 		EXPECT_EQ(result, false) << L"command(no-mock): " << commandLine;
 	};
-		
-	
+
+
 	test_mocks::FileSystemMock fileMock;
 	fileMock.MockFile(LR"(C:\Far\Far.exe)");
 	fileMock.MockFile(LR"(C:\Program Files\CodeBlocks/cb_console_runner.exe)");

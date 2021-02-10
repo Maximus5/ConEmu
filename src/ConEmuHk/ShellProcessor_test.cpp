@@ -79,7 +79,7 @@ public:
 		ghConWnd = GetRealConsoleWindow();
 		if (!ghConWnd)
 		{
-			cdbg() << "Test is not functional, GetRealConsoleWindow is nullptr";
+			cdbg() << "Test is not functional, GetRealConsoleWindow is nullptr" << std::endl;
 			return;
 		}
 		if (!LoadSrvMapping(ghConWnd, srvMap))
@@ -294,19 +294,19 @@ TEST_F(ShellProcessor, Far175)
 	TestInfo tests[] = {
 		{Function::CreateA,
 			nullptr, R"(""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd""  )",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd""  )"},
+			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd""  )"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /C "set > res.log")",
-			nullptr, R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "set > res.log")"},
+			nullptr, R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C "set > res.log")"},
 	};
 
 	for (size_t i = 0; i < countof(tests); ++i)

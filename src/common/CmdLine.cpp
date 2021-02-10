@@ -833,10 +833,36 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	}
 	else
 	{
+		auto isCmdInternalCommand = [](const CEStr& cmd)
+		{
+			const bool bHasExt = (wcschr(cmd, L'.') != nullptr);
+			if (bHasExt)
+				return false;
+			bool isCommand = false;
+			const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
+			while (*internalCommand)
+			{
+				if (cmd.Compare(internalCommand, false) == 0)
+				{
+					isCommand = true;
+					break;
+				}
+				internalCommand += wcslen(internalCommand) + 1;
+			}
+			return isCommand;
+		};
+
 		// Illegal characters in the executable we parse from the command line.
 		// We can't run the program as it's path is invalid, so let's try it to "cmd.exe /c ..."
 		if (wcspbrk(szExe, ILLEGAL_CHARACTERS))
 		{
+			#ifdef _DEBUG
+			CmdArg testCmd;
+			bool isInternalCmd = false;
+			if (NextArg(pwszCopy, testCmd))
+				isInternalCmd = isCmdInternalCommand(testCmd);
+			#endif
+			szExe.Clear();
 			rootIsCmdExe = true;
 			isNeedCmd = true;
 			goto wrap;
@@ -847,29 +873,15 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		{
 			const bool bHasExt = (wcschr(szExe, L'.') != nullptr);
 			// Let's check if it's a processor command, e.g. "DIR"
-			if (!bHasExt)
+			if (isCmdInternalCommand(szExe))
 			{
-				bool isCommand = false;
-				const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
-				while (*internalCommand)
-				{
-					if (szExe.Compare(internalCommand, false) == 0)
-					{
-						isCommand = true;
-						break;
-					}
-					internalCommand += wcslen(internalCommand) + 1;
-				}
-				if (isCommand)
-				{
-					#ifdef WARN_NEED_CMD
-					_ASSERTE(FALSE);
-					#endif
-					rootIsCmdExe = true;
-					isNeedCmd = true;
-					goto wrap;
-				}
-			}
+				#ifdef WARN_NEED_CMD
+				_ASSERTE(FALSE);
+				#endif
+				rootIsCmdExe = true;
+				isNeedCmd = true;
+				goto wrap;
+		}
 
 			// Try to find executable in %PATH%
 			{
