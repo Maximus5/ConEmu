@@ -300,7 +300,7 @@ protected:
 		BOOL  WrapWasSet = FALSE;
 		SHORT WrapAt = 0; // Rightmost X coord (1-based)
 		//
-		BOOL  AutoLfNl = TRUE; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
+		BOOL  AutoLfNl = FALSE; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
 		//
 		BOOL  ScrollRegion = FALSE;
 		SHORT ScrollStart = 0, ScrollEnd = 0; // 0-based absolute line indexes
