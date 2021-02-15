@@ -214,6 +214,12 @@
     <Manifest>
       <AdditionalManifestFiles>ConEmuC/ConEmuC.exe.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>echo Copying "$(SolutionDir)../Release/ConEmu/*.cmd" "../Debug/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\*.cmd"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "..\Debug\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "..\Debug\ConEmu" &gt; nul)
+echo Copying "$(SolutionDir)../Release/ConEmu/ConEmu.l10n" "../Debug/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "..\Debug\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "..\Debug\ConEmu" &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -238,6 +244,12 @@
     <Manifest>
       <AdditionalManifestFiles>ConEmuC/ConEmuC.exe.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>echo Copying "$(SolutionDir)../Release/ConEmu/*.cmd" "../Debug/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\*.cmd"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "..\Debug\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "..\Debug\ConEmu" &gt; nul)
+echo Copying "$(SolutionDir)../Release/ConEmu/ConEmu.l10n" "../Debug/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "..\Debug\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "..\Debug\ConEmu" &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <ClCompile>
@@ -262,6 +274,12 @@
     <Manifest>
       <AdditionalManifestFiles>ConEmuC/ConEmuC.exe.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>echo Copying "$(SolutionDir)../Release/ConEmu/*.cmd" "Z:/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\*.cmd"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "Z:\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "Z:\ConEmu" &gt; nul)
+echo Copying "$(SolutionDir)../Release/ConEmu/ConEmu.l10n" "Z:/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "Z:\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "Z:\ConEmu" &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <ClCompile>
@@ -286,6 +304,12 @@
     <Manifest>
       <AdditionalManifestFiles>ConEmuC/ConEmuC.exe.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>echo Copying "$(SolutionDir)../Release/ConEmu/*.cmd" "Z:/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\*.cmd"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "Z:\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\*.cmd" "Z:\ConEmu" &gt; nul)
+echo Copying "$(SolutionDir)../Release/ConEmu/ConEmu.l10n" "Z:/ConEmu"
+IF EXIST "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n"\ (xcopy /Q /E /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "Z:\ConEmu" &gt; nul) ELSE (xcopy /Q /Y /I "$(SolutionDir)\..\Release\ConEmu\ConEmu.l10n" "Z:\ConEmu" &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ConEmuC\ConEmuC.h" />

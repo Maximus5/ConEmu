@@ -347,6 +347,15 @@ project "ConEmuC"
     { ["Exports"]   = {"**.def"} },
   }
 
+  filter { "configurations:Debug or Remote" }
+  postbuildcommands {
+    '{ECHO} Copying "%{wks.location}../Release/ConEmu/*.cmd" "%{cfg.targetdir}"',
+    '{COPY} "%{wks.location}/../Release/ConEmu/*.cmd" "%{cfg.targetdir}"',
+    '{ECHO} Copying "%{wks.location}../Release/ConEmu/ConEmu.l10n" "%{cfg.targetdir}"',
+    '{COPY} "%{wks.location}/../Release/ConEmu/ConEmu.l10n" "%{cfg.targetdir}"',
+  }
+  filter{}
+
   target_dir("ConEmu/")
   targetname "ConEmuC"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
