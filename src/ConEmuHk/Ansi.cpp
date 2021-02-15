@@ -4434,6 +4434,8 @@ void CEAnsi::StartXTermOutput(const bool bStart)
 {
 	// Remember last mode
 	gbWasXTermOutput = bStart;
+	// Set AutoLfNl according to mode
+	gDisplayOpt.AutoLfNl = bStart ? FALSE : TRUE;
 }
 
 void CEAnsi::RefreshXTermModes()

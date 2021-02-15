@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tuple>
 
 HANDLE hConOut;
+int result = 0;
 
 void write(const std::wstring& line)
 {
@@ -38,7 +39,7 @@ void write(const std::wstring& line)
 	WriteConsoleW(hConOut, line.c_str(), line.length(), &written, nullptr);
 }
 
-void test()
+void test(const std::wstring& expected)
 {
 	DWORD outFlags = -1; GetConsoleMode(hConOut, &outFlags);
 	wchar_t buffer[255] = L"";
@@ -47,37 +48,74 @@ void test()
 		(outFlags & DISABLE_NEWLINE_AUTO_RETURN) ? L"DISABLE_NEWLINE_AUTO_RETURN" : L"!DISABLE_NEWLINE_AUTO_RETURN");
 	write(buffer);
 
-	write(
-		L"Print(AAA\\nBBB\\r\\nCCC)\r\n"
-		L"AAA\nBBB\r\nCCC\r\n"
-	);
+	SetConsoleTextAttribute(hConOut, 14);
+	write(L"Print(AAA\\nBBB\\r\\nCCC)\r\n");
+	SetConsoleTextAttribute(hConOut, 7);
+
+	write(L"AAA\nBBB\r\nCCC\r\n");
+
+	if (expected.empty())
+		return;
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	GetConsoleScreenBufferInfo(hConOut, &csbi);
+	CHAR_INFO readBuffer[6 * 3] = {};
+	SMALL_RECT rcRead = {0, csbi.dwCursorPosition.Y - 3, 5, csbi.dwCursorPosition.Y - 1};
+	ReadConsoleOutputW(hConOut, readBuffer, COORD{6, 3}, COORD{0, 0}, &rcRead);
+	std::wstring data;
+	for (const auto& ci : readBuffer)
+	{
+		data += ci.Char.UnicodeChar;
+	}
+	if (data == expected)
+	{
+		SetConsoleTextAttribute(hConOut, 10);
+		write(L"OK\r\n");
+	}
+	else
+	{
+		SetConsoleTextAttribute(hConOut, 12);
+		write(L"FAILED: '");
+		write(data);
+		write(L"' != '");
+		write(expected);
+		write(L"'\r\n");
+		result = 1;
+	}
+	SetConsoleTextAttribute(hConOut, 7);
 }
 
 int main()
 {
 	hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD outFlags = 0; GetConsoleMode(hConOut, &outFlags);
+	const bool isDefaultMode = (outFlags == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT));
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	GetConsoleScreenBufferInfo(hConOut, &csbi);
 
-	test();
+	SetConsoleTextAttribute(hConOut, 7);
 
-	if (outFlags & (ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN))
+	test(isDefaultMode ? L"AAA   " L"BBB   " L"CCC   " : L"");
+
+	if (!isDefaultMode)
 	{
-		SetConsoleMode(hConOut, outFlags & (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT));
-		test();
+		SetConsoleMode(hConOut, (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT));
+		test(L"AAA   " L"BBB   " L"CCC   ");
 	}
 
 	SetConsoleMode(hConOut, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN);
-	test();
+	test(L"AAA   " L"   BBB" L"CCC   ");
 
 	SetConsoleMode(hConOut, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-	test();
+	test(L"AAA   " L"BBB   " L"CCC   ");
 
 	SetConsoleMode(hConOut, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | DISABLE_NEWLINE_AUTO_RETURN);
-	test();
+	test(L"AAA   " L"   BBB" L"CCC   ");
 
 	SetConsoleMode(hConOut, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN);
-	test();
+	test(L"AAA   " L"   BBB" L"CCC   ");
 
 	SetConsoleMode(hConOut, outFlags);
-	return 0;
+	SetConsoleTextAttribute(hConOut, csbi.wAttributes);
+	return result;
 }

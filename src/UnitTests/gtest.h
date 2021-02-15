@@ -16,6 +16,7 @@ void ColoredPrintf(GTestColor color, const char* fmt, ...);
 
 namespace conemu {
 namespace tests {
+void InitConEmuPathVars();
 extern std::vector<std::string> gTestArgs;
 }  // namespace tests
 }  // namespace conemu

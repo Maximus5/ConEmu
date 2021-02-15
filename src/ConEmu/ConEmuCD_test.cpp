@@ -38,8 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MModule.h"
 #include "../common/MToolHelp.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../UnitTests/gtest.h"
 #include "../ConEmuCD/ExportedFunctions.h"
+
+#include "../UnitTests/gtest.h"
 
 
 class OutputWasRedirected final : public std::runtime_error
@@ -468,20 +469,7 @@ TEST_F(ServerDllTest, RunCommand)
 		}
 	};
 
-	CEStr testExe;
-	GetModulePathName(nullptr, testExe);
-	auto* namePtr = const_cast<wchar_t*>(PointToName(testExe.c_str()));
-	if (namePtr && namePtr > testExe.c_str())
-	{
-		*(namePtr - 1) = 0;
-		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, testExe);
-		const CEStr baseDir(testExe, L"\\ConEmu");
-		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, baseDir);
-	}
-	else
-	{
-		cdbg() << "GetModulePathName failed, name is null" << std::endl;
-	}
+	conemu::tests::InitConEmuPathVars();
 	SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, L"0");
 	SetEnvironmentVariableW(ENV_CONEMUDRAW_VAR_W, L"0");
 	SetEnvironmentVariableW(ENV_CONEMUBACK_VAR_W, L"0");
@@ -517,11 +505,7 @@ TEST_F(ServerDllTest, RunCommand)
 
 	executeRun(L"-c cmd.exe /c echo echo from cmd.exe", 0, L"echo from cmd.exe");
 
-	#ifndef _DEBUG
 	executeRun(L"-c \"%ConEmuBaseDir%\\cecho.cmd\" \"Hello\" \"World\"", 0, L"Hello");
-	#else
-	cdbg("FIX_ME") << "%ConEmuBaseDir%\\cecho.cmd is absent on agents" << std::endl;
-	#endif
 
 	executeRun(L"-c \"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -echo Hello World\"", 0, L"Hello World");
 

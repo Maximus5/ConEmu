@@ -33,6 +33,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace conemu {
 namespace tests {
 void PrepareGoogleTests();
+int RunLineFeedTest();
+int RunLineFeedTestXTerm();
+int RunLineFeedTestParent();
+int RunLineFeedTestChild();
+int RunXTermTestChild();
+int RunXTermTestParent();
 std::vector<std::string> gTestArgs;
 }  // namespace tests
 }  // namespace conemu
@@ -47,12 +53,29 @@ TEST(ConEmuTest, Main)
 int main(int argc, char** argv)
 {
 	conemu::tests::PrepareGoogleTests();
+
+	for (int i = 0; i < argc; ++i)
+	{
+		if (argv[i] && strcmp(argv[i], "RunLineFeedTest") == 0)
+			return conemu::tests::RunLineFeedTest();
+		if (argv[i] && strcmp(argv[i], "RunLineFeedTestXTerm") == 0)
+			return conemu::tests::RunLineFeedTestXTerm();
+		if (argv[i] && strcmp(argv[i], "RunLineFeedTestParent") == 0)
+			return conemu::tests::RunLineFeedTestParent();
+		if (argv[i] && strcmp(argv[i], "RunLineFeedTestChild") == 0)
+			return conemu::tests::RunLineFeedTestChild();
+		if (argv[i] && strcmp(argv[i], "RunXTermTestChild") == 0)
+			return conemu::tests::RunXTermTestChild();
+		if (argv[i] && strcmp(argv[i], "RunXTermTestParent") == 0)
+			return conemu::tests::RunXTermTestParent();
+	}
+
 	::testing::InitGoogleTest(&argc, argv);
 	conemu::tests::gTestArgs.reserve(argc);
 	for (int i = 0; i < argc; ++i)
 	{
 		if (argv[i])
-			conemu::tests::gTestArgs.push_back(argv[i]);
+			conemu::tests::gTestArgs.emplace_back(argv[i]);
 	}
 	return RUN_ALL_TESTS();
 }

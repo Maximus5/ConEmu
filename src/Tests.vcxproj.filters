@@ -1235,6 +1235,9 @@
     <ClCompile Include="ConEmuHk\ShellProcessor_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="UnitTests\ansi_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
