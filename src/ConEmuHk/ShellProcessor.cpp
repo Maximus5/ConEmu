@@ -1766,6 +1766,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			{
 				*lphStdOut = nullptr;
 				*anStartFlags &= ~0x400;
+				LogShellString(L"PrepareExecuteParams set null on StdOut and sFlag 0x400");
 			}
 		}
 	}
@@ -2858,9 +2859,22 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 
 	auto* lpSi = m_lpStartupInfoW.get();
 	if ((*ppStartupInfo)->cb)
+	{
 		memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+
+		#ifdef DEBUG_SHELL_LOG_OUTPUT
+		wchar_t dbgBuf[200];
+		msprintf(dbgBuf, countof(dbgBuf), L"OnCreateProcessW cFlags=x%X sFlags=x%X sw=x%X in=x%X out=x%X err=x%X",
+			anCreationFlags ? *anCreationFlags : 0, (*ppStartupInfo)->dwFlags, (*ppStartupInfo)->wShowWindow,
+			LODWORD((*ppStartupInfo)->hStdInput), LODWORD((*ppStartupInfo)->hStdOutput), LODWORD((*ppStartupInfo)->hStdError));
+		LogShellString(dbgBuf);
+		#endif
+	}
 	else
+	{
 		lpSi->cb = sizeof(*lpSi); // VS 2019 passes cb==0 while starting console applications (run & debug)
+		LogShellString(L"OnCreateProcessW creating new default STARTUPINFOW");
+	}
 
 	// Preprocess flags and options
 	auto state = OnCreateProcessPrepare(anCreationFlags, lpSi->dwFlags, lpSi->wShowWindow, lpSi->dwX, lpSi->dwY);
@@ -2882,9 +2896,23 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
 	// patch flags and variables based on decision
-	if (OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags))
+	const bool needChangeSi = OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags)
+		|| (lpSi->hStdOutput != (*ppStartupInfo)->hStdOutput || lpSi->dwFlags != (*ppStartupInfo)->dwFlags);
+	if (needChangeSi)
+	{
 		*ppStartupInfo = lpSi;
+	}
 
+	// Some debug info (exec problem on WinXP from Far 3)
+	{
+		#ifdef DEBUG_SHELL_LOG_OUTPUT
+		wchar_t dbgBuf[200];
+		msprintf(dbgBuf, countof(dbgBuf), L"OnCreateProcessW (post) rc=%i cFlags=x%X sFlags=x%X sw=x%X in=x%X out=x%X err=x%X",
+			static_cast<int>(prepareResult), anCreationFlags ? *anCreationFlags : 0, (*ppStartupInfo)->dwFlags, (*ppStartupInfo)->wShowWindow,
+			LODWORD((*ppStartupInfo)->hStdInput), LODWORD((*ppStartupInfo)->hStdOutput), LODWORD((*ppStartupInfo)->hStdError));
+		LogShellString(dbgBuf);
+		#endif
+	}
 
 	// Patch modified strings (wide to ansi/oem)
 

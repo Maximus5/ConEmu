@@ -1,4 +1,4 @@
-
+﻿
 /*
 Copyright (c) 2020-present Maximus5
 All rights reserved.
@@ -27,10 +27,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <gtest/gtest.h>
+#include <vector>
+#include <string>
 
 namespace conemu {
 namespace tests {
 void PrepareGoogleTests();
+std::vector<std::string> gTestArgs;
 }  // namespace tests
 }  // namespace conemu
 
@@ -45,5 +48,11 @@ int main(int argc, char** argv)
 {
 	conemu::tests::PrepareGoogleTests();
 	::testing::InitGoogleTest(&argc, argv);
+	conemu::tests::gTestArgs.reserve(argc);
+	for (int i = 0; i < argc; ++i)
+	{
+		if (argv[i])
+			conemu::tests::gTestArgs.push_back(argv[i]);
+	}
 	return RUN_ALL_TESTS();
 }

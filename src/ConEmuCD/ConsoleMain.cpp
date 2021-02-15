@@ -4087,7 +4087,22 @@ bool IsOutputRedirected()
 		{
 			isRedirected = 2;
 		}
+
+		#ifdef _DEBUG
+		char dbgBuf[80];
+		const auto errCode = GetLastError();
+		msprintf(dbgBuf, countof(dbgBuf), "IsOutputRedirected: isRedirected=%s handle=0x%08X",
+			isRedirected == 2 ? "yes" : "no", reinterpret_cast<DWORD>(static_cast<HANDLE>(hOut)));
+		LogString(dbgBuf);
+		#endif
 	}
+
+	#ifdef _DEBUG
+	char dbgBuf[80];
+	msprintf(dbgBuf, countof(dbgBuf), "IsOutputRedirected: isRedirected=%s",
+		isRedirected == 2 ? "yes" : isRedirected == 1 ? "no" : "???");
+	LogString(dbgBuf);
+	#endif
 
 	return (isRedirected == 2);
 }

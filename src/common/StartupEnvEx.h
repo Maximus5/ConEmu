@@ -403,6 +403,23 @@ public:
 			);
 		dumpEnvStr(szSI, false);
 
+		{
+		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+		DWORD nInMode = 0, nOutMode = 0, nErrMode = 0;
+		BOOL bIn = GetConsoleMode(hIn, &nInMode);
+		BOOL bOut = GetConsoleMode(hOut, &nOutMode);
+		BOOL bErr = GetConsoleMode(hErr, &nErrMode);
+		wchar_t szIn[20], szOut[20], szErr[20];
+		msprintf(szIn, countof(szIn), L"x%X", nInMode);
+		msprintf(szOut, countof(szOut), L"x%X", nOutMode);
+		msprintf(szErr, countof(szErr), L"x%X", nErrMode);
+		msprintf(szSI, countof(szSI), L"  StdFlags: In=x%X (Mode=%s) Out=x%X (Mode=%s) Err=x%X (Mode=%s)\r\n",
+			LODWORD(hIn), bIn?szIn:L"-1", LODWORD(hOut), bOut?szOut:L"-1", LODWORD(hErr), bErr?szErr:L"-1");
+		dumpEnvStr(szSI, false);
+		}
+
 		if (hConWnd)
 		{
 			szSI[0] = 0;

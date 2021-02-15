@@ -4,17 +4,21 @@
 
 #include <sstream>
 #include <memory>
+#include <vector>
+#include <string>
 
-// ReSharper disable once CppInconsistentNaming
-namespace testing
-{
-	// ReSharper disable once CppInconsistentNaming
-	namespace internal
-	{
-		// ReSharper disable once IdentifierTypo
-		void ColoredPrintf(GTestColor color, const char* fmt, ...);
-	}
+namespace testing {
+namespace internal {
+// ReSharper disable once IdentifierTypo
+void ColoredPrintf(GTestColor color, const char* fmt, ...);
 }
+}
+
+namespace conemu {
+namespace tests {
+extern std::vector<std::string> gTestArgs;
+}  // namespace tests
+}  // namespace conemu
 
 struct wcdbg : public std::wostringstream
 {
