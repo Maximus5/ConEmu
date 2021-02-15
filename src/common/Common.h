@@ -1146,11 +1146,11 @@ struct FarVersion
 	union
 	{
 		DWORD dwVer;
-		struct
+		struct  // NOLINT(clang-diagnostic-nested-anon-types)
 		{
-		    int Bis : 1;
-			int dwVerMinor : 15;
-			int dwVerMajor : 16;
+			uint dwVerMinor : 15;
+			uint Bis : 1;
+			uint dwVerMajor : 16;
 		};
 	};
 	DWORD dwBuild;
