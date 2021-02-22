@@ -108,7 +108,7 @@ protected:
 	};
 	struct CpConv gCpConv = {};
 
-	bool gbWasXTermOutput = false;
+	bool gbIsXTermOutput = false;
 	struct TermModeSet {
 		DWORD value, pid;
 	} gWasXTermModeSet[tmc_Last] = {};

@@ -140,7 +140,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			return outputCheckResult;
 		};
 
-		if ((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) || (CEAnsi::gbWasXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)))
+		if ((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) || (CEAnsi::gbIsXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)))
 		{
 			if (!isOutput())
 			{
@@ -170,7 +170,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 
 		// don't use "else if" here! first "if" could be executed.
 		const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;
-		if (CEAnsi::gbWasXTermOutput != enableXterm)
+		if (CEAnsi::gbIsXTermOutput != enableXterm)
 		{
 			if (isOutput())
 			{

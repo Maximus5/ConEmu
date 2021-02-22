@@ -124,7 +124,7 @@ public:
 	static bool   gbAnsiWasNewLine /*= false*/;
 	static MSectionSimple* gcsAnsiLogFile;
 
-	static bool gbWasXTermOutput;
+	static bool gbIsXTermOutput;
 	static struct TermModeSet {
 		DWORD value, pid;
 	} gWasXTermModeSet[tmc_Last];

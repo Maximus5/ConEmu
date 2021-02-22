@@ -2222,7 +2222,7 @@ void SrvAnsiImpl::WriteAnsiCode_OSC(AnsiEscCode& Code)
 				{
 					// ESC ] 9 ; 10 ST
 					// ESC ] 9 ; 10 ; 1 ST
-					if (!m_Owner->gbWasXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] == 1))
+					if (!m_Owner->gbIsXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] == 1))
 						m_Owner->StartXTermMode(true);
 					// ESC ] 9 ; 10 ; 0 ST
 					else if (Code.ArgC >= 3 || Code.ArgV[2] == 0)
@@ -2364,7 +2364,7 @@ void SrvAnsiImpl::WriteAnsiCode_OSC(AnsiEscCode& Code)
 void SrvAnsiImpl::WriteAnsiCode_VIM(AnsiEscCode& Code)
 {
 	/*
-	if (!m_Owner->gbWasXTermOutput && !gnWriteProcessed)
+	if (!m_Owner->gbIsXTermOutput && !gnWriteProcessed)
 	{
 		SrvAnsiImpl::StartXTermMode(true);
 	}

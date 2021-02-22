@@ -128,7 +128,7 @@ bool CEAnsi::gbAnsiWasNewLine = false;
 MSectionSimple* CEAnsi::gcsAnsiLogFile = nullptr;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
-bool CEAnsi::gbWasXTermOutput = false;
+bool CEAnsi::gbIsXTermOutput = false;
 // Let RefreshXTermModes() know what to restore
 CEAnsi::TermModeSet CEAnsi::gWasXTermModeSet[tmc_Last] = {};
 
@@ -1212,17 +1212,17 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, L
 		bool curFishLineFeed = false;
 		if (count_chars(ucLineFeed) > 0)
 		{
-			if (!gbWasXTermOutput)
+			if (!gbIsXTermOutput)
 			{
 				_ASSERTE(FALSE && "XTerm mode was not enabled!");
-				gbWasXTermOutput = true;
+				gbIsXTermOutput = true;
 			}
 			curFishLineFeed = true;
 		}
 		#endif
 
 		// for debug purposes insert "\x1B]9;10\x1B\" at the beginning of connector-*-out.log
-		if (gbWasXTermOutput)
+		if (gbIsXTermOutput)
 		{
 			// On Win10 we may utilize DISABLE_NEWLINE_AUTO_RETURN flag, but it would
 			// complicate our code, because ConEmu support older Windows versions
@@ -3882,7 +3882,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleO
 				{
 					// ESC ] 9 ; 10 ST
 					// ESC ] 9 ; 10 ; 1 ST
-					if (!gbWasXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] == 1))
+					if (!gbIsXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] == 1))
 						CEAnsi::StartXTermMode(true);
 					// ESC ] 9 ; 10 ; 0 ST
 					else if (Code.ArgC >= 3 || Code.ArgV[2] == 0)
@@ -4028,7 +4028,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleO
 
 void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
-	if (!gbWasXTermOutput && !gnWriteProcessed)
+	if (!gbIsXTermOutput && !gnWriteProcessed)
 	{
 		CEAnsi::StartXTermMode(true);
 	}
@@ -4396,7 +4396,7 @@ HANDLE CEAnsi::StartVimTerm(bool bFromDllStart)
 
 HANDLE CEAnsi::StopVimTerm()
 {
-	if (gbWasXTermOutput)
+	if (gbIsXTermOutput)
 	{
 		CEAnsi::StartXTermMode(false);
 	}
@@ -4433,7 +4433,7 @@ void CEAnsi::DoneTermMode()
 	{
 		StopVimTerm();
 	}
-	else if (CEAnsi::gbWasXTermOutput)
+	else if (CEAnsi::gbIsXTermOutput)
 	{
 		StartXTermMode(false);
 	}
@@ -4459,7 +4459,7 @@ void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*
 void CEAnsi::StartXTermMode(const bool bStart)
 {
 	// May be triggered by connector, official Vim builds, ENABLE_VIRTUAL_TERMINAL_INPUT, "ESC ] 9 ; 10 ; 1 ST"
-	_ASSERTEX(gbWasXTermOutput != bStart);
+	_ASSERTEX(gbIsXTermOutput != bStart);
 
 	StartXTermOutput(bStart);
 
@@ -4470,14 +4470,14 @@ void CEAnsi::StartXTermMode(const bool bStart)
 void CEAnsi::StartXTermOutput(const bool bStart)
 {
 	// Remember last mode
-	gbWasXTermOutput = bStart;
+	gbIsXTermOutput = bStart;
 	// Set AutoLfNl according to mode
 	gDisplayOpt.AutoLfNl = bStart ? FALSE : TRUE;
 }
 
 void CEAnsi::RefreshXTermModes()
 {
-	if (!gbWasXTermOutput)
+	if (!gbIsXTermOutput)
 		return;
 	for (int i = 0; i < static_cast<int>(countof(gWasXTermModeSet)); ++i)
 	{
@@ -4495,7 +4495,7 @@ void CEAnsi::SetAutoLfNl(const bool autoLfNl)
 
 bool CEAnsi::IsAutoLfNl()
 {
-	// #TODO check for gbWasXTermOutput?
+	// #TODO check for gbIsXTermOutput?
 	return gDisplayOpt.AutoLfNl;
 }
 
