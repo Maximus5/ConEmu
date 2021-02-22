@@ -1415,49 +1415,18 @@ CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, U
 
 CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
-	BOOL  bProcessed = TRUE;
-	DWORD nCmd = pIn->hdr.nCmd;
+	const DWORD nCmd = pIn->hdr.nCmd;
 	DEBUGSTRCMD(L"GUI recieved CECMD_STARTXTERM\n");
 
-	TermModeCommand mode = (TermModeCommand)pIn->dwData[0];
-	DWORD value = pIn->dwData[1];
-	DWORD nPID = (nDataSize >= (sizeof(DWORD)*3)) ? pIn->dwData[2] : pIn->hdr.nSrcPID;
+	const TermModeCommand mode = static_cast<TermModeCommand>(pIn->dwData[0]);
+	const DWORD value = pIn->dwData[1]; // NOLINT(clang-diagnostic-array-bounds)
+	const DWORD nPID = (nDataSize >= (sizeof(DWORD) * 3))
+		? pIn->dwData[2]  // NOLINT(clang-diagnostic-array-bounds)
+		: pIn->hdr.nSrcPID;
 
-	switch (mode)
-	{
-	case tmc_TerminalType:
-		_ASSERTE(value == te_win32 || value == te_xterm);
-		mp_RCon->StartStopXTerm(nPID, (value != te_win32));
-		break;
-	case tmc_MouseMode:
-		mp_RCon->StartStopXMouse(nPID, (TermMouseMode)value);
-		break;
-	case tmc_BracketedPaste:
-		mp_RCon->StartStopBracketedPaste(nPID, (value != 0));
-		break;
-	case tmc_AppCursorKeys:
-		mp_RCon->StartStopAppCursorKeys(nPID, (value != 0));
-		break;
-	case tmc_CursorShape:
-		mp_RCon->SetCursorShape((TermCursorShapes)value);
-		break;
-	case tmc_ConInMode:
-		// Some console application (not hooked?) changes ConInMode flag ENABLE_VIRTUAL_TERMINAL_INPUT
-		if ((mp_RCon->GetTermType() == te_xterm) != ((value & ENABLE_VIRTUAL_TERMINAL_INPUT) == ENABLE_VIRTUAL_TERMINAL_INPUT))
-		{
-			_ASSERTEX(mp_RCon->m_RootInfo.nPID == nPID); // expected PID at the moment
-			DWORD nRootPID = mp_RCon->m_RootInfo.nPID ? mp_RCon->m_RootInfo.nPID : nPID;
-			bool newXTerm = ((value & ENABLE_VIRTUAL_TERMINAL_INPUT) == ENABLE_VIRTUAL_TERMINAL_INPUT);
-			mp_RCon->StartStopXTerm(nRootPID, newXTerm);
-			if (newXTerm)
-				mp_RCon->StartStopAppCursorKeys(nRootPID, true);
-		}
-		break;
-	default:
-		bProcessed = FALSE;
-	}
+	const BOOL bProcessed = mp_RCon->StartStopTermMode(nPID, mode, value);
 
-	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 	if (pOut)
 		pOut->dwData[0] = bProcessed;
 	return pOut;

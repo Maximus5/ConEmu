@@ -6116,36 +6116,88 @@ void CRealConsole::StopSignal()
 	}
 }
 
+bool CRealConsole::StartStopTermMode(const DWORD pid, const TermModeCommand mode, const DWORD value)
+{
+	AssertThisRet(false);
+
+	bool processed = true;
+	_ASSERTE(pid != 0);
+
+	switch (mode)
+	{
+	case tmc_TerminalType:
+		_ASSERTE(value == te_win32 || value == te_xterm);
+		StartStopXTerm(pid, (value != te_win32));
+		break;
+	case tmc_MouseMode:
+		StartStopXMouse(pid, static_cast<TermMouseMode>(value));
+		break;
+	case tmc_BracketedPaste:
+		StartStopBracketedPaste(pid, (value != 0));
+		break;
+	case tmc_AppCursorKeys:
+		StartStopAppCursorKeys(pid, (value != 0));
+		break;
+	case tmc_CursorShape:
+		SetCursorShape(static_cast<TermCursorShapes>(value));
+		break;
+	case tmc_ConInMode:
+		// Some console application (not hooked?) changes ConInMode flag ENABLE_VIRTUAL_TERMINAL_INPUT
+		if ((GetTermType() == te_xterm) != ((value & ENABLE_VIRTUAL_TERMINAL_INPUT) == ENABLE_VIRTUAL_TERMINAL_INPUT))
+		{
+			_ASSERTEX(m_RootInfo.nPID == pid); // expected PID at the moment
+			const DWORD nRootPID = m_RootInfo.nPID ? m_RootInfo.nPID : pid;
+			const bool newXTerm = ((value & ENABLE_VIRTUAL_TERMINAL_INPUT) == ENABLE_VIRTUAL_TERMINAL_INPUT);
+			StartStopXTerm(nRootPID, newXTerm);
+			if (newXTerm)
+			{
+				StartStopAppCursorKeys(nRootPID, true);
+			}
+		}
+		break;
+	case tmc_Last:
+	default:
+		_ASSERTE(FALSE && "mode is not supported");
+		processed = false;
+	}
+
+	return processed;
+}
+
 bool CRealConsole::StartStopTermMode(TermModeCommand mode, ChangeTermAction action)
 {
 	AssertThisRet(false);
 
-	bool bOk = true;
-	bool bValue = (action == cta_Enable);
-	DWORD nActivePID = GetActivePID();
+	const DWORD nActivePID = GetActivePID();
+	DWORD newValue = 0;
 
 	switch (mode)
 	{
 	case tmc_TerminalType:
 		if (action == cta_Switch)
-			bValue = (GetTermType() == te_win32);
-		StartStopXTerm(nActivePID, bValue);
+			newValue = (GetTermType() == te_win32) ? te_xterm : te_win32;
+		else if (action == cta_Enable)
+			newValue = te_xterm;
+		else
+			newValue = te_win32;
 		break;
 	case tmc_AppCursorKeys:
 		if (action == cta_Switch)
-			bValue = !GetAppCursorKeys();
-		StartStopAppCursorKeys(nActivePID, bValue);
+			newValue = GetAppCursorKeys() ? FALSE : TRUE;
+		else
+			newValue = (action == cta_Enable);
 		break;
 	case tmc_BracketedPaste:
 		if (action == cta_Switch)
-			bValue = !GetBracketedPaste();
-		StartStopBracketedPaste(nActivePID, bValue);
+			newValue = GetBracketedPaste() ? FALSE : TRUE;
+		else
+			newValue = (action == cta_Enable);
 		break;
 	default:
-		bOk = false;
+		return false;
 	}
 
-	return bOk;
+	return StartStopTermMode(nActivePID, mode, newValue);
 }
 
 void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
