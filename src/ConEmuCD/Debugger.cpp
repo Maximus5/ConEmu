@@ -831,7 +831,7 @@ void DebuggerInfo::WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_
 			else
 			{
 				const int iLeft = (this->nWaitTreeBreaks > 0) ? (this->nWaitTreeBreaks - 1) : 0;
-				swprintf_c(szErrInfo, L"\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
+				_printf("\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
 				bDumpSucceeded = true;
 			}
 
