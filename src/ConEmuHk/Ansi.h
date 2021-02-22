@@ -105,9 +105,6 @@ public:
 	/* ************************************* */
 	/*      STATIC Helper routines           */
 	/* ************************************* */
-	static HANDLE StartVimTerm(bool bFromDllStart);
-	static HANDLE StopVimTerm();
-
 	static BOOL OurWriteConsoleW(HANDLE hConsoleOutput, const VOID* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal = true);
 
 	static void OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
@@ -138,6 +135,12 @@ protected:
 	void ReloadFeatures();
 
 public:
+	static HANDLE StartVimTerm(bool bFromDllStart);
+	static HANDLE StopVimTerm();
+
+	static void InitTermMode();
+	static void DoneTermMode();
+
 	static void ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID = 0);
 	/// <summary>
 	/// Turn on/off xterm mode for both output and input.
@@ -301,7 +304,7 @@ protected:
 		BOOL  WrapWasSet = FALSE;
 		SHORT WrapAt = 0; // Rightmost X coord (1-based)
 		//
-		BOOL  AutoLfNl = TRUE; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
+		BOOL  AutoLfNl = TRUE; // LF/NL (default on for Windows, off for XTerm): Automatically follow echo of LF, VT or FF with CR.
 		//
 		BOOL  ScrollRegion = FALSE;
 		SHORT ScrollStart = 0, ScrollEnd = 0; // 0-based absolute line indexes

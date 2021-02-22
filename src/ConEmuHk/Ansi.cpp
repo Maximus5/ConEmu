@@ -61,6 +61,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ///* ***************** */
 #include "Ansi.h"
+
+#include "../common/MHandle.h"
 static DWORD gAnsiTlsIndex = 0;
 
 #include "DllOptions.h"
@@ -4400,6 +4402,41 @@ HANDLE CEAnsi::StopVimTerm()
 	}
 
 	return XTermAltBuffer(false);
+}
+
+void CEAnsi::InitTermMode()
+{
+	bool needSetXterm = gbIsVimProcess;
+
+	if (IsWin10())
+	{
+		const MHandle hOut{ GetStdHandle(STD_OUTPUT_HANDLE) };
+		DWORD conOutMode = 0;
+		if (GetConsoleMode(hOut, &conOutMode))
+		{
+			if (conOutMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+			{
+				needSetXterm = true;
+			}
+		}
+	}
+	
+	if (needSetXterm)
+	{
+		StartVimTerm(true);
+	}
+}
+
+void CEAnsi::DoneTermMode()
+{
+	if (gbIsVimProcess)
+	{
+		StopVimTerm();
+	}
+	else if (CEAnsi::gbWasXTermOutput)
+	{
+		StartXTermMode(false);
+	}
 }
 
 void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*/)

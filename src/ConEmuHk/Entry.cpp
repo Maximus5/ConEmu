@@ -988,10 +988,7 @@ DWORD DllStart_Continue()
 
 	//delete sp;
 
-	if (gbIsVimProcess)
-	{
-		CEAnsi::StartVimTerm(true);
-	}
+	CEAnsi::InitTermMode();
 
 	/*
 	#ifdef _DEBUG
@@ -1233,12 +1230,10 @@ void InitExeName()
 		|| (lstrcmpi(gsExeName, L"vimd.exe") == 0))
 	{
 		gbIsVimProcess = true;
-		//CEAnsi::StartVimTerm(true);
 	}
 	else if (lstrcmpi(gsExeName, L"plink.exe") == 0)
 	{
 		gbIsPlinkProcess = true;
-		//CEAnsi::StartXTermMode(true);
 	}
 	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
 	{
@@ -1375,18 +1370,9 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	if ((bFinal || (bFromTerminate & (ds_OnTerminateProcess|ds_OnExitProcess))) && !bTermStopped)
 	{
 		bTermStopped = true;
-		if (gbIsVimProcess)
-		{
-			DLOG1("StopVimTerm",0);
-			CEAnsi::StopVimTerm();
-			DLOGEND1();
-		}
-		else if (CEAnsi::gbWasXTermOutput)
-		{
-			DLOG1("StartXTermMode(false)",0);
-			CEAnsi::StartXTermMode(false);
-			DLOGEND1();
-		}
+		DLOG1("DoneTermMode",0);
+		CEAnsi::DoneTermMode();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(1);
@@ -2264,10 +2250,10 @@ void SendStopped()
 		pIn->StartStop.nOtherPID = gnPrevAltServerPID;
 		pIn->StartStop.bWasSucceededInRead = gbWasSucceededInRead;
 
-		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		const MHandle hOut{ GetStdHandle(STD_OUTPUT_HANDLE) };
 
 		// May be set to nullptr in some cases (connector+wslbridge)
-		if (hOut != nullptr)
+		if (hOut.HasHandle())
 		{
 			// НЕ MyGet..., а то можем заблокироваться...
 			// ghConOut может быть nullptr, если ошибка произошла во время разбора аргументов
