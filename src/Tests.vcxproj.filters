@@ -582,6 +582,9 @@
     <ClInclude Include="common\MAssert.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\MAtomic.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\MBSTR.h">
       <Filter>common</Filter>
     </ClInclude>

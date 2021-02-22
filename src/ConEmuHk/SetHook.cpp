@@ -1310,7 +1310,7 @@ bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_heade
 							pOrdinalNameO = static_cast<PIMAGE_IMPORT_BY_NAME>(GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, reinterpret_cast<LPCBYTE>(Module)));
 
 							#ifdef USE_SEH
-								pszFuncName = static_cast<LPCSTR>(pOrdinalNameO->Name);
+								pszFuncName = reinterpret_cast<const char*>(pOrdinalNameO->Name);
 							#else
 								HLOG("SetImportsPrep.pOrdinalNameO",f);
 								// WARNING: Numerous IsBad???Ptr calls may introduce lags and bugs

@@ -99,6 +99,7 @@ public:
 	/* Init and release thread local storage */
 	/* ************************************* */
 	static CEAnsi* Object();
+	static void Release();
 
 public:
 	/* ************************************* */

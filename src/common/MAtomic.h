@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-present Maximus5
+Copyright (c) 2021-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,35 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <atomic>
+#include <intrin.h>
 
-class CLogFunction final
+// Type size should be 4 bytes or lesser
+template <typename Type>
+struct MAtomic
 {
-public:
-	CLogFunction() = delete;
-	CLogFunction(const char* asFnName);
-	CLogFunction(const wchar_t* asFnName);
-	~CLogFunction();
-
 private:
-	void DoLogFunction(const wchar_t* asFnName);
+	LONG data_ = 0;
+public:
+	MAtomic() = default;
+	MAtomic(const Type newValue)
+	{
+		store(newValue);
+	}
 
-	static std::atomic_int32_t m_FnLevel; // log string indentation, without per-thread division
-	bool mb_Logged = false;
-	wchar_t mc_FnInfo[120] = L"";
-	size_t mn_FnSuffix = 0;
+	Type load()
+	{
+		return static_cast<Type>(InterlockedCompareExchange(&data_, 0, 0));
+	}
+
+	Type store(const Type newValue)
+	{
+		return static_cast<Type>(InterlockedExchange(&data_, static_cast<LONG>(newValue)));
+	}
+
+	/// @brief Perform atomic addition
+	/// @return returns the result of the operation
+	Type inc()
+	{
+		return static_cast<Type>(InterlockedIncrement(&data_));
+	}
 };
-
-#define LogFunction_Cat2(n,i) n##i
-#define LogFunction_Cat1(n,i) LogFunction_Cat2(n,i)
-#define LogFunction(fn) CLogFunction LogFunction_Cat1(logFunction,__COUNTER__)(fn)

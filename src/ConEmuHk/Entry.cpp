@@ -1426,7 +1426,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		AsyncCmdQueue::Terminate();
 		DLOGEND1();
 	}
-	
+
 	DLL_STOP_STEP(4);
 
 	// Issue 689: Progress stuck at 100%
@@ -1884,7 +1884,7 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
 	gDllMainCallInfo[DLL_THREAD_DETACH].OnCall();
 
-	DWORD nTID = GetCurrentThreadId();
+	const DWORD nTID = GetCurrentThreadId();
 	bool bNeedDllStop = false;
 
 	#ifdef SHOW_SHUTDOWN_STEPS
@@ -1900,6 +1900,8 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 		gnDllState |= ds_DllDeinitializing;
 	}
 
+	CEAnsi::Release();
+
 	if (IsHeapInitialized())
 	{
 		gStartedThreads.Del(nTID);
@@ -1913,7 +1915,7 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 		DLOGEND1();
 	}
 
-	LONG nThreadCount = gDllMainCallInfo[DLL_THREAD_ATTACH].nCallCount - gDllMainCallInfo[DLL_THREAD_DETACH].nCallCount;
+	const LONG nThreadCount = gDllMainCallInfo[DLL_THREAD_ATTACH].nCallCount - gDllMainCallInfo[DLL_THREAD_DETACH].nCallCount;
 	ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", nThreadCount);
 
 	#if 0

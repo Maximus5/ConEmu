@@ -27,7 +27,9 @@ workspace "CE"
     architecture "x64"
     defines { "WIN64", "_WIN64" }
 
-  filter { "action:vs2019", "configurations:Release", "platforms:Win32" }
+  filter { "action:vs2019", "configurations:Release or Remote", "platforms:Win32" }
+    toolset "v141_xp"
+  filter { "action:vs2019", "configurations:Debug", "platforms:Win32" }
     toolset "v141_xp"
   filter "action:vs2017"
     toolset "v141_xp"

@@ -57,6 +57,9 @@
     <ClInclude Include="common\MArray.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\MAtomic.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\MBSTR.h">
       <Filter>Headers</Filter>
     </ClInclude>

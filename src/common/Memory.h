@@ -38,12 +38,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef MVALIDATE_POINTERS
 #else
 #if defined(_DEBUG) || (ConEmuVersionStage == CEVS_ALPHA)
-#define TRACK_MEMORY_ALLOCATIONS
+//#define TRACK_MEMORY_ALLOCATIONS
 #endif
 #if defined(_DEBUG) || defined(TRACK_MEMORY_ALLOCATIONS)
 // #define MVALIDATE_POINTERS
 #endif
 #endif
+
 
 // Heap allocation routines
 
@@ -164,7 +165,7 @@ void SafeDelete(T*& p)
 {
 	if (!p) return;
 
-	_ASSERTE(g_LastDeletePtr != (void*)p);
+	//_ASSERTE(g_LastDeletePtr != (void*)p);
 	g_LastDeletePtr = (void*)p;
 
 	#if defined(_DEBUG) || defined(TRACK_MEMORY_ALLOCATIONS) || defined(MVALIDATE_POINTERS)

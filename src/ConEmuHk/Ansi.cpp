@@ -29,8 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #ANSI This file is expected to be moved almost completely to ConEmuCD
 
 #include "../common/defines.h"
-#include <winerror.h>
-#include <winnt.h>
+#include <WinError.h>
+#include <WinNT.h>
 #include <tchar.h>
 #include <limits>
 #include <chrono>
@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 #include "../common/WErrGuard.h"
-#include "../ConEmu/version.h"
+#include "../common/MAtomic.h"
 
 #include "Connector.h"
 #include "ExtConsole.h"
@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ///* ***************** */
 #include "Ansi.h"
+static DWORD gAnsiTlsIndex = 0;
 
 #include "DllOptions.h"
 #include "../common/WObjects.h"
@@ -73,7 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef isPressed
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-#define ANSI_MAP_CHECK_TIMEOUT std::chrono::seconds(1)
+#define ANSI_MAP_CHECK_TIMEOUT 1000 // 1sec
 
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
@@ -487,19 +488,16 @@ void CEAnsi::AnsiLogEnterPressed()
 
 bool CEAnsi::GetFeatures(ConEmu::ConsoleFlags& features)
 {
-	static std::chrono::steady_clock::time_point nLastCheck{};
-	union FeaturesCache
+	struct FeaturesCache
 	{
-		uint64_t raw = 0;
-		struct
-		{
-			ConEmu::ConsoleFlags features;
-			bool result;
-		};
+		ConEmu::ConsoleFlags features;
+		BOOL result;
 	};
-	static std::atomic_uint64_t featuresCache{};
+	static FeaturesCache featuresCache{};
+	// Don't use system_clock here, it fails in some cases during DllLoad (segment is not ready somehow)
+	static DWORD nLastCheck{ 0 };
 
-	if ((std::chrono::steady_clock::now() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT)
+	if (!nLastCheck || (GetTickCount() - nLastCheck) > ANSI_MAP_CHECK_TIMEOUT)
 	{
 		CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
 		//	(CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(CESERVER_CONSOLE_MAPPING_HDR));
@@ -507,22 +505,22 @@ bool CEAnsi::GetFeatures(ConEmu::ConsoleFlags& features)
 		{
 			// bAnsiAllowed = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::ProcessAnsi));
 			// bSuppressBells = ((pMap != nullptr) && (pMap->Flags & ConEmu::ConsoleFlags::SuppressBells));
-			FeaturesCache rc{};
-			rc.features = pMap->Flags;
-			rc.result = true;
-			featuresCache.store(rc.raw);
+			// Well, it's not so atomic as could be, but here we care only on proper features value
+			// and we can't use std::atomic here because function is called during DllLoad
+			InterlockedExchange(reinterpret_cast<LONG*>(&featuresCache.features), static_cast<LONG>(pMap->Flags));
+			InterlockedExchange(reinterpret_cast<LONG*>(&featuresCache.result), static_cast<LONG>(true));
 		}
 		else
 		{
-			featuresCache.store(0);
+			InterlockedExchange(reinterpret_cast<LONG*>(&featuresCache.features), 0);
+			InterlockedExchange(reinterpret_cast<LONG*>(&featuresCache.result), 0);
 		}
-		nLastCheck = std::chrono::steady_clock::now();
+		nLastCheck = GetTickCount();
 	}
 
-	FeaturesCache rc{};
-	rc.raw = featuresCache.load();
-	features = rc.features;
-	return rc.result;
+	features = static_cast<ConEmu::ConsoleFlags>(InterlockedCompareExchange(reinterpret_cast<LONG*>(&featuresCache.features), 0, 0));
+	const bool result = InterlockedCompareExchange(reinterpret_cast<LONG*>(&featuresCache.result), 0, 0);
+	return result;
 }
 
 void CEAnsi::ReloadFeatures()
@@ -829,6 +827,10 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 }
 
 
+#if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
+static MAtomic<int32_t> nWriteCallNo{ 0 };
+#endif
+
 int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 {
 	int result = 0;
@@ -842,7 +844,6 @@ int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 
 	wchar_t szDbg[200];
 	size_t nLen = cchLen;
-	static std::atomic_int32_t nWriteCallNo{ 0 };
 
 	switch (iUnknown)  // NOLINT(clang-diagnostic-switch-enum)
 	{
@@ -868,7 +869,7 @@ int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Internal comment: ", GetCurrentThreadId());
 		break;
 	default:
-		result = nWriteCallNo.fetch_add(1) + 1;
+		result = nWriteCallNo.inc();
 		msprintf(szDbg, countof(szDbg), L"[%u] AnsiDump #%u: ", GetCurrentThreadId(), result);
 	}
 
@@ -965,7 +966,7 @@ int CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 #define DumpKnownEscape(buf, cchLen, eType) (0)
 #endif
 
-static std::atomic_uint32_t gnLastReadId{ 0 };
+static MAtomic<uint32_t> gnLastReadId{ 0 };
 
 // When user type something in the prompt, screen buffer may be scrolled
 // It would be nice to do the same in "ConEmuC -StoreCWD"
@@ -976,7 +977,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 		return;
 
 	if (!gnLastReadId.load())
-		gnLastReadId.exchange(GetCurrentProcessId());
+		gnLastReadId.store(GetCurrentProcessId());
 
 	WORD newRowId = 0;
 	CEConsoleMark Test = {};
@@ -1002,9 +1003,9 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 		else
 		{
 			// ReSharper disable once CppJoinDeclarationAndAssignment
-			newRowId = LOWORD(gnLastReadId.fetch_add(1) + 1);
+			newRowId = LOWORD(gnLastReadId.inc());
 			if (!newRowId)
-				newRowId = LOWORD(gnLastReadId.fetch_add(1) + 1);
+				newRowId = LOWORD(gnLastReadId.inc());
 
 			if (WriteConsoleRowId(hConOut, crPos[i].Y, newRowId))
 			{
@@ -4487,13 +4488,43 @@ CEAnsi* CEAnsi::Object()
 {
 	CLastErrorGuard errGuard;
 
-	thread_local CEAnsi object{};
-
-	if (!object.initialized_)
+	if (!gAnsiTlsIndex)
 	{
-		object.GetDefaultTextAttr(); // Initialize "default attributes";
-		object.initialized_ = true;
+		gAnsiTlsIndex = TlsAlloc();
 	}
 
-	return &object;
+	if ((!gAnsiTlsIndex) || (gAnsiTlsIndex == TLS_OUT_OF_INDEXES))
+	{
+		_ASSERTEX(gAnsiTlsIndex && gAnsiTlsIndex != TLS_OUT_OF_INDEXES);
+		return nullptr;
+	}
+
+	// Don't use thread_local, it doesn't work in WinXP in dynamically loaded dlls
+	CEAnsi* obj = static_cast<CEAnsi*>(TlsGetValue(gAnsiTlsIndex));
+	if (!obj)
+	{
+		obj = new CEAnsi;
+		if (obj)
+			obj->GetDefaultTextAttr(); // Initialize "default attributes"
+		TlsSetValue(gAnsiTlsIndex, obj);
+	}
+
+	return obj;
+}
+
+//static
+void CEAnsi::Release()
+{
+	if (gAnsiTlsIndex && (gAnsiTlsIndex != TLS_OUT_OF_INDEXES))
+	{
+		CEAnsi* p = static_cast<CEAnsi*>(TlsGetValue(gAnsiTlsIndex));
+		if (p)
+		{
+			if (IsHeapInitialized())
+			{
+				delete p;
+			}
+			TlsSetValue(gAnsiTlsIndex, nullptr);
+		}
+	}
 }

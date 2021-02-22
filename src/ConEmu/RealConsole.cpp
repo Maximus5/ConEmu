@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
+#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -14648,7 +14649,7 @@ LPCWSTR CRealConsole::GetMntPrefix()
 		return ms_MountRoot;
 
 	WORD conInMode = mp_RBuf ? mp_RBuf->GetConInMode() : 0;
-	CEActiveAppFlags activeAppFlags = GetActiveAppFlags();
+	const CEActiveAppFlags activeAppFlags = GetActiveAppFlags();
 	TermEmulationType termMode = GetTermType();
 
 	if (conInMode & ENABLE_VIRTUAL_TERMINAL_INPUT/*0x200*/)
