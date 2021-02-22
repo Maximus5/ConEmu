@@ -47,12 +47,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessData.h"
 #include "../common/WFiles.h"
 #include "../common/WUser.h"
+#include "../common/MWnd.h"
 #include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"
 
 #include "Actions.h"
-
-
 #include "ConsoleArgs.h"
 #include "ConsoleState.h"
 #include "ConsoleMain.h"
@@ -60,7 +59,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InjectRemote.h"
 #include "MapDump.h"
 #include "UnicodeTest.h"
-#include "../common/MWnd.h"
 
 
 // ConEmuC -OsVerInfo
@@ -1003,12 +1001,35 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 		static WriteProcessedA_t WriteProcessedA = nullptr;
 		if (bProcessed && (!WriteProcessed || !WriteProcessedA))
 		{
+			_ASSERTE(FALSE && "Continue to load ConEmuHk");
 			// ConEmuHk.dll / ConEmuHk64.dll
 			if (ConEmuHk.Load(ConEmuHk_DLL_3264))
 			{
 				ConEmuHk.GetProcAddress("WriteProcessed", WriteProcessed);
 				ConEmuHk.GetProcAddress("WriteProcessedA", WriteProcessedA);
+				if (!WriteProcessed || !WriteProcessedA)
+				{
+					const DWORD errCode = GetLastError();
+					wchar_t buffer[120];
+					msprintf(buffer, countof(buffer), L"WriteOutput: GetProcAddress(%s, WriteProcessed) failed, code=%u", ConEmuHk_DLL_3264, errCode);
+					LogString(buffer);
+				}
+				else
+				{
+					LogString(L"WriteOutput: using WriteProcessed from " ConEmuHk_DLL_3264);
+				}
 			}
+			else
+			{
+				const DWORD errCode = GetLastError();
+				wchar_t buffer[120];
+				msprintf(buffer, countof(buffer), L"WriteOutput: LoadLibrary(%s) failed, code=%u", ConEmuHk_DLL_3264, errCode);
+				LogString(buffer);
+			}
+		}
+		else
+		{
+			LogString(L"WriteOutput: using WriteConsole because no escape sequences were found");
 		}
 
 		// If possible - use processed (with ANSI support) output via WriteProcessed[A] function
@@ -1046,11 +1067,13 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 	}
 	else if (bAsciiPrint)
 	{
+		LogString(L"WriteOutput: using WriteFile because output is redirected");
 		bRc = WriteFile(hOut, pszText, cchLen, &dwWritten, 0);
 	}
 	else
 	{
 		// Current process output was redirected to file!
+		LogString(L"WriteOutput: using WriteFile on unicode string because output is redirected");
 
 		char* pszOem = nullptr;
 		UINT  cp = GetConsoleOutputCP();
@@ -1103,6 +1126,11 @@ wrap:
 int DoExecAction(const ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, MacroInstance& Inst)
 {
 	int iRc = CERR_CARGUMENT;
+
+	if (gpConsoleArgs->isLogging_.exists)
+	{
+		CreateLogSizeFile(0);
+	}
 
 	switch (eExecAction)
 	{
