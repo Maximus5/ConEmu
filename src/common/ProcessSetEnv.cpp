@@ -536,7 +536,7 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 
 	if (mch_Total)
 	{
-		pszData = static_cast<wchar_t*>(malloc((mch_Total + 1) * sizeof(*pszData)));
+		pszData = static_cast<wchar_t*>(malloc((mch_Total + 2) * sizeof(*pszData)));
 		if (pszData)
 		{
 			wchar_t* pszDst = pszData;
@@ -598,8 +598,10 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 
 			// Fin
 			cchData = (pszDst - pszData + 1);
-			_ASSERTE(cchData > 2 && pszData[cchData-2] == L'\n' && pszData[cchData-3] != 0 && pszData[cchData]);
-			pszData[cchData-1] = 0; // MSZZ
+			_ASSERTE(cchData > 2 && pszData[cchData-2] == L'\n' && pszData[cchData-3] != 0);
+			// MSZZ
+			pszData[cchData-1] = 0;
+			pszData[cchData] = 0;
 		}
 	}
 
