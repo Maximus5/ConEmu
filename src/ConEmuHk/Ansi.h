@@ -125,6 +125,7 @@ public:
 	static MSectionSimple* gcsAnsiLogFile;
 
 	static bool gbIsXTermOutput;
+	static DWORD gPrevConOutMode;
 	static struct TermModeSet {
 		DWORD value, pid;
 	} gWasXTermModeSet[tmc_Last];

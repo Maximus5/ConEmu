@@ -144,7 +144,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		{
 			if (!isOutput())
 			{
-				static MHandle xtermEnabledFor;  // NOLINT(clang-diagnostic-exit-time-destructors)
+				static void* xtermEnabledFor = nullptr;
 				const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0;
 
 				#ifdef _DEBUG
@@ -152,16 +152,13 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 				#endif
 				const bool isInput = HandleKeeper::IsInputHandle(hConsoleHandle);
 				const bool allowChange = isInput
-					|| (!enableXterm && xtermEnabledFor.GetHandle() == hConsoleHandle);
+					|| (!enableXterm && xtermEnabledFor == hConsoleHandle);
 
 				if (allowChange)
 				{
-					CEAnsi::StartXTermMode(enableXterm);
+					CEAnsi::ChangeTermMode(tmc_TerminalType, enableXterm ? te_xterm : te_win32);
 
-					if (enableXterm)
-						xtermEnabledFor.SetHandle(hConsoleHandle);
-					else
-						xtermEnabledFor.SetHandle(nullptr);
+					xtermEnabledFor = enableXterm ? hConsoleHandle : nullptr;
 				}
 				//if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
 				//	CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);

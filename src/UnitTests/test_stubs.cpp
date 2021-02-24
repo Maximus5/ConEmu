@@ -170,5 +170,22 @@ void InitConEmuPathVars()
 	}
 
 }
+
+void WaitDebugger(const std::string& label, const DWORD milliseconds)
+{
+	if (::IsDebuggerPresent())
+		return;
+	const auto started = GetTickCount();
+	cdbg() << label << " (waiting for debugger)";
+	while (true)
+	{
+		Sleep(1000);
+		if (::IsDebuggerPresent() || (GetTickCount() - started) > milliseconds)
+			break;
+		cdbg("", false) << ".";
+	}
+	cdbg("", false) << std::endl;
+}
+
 }  // namespace tests
 }  // namespace conemu

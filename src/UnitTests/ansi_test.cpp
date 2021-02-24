@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#define WAIT_DEBUGGER_TIMEOUT 1
+
 #include "../common/defines.h"
 #include "gtest.h"
 #include "../common/ConEmuCheck.h"
@@ -171,12 +173,12 @@ int RunLineFeedTestXTerm()
 
 	Write(hConOut, L"\x1B]9;10\x07");
 
-	Sleep(10 * 1000);
+	Sleep(1000);
 
 	if (!TestWrite(hConOut, L"AAA   " L"   BBB" L"CCC   "))
 		result = 1;
 
-	Sleep(10 * 1000);
+	Sleep(1000);
 
 	SetConsoleTextAttribute(hConOut, csbi.wAttributes);
 	return result;
@@ -208,7 +210,7 @@ int RunLineFeedTestParent()
 	if (!created)
 	{
 		const DWORD errCode = GetLastError();
-		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str() << std::endl;
+		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str();
 		result = 1;
 	}
 	else
@@ -216,7 +218,7 @@ int RunLineFeedTestParent()
 		const auto wait = WaitForSingleObject(pi.hProcess, 1000 * 180);
 		if (wait != WAIT_OBJECT_0)
 		{
-			EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str() << std::endl;
+			EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str();
 			TerminateProcess(pi.hProcess, 255);
 			result = 2;
 		}
@@ -249,12 +251,12 @@ int RunLineFeedTestChild()
 	CONSOLE_SCREEN_BUFFER_INFO csbi{};
 	GetConsoleScreenBufferInfo(hConOut, &csbi);
 
-	Sleep(1 * 1000);
+	Sleep(1000);
 
 	if (!TestWrite(hConOut, L"AAA   " L"   BBB" L"CCC   "))
 		result = 1;
 
-	Sleep(1 * 1000);
+	Sleep(1000);
 
 	SetConsoleTextAttribute(hConOut, csbi.wAttributes);
 	return result;
@@ -266,6 +268,8 @@ int RunXTermTestChild()
 	const MHandle hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (!IsConEmuMode(hConOut, __FUNCTION__))
 		return 0;
+
+	WaitDebugger("Continue to child process", WAIT_DEBUGGER_TIMEOUT);
 
 	const DWORD dwMode = GetMode(hConOut);
 	EXPECT_TRUE(SetConsoleMode(hConOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING));
@@ -297,32 +301,40 @@ int RunXTermTestParent()
 	const DWORD inModeOrig = GetMode(hIn);
 	const DWORD outModeOrig = GetMode(hConOut);
 
+	WaitDebugger("Requesting XTerm mode via console In/Out modes", WAIT_DEBUGGER_TIMEOUT);
+
 	// Set output console mode
 	DWORD outMode = outModeOrig;
 	outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-	SetConsoleMode(hConOut, outMode);
+	EXPECT_TRUE(SetConsoleMode(hConOut, outMode));
 
 	// Set input console mode
 	DWORD inMode = inModeOrig;
 	inMode &= ~ENABLE_LINE_INPUT;
 	inMode &= ~ENABLE_ECHO_INPUT;
 	inMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
-	SetConsoleMode(hIn, inMode);
+	EXPECT_TRUE(SetConsoleMode(hIn, inMode));
 
 	// Start another process which sets xterm mode enabled
 	if (result == 0)
 	{
+		const DWORD inModePost = GetMode(hIn);
+		const DWORD outModePost = GetMode(hConOut);
+		char modesBuffer[80] = "";
+		msprintf(modesBuffer, countof(modesBuffer), "Before child start, inMode=0x%04X outMode=0x%04X", inModePost, outModePost);
+		cdbg() << modesBuffer << std::endl;
+		
 		STARTUPINFOW si{};
 		PROCESS_INFORMATION pi{};
 		si.cb = sizeof(si);
 		CEStr testExe;
 		GetModulePathName(nullptr, testExe);
-		const CEStr envCmdLine("\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunXTermTestChild");
+		const CEStr envCmdLine(L"\"", testExe, L"\" RunXTermTestChild");
 		const CEStr cmdLine(ExpandEnvStr(envCmdLine));
 		const bool created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
 		if (!created)
 		{
-			EXPECT_TRUE(created) << "command: " << cmdLine.c_str() << std::endl;
+			EXPECT_TRUE(created) << "command: " << cmdLine.c_str();
 			result = 1;
 		}
 		else
@@ -336,18 +348,20 @@ int RunXTermTestParent()
 
 	if (result == 0)
 	{
-		DWORD mode = 0;
-		EXPECT_TRUE(GetConsoleMode(hIn, &mode));
-		if (mode != inMode)
+		const DWORD inModePost = GetMode(hIn);
+		const DWORD outModePost = GetMode(hConOut);
+		char modesBuffer[80] = "";
+		msprintf(modesBuffer, countof(modesBuffer), "After child exit, inMode=0x%04X outMode=0x%04X", inModePost, outModePost);
+		cdbg() << modesBuffer << std::endl;
+		if (inModePost != inMode)
 		{
-			EXPECT_EQ(mode, inMode);
+			EXPECT_EQ(inModePost, inMode);
 			EXPECT_TRUE(SetConsoleMode(hIn, inMode));
 			result = 2;
 		}
-		EXPECT_TRUE(GetConsoleMode(hConOut, &mode));
-		if (mode != outMode)
+		if (outModePost != outMode)
 		{
-			EXPECT_EQ(mode, outMode);
+			EXPECT_EQ(outModePost, outMode);
 			EXPECT_TRUE(SetConsoleMode(hConOut, outMode));
 			result = 3;
 		}
@@ -356,6 +370,8 @@ int RunXTermTestParent()
 	// Request for AppKeys mode (cursor keys are sent with `ESC O`)
 	if (result == 0)
 	{
+		cdbg() << "Requesting AppKeys mode" << std::endl;
+		Sleep(1000);
 		DWORD written = 0;
 		const bool writeRc = WriteConsoleA(hConOut, "\033[?1h", 5, &written, nullptr);
 		if (!writeRc || !written)
@@ -366,9 +382,12 @@ int RunXTermTestParent()
 		}
 	}
 
+	Sleep(10000);
+
 	// Clean the input buffer
 	if (result == 0)
 	{
+		cdbg() << "Clearing input queue" << std::endl;
 		INPUT_RECORD ir[32]{}; DWORD count = 0;
 		while (PeekConsoleInputW(hIn, ir, 32, &count) && count)
 		{
@@ -380,6 +399,7 @@ int RunXTermTestParent()
 	// Check what is sent through input queue
 	if (result == 0)
 	{
+		cdbg() << "Posting UpArrow keypress" << std::endl;
 		PostMessage(srvMap.hConEmuWndDc, WM_KEYDOWN, VK_UP, 0);
 		PostMessage(srvMap.hConEmuWndDc, WM_KEYUP, VK_UP, (1U << 31) | (1U << 30));
 
@@ -414,20 +434,20 @@ TEST(Ansi, CheckLineFeed)
 	PROCESS_INFORMATION pi{};
 	CEStr testExe;
 	GetModulePathName(nullptr, testExe);
-	const CEStr envCmdLine("\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTest");
+	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTest");
 	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
 	const auto created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, false, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
 	if (!created)
 	{
 		const DWORD errCode = GetLastError();
-		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str() << std::endl;
+		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str();
 		return;
 	}
 
 	const auto wait = WaitForSingleObject(pi.hProcess, 1000 * 180);
 	if (wait != WAIT_OBJECT_0)
 	{
-		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str() << std::endl;
+		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str();
 		TerminateProcess(pi.hProcess, 255);
 	}
 	else
@@ -456,20 +476,20 @@ TEST(Ansi, CheckLineFeedXTerm)
 	PROCESS_INFORMATION pi{};
 	CEStr testExe;
 	GetModulePathName(nullptr, testExe);
-	const CEStr envCmdLine("\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTestXTerm");
+	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTestXTerm");
 	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
 	const auto created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, false, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
 	if (!created)
 	{
 		const DWORD errCode = GetLastError();
-		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str() << std::endl;
+		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str();
 		return;
 	}
 
 	const auto wait = WaitForSingleObject(pi.hProcess, 1000 * 180);
 	if (wait != WAIT_OBJECT_0)
 	{
-		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str() << std::endl;
+		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str();
 		TerminateProcess(pi.hProcess, 255);
 	}
 	else
@@ -499,20 +519,20 @@ TEST(Ansi, CheckLineFeedChild)
 	PROCESS_INFORMATION pi{};
 	CEStr testExe;
 	GetModulePathName(nullptr, testExe);
-	const CEStr envCmdLine("\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTestParent");
+	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTestParent");
 	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
 	const auto created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, false, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
 	if (!created)
 	{
 		const DWORD errCode = GetLastError();
-		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str() << std::endl;
+		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str();
 		return;
 	}
 
 	const auto wait = WaitForSingleObject(pi.hProcess, 1000 * 180);
 	if (wait != WAIT_OBJECT_0)
 	{
-		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str() << std::endl;
+		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str();
 		TerminateProcess(pi.hProcess, 255);
 	}
 	else
@@ -539,12 +559,12 @@ TEST(Ansi, CheckXTermInChain)
 	si.cb = sizeof(si);
 	CEStr testExe;
 	GetModulePathName(nullptr, testExe);
-	const CEStr envCmdLine("\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunXTermTestParent");
+	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunXTermTestParent");
 	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
 	const bool created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
 	if (!created)
 	{
-		EXPECT_TRUE(created) << "command: " << cmdLine.c_str() << std::endl;
+		EXPECT_TRUE(created) << "command: " << cmdLine.c_str();
 	}
 	else
 	{

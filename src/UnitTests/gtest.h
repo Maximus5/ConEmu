@@ -17,16 +17,18 @@ void ColoredPrintf(GTestColor color, const char* fmt, ...);
 namespace conemu {
 namespace tests {
 void InitConEmuPathVars();
+void WaitDebugger(const std::string& label, const DWORD milliseconds = 15000);
 extern std::vector<std::string> gTestArgs;
 }  // namespace tests
 }  // namespace conemu
 
 struct wcdbg : public std::wostringstream
 {
-	wcdbg(const char* label = nullptr)
+	wcdbg(const char* label = nullptr, const bool brackets = true) : m_brackets(brackets)
 	{
 		m_label = label ? label : "DEBUG";
-		m_label.resize(8, ' ');
+		if (brackets)
+			m_label.resize(8, ' ');
 	}
 
 	wcdbg(const wcdbg&) = delete;
@@ -43,19 +45,27 @@ struct wcdbg : public std::wostringstream
 		const int len = WideCharToMultiByte(cp, 0, data.c_str(), int(data.length()), nullptr, 0, nullptr, nullptr);
 		utf_data.resize(len);
 		WideCharToMultiByte(cp, 0, data.c_str(), int(data.length()), &(utf_data[0]), len, nullptr, nullptr);
-		testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "[ %s ] %s", m_label.c_str(), utf_data.c_str());
+		if (m_brackets)
+			testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "[ %s ] %s", m_label.c_str(), utf_data.c_str());
+		else
+			testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "%s%s", m_label.c_str(), utf_data.c_str());
+		static const bool in_color_mode = _isatty(_fileno(stdout)) != 0;
+		if (!in_color_mode)
+			fflush(stdout);
 	}
 
 private:
 	std::string m_label;
+	const bool m_brackets;
 };
 
 struct cdbg : public std::ostringstream
 {
-	cdbg(const char* label = nullptr)
+	cdbg(const char* label = nullptr, const bool brackets = true) : m_brackets(brackets)
 	{
 		m_label = label ? label : "DEBUG";
-		m_label.resize(8, ' ');
+		if (brackets)
+			m_label.resize(8, ' ');
 	}
 	cdbg(const cdbg&) = delete;
 	cdbg(cdbg&&) = delete;
@@ -65,7 +75,10 @@ struct cdbg : public std::ostringstream
 	virtual ~cdbg()
 	{
 		const auto data = this->str();
-		testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "[ %s ] %s", m_label.c_str(), data.c_str());
+		if (m_brackets)
+			testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "[ %s ] %s", m_label.c_str(), data.c_str());
+		else
+			testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, "%s%s", m_label.c_str(), data.c_str());
 		static const bool in_color_mode = _isatty(_fileno(stdout)) != 0;
 		if (!in_color_mode)
 			fflush(stdout);
@@ -73,4 +86,5 @@ struct cdbg : public std::ostringstream
 
 private:
 	std::string m_label;
+	const bool m_brackets;
 };

@@ -129,6 +129,8 @@ MSectionSimple* CEAnsi::gcsAnsiLogFile = nullptr;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
 bool CEAnsi::gbIsXTermOutput = false;
+// On Windows 10 we have ENABLE_VIRTUAL_TERMINAL_PROCESSING which implies XTerm mode
+DWORD CEAnsi::gPrevConOutMode = 0;
 // Let RefreshXTermModes() know what to restore
 CEAnsi::TermModeSet CEAnsi::gWasXTermModeSet[tmc_Last] = {};
 
@@ -4406,29 +4408,50 @@ HANDLE CEAnsi::StopVimTerm()
 
 void CEAnsi::InitTermMode()
 {
-	bool needSetXterm = gbIsVimProcess;
+	bool needSetXterm = false;
 
 	if (IsWin10())
 	{
 		const MHandle hOut{ GetStdHandle(STD_OUTPUT_HANDLE) };
-		DWORD conOutMode = 0;
-		if (GetConsoleMode(hOut, &conOutMode))
+		gPrevConOutMode = 0;
+		if (GetConsoleMode(hOut, &gPrevConOutMode))
 		{
-			if (conOutMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+			if (gPrevConOutMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 			{
 				needSetXterm = true;
 			}
 		}
 	}
 	
-	if (needSetXterm)
+	if (gbIsVimProcess)
 	{
 		StartVimTerm(true);
+		_ASSERTE(CEAnsi::gbIsXTermOutput == true);
+	}
+
+	if (needSetXterm)
+	{
+		StartXTermMode(true);
+	}
+
+	if (CEAnsi::gbIsXTermOutput && gPrevConOutMode)
+	{
+		const bool autoLfNl = (gPrevConOutMode & DISABLE_NEWLINE_AUTO_RETURN) == 0;
+		if (CEAnsi::IsAutoLfNl() != autoLfNl)
+		{
+			CEAnsi::SetAutoLfNl(autoLfNl);
+		}
 	}
 }
 
 void CEAnsi::DoneTermMode()
 {
+	if (gbIsXTermOutput && (gPrevConOutMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+	{
+		// If XTerm was enabled already before process start, no need to disable it
+		gbIsXTermOutput = false; // just reset
+	}
+	
 	if (gbIsVimProcess)
 	{
 		StopVimTerm();
