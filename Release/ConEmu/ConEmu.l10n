@@ -258,7 +258,7 @@
       "ja": "メインフォントの太さ",
       "es": "Peso del tipo de letra principal",
       "pl": "Główna waga czcionki",
-      "it_IT": "Dimensione font principale",
+      "it_IT": "Spessore font principale",
       "id": 2278 }
     ,
     "cbClinkWebPage": {
@@ -700,7 +700,7 @@
       "zh": [ "停止 Windows 任务栏上所有来自 Far Manager 的闪烁。\r\n"
             , "第三种情况 - 允许较短闪烁" ],
       "de": [ "Deaktiviert Blinken (des Far-Managers) in der Windows-Taskleiste.\r\n"
-            , "3.-Zustand - Erlaubt kurzes Aufblinken." ],
+            , "Auswahlfeld im Zwischenzustand - kurzes Aufblinken erlauben." ],
       "ja": [ "Windowsタスクバーの(Far Managerからの)点滅を無効にします.\r\n"
             , "3番目 - 短期間の点滅は許可" ],
       "es": [ "Desactivar parpadeo (de Far Manager) en la barra de tareas de Windows.\r\n"
@@ -993,6 +993,8 @@
             , "Ej.: principal - \"Consolas\",  adicional - \"Segoe UI\"." ],
       "pl": [ "Możesz określić dodatkową czcionkę do rysowania pseudografii lub określony zakres symboli.\n"
             , "Na przykład. główny- „Consolas”, dodatkowe - „Segoe UI”." ],
+      "it_IT": [ "È possibile specificare un tipo di font aggiuntivo per disegnare pseudografiche o un intervallo di simboli specificato.\r\n"
+            , "Ad esempio principale - \"Consolas\", aggiuntivo - \"Segoe UI\"." ],
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
@@ -1020,6 +1022,8 @@
             , "Se verán mejor los pseudo-gráficos." ],
       "pl": [ "Włącz lub wyłącz „Wyczyść typ” dla alternatywnej czcionki.\n"
             , "Dokładna pseudografia wygląda lepiej." ],
+      "it_IT": [ "Abilita o disabilita 'Clear Type' per il font alternativo.\r\n"
+            , "Le pseudografiche avranno un aspetto migliore." ],
       "id": 2883 }
     ,
     "cbFontAuto": {
@@ -1030,6 +1034,7 @@
       "ja": "実際のコンソール幅で自動的にフォントをリサイズする",
       "es": "Redimensionar automáticamente el tipo de letra para la anchura fija del terminal real",
       "pl": "Automatyczna zmiana rozmiaru czcionki dla ustalonej rzeczywistej szerokości konsoli",
+      "it_IT": "Ridimensionamento automatico del font per la dimensione della console reale",
       "id": 1566 }
     ,
     "cbHandleFarDetach": {
@@ -1067,6 +1072,7 @@
       "ja": "最大化するとメインウィンドウのキャプションを隠す(Alt-F9)",
       "es": "Ocultar la barra de título de la ventana principal, cuando está maximizada (Alt-F9)",
       "pl": "Ukryj podpis okna głównego po zmaksymalizowaniu (Alt-F9)",
+      "it_IT": "Nascondi la didascalia della finestra principale quando massimizzata (Alt+F9)",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
@@ -1077,6 +1083,7 @@
       "ja": "ウィンドウ枠とキャプションを削除します.コンソール,タブ,ステータスバーのみが表示されます.",
       "es": "Eliminar el borde y barra de título de la ventana. Sólo se mostrarán el terminal, las pestañas y la barra de estado.",
       "pl": "Usuń obramowanie okna i podpis. Wyświetlana będzie tylko konsola, karty i pasek stanu.",
+      "it_IT": "Togli il bordo della finestra e la didascalia. Solo la console, la barra delle schede e di stato verranno mostrate.",
       "id": 1569 }
     ,
     "cbHideInactiveConTabs": {
@@ -1097,7 +1104,7 @@
       "ja": "多くの機能(ConEmuタブのANSI X3.64, -new_console 引数, GUIアプリケーション,...)といくつかの問題(Windows8でのクラッシュ, Windows7での telnet, ConEmuウィンドウの後ろのダイアログとメニュー, chcp hungs , 等々...)",
       "es": "Se necesita para varias características (ANSI X3.64, parámentro -new_console, aplicaciones GUI en pestañas de ConEmu, ...) y para evitar varios problemas (casques en Windows 8, telnet en Windows 7, diálogos y menús que se quedan detrás de la ventana de ConEmu, cuelgues de chcp, ...)",
       "pl": "Wymagane dla wielu funkcji (ANSI X3.64, -new_console argument, GUI aplikacje na kartach ConEmu , ...) i wyeliminowanie kilku problemów (awaria w Windows 8, telnet w Windows 7, okna dialogowe i menu za oknem ConEmu, chcp hungs itd.)",
-      "it_IT": "Necessario per molteplici funzionalità (ANSI X3.64, argomento -new_console, applicazioni rafiche nelle schede di ConEmu, ...) e prevenzione di molti problemi (crash su Win8, telnet su Win7, finestre e menù non in primo piano rispetto alla finestra di ConEmu, blocco chcp, etc...)",
+      "it_IT": "Necessario per molteplici funzionalità (ANSI X3.64, argomento -new_console, applicazioni grafiche nelle schede di ConEmu, ...) e prevenzione di molti problemi (crash su Win8, telnet su Win7, finestre e menù non in primo piano rispetto alla finestra di ConEmu, blocco chcp, etc...)",
       "id": 2098 }
     ,
     "cbInsideName": {
@@ -1145,6 +1152,7 @@
       "ja": "メイン フォント 斜体",
       "es": "Tipo de letra itálica principal",
       "pl": "Główna czcionka kursywą",
+      "it_IT": "Corsivo per il font principale",
       "id": 2280 }
     ,
     "cbJumpListAutoUpdate": {
@@ -1242,8 +1250,8 @@
             , "(например, поддержка переключения Far Manager XLat)" ],
       "zh": [ "监视在控制台本体里输入语言的改变\r\n"
             , "（例如：Far Manager XLat 切换支持）" ],
-      "de": [ "Überwacht Wechsel der Eingabesprache in real\r\n"
-            , "console (z.B. Unterstützung für Far-Manager-XLat-Wechsel)" ],
+      "de": [ "Überwacht den Wechsel der Eingabesprache im Originalfenster\r\n"
+            , "der Konsole (Unterstützt z.B. XLat-Wechsel in Far-Manager)" ],
       "ja": [ "実際の入力言語の変化を監視する\r\n"
             , "コンソール(Far Manager XLatスイッチングサポートなど)" ],
       "es": [ "Monitorizar el cambio del idioma de entrada del terminal\r\n"
@@ -1260,6 +1268,7 @@
       "ja": "等幅(monospace)フォントを使用",
       "es": "Activarlo para tipos de letra no proporcionales (monoespaciados)",
       "pl": "Sprawdź, czy nie ma czcionek nieproporcjonalnych (o stałej szerokości)",
+      "it_IT": "Seleziona per font non proporzionali (monospazio)",
       "id": 2283 }
     ,
     "cbMouseDragWindow": {
@@ -1294,6 +1303,9 @@
       "pl": [ "Włącz MultiConsole\n"
             , "(Kilka konsol w jednym ConEmu)\n"
             , "Wymagany restart ConEmu" ],
+      "it_IT": [ "Attiva MultiConsole\r\n"
+            , "(diverse console in un'unica finestra di ConEmu)\r\n"
+            , "Riavvio ConEmu richiesto" ],
       "id": 1506 }
     ,
     "cbMultiIterate": {
@@ -1514,6 +1526,7 @@
       "ja": "コンソール出力での最大スクロールバー位置の増加",
       "es": "Aumentar la posición máxima de la barra de desplazamiento cuando crece la salida del terminal",
       "pl": "Zwiększ maksymalną pozycję paska przewijania wraz z rosnącym wyjściem konsoli",
+      "it_IT": "Aumenta la posizione massima della barra di scorrimento con l'output della console che aumenta",
       "id": 3090 }
     ,
     "cbSendAltEsc": {
@@ -1945,6 +1958,7 @@
       "ja": "手動で入力したUCS範囲を適用するなら結果をきちんと確認して下さい。",
       "es": "No olvides aplicar manualmente el rango UCS introducido para observar los resultados.",
       "pl": "Nie fałszuj zastosowania ręcznie wprowadzonego zakresu UCS, aby obserwować wynik.",
+      "it_IT": "Non dimenticare di applicare manualmete per abilitare il nuovo range Unicode e vederne il risultato.",
       "id": 2838 }
     ,
     "cbUseAltGrayPlus": {
@@ -1978,7 +1992,7 @@
             , "https://chrisant996.github.io/clink/" ],
       "zh": [ "使用 Clink 扩展 command prompt（cmd.exe）\r\n"
             , "https://chrisant996.github.io/clink/" ],
-      "de": [ "Verwende clink um Befehls-Prompt (cmd.exe) zu erweitern\r\n"
+      "de": [ "Clink verwenden, um Kommandointerpretor (cmd.exe) zu erweitern\r\n"
             , "https://chrisant996.github.io/clink/" ],
       "ja": [ "clinkを使用してコマンドプロンプトを拡張する(cmd.exe)\r\n"
             , "https://chrisant996.github.io/clink/" ],
@@ -2473,6 +2487,7 @@
       "ja": "マウスオーバーまたはスクロール位置の変更時にスクロールバーを表示する",
       "es": "Mostrar barra de scroll al pasar el ratón por encima o cuando cambia la posición de scroll",
       "pl": "Pokaż pasek przewijania po najechaniu myszą lub zmianie pozycji przewijania",
+      "it_IT": "Mostra barra di scorrimento al passaggio del mouse o modifica della posizione di scorrimento",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
@@ -2483,6 +2498,7 @@
       "ja": "スクロールバーを表示しない",
       "es": "No mostrar barra de scroll",
       "pl": "Nie pokazuj paska przewijania",
+      "it_IT": "Non mostrare la barra di scorrimento",
       "id": 2487 }
     ,
     "rbScrollbarShow": {
@@ -2772,6 +2788,7 @@
       "ja": "メインフォントの文字セット",
       "es": "Juego de caracteres principal",
       "pl": "Główny zestaw czcionek",
+      "it_IT": "Mappa caratteri del font principale",
       "id": 1513 }
     ,
     "tFontFace": {
@@ -2782,6 +2799,7 @@
       "ja": "メインフォントのフェイス名",
       "es": "Nombre del tipo de letra principal",
       "pl": "Nazwa twarzy dla głównej czcionki",
+      "it_IT": "Nome del font da usare come font principale",
       "id": 1511 }
     ,
     "tFontFace2": {
@@ -2800,6 +2818,8 @@
             , "Ej.: principal - \"Consolas\", adicional - \"Segoe UI\"" ],
       "pl": [ "Czcionka używana do rysowania pseudografii lub określonego zakresu symboli.\n"
             , "Na przykład. główny - \"Consolas\", dodatkowe - \"Segoe UI\"." ],
+      "it_IT": [ "Carattere utilizzato per disegnare pseudografiche o intervallo di simboli specificato.\r\n"
+            , "Ad esempio principale - \"Consolas\", aggiuntivo - \"Segoe UI\"." ],
       "id": 1514 }
     ,
     "tFontSizeX": {
@@ -2824,6 +2844,8 @@
       "pl": [ "Główna szerokość czcionki\n"
             , "0 - średnia domyślna szerokość\n"
             , "dla określonej wysokości" ],
+      "it_IT": [ "Altezza del font principale\r\n"
+            , "0 - altezza di default" ],
       "id": 2279 }
     ,
     "tFontSizeX2": {
@@ -2848,6 +2870,9 @@
       "pl": [ "WIDTH dla czcionki pseudograficznej.\n"
             , "Musi być szerszy niż główna czcionka\n"
             , "aby uniknąć pseudografii „przerywanej” (ramki)." ],
+      "it_IT": [ "Larghezza per caratteri pseudografici.\r\n"
+            , "Deve essere maggiore della larghezza del font principale\r\n"
+            , "per evitare artefatti grafici." ],
       "id": 2284 }
     ,
     "tFontSizeX3": {
@@ -2858,6 +2883,7 @@
       "ja": "\"モノスペース\"モードのセル幅",
       "es": "Anchura de celda para modo \"Monoespaciado\"",
       "pl": "Szerokość komórki w trybie \"Monospace\"",
+      "it_IT": "Larghezza cella per la modalità \"Monospazio\"",
       "id": 2290 }
     ,
     "tFontSizeY": {
@@ -2868,6 +2894,7 @@
       "ja": "メインフォントの高さ",
       "es": "Altura del tipo de letra principal",
       "pl": "Wysokość głównej czcionki",
+      "it_IT": "Altezza del font principale",
       "id": 1512 }
     ,
     "tHereConfig": {
@@ -2953,6 +2980,8 @@
       "ja": "キャプションとフレームが隠されている間,ConEmuはコンソール部分の周りにフレームの小さな部分(ピクセル単位)を保持します.デフォルトは1ピクセルです.",
       "es": "Mientras la barra de título y el borde están ocultos, ConEmu puede mantener un pequeño margen alrededor de la zona del terminal. Por defecto es 1 pixel.",
       "pl": "Podczas gdy podpis i ramka są ukryte, ConEmu może utrzymywać małą część ramki (w pikselach) wokół części konsoli. Domyślnie jest to 1 piksel.",
+      "it_IT": [ "Quando didascalia e bordo sono nascosti, ConEmu piò disegnare un contorno (in pixel) all'esterno della console.\r\n"
+            , "Default è -1." ],
       "id": 1589 }
     ,
     "tInsideConfig": {
@@ -3224,6 +3253,7 @@
       "ja": "'常にスクロールバーを表示する'が OFFまたは自動のときスクロールバーを遅らせて表示する",
       "es": "Retraso de aparición de la barra de scroll cuando 'Motrar siempre barra de scroll' está desactivada o en el 3er-estado",
       "pl": "Pasek przewijania pojawia się z opóźnieniem, gdy \"Zawsze pokazuj pasek przewijania\" jest wyłączony lub znajduje się w 3rd-stanie",
+      "it_IT": "Ritardo di visualizzazione della barra di scorrimento quando 'Auto' è selezionato",
       "id": 2354 }
     ,
     "tScrollDisappearDelay": {
@@ -3234,6 +3264,7 @@
       "ja": "'常にスクロールバーを表示する'が OFFまたは自動のときスクロールバーを遅らせて非表示にする",
       "es": "El retardo de desaparición de la barra de scroll cuando 'Mostrar siempre barra de scroll' está desactivado o en 3er-estado",
       "pl": "Pasek przewijania zniknie z opóźnieniem, gdy \"Zawsze pokazuj pasek przewijania\" jest wyłączony lub znajduje się w 3-rd stanie",
+      "it_IT": "Ritardo di nascondimento della barra di scorrimento quando 'Auto' è selezionato",
       "id": 2355 }
     ,
     "tsTopPID": {
@@ -3656,6 +3687,8 @@
             , "elige uno de la lista." ],
       "pl": [ "Zdefiniuj własny zakres UCS lub\n"
             , "wybierz predefiniowany z listy." ],
+      "it_IT": [ "Definisci il Range Unicode che ti serve o\r\n"
+            , "scegli tra uno di quelli predefiniti." ],
       "id": 2835 }
     ,
     "tUpdateVerLocation": {
@@ -3680,6 +3713,9 @@
       "pl": [ "URL do pobierania informacji o najnowszej wersji,\n"
             , "domyślnie jest to: https://conemu.github.io/version.ini\n"
             , "Usuń pole tekstowe, aby przywrócić domyślny adres URL." ],
+      "it_IT": [ "Indirizzo dove reperire le informazioni sull'ultima versione,\r\n"
+            , "dafault: https://conemu.github.io/version.ini\r\n"
+            , "Cancella la casella di testo per ripristinare l'indirizzo di default." ],
       "id": 2052 }
     ,
     "tWndHeight": {
@@ -4782,6 +4818,7 @@
       "ja": "新しいコンソールまたは新しいウィンドウを作成する( '1つのConEmuウィンドウで複数のコンソールをチェックする' )",
       "es": "Crear un nuevo terminal o nueva ventana (comprobar 'Varios terminales en una ventana de ConEmu')",
       "pl": "Utwórz nową konsolę lub nowe okno (zaznacz \"Wiele konsol w jednym oknie ConEmu\")",
+      "it_IT": "Crea nuova console o nuova finestra (seleziona 'Più console in una finestra ConEmu')",
       "id": 2001 }
     ,
     "vkMultiNewAttach": {
@@ -5074,6 +5111,7 @@
       "ja": "タブバーを表示",
       "es": "Mostrar barra de pestañas",
       "pl": "Pokaż pasek kart",
+      "it_IT": "Mostra barra schede",
       "id": 2326 }
     ,
     "vkShowTabsList": {
@@ -6158,7 +6196,7 @@
       "ja": "ホットキー<%s>は一意ではありません",
       "es": "Combinación <%s> no es única",
       "pl": "Klawisz skrótu <%s> nie jest wyjątkowy",
-      "it_IT": "Combinazione <%s> non è unica",
+      "it_IT": "Combo <%s> non è unica",
       "id": 79 }
     ,
     "lng_HotkeysAll": {
@@ -6600,7 +6638,7 @@
       "zh": "热键",
       "de": "Tasten&kürzel",
       "pl": "Klawisze skrótu",
-      "it_IT": "Combinazione &tasti",
+      "it_IT": "Combo &tasti",
       "id": 136 }
     ,
     "lng_MenuLoadDumpConsole": {
@@ -8502,7 +8540,7 @@
       "en": "Exception handler (debug)",
       "ru": "Обработчик исключений (отладка)",
       "zh": "移除处理程序（调试）",
-      "de": "Behandlung von Ausnahmen (Fehlersuche)",
+      "de": "Behandlung von Ausnahmen",
       "ja": "例外ハンドラ(デバッグ)",
       "es": "Manejador de excepciones (depuración)",
       "pl": "Moduł obsługi wyjątków (debug)",
@@ -8737,7 +8775,7 @@
       "en": "Debug steps in caption",
       "ru": "Шаги отладки в заголовке",
       "zh": "标题里显示调试步骤",
-      "de": "Untersuchungsschritte in Titelleiste",
+      "de": "Untersuchungsschritte im Titel",
       "ja": "キャプション内のデバッグステップ",
       "es": "Depurar pasos en título",
       "pl": "Kroki debugowania w podpisie",
@@ -8818,7 +8856,7 @@
       "en": "Disable all flashing",
       "ru": "Отключить все мигания",
       "zh": "禁用所有闪烁",
-      "de": "Jegliches Blinken deaktivieren",
+      "de": "Blinken in Taskleiste verhindern",
       "ja": "すべての点滅を無効にする",
       "es": "Desactivar parpadeo",
       "pl": "Wyłącz wszystkie flashowanie",
@@ -9006,6 +9044,7 @@
       "ja": "フォントスタイルを拡張する",
       "es": "Extender estilos de texto",
       "pl": "Rozszerz style czcionek",
+      "it_IT": "Estendi stile font",
       "id": 1576 }
     ,
     "cbExtendFontsOverride": {
@@ -9165,7 +9204,7 @@
       "ja": "代替フォント (pseudographics, CJK, etc.)",
       "es": "Tipo de letra alternativo (pseudográficos, CJK, etc...)",
       "pl": "Alternatywna czcionka (pseudografia, CJK itp.)",
-      "it_IT": "Tipo di carattere alternativo (pseudografica, CJK, ecc.)",
+      "it_IT": "Font alternativo (pseudografica, CJK, ecc.)",
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
@@ -9197,6 +9236,7 @@
       "ja": "フォントの高さをデバイス単位として扱う",
       "es": "Tratar altura de letra como unidades de dispositivo",
       "pl": "Traktuj wysokość czcionki jako jednostki urządzenia",
+      "it_IT": "Usa l'altezza del font come unità di dispositivo",
       "id": 2692 }
     ,
     "cbFontAuto": {
@@ -9207,7 +9247,7 @@
       "ja": "自動サイズ(セル内の固定コンソールサイズ)",
       "es": "Tamaño automático (tamaño de terminal en celdas)",
       "pl": "Rozmiar automat (naprawiono rozmiar w komórkach)",
-      "it_IT": "Dimensione automatica (dimensione console fissa in celle)",
+      "it_IT": "Dim. automatica (dimensione console fissa in celle)",
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
@@ -9249,6 +9289,7 @@
       "ja": "最大化時にキャプションを隠す",
       "es": "Ocultar título al maximizar",
       "pl": "Ukryj podpis po zmaksymalizowaniu",
+      "it_IT": "Nascondi didascalia quando massimizzato",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
@@ -9259,6 +9300,7 @@
       "ja": "キャプションを常に隠す",
       "es": "Ocultar título siempre",
       "pl": "Zawsze ukryj podpis",
+      "it_IT": "Nascondi didascalia sempre",
       "id": 1569 }
     ,
     "cbHideChildCaption": {
@@ -9453,7 +9495,7 @@
     "cbKillSshAgent": {
       "en": "Kill ssh-agent with ConEmu",
       "ru": "Убить ssh агент с ConEmu",
-      "de": "Beende SSH-Agenten durch ConEmu",
+      "de": "ssh-agent mit ConEmu beenden",
       "ja": "ConEmuでssh-agentを終了させる",
       "es": "Finalizar ssh-agent con ConEmu",
       "pl": "Zabij ssh-agent za pomocą ConEmu",
@@ -9517,7 +9559,7 @@
       "en": "Monitor console lang",
       "ru": "Отслеживание языка консоли",
       "zh": "监视控制台（console）语言",
-      "de": "Überwache Konsolensprache",
+      "de": "Eingabesprache überwachen",
       "ja": "コンソールの言語をモニターする",
       "es": "Comprobar idioma de terminal",
       "pl": "Monitoruj tylko konsolę",
@@ -9551,6 +9593,7 @@
       "ja": "1つのConEmuウィンドウに複数のコンソール",
       "es": "Múltiples terminales en una ventana ConEmu",
       "pl": "Wiele konsol w jednym oknie ConEmu",
+      "it_IT": "Più console in una finestra ConEmu",
       "id": 1506 }
     ,
     "cbMultiIterate": {
@@ -9571,6 +9614,7 @@
       "ja": "タブバーにボタン (ツールバー) を表示する",
       "es": "Mostrar botones en barra de pestañas",
       "pl": "Pokaż przyciski (pasek narzędzi) na pasku kart",
+      "it_IT": "Mostra pulsanti (barra strumenti) nella barra delle schede",
       "id": 2549 }
     ,
     "cbMultiShowSearch": {
@@ -9650,7 +9694,7 @@
       "en": "Process 'start'",
       "ru": "Процесс 'start'",
       "zh": "处理 'start'",
-      "de": "Verarbeite 'start'",
+      "de": "'start' verarbeiten",
       "ja": "プロセス '開始'",
       "es": "Procesar 'inicio'",
       "pl": "Rozpocznij proces",
@@ -9660,7 +9704,7 @@
       "en": "Process Ctrl-Z in ReadConsole",
       "ru": "Обработка Ctrl-Z в ReadConsole",
       "zh": "在ReadConsole里处理 Ctrl-Z",
-      "de": "Verarbeite Strg+Z in RealConsole",
+      "de": "Strg+Z an Konsole senden",
       "ja": "ReadConsoleでCtrl+Zを処理する",
       "es": "Procesar Ctrl-Z en ReadConsole",
       "pl": "Przetwarzaj Ctrl-Z w ReadConsole",
@@ -9670,7 +9714,7 @@
       "en": "Process '-new_console' and '-cur_console' switches",
       "ru": "Обработка переключателей '-new_console' и '-cur_console'",
       "zh": "进行 '-new_console' 和 '-cur_console' 切换",
-      "de": "Verarbeite '-new_console'- und '-cur_console'-Parameter",
+      "de": "\"-new_console\" und \"-cur_console\"-Parameter verarbeiten",
       "ja": "'-new_console'と '-cur_console'スイッチを処理する",
       "es": "Procesar opciones '-new_console' y '-cur_console'",
       "pl": "Przetwarzaj przełączniki \"-new_console\" i \"-cur_console\"",
@@ -9741,7 +9785,7 @@
       "en": "Retard inactive panes",
       "ru": "Задержка неактивных панелей",
       "zh": "延缓不活动的窗格",
-      "de": "Verzögere inaktive Bereiche",
+      "de": "Inaktive Konsolen verlangsamen",
       "ja": "非アクティブなペインを遅らせる",
       "es": "Retrasar paneles inactivos",
       "pl": "Opóźnij nieaktywne szyby",
@@ -9965,7 +10009,7 @@
       "en": "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",
       "ru": "Пропустить события фокуса (не отправлять в консоль FOCUS_EVENT, полезно с Far Manager)",
       "zh": "跳过焦点事件（FOCUS_EVENT不发送到控制台，对于Far Manager有用）",
-      "de": "Ignoriere Fokusereignisse (Sendet kein FOCUS_EVENT an die Konsole, nützlich bei Verwendung von Far-Manager)",
+      "de": "Fokus-Ereignisse ignorieren (FOCUS_EVENT nicht an Konsole senden, nützlich bei Far-Manager)",
       "ja": "フォーカスイベントをスキップします(コンソールFOCUS_EVENTには送信しないでください,Far Managerで便利です)",
       "es": "Saltar eventos de foco (no enviar FOCUS_EVENT al terminal, útil con Far Manager)",
       "pl": "Pomiń zdarzenia skupienia (nie wysyłaj do konsoli FOCUS_EVENT, przydatne w Far Managerze)",
@@ -9985,7 +10029,7 @@
       "en": "Sleep in background",
       "ru": "Сон в фоновом режиме",
       "zh": "在后端Sleep",
-      "de": "Im Hintergrund schlafen",
+      "de": "Im Hintergrund verlangsamen",
       "ja": "バックグラウンドでスリープ",
       "es": "Dormir en el fondo",
       "pl": "Spać w tle",
@@ -10069,7 +10113,7 @@
       "en": "Suppress bells (beeps)",
       "ru": "Подавить звонки (гудки)",
       "_zh": "抑制bell声",
-      "de": "Unterdrücke Beeps",
+      "de": "Töne unterdrücken",
       "ja": "鐘を鳴らさない(ビープ音)",
       "es": "Eliminar timbres (beeps)",
       "pl": "Pomiń dzwonki (sygnały dźwiękowe)",
@@ -10300,7 +10344,7 @@
       "ja": "起動",
       "es": "Inicio",
       "pl": "PrzyStarcie",
-      "it_IT": "Avvio",
+      "it_IT": "All'avvvio",
       "id": 2058 }
     ,
     "cbUpdateConfirmDownload": {
@@ -10361,7 +10405,7 @@
       "en": "Use Clink in prompt",
       "ru": "Использовать Clink в подсказке",
       "zh": "命令行提示符里使用Clink",
-      "de": "Verwende Clink in der Eingabeaufforderung",
+      "de": "Clink in CMD laden",
       "ja": "プロンプトでClinkを使う",
       "es": "Usar Clink en símbolo de sistema",
       "pl": "Użyj Clink w odpowiedzi",
@@ -10382,7 +10426,7 @@
       "en": "Inject ConEmuHk",
       "ru": "Внедрить ConEmuHk",
       "zh": "注入ConEmuHk",
-      "de": "Einschleusen von ConEmuHk",
+      "de": "ConEmuHk laden",
       "ja": "ConEmuHk を注入する",
       "es": "Inyectar ConEmuHk",
       "pl": "wstrzyknąć CONEmuHk",
@@ -10630,7 +10674,7 @@
       "en": "Miscellaneous",
       "ru": "Прочее",
       "zh": "其他",
-      "de": "Verschiedenes",
+      "de": "Verschiedene ",
       "ja": "雑",
       "es": "Miscelánea",
       "pl": "Różne",
@@ -10665,14 +10709,14 @@
       "ja": "ホットキー処理",
       "es": "Procesado de combinaciones de teclas",
       "pl": "Przetwarzanie skrótów klawiszowych",
-      "it_IT": "Processazione combinazione tasti",
+      "it_IT": "Elaborazione combo tasti",
       "id": 3017 }
     ,
     "gbCtrlMisc": {
       "en": "Miscellaneous",
       "ru": "Разное",
       "zh": "其他",
-      "de": "Verschiedenes",
+      "de": "Verschiedene ",
       "ja": "雑",
       "es": "Miscelánea",
       "pl": "Różne",
@@ -10854,6 +10898,7 @@
       "ja": "タイトルバー (キャプション) と境界オプション",
       "es": "Opciones de barra de título y borde",
       "pl": "Pasek tytułu (podpis) i opcje obramowania",
+      "it_IT": "Barra del titolo (Didascalia) e opzioni del bordo",
       "id": 2165 }
     ,
     "gbFeatureClipboard": {
@@ -10880,7 +10925,7 @@
       "en": "In-console options",
       "ru": "Параметры в консоли",
       "zh": "控制台内设置",
-      "de": "Einstellungen für innerhalb der Konsole",
+      "de": "Konsoleneinstellungen",
       "ja": "コンソール内のオプション",
       "es": "Opciones en-terminal",
       "pl": "Opcje w konsoli",
@@ -10894,16 +10939,18 @@
       "ja": "その他のオプション",
       "es": "Otras opciones",
       "pl": "Różne opcje",
+      "it_IT": "Opzioni varie",
       "id": 2163 }
     ,
     "gbFeatureRetard": {
       "en": "CPU consuming",
       "ru": "Загрузка процессора",
       "zh": "CPU消耗",
-      "de": "CPU-Last",
+      "de": "CPU-Nutzung",
       "ja": "CPU消費",
       "es": "Consumo de CPU",
       "pl": "Zużycie procesora",
+      "it_IT": "Consumo della CPU",
       "id": 2748 }
     ,
     "gbFindText": {
@@ -10934,7 +10981,7 @@
       "ja": "ホットキー, モデファイヤ, マクロ",
       "es": "Combinaciones, modificadores, macros",
       "pl": "Skróty klawiszowe, modyfikatory, makra",
-      "it_IT": "Combinazione tasti, modificatori, macro",
+      "it_IT": "Combo tasti, modificatori, macro",
       "id": 3014 }
     ,
     "gbHyperlinks": {
@@ -11345,7 +11392,7 @@
       "ja": "設定を更新",
       "es": "Opciones de actualización",
       "pl": "Ustawienia aktualizacji",
-      "it_IT": "Aggiorna impostazioni",
+      "it_IT": "Impostazioni aggiornamento",
       "id": 2864 }
     ,
     "gbVConAlignment": {
@@ -12038,7 +12085,7 @@
       "ja": "自動",
       "es": "Auto",
       "pl": "Auto",
-      "it_IT": "Automatico",
+      "it_IT": "Auto",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
@@ -12296,7 +12343,7 @@
       "ja": "最新",
       "es": "Último",
       "pl": "Alpha \"testowa\"",
-      "it_IT": "Ultima",
+      "it_IT": "Latest",
       "id": 2056 }
     ,
     "rbUpdatePreview": {
@@ -12318,7 +12365,7 @@
       "ja": "Stable",
       "es": "Estable",
       "pl": "Stabilna",
-      "it_IT": "Stabile",
+      "it_IT": "Stable",
       "id": 2054 }
     ,
     "rbUpdateUseArc": {
@@ -12493,7 +12540,7 @@
       "ja": "なし(&N)",
       "es": "&Ninguno",
       "pl": "&Żaden",
-      "it_IT": "&Nessuno",
+      "it_IT": "&No",
       "id": 1202 }
     ,
     "rNormal": {
@@ -13046,7 +13093,7 @@
       "ja": "暗くなる:",
       "es": "Oscurecer:",
       "pl": "Ściemnianie:",
-      "it_IT": "Oscuramento:",
+      "it_IT": "Scurimento:",
       "id": 2672 }
     ,
     "stDarkerPlugin": {
@@ -13057,7 +13104,7 @@
       "ja": "暗くなる:",
       "es": "Oscurecer:",
       "pl": "Ściemnianie:",
-      "it_IT": "Oscuramento:",
+      "it_IT": "Scurimento:",
       "id": 2673 }
     ,
     "stDcWndSize": {
@@ -13177,6 +13224,7 @@
       "ja": "背景色のコストでフォントを太字または斜体に変更",
       "es": "Al coste de los colores de fondo podrá cambiar la letra a negrita o cursiva",
       "pl": "Kosztem kolorów tła możesz zmienić używaną czcionkę na pogrubioną lub kursywą",
+      "it_IT": "A discapito del colore di sfondo puoi modificare il font utilizzato in grassetto o corsivo",
       "id": 2836 }
     ,
     "stFarPanelLeft": {
@@ -13321,6 +13369,7 @@
       "ja": "フレーム幅:",
       "es": "Ancho borde:",
       "pl": "Szerokość ramy:",
+      "it_IT": "Dimensione bordo:",
       "id": 2904 }
     ,
     "stGotoEditorCmd": {
@@ -13405,7 +13454,7 @@
       "en": "Interface language:",
       "ru": "Язык интерфейса:",
       "zh": "界面语言：",
-      "de": "Sprache der Oberfläche:",
+      "de": "Sprache:",
       "ja": "インターフェイス言語:",
       "es": "Idioma del interface:",
       "pl": "Język interfejsu:",
@@ -13672,7 +13721,7 @@
       "ja": "最小化 / 復元 ホットキー:",
       "es": "Combinación para Minimizar/Restaurar:",
       "pl": "Skrót minimalizuj / przywróć:",
-      "it_IT": "Combinazione tasti Minimizza/Ripristina:",
+      "it_IT": "Combo tasti Minimizza/Ripristina:",
       "id": 3096 }
     ,
     "stRConCursorInfo": {
@@ -14247,6 +14296,7 @@
       "ja": "自動チェックを行う",
       "es": "Hacer control automático",
       "pl": "Wykonaj automatyczne sprawdzanie",
+      "it_IT": "Controlla aggiornamento",
       "id": 2863 }
     ,
     "stUpdateCommand": {
@@ -14257,6 +14307,7 @@
       "ja": "アップデートコマンド(%1 - パッケージ, %2 - ConEmu.exeフォルダ, %3 - x86/x64, %4 - PID)",
       "es": "Comando de actualización (%1 - paquete, %2 - carpeta de ConEmu.exe, %3 - x86/x64, %4 - PID)",
       "pl": "Zaktualizuj polecenie (%1 - package, %2 - ConEmu.exe folder, %3 - x86/x64, %4 - PID)",
+      "it_IT": "Comando aggiornamento (%1 - pacchetto, %2 - cartella ConEmu.exe, %3 - x86/x64, %4 - PID)",
       "id": 2859 }
     ,
     "stUpdatePostCommand": {
@@ -14267,6 +14318,7 @@
       "ja": "更新後のコマンド,バッチの 'call' を忘れないでください",
       "es": "Comando post-actualización, no olvides 'invocar' los procesos batch",
       "pl": "Polecenie po aktualizacji, nie zapomnij \"zadzwoń\" w przypadku partii",
+      "it_IT": "Comando post-aggiornamento, non dimenticare 'call' per script batch",
       "id": 2860 }
     ,
     "stUpdateProxy": {
@@ -14310,6 +14362,7 @@
       "ja": "好ましいリリースタイプ",
       "es": "Tipo de versión",
       "pl": "Preferowany typ wydania",
+      "it_IT": "Canale di aggiornamento",
       "id": 2862 }
     ,
     "stUpdateVerLocation": {
@@ -14320,6 +14373,7 @@
       "ja": "ConEmu最新バージョンの位置情報",
       "es": "Información sobre localización de última versión de ConEmu",
       "pl": "Informacje o lokalizacji najnowszej wersji ConEmu",
+      "it_IT": "Indirizzo informazioni versione di ConEmu",
       "id": 2861 }
     ,
     "stUseKeyboardHooksFast": {
