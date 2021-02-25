@@ -1973,11 +1973,13 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POI
 
 	// Prepare assertion message
 	{
-		wchar_t szDashes[] = L"-----------------------\r\n", szPID[80];
-		swprintf_c(szPID, L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
+		SYSTEMTIME st{}; GetSystemTime(&st);
+		wchar_t szDashes[] = L"-----------------------\r\n", szPID[120];
+		swprintf_c(szPID, L"PID=%u TID=%u at %02u:%02u:%02u.%03u",
+			GetCurrentProcessId(), GetCurrentThreadId(), st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 		const CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild[0]) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
 							L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(nullptr,L"D"), L"] ");
-		const CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
+		const CEStr lsAssertion(L"Assertion:\r\n", lsBuild, szPID, L"\r\n");
 		const CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", ultow_s(nLine, szLine, 10), L"\r\n", szDashes);
 		const CEStr lsHeader(lsAssertion,
 			(gpConEmu && gpConEmu->ms_ConEmuExe[0]) ? gpConEmu->ms_ConEmuExe : L"<nullptr>",
