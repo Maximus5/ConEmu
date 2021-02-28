@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// ReSharper disable CppInconsistentNaming
 #pragma once
 
 #include "Memory.h"
@@ -50,6 +51,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #endif
 
+#ifdef _DEBUG
+#include <tuple>
+#endif
+
 template <typename T>
 class MArrayAllocator
 {
@@ -66,7 +71,14 @@ public:
 		HeapInitialize();
 	}
 	template<class U, std::enable_if_t<!std::is_same_v<T, U>>> MArrayAllocator(MArrayAllocator<U>&& other) = delete;
+	template<class U, std::enable_if_t<std::is_same_v<T, U>>> MArrayAllocator(MArrayAllocator<U>&& other)
+	{
+		HeapInitialize();
+	}
+
 	template<class U> MArrayAllocator<T>& operator=(const MArrayAllocator<U>& other) = delete;
+	template<class U> MArrayAllocator<T>& operator=(MArrayAllocator<U>&& other) = delete;
+
 	template<class U> bool operator==(const MArrayAllocator<U>& other) const { return true; };
 	template<class U> bool operator!=(const MArrayAllocator<U>& other) const { return false; };
 
@@ -101,7 +113,7 @@ class MArray
 
 	public:
 
-		void swap(MArray<_Ty>& obj)
+		void swap(MArray<_Ty>& obj) noexcept
 		{
 			data.swap(obj.data);
 		}
@@ -109,70 +121,70 @@ class MArray
 		iterator begin()
 		{
 			return data.begin();
-		};
+		}
 		iterator end()
 		{
 			return data.end();
-		};
+		}
 		const_iterator begin() const
 		{
 			return data.cbegin();
-		};
+		}
 		const_iterator end() const
 		{
 			return data.cend();
-		};
+		}
 		const_iterator cbegin() const
 		{
 			return data.cbegin();
-		};
+		}
 		const_iterator cend() const
 		{
 			return data.cend();
-		};
+		}
 
 		ssize_t size() const
 		{
-			ssize_t count = data.size();
+			const ssize_t count = data.size();
 			_ARRAY_ASSERTE(count >= 0);
 			return count;
-		};
+		}
 		ssize_t capacity() const
 		{
-			ssize_t count = data.capacity();
+			const ssize_t count = data.capacity();
 			_ARRAY_ASSERTE(count >= 0);
 			return count;
-		};
+		}
 		bool empty() const
 		{
 			return data.empty();
-		};
+		}
 
 		// UB if _Index is invalid
 		const _Ty & operator[](ssize_t _Index) const
 		{
 			_ARRAY_ASSERTE(!(_Index<0 || _Index>=size()));
 			return data[_Index];
-		};
+		}
 		// UB if _Index is invalid
 		_Ty & operator[](ssize_t _Index)
 		{
 			_ARRAY_ASSERTE(!(_Index<0 || _Index>=size()));
 			return data[_Index];
-		};
+		}
 
 		ssize_t push_back(const _Ty& _Item)
 		{
-			ssize_t nPos = size();
+			const ssize_t nPos = size();
 			data.push_back(_Item);
 			return nPos;
-		};
+		}
 		ssize_t push_back(_Ty&& _Item)
 		{
-			ssize_t nPos = size();
+			const ssize_t nPos = size();
 			data.push_back(std::move(_Item));
 			return nPos;
-		};
+		}
 		/// Insert at the end if nPosBefore==-1 or greater than current size
 		ssize_t insert(ssize_t nPosBefore, const _Ty& _Item, ssize_t _Count = 1)
 		{
@@ -190,7 +202,7 @@ class MArray
 				data.insert(data.begin()+nPosBefore, _Count, _Item);
 			}
 			return inserted;
-		};
+		}
 		/// Insert at the end if nPosBefore==-1 or greater than current size
 		ssize_t insert(ssize_t nPosBefore, _Ty&& _Item)
 		{
@@ -199,6 +211,7 @@ class MArray
 			{
 				#ifdef _DEBUG
 				inserted = data.size();
+				std::ignore = inserted;
 				#endif
 				inserted = push_back(std::move(_Item));  // -V519
 			}
