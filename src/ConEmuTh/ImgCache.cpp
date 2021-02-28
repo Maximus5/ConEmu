@@ -63,7 +63,7 @@ CImgCache::CImgCache(HMODULE hSelf)
 
 	// Initialize Com
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-	_ASSERTE(SUCCEEDED(hr));
+	_ASSERTE(SUCCEEDED(hr) || (hr == RPC_E_CHANGED_MODE));
 	mb_comInitialized = SUCCEEDED(hr);
 
 	//// Alpha blending

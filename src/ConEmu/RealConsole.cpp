@@ -6121,7 +6121,7 @@ bool CRealConsole::StartStopTermMode(const DWORD pid, const TermModeCommand mode
 	AssertThisRet(false);
 
 	bool processed = true;
-	_ASSERTE(pid != 0);
+	// _ASSERTE(pid != 0); pid is 0 when it's caused by ConsoleMode change detection in server
 
 	switch (mode)
 	{

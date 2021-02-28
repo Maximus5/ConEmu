@@ -1001,7 +1001,7 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 		static WriteProcessedA_t WriteProcessedA = nullptr;
 		if (bProcessed && (!WriteProcessed || !WriteProcessedA))
 		{
-			_ASSERTE(FALSE && "Continue to load ConEmuHk");
+			//_ASSERTE(FALSE && "Continue to load ConEmuHk");
 			// ConEmuHk.dll / ConEmuHk64.dll
 			if (ConEmuHk.Load(ConEmuHk_DLL_3264))
 			{
