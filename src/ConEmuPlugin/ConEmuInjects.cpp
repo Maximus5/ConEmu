@@ -145,7 +145,7 @@ bool StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, CPluginBase::OnShellExecuteExW_Except);
 	gFarMode.onCurDirChanged = CPluginBase::OnCurDirChanged;
 	gFarMode.farVer = gFarVersion;
-	_ASSERTE(gFarMode.bFarHookMode == true); // should be set in global initializer
+	_ASSERTE(gFarMode.bFarHookMode); // should be set in global initializer
 
 	SetFarHookMode(&gFarMode);
 

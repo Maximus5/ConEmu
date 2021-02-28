@@ -1550,8 +1550,10 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 	switch(rootType)
 	{
 #ifndef verc0_EXPORTS
-		case(WORD)RT_GROUP_ICON: case 0x8000+(WORD)RT_GROUP_ICON:
-			//case (WORD)RT_GROUP_CURSOR: case 0x8000+(WORD)RT_GROUP_CURSOR:
+		case LOWORD(RT_GROUP_ICON):
+		case 0x8000 + LOWORD(RT_GROUP_ICON):
+		//case (WORD)RT_GROUP_CURSOR:
+		//case 0x8000+(WORD)RT_GROUP_CURSOR:
 		{
 			//strcat(fileNameBuffer, ".txt");
 			//pChild = pRoot->AddFile(fileNameBuffer, 0);

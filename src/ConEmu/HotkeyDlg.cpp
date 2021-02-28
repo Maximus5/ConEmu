@@ -92,7 +92,7 @@ DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/
 
 	if (nCtrlValue != nHotKey)
 	{
-		SetHotkeyField(GetDlgItem(hDlg, iEditCtrl), nHotKey);
+		SetHotkeyField(GetDlgItem(hDlg, iEditCtrl), static_cast<BYTE>(nHotKey));
 		if (nCtrlMods & HOTKEYF_ALT)
 			nHotKey |= cvk_Alt;
 		if (nCtrlMods & HOTKEYF_CONTROL)

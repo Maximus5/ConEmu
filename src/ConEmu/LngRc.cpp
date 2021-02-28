@@ -433,23 +433,26 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, const int idx, LPCWSTR asValue,
 	}
 
 	const size_t iLen = wcslen(asValue);
-	if (iLen >= static_cast<uint16_t>(-1))
+	if (iLen >= (std::numeric_limits<uint16_t>::max)())
 	{
 		// Too long string?
-		_ASSERTE(iLen < static_cast<uint16_t>(-1));
+		_ASSERTE(iLen < (std::numeric_limits<uint16_t>::max)());
 	}
 	else
 	{
-		if (item.Str && (item.MaxLen >= iLen))
+		if (item.Str && (item.MaxLen > iLen))
 		{
-			_wcscpy_c(item.Str, item.MaxLen+1, asValue);
+			_wcscpy_c(item.Str, item.MaxLen, asValue);
 		}
 		else
 		{
-			//TODO: thread-safe
-			SafeFree(item.Str);
-			item.MaxLen = iLen;
-			item.Str = lstrdup(asValue);
+			auto* newStr = lstrdup(asValue);
+			if (newStr)
+			{
+				item.MaxLen = static_cast<uint16_t>(iLen);
+				std::swap(item.Str, newStr);
+				free(newStr);
+			}
 		}
 		bOk = (item.Str != nullptr);
 	}

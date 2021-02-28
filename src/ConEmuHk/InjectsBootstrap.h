@@ -25,15 +25,15 @@ struct InjectHookFunctions
 };
 
 // Use WriteProcessMemory and SetThreadContext
-int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fnLoadLibrary*/, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
+inline int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fnLoadLibrary*/, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
 {
 	CINJECTHK_EXIT_CODES iRc = CIH_AsmGeneralError/*-1000*/;
 	CONTEXT		context = {};
-	void*		mem		 = NULL;
+	void*		mem		 = nullptr;
 	size_t		memLen	 = 0;
 	size_t		codeSize = 0;
 	size_t		cbTotal  = 0;
-	BYTE* 		code	 = NULL;
+	BYTE* 		code	 = nullptr;
 	wchar_t 	strHookDllPath[MAX_PATH*2] = {};
 	DWORD 		dwErrCode = 0;
 #ifndef _WIN64
@@ -56,10 +56,10 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		PWSTR  Buffer;
 	} USTR, *PUSTR;
 
-	PUSTR pStr = NULL;
+	PUSTR pStr = nullptr;
 
 	_ASSERTE(pfn->szKernelName && *pfn->szKernelName);
-	size_t pnKernelNameLen = lstrlen(pfn->szKernelName);
+	size_t pnKernelNameLen = wcslen(pfn->szKernelName);
 	size_t pstrSize = sizeof(USTR) + 8/*alignment*/ + sizeof(wchar_t) * (pnKernelNameLen + 1); // UNICODE_STRING ( "kernel32.dll" | "kernelbase.dll" )
 
 
@@ -132,7 +132,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	wcscat_c(strHookDllPath, pszDllName);
 	// Dll must exist!
 	{
-		HANDLE hLib = CreateFile(strHookDllPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+		HANDLE hLib = CreateFile(strHookDllPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, nullptr);
 		if (!hLib || (hLib == INVALID_HANDLE_VALUE))
 		{
 			iRc = CIH_AsmDllNotFound/*-804*/;
@@ -154,8 +154,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	memmove(code + codeSize, strHookDllPath, memLen);
 
 	pStr = (PUSTR)((((DWORD_PTR)(code + codeSize + memLen + 7))>>3)<<3);
-	pStr->Length = pnKernelNameLen * sizeof(wchar_t);
-	pStr->MaximumLength = (pnKernelNameLen+1)*sizeof(wchar_t);
+	pStr->Length = static_cast<USHORT>(pnKernelNameLen * sizeof(wchar_t));
+	pStr->MaximumLength = static_cast<USHORT>((pnKernelNameLen + 1) * sizeof(wchar_t));
 	#ifdef _WIN64
 	pStr->Pad = 0;
 	#endif
@@ -177,7 +177,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		#else
 			MessageBoxW
 		#endif
-			(NULL, L"GetThreadContext failed", L"Injects", MB_OK|MB_SYSTEMMODAL);
+			(nullptr, L"GetThreadContext failed", L"Injects", MB_OK|MB_SYSTEMMODAL);
 		#endif
 		iRc = CIH_AsmGetThreadContext/*-710*/;
 		goto wrap;
@@ -199,16 +199,16 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	OutputDebugString(strHookDllPath);
 	#endif
 
-	//mem = ::VirtualAllocEx(pi.hProcess, NULL, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	//mem = ::VirtualAllocEx(pi.hProcess, nullptr, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#ifdef _WIN64
-	//if (!mem) -- не работает, нужен NULL
+	//if (!mem) -- не работает, нужен nullptr
 	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF0000000000, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#endif
-	//if (!mem) -- не работает, нужен NULL
+	//if (!mem) -- не работает, нужен nullptr
 	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF00, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//if (!mem)
 	// MEM_TOP_DOWN - память выделяется в верхних адресах, разницы в работе не заметил
-	mem = ::VirtualAllocEx(pi.hProcess, NULL, cbTotal,
+	mem = ::VirtualAllocEx(pi.hProcess, nullptr, cbTotal,
 			MEM_COMMIT|MEM_RESERVE/*|MEM_TOP_DOWN*/, PAGE_EXECUTE_READWRITE|PAGE_NOCACHE);
 
 	if (!mem)
@@ -469,7 +469,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		goto wrap;
 	}
 
-	if (!::WriteProcessMemory(pi.hProcess, mem, code, cbTotal, NULL))
+	if (!::WriteProcessMemory(pi.hProcess, mem, code, cbTotal, nullptr))
 	{
 		dwErrCode = GetLastError();
 		iRc = CIH_AsmWriteProcessMemory/*-730*/;
@@ -496,7 +496,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		#else
 			MessageBoxW
 		#endif
-			(NULL, L"SetThreadContext failed", L"Injects", MB_OK|MB_SYSTEMMODAL);
+			(nullptr, L"SetThreadContext failed", L"Injects", MB_OK|MB_SYSTEMMODAL);
 		#endif
 		iRc = CIH_AsmSetThreadContext/*-732*/;
 		goto wrap;
@@ -528,7 +528,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	iRc = CIH_OK/*0*/; // OK
 wrap:
 
-	if (code != NULL)
+	if (code != nullptr)
 		free(code);
 
 #ifdef _DEBUG

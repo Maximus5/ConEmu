@@ -331,7 +331,7 @@ bool CPluginW2800::GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, 
 	if (!pItem)
 		return false;
 
-	FarGetPluginPanelItem gppi = {sizeof(gppi), sz, pItem};
+	FarGetPluginPanelItem gppi = {sizeof(gppi), static_cast<size_t>(sz), pItem};
 	if (PanelControlApi(PANEL_ACTIVE, iCmd, iIndex, &gppi) <= 0)
 	{
 		free(pItem);

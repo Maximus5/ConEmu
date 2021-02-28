@@ -257,7 +257,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 		const CommandTasks* pGrp = nullptr;
 		HMENU hCurPopup = hPopup;
 		//const wchar_t* sMenuHotkey = L"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		const size_t nMenuHotkeyMax = _tcslen(sMenuHotkey);
+		const int nMenuHotkeyMax = static_cast<int>(wcslen(sMenuHotkey));
 		//bool bWasTasks = false;
 
 		struct FolderInfo

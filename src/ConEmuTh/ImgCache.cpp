@@ -1029,7 +1029,7 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon /*
 	}
 
 	_ASSERTE(nPreviewSize == mcr_LoadDibSize.X);
-	COORD crSize = {nPreviewSize,pItem->Icon.crSize.Y};
+	const COORD crSize = { static_cast<SHORT>(nPreviewSize), pItem->Icon.crSize.Y };
 	CopyBits(crSize, mp_LoadDibBytes, nPreviewSize*4, pItem->Icon.crSize, (LPBYTE)pItem->Icon.Pixels);
 	// ShellIcon загрузили
 	pItem->PreviewLoaded |= (bLargeIcon ? ilt_ShellLarge : ilt_ShellSmall);
