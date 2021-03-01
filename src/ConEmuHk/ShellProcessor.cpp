@@ -1744,7 +1744,8 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	CheckIsCurrentGuiClient();
 
 	ChangeExecFlags NewConsoleFlags = CEF_DEFAULT;
-	bool bForceNewConsole = false, bCurConsoleArg = false;
+	bool bForceNewConsole = false; // if ChildGui starts console app - let's attach it to new tab
+	bool bCurConsoleArg = false; // "-cur_console" was specified (user wants to set some options in the *current* tab)
 
 	// Service object (moved to members: RConStartArgs m_Args)
 	_ASSERTEX(m_Args.pszSpecialCmd == nullptr); // Must not be touched yet!
@@ -1999,7 +2000,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				}
 				else
 				{
-					_ASSERTE(anShellFlags!=nullptr);
+					// _ASSERTE(anShellFlags!=nullptr); -- is null for ShellExecute
 				}
 			}
 			else if ((nFlags != nFlagsMask) && !bLongConsoleOutput)
