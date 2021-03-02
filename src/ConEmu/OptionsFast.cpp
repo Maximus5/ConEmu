@@ -1218,6 +1218,12 @@ public:
 			return;
 		}
 
+		// Avoid things like "%ConEmuDrive%\tools\far\far.exe", if they are just in "C:\"
+		if (lstrcmpi(psValue, L"C:") == 0)
+		{
+			return;
+		}
+
 		VarDef v = {asName, psValue};
 		Vars.push_back(std::move(v));
 	};
@@ -1244,8 +1250,6 @@ public:
 			if (!pszSlash)
 				break;
 			*pszSlash = 0;
-			if (!wcsrchr(expanded, L'\\'))
-				break;
 			szName = CEStr(szName, L"\\..");
 		}
 	}
