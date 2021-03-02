@@ -960,6 +960,8 @@ size_t CDefTermHk::GetSrvAddArgs(const bool bGuiArgs, const bool forceInjects, C
 	rsArgs.Clear();
 	rsNewCon.Clear();
 
+	// #TODO Replace with fast string buffer to optimize appends
+
 	const auto& opt = gpDefTerm->m_Opt;
 
 	const size_t cchMax = 128
@@ -1030,9 +1032,14 @@ size_t CDefTermHk::GetSrvAddArgs(const bool bGuiArgs, const bool forceInjects, C
 		_wcscat_c(psz, cchMax, L"\"");
 	}
 
+	if (*psz)
+	{
+		_wcscat_c(psz, cchMax, L" ");
+	}
+
 	if (szNewConSw[0])
 	{
-		_wcscpy_c(pszNew, cchNew, L"-new_console:");
+		_wcscpy_c(pszNew, cchNew, L" -new_console:");
 		_wcscat_c(pszNew, cchNew, szNewConSw);
 		_wcscat_c(pszNew, cchNew, L" ");
 	}

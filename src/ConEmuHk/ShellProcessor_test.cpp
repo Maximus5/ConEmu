@@ -245,7 +245,7 @@ TEST_F(ShellProcessor, Far300)
 
 		CEStr expanded(ExpandEnvStr(test.expectParam));
 
-		const std::wstring testInfo(L"#" + std::to_wstring(i + 1)
+		const std::wstring testInfo(L"#" + std::to_wstring(i)
 			+ L": file=" + (test.file ? test.file : L"<null>")
 			+ L"; param=" + (test.param ? test.param : L"<null>") + L";");
 
@@ -294,48 +294,58 @@ TEST_F(ShellProcessor, Far175)
 	TestInfo tests[] = {
 		{Function::CreateA,
 			nullptr, R"(""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")"},
+			nullptr,
+			R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
-			nullptr, R"(C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")"},
+			nullptr, R"(C:\Windows\system32\cmd.exe /K ""C:\1 @\a.cmd"")",
+			nullptr,
+			R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /K ""C:\1 @\a.cmd"")"},
+		{Function::ShellA,
+			R"(C:\Windows\system32\cmd.exe)", R"(/C ""C:\1 @\a.cmd" -new_console")",
+			R"(%ConEmuBaseDirTest%\ConEmuC.exe)",
+			R"(%ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd" -new_console")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd"")",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd"")"},
+			nullptr,
+			R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd""  )",
-			nullptr, R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C ""C:\1 @\a.cmd""  )"},
+			nullptr,
+			R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd""  )"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /C "set > res.log")",
-			nullptr, R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\Windows\system32\cmd.exe /C "set > res.log")"},
+			nullptr,
+			R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe","ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "set > res.log")"},
 	};
 
 	for (size_t i = 0; i < countof(tests); ++i)
 	{
 		const auto& test = tests[i];
 		auto sp = std::make_shared<CShellProc>();
-		LPCSTR pszFile = test.file, pszParam = test.param;
+		LPCSTR resultFile = test.file, resultParam = test.param;
 		DWORD nCreateFlags = CREATE_DEFAULT_ERROR_MODE, nShowCmd = 0;
 		STARTUPINFOA si = {};
 		auto* psi = &si;
 		si.cb = sizeof(si);
 
-		CEStrA expanded(ExpandEnvStr(test.expectParam));
+		CEStrA expectFile(ExpandEnvStr(test.expectFile));
+		CEStrA expectParam(ExpandEnvStr(test.expectParam));
 
-		const std::string testInfo("#" + std::to_string(i + 1)
+		const std::string testInfo("#" + std::to_string(i)
 			+ ": file=" + (test.file ? test.file : "<null>")
 			+ "; param=" + (test.param ? test.param : "<null>") + ";");
 
 		switch (test.function)
 		{
 		case Function::CreateA:
-			EXPECT_TRUE(sp->OnCreateProcessA(&pszFile, &pszParam, nullptr, &nCreateFlags, &psi));
-			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
+			EXPECT_TRUE(sp->OnCreateProcessA(&resultFile, &resultParam, nullptr, &nCreateFlags, &psi));
+			EXPECT_STREQ(resultFile, expectFile.c_str()) << testInfo.c_str();
+			EXPECT_STREQ(resultParam, expectParam.c_str()) << testInfo.c_str();
 			break;
 		case Function::ShellA:
-			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &pszFile, &pszParam, nullptr, nullptr, &nShowCmd));
-			EXPECT_STREQ(pszFile, test.expectFile) << testInfo.c_str();
-			EXPECT_STREQ(pszParam, expanded.c_str()) << testInfo.c_str();
+			EXPECT_TRUE(sp->OnShellExecuteA(nullptr, &resultFile, &resultParam, nullptr, nullptr, &nShowCmd));
+			EXPECT_STREQ(resultFile, expectFile.c_str()) << testInfo.c_str();
+			EXPECT_STREQ(resultParam, expectParam.c_str()) << testInfo.c_str();
 			break;
 		default:
 			break;
@@ -409,7 +419,7 @@ TEST_F(ShellProcessor, Cmd)
 
 		CEStr expanded(ExpandEnvStr(test.expectParam));
 
-		const std::wstring testInfo(L"#" + std::to_wstring(i + 1)
+		const std::wstring testInfo(L"#" + std::to_wstring(i)
 			+ L": file=" + (test.file ? test.file : L"<null>")
 			+ L"; param=" + (test.param ? test.param : L"<null>") + L";");
 

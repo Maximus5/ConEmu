@@ -483,22 +483,22 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		return FALSE;
 
 	bool lbRc = false;
-	CEStr szComspec;
 	CEStr pszOurExe; // ConEmuC64.exe or ConEmu64.exe (for DefTerm)
 	bool ourGuiExe = false; // ConEmu64.exe
 	BOOL lbUseDosBox = FALSE;
 	CEStr szDosBoxExe, szDosBoxCfg;
-	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	size_t nCchSize = 0;
 	BOOL addDoubleQuote = FALSE;
 #if 0
 	bool lbNewGuiConsole = false;
 #endif
 	bool lbNewConsoleFromGui = false;
-	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 	CEStr szDefTermArg, szDefTermArg2;
 	CEStr fileUnquote;
 	CEStr bufferReplacedExe;
+	CEStr szComspec;
+	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
+	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0] != 0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0] != 0);
 	if (gbPrepareDefaultTerminal)
@@ -956,7 +956,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	{
 		(*psParam)[0] = L'"';
 		_wcscpy_c((*psParam)+1, nCchSize-1, pszOurExe);
-		_wcscat_c((*psParam), nCchSize, L"\"");
+		_wcscat_c((*psParam), nCchSize, L"\" ");
 	}
 
 	// as_Param: "C:\test.cmd" "c:\my documents\test.txt"
@@ -965,44 +965,51 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	// C:\1 @\check.cmd
 	if (asFile && *asFile)
 	{
-		addDoubleQuote = true;
+		const CEStr tempCommand(*asFile == L'"' ? nullptr : L"\"", asFile, * asFile == L'"' ? L" " : L"\" ", asParam);
+		CEStr tempExe;
+		NeedCmdOptions opt{};
+		const auto needCmd = IsNeedCmd(false, tempCommand, tempExe, &opt);
+		addDoubleQuote = needCmd && (opt.startEndQuot == StartEndQuot::NeedAdd);
 	}
 
 	if (lbUseDosBox)
-		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+		_wcscat_c((*psParam), nCchSize, L"/DOSBOX ");
 
 	if (m_SrvMapping.nLogLevel)
-		_wcscat_c((*psParam), nCchSize, L" /LOG");
+		_wcscat_c((*psParam), nCchSize, L"/LOG ");
 
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
 		_ASSERTEX(!gbPrepareDefaultTerminal);
 		// Добавить /PARENTFAR=%u
 		wchar_t szParentFar[64];
-		msprintf(szParentFar, countof(szParentFar), L" /PARENTFARPID=%u", GetCurrentProcessId());
+		msprintf(szParentFar, countof(szParentFar), L"/PARENTFARPID=%u ", GetCurrentProcessId());
 		_wcscat_c((*psParam), nCchSize, szParentFar);
 	}
 
 	if (gbPrepareDefaultTerminal)
 	{
+		_ASSERTE(!lbComSpec);
+
 		if (!szDefTermArg.IsEmpty())
 		{
 			_wcscat_c((*psParam), nCchSize, szDefTermArg);
 		}
 
+		_ASSERTE(((*psParam)[0] == L'\0') || (*((*psParam) + wcslen(*psParam) - 1) == L' '));
 		if ((workOptions_ & ShellWorkOptions::InheritDefTerm) && (workOptions_ & ShellWorkOptions::ExeReplacedConsole) && deftermConEmuInsidePid_)
 		{
-			_wcscat_c((*psParam), nCchSize, L" /InheritDefTerm");
+			_wcscat_c((*psParam), nCchSize, L"/InheritDefTerm ");
 		}
 
 		if ((workOptions_ & ShellWorkOptions::ConsoleMode))
 		{
-			_wcscat_c((*psParam), nCchSize, L" /AttachDefTerm /ROOT ");
+			_wcscat_c((*psParam), nCchSize, L"/AttachDefTerm /ROOT ");
 		}
 		else
 		{
 			// Starting GUI
-			_wcscat_c((*psParam), nCchSize, L" -run ");
+			_wcscat_c((*psParam), nCchSize, L"-run ");
 		}
 
 		if (!szDefTermArg2.IsEmpty())
@@ -1014,26 +1021,27 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	{
 		if (args.InjectsDisable == crb_On)
 		{
-			_wcscat_c((*psParam), nCchSize, L" /NOINJECT");
+			_wcscat_c((*psParam), nCchSize, L"/NOINJECT");
 		}
 
+		_ASSERTE(((*psParam)[0] == L'\0') || (*((*psParam) + wcslen(*psParam) - 1) == L' '));
 		if (lbNewConsoleFromGui)
 		{
 			int nCurLen = lstrlen(*psParam);
-			msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L" /ATTACH /GID=%u /GHWND=%08X /ROOT ",
+			msprintf((*psParam) + nCurLen, nCchSize - nCurLen, L"/ATTACH /GID=%u /GHWND=%08X /ROOT ",
 				m_SrvMapping.nGuiPID, m_SrvMapping.hConEmuRoot.GetPortableHandle());
 			TODO("Наверное, хорошо бы обработать /K|/C? Если консольное запускается из GUI");
 		}
 		else
 		{
-			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+			_wcscat_c((*psParam), nCchSize, lbComSpecK ? L"/K " : L"/C ");
 			// If was used "start" from cmd prompt or batch
 			if (Flags & CEF_NEWCON_PREPEND)
 				_wcscat_c((*psParam), nCchSize, L"-new_console ");
 		}
 	}
-	if (asParam && *asParam == L' ')
-		asParam++;
+
+	asParam = SkipNonPrintable(asParam);
 
 	WARNING("###: Перенести обработку параметров DosBox в ConEmuC!");
 	if (lbUseDosBox)
