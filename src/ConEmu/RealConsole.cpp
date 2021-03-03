@@ -15911,7 +15911,7 @@ bool CRealConsole::GetFarVersion(FarVersion* pfv)
 
 bool CRealConsole::IsFarLua()
 {
-	FarVersion fv;
+	FarVersion fv{};
 	if (GetFarVersion(&fv))
 		return fv.IsFarLua();
 	return false;
@@ -15944,7 +15944,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 		return;
 	}
 
-	DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
+	const DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
 
 	if (!nPID)
 	{

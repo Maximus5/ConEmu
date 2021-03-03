@@ -5679,7 +5679,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 
 			cbSize = (psz - pszDst + 1)*sizeof(wchar_t);
 			_ASSERTE(cbSize <= (nLenMax*sizeof(wchar_t)));
-			_ASSERTE(*(psz-1) == 0 && *psz);
+			_ASSERTE(*(psz-1) == 0 && psz < (pszDst + nLenMax));
 			*psz = 0; // MSZZ
 		}
 	}
