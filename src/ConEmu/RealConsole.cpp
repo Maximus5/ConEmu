@@ -5063,7 +5063,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 
 			//pp_sei->nShow = gpSet->isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 			//pp_sei->nShow = SW_SHOWMINIMIZED;
-			pp_sei->nShow = SW_SHOWNORMAL;
+			pp_sei->nShow = SW_HIDE;
 
 			// GuiShellExecuteEx запускается в основном потоке, поэтому nCreateDuration здесь не считаем
 			pRCon->SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", cso_ResetOnConsoleReady|cso_Critical);
