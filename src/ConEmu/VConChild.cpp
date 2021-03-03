@@ -114,6 +114,7 @@ CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 	mn_MsgTabChanged = gpConEmu->GetRegisteredMessage("CONEMUTABCHANGED",CONEMUTABCHANGED);
 	mn_MsgPostFullPaint = gpConEmu->GetRegisteredMessage("CConEmuChild::PostFullPaint");
 	mn_MsgSavePaneSnapshot = gpConEmu->GetRegisteredMessage("CConEmuChild::SavePaneSnapshot");
+	mn_MsgOnTitleChanged = gpConEmu->GetRegisteredMessage("CConEmuChild::OnTitleChanged");
 	mn_MsgDetachPosted = gpConEmu->GetRegisteredMessage("CConEmuChild::Detach");
 	mn_MsgRestoreChildFocus = gpConEmu->GetRegisteredMessage("CONEMUMSG_RESTORECHILDFOCUS",CONEMUMSG_RESTORECHILDFOCUS);
 	#ifdef _DEBUG
@@ -698,6 +699,10 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			else if (messg == pVCon->mn_MsgSavePaneSnapshot)
 			{
 				pVCon->SavePaneSnapshot();
+			}
+			else if (messg == pVCon->mn_MsgOnTitleChanged)
+			{
+				pVCon->OnTitleChanged();
 			}
 			else if (messg == pVCon->mn_MsgDetachPosted)
 			{

@@ -5162,6 +5162,11 @@ bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 
 void CVirtualConsole::OnTitleChanged()
 {
+	if (!isMainThread())
+	{
+		PostMessage(GetView(), mn_MsgOnTitleChanged, 0, 0);
+		return;
+	}
 	if (mp_Ghost)
 		mp_Ghost->CheckTitle();
 	if (isActive(false))
