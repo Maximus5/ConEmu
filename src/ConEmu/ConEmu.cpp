@@ -12941,46 +12941,46 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 struct CallMainThreadArg
 {
 public:
-	DWORD  nMagic; // cnMagic
-	BOOL   bNeedFree;
-	LPARAM lParam;
-	DWORD  nSourceTID;
-	DWORD  nCallTick;
-	DWORD  nReceiveTick;
+	static const DWORD magic_value = 0x7847CABF;
 public:
-	static const DWORD cnMagic = 0x7847CABF;
+	DWORD  magic_ = magic_value;
+	bool   needDelete_ = false; // shall main thread call delete on CallMainThreadArg?
+	LPARAM lParam_ = 0;
+	DWORD  sourceTID_ = 0;
+	DWORD  callTick_ = 0;
+	DWORD  receiveTick_ = 0;
+	std::function<LRESULT(LPARAM)> fnStd_ = nullptr;
 public:
-	CallMainThreadArg(LPARAM alParam, BOOL abNeedFree)
-		: nMagic(cnMagic)
-		, bNeedFree(abNeedFree)
-		, lParam(alParam)
-		, nSourceTID(GetCurrentThreadId())
-		, nCallTick(GetTickCount())
-		, nReceiveTick(0)
+	CallMainThreadArg(const LPARAM lParam, const bool needFree, std::function<LRESULT(LPARAM)>&& fn)
+		: needDelete_(needFree)
+		, lParam_(lParam)
+		, sourceTID_(GetCurrentThreadId())
+		, callTick_(GetTickCount())
+		, fnStd_(std::move(fn))
 	{
-	};
+	}
 };
 
-LRESULT CConEmuMain::CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lParam)
+LRESULT CConEmuMain::CallMainThread(bool bSync, std::function<LRESULT(LPARAM)>&& fn, LPARAM lParam)
 {
 	LRESULT lRc;
-	DWORD nCallTime = 0;
+	DWORD duration = 0;
 	if (isMainThread() && bSync)
 	{
 		lRc = fn(lParam);
 	}
 	else if (!bSync)
 	{
-		CallMainThreadArg* pArg = new CallMainThreadArg(lParam, TRUE);
-		lRc = PostMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, (LPARAM)pArg);
+		CallMainThreadArg* pArg = new CallMainThreadArg(lParam, true, std::move(fn));
+		lRc = PostMessage(ghWnd, mn_MsgCallMainThread, CallMainThreadArg::magic_value, reinterpret_cast<LPARAM>(pArg));
 	}
 	else
 	{
-		CallMainThreadArg arg(lParam, FALSE);
-		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, (LPARAM)&arg);
-		nCallTime = arg.nReceiveTick - arg.nCallTick;
+		CallMainThreadArg arg(lParam, false, std::move(fn));
+		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, CallMainThreadArg::magic_value, reinterpret_cast<LPARAM>(&arg));
+		duration = arg.receiveTick_ - arg.callTick_;
 	}
-	UNREFERENCED_PARAMETER(nCallTime);
+	std::ignore = duration;
 	return lRc;
 }
 
@@ -13851,18 +13851,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == this->mn_MsgCallMainThread)
 			{
 				LRESULT lFnRc = -1;
-				CallMainThreadFn fn = (CallMainThreadFn)wParam;
-				CallMainThreadArg* pArg = (CallMainThreadArg*)lParam;
-				if (pArg && (pArg->nMagic == CallMainThreadArg::cnMagic))
+				CallMainThreadArg* pArg = reinterpret_cast<CallMainThreadArg*>(lParam);
+				if (wParam == CallMainThreadArg::magic_value && pArg && (pArg->magic_ == CallMainThreadArg::magic_value))
 				{
-					pArg->nReceiveTick = GetTickCount();
+					pArg->receiveTick_ = GetTickCount();
 
-					if (fn)
+					if (pArg->fnStd_)
 					{
-						lFnRc = fn(pArg->lParam);
+						lFnRc = pArg->fnStd_(pArg->lParam_);
 					}
 
-					if (pArg->bNeedFree)
+					if (pArg->needDelete_)
 					{
 						delete pArg;
 					}
