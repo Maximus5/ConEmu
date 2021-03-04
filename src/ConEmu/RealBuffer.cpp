@@ -3546,14 +3546,17 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	if (bSelAllowed)
 	{
+		const bool tripleClick = (messg == WM_LBUTTONDOWN) && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+			&& ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
 		// Click outside selection region - would reset active selection
-		if (((messg == WM_LBUTTONDOWN) || ((messg == WM_LBUTTONUP) && !(con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN)))
+		if ((((messg == WM_LBUTTONDOWN) && !tripleClick)
+			|| ((messg == WM_LBUTTONUP) && !(con.m_sel.dwFlags & (CONSOLE_MOUSE_DOWN | CONSOLE_DBLCLICK_SELECTION | CONSOLE_TRIPLE_CLICK_SELECTION))))
 			&& gpSet->isCTSIntelligent // Only intelligent mode?
 			&& isSelectionPresent()
 			&& !isMouseClickExtension()
 			)
 		{
-			bool bInside = isMouseInsideSelection(x, y);
+			const bool bInside = isMouseInsideSelection(x, y);
 			if (!bInside)
 			{
 				DEBUGSTRSEL(L"Selection: DoSelectionFinalize#L");
