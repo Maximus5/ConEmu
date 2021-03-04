@@ -257,7 +257,7 @@ protected:
 	/* ****************************************** */
 	CRgnDetect m_Rgn; DWORD mn_LastRgnFlags;
 
-	bool mb_BuferModeChangeLocked;
+	bool bufferModeChangeLocked_;
 
 	// Informational
 	COORD mcr_LastMousePos;

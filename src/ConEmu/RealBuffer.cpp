@@ -126,7 +126,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Prim
 	con.TopLeft.Reset();
 	mp_Match = nullptr;
 
-	mb_BuferModeChangeLocked = FALSE;
+	bufferModeChangeLocked_ = FALSE;
 	mcr_LastMousePos = MakeCoord(-1,-1);
 
 	mb_LeftPanel = mb_RightPanel = FALSE;
@@ -1305,7 +1305,7 @@ void CRealBuffer::InitSBI(const CONSOLE_SCREEN_BUFFER_INFO& sbi)
 	con.bBufferHeight = bCurBufHeight;
 
 	// Check real console scrollers - if they were changed
-	_ASSERTEX(!mb_BuferModeChangeLocked);
+	_ASSERTEX(!bufferModeChangeLocked_);
 	CheckBufferSize();
 
 	_ASSERTE(mp_RCon->isBufferHeight() == bCurBufHeight);
@@ -1957,7 +1957,7 @@ bool CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 // Изменение значений переменной (флаг включенного скролла)
 void CRealBuffer::SetBufferHeightMode(bool abBufferHeight, bool abIgnoreLock /*= false*/)
 {
-	if (mb_BuferModeChangeLocked)
+	if (bufferModeChangeLocked_)
 	{
 		if (!abIgnoreLock)
 		{
@@ -1985,8 +1985,8 @@ void CRealBuffer::ChangeBufferHeightMode(bool abBufferHeight)
 		//	nNewBufHeightSize = nMaxBuf;
 	}
 
-	_ASSERTE(!mb_BuferModeChangeLocked);
-	MSetter lSetter(&mb_BuferModeChangeLocked);
+	_ASSERTE(!bufferModeChangeLocked_);
+	MSetter lSetter(&bufferModeChangeLocked_);
 	con.bBufferHeight = abBufferHeight;
 
 	// Если при запуске было "conemu.exe /bufferheight 0 ..."
@@ -2023,21 +2023,21 @@ void CRealBuffer::SetChange2Size(int anChange2TextWidth, int anChange2TextHeight
 
 bool CRealBuffer::isBuferModeChangeLocked()
 {
-	return mb_BuferModeChangeLocked;
+	return bufferModeChangeLocked_;
 }
 
 // Utilized in CRealServer::cmdStartStop
 bool CRealBuffer::BuferModeChangeLock()
 {
-	bool lbNeedUnlock = !mb_BuferModeChangeLocked;
-	mb_BuferModeChangeLocked = true;
+	bool lbNeedUnlock = !bufferModeChangeLocked_;
+	bufferModeChangeLocked_ = true;
 	return lbNeedUnlock;
 }
 
 // Utilized in CRealServer::cmdStartStop
 void CRealBuffer::BuferModeChangeUnlock()
 {
-	mb_BuferModeChangeLocked = false;
+	bufferModeChangeLocked_ = false;
 }
 
 // По con.m_sbi проверяет, включена ли прокрутка
@@ -2048,7 +2048,7 @@ bool CRealBuffer::CheckBufferSize()
 	if (!this)
 		return false;
 
-	if (mb_BuferModeChangeLocked)
+	if (bufferModeChangeLocked_)
 		return false;
 
 	//if (con.m_sbi.dwSize.X>(con.m_sbi.srWindow.Right-con.m_sbi.srWindow.Left+1)) {
@@ -2586,7 +2586,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 				}
 
 				// #SIZE_TODO buffer mode may be changing at the moment by cmdStartStop, use mutex?
-				if (!mb_BuferModeChangeLocked)
+				if (!bufferModeChangeLocked_)
 				{
 					CheckBufferSize();
 					lbBufferChecked = true;
@@ -3940,6 +3940,7 @@ void CRealBuffer::SetSelectionFlags(const DWORD flags)
 			else
 				OnMouseSelectionStopped();
 		}
+
 		con.m_sel.dwFlags = flags;
 	}
 }
@@ -4104,12 +4105,14 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			if (gpSet->isCTSAutoCopy)
 			{
 				//if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
-				const DWORD nPrevTick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) ? con.m_SelDblClickTick : con.m_SelClickTick;
+				const DWORD nPrevTick = (con.m_sel.dwFlags & (CONSOLE_DBLCLICK_SELECTION | CONSOLE_TRIPLE_CLICK_SELECTION))
+					? con.m_SelDblClickTick
+					: con.m_SelClickTick;
 				if ((GetTickCount() - nPrevTick) > GetDoubleClickTime())
 				{
 					// If duration of dragging/marking with mouse key pressed
 					// exceeds DblClickTime we may (and must) do copy immediately
-					_ASSERTE(nPrevTick!=0);
+					_ASSERTE(nPrevTick != 0);
 					_ASSERTE(gpSet->isCTSAutoCopy && mp_RCon && mp_RCon->isSelectionPresent());
 					mp_RCon->AutoCopyTimer();
 				}
