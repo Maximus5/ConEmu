@@ -20,6 +20,23 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.3.4
+* gh-2212: Fix executer in Far 1.75 (commands with redirections).
+* gh-2249, gh-2248: ANSI: Fix new line processing (screen issues).
+* Fix logging during `ConEmuC -echo` or `ConEmuC -type`.
+* gh-2251: Restore WindowsXP 32-bit support.
+* Executor: Fix empty output of console app started from Far 3.0 on Windows XP.
+* Fix Far 1.75 default task name.
+* gh-2246: Xterm child process fix.
+* Don't try to substitute `C:\` with env.vars in default tasks.
+* Remove RealConsole flickering while starting elevated tab.
+* Support `|||` delimiter in single instance mode. E.g. run from .cmd file (^-escaped):
+  `start ConEmu64.exe -single -runlist ping -t 8.8.8.8 ^|^|^| ping -t google.com`.
+* Stop selecting with mouse on LBtnUp when cursor is out of the ConEmu window rect.
+* gh-1413: Improve scrolling during selection text with mouse.
+* l10n: translations were updated.
+
+
 2021.2.6
 * gh-2259, gh-2269: Fix Far Manager crash using `ConEmu.Editor.lua`.
 * gh-2262: Fix executing batch scripts from Far if command contains quotes.
