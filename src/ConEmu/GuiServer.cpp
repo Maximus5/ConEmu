@@ -533,7 +533,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				CRealConsole* pRCon = nullptr;
 				CVConGuard VCon;
 
-				for (size_t i = 0;; i++)
+				for (int i = 0;; i++)
 				{
 					if (!CVConGroup::GetVCon(i, &VCon))
 						break;
@@ -714,9 +714,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			DWORD nFarPluginPID = pRCon ? pRCon->GetFarPID(true) : 0;
 			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, pRCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
 
-			int nLen = pszResult ? _tcslen(pszResult) : 0;
+			const auto nLen = pszResult ? _tcslen(pszResult) : 0;
 
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t);
+			pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_GUIMACRO) + nLen * sizeof(wchar_t);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 			{
 				SafeFree(pszResult);
