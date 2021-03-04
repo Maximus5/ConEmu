@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSetter.h"
 #include "../common/MStrEsc.h"
 #include "../common/MToolHelp.h"
+#include "../common/WConsole.h" // 'ENABLE_VIRTUAL_TERMINAL_INPUT'
 #include "../common/MWow64Disable.h"
 #include "../common/ProcessData.h"
 #include "../common/ProcessSetEnv.h"
