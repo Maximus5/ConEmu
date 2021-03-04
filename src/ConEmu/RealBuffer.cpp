@@ -4012,6 +4012,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 				ConsoleLinePtr next{};
 				const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 				const bool bBash = pApp ? pApp->CTSBashMargin() : false;
+				const bool bTrimTrailingSpaces = pApp ? pApp->CTSTrimTrailing() : true;
 				auto isOneLine = [&prev, &next, this, bBash]()
 				{
 					// some heuristics - no more than one space is allowed at the beginning of the next line
@@ -4058,10 +4059,20 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 						next = prev;
 					}
 				}
-			}
+				// Trip trailing spaces
+				if (bTrimTrailingSpaces && data->GetConsoleLine(crTo.Y - shiftY, next) && next.nLen > 2)
+				{
+					int lastPos = std::max<int>(0, std::min<int>(next.nLen - 1, crTo.X));
+					while (lastPos > 0 && next.pChar[lastPos] == L' ')
+					{
+						--lastPos;
+					}
+					crTo.X = static_cast<SHORT>(lastPos);
+				}
+			} // if (GetData(data))
 			// unexpected selection change on LBtnUp
 			SetSelectionFlags(con.m_sel.dwFlags | CONSOLE_TRIPLE_CLICK_SELECTION);
-		}
+		} // if (tripleClick)
 
 		#ifdef _DEBUG
 		wchar_t szLog[200]; swprintf_c(szLog, L"Selection: %s %s",
