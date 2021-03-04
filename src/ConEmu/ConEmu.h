@@ -782,6 +782,7 @@ class CConEmuMain
 		void OnTimer_FrameAppearDisappear(WPARAM wParam);
 		void OnTimer_RClickPaint();
 		void OnTimer_AdmShield();
+		void OnTimer_Selection();
 		int mn_TBOverlayTimerCounter = 0;
 		void OnTimer_QuakeFocus();
 		void OnActivateSplitChanged();

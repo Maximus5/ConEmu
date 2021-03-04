@@ -106,7 +106,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSEWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
@@ -11869,6 +11869,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_ACTIVATESPLIT_ID:
 			OnTimer_ActivateSplit();
 			break;
+
+		case TIMER_SELECTION_ID: // 20ms TIMER_SELECTION_ELAPSE
+			OnTimer_Selection();
+			break;
 	}
 
 	mb_InTimer = FALSE;
@@ -12302,6 +12306,11 @@ void CConEmuMain::OnTimer_AdmShield()
 		SetKillTimer(false, TIMER_ADMSHIELD_ID, 0);
 		LogString(L"Timer for Taskbar_UpdateOverlay was stopped");
 	}
+}
+
+void CConEmuMain::OnTimer_Selection()
+{
+	CVConGroup::OnRConSelectionTimerCheck();
 }
 
 void CConEmuMain::OnTimer_QuakeFocus()

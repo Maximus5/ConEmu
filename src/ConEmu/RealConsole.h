@@ -626,6 +626,7 @@ class CRealConsole
 
 		void OnStartProcessAllowed();
 		void OnTimerCheck();
+		void OnSelectionTimerCheck();
 
 		static bool RefreshAfterRestore(CVirtualConsole* pVCon, LPARAM lParam);
 

@@ -68,6 +68,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConText.h"
 #include "VirtualConsole.h"
 
+#include <cmath>
+
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE2(s) DEBUGSTR(s) // Warning level
 #define DEBUGSTRDYNAMIC(s) //DEBUGSTR(s)
@@ -89,7 +91,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONSOLE_MOUSE_DOWN 8
 #endif
 
-#define SEL_MOUSE_AUTOSCROLL_DELTA 25
+#define SEL_MOUSE_AUTOSCROLL_DELTA 15
 #define SEL_MOUSE_AUTOSCROLL_PIX   2
 
 #ifdef _DEBUG
@@ -634,7 +636,7 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 		{
 			DEBUGSTRTIMEOUTS(szLog);
 		}
-		_ASSERTE(!lbRc || (nDurationTick < 1000));
+		_ASSERTE(!lbRc || (nDurationTick < 3000));
 	}
 	return lbRc;
 }
@@ -3328,12 +3330,15 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 		return false;
 	}
 
+	wchar_t dbgBuf[80];
+
 	// Avoid too fast scrolling
 	const DWORD nCurTick = GetTickCount();
 	const DWORD nDelta = (nCurTick - con.m_SelLastScrollCheck);
 	if (nDelta < SEL_MOUSE_AUTOSCROLL_DELTA)
 	{
-		DEBUGSTRMOUSE(L"Mouse selection autoscroll skipped (waiting 25ms)\n");
+		msprintf(dbgBuf, countof(dbgBuf), L"Mouse selection autoscroll skipped (waiting %ums)\n", SEL_MOUSE_AUTOSCROLL_DELTA);
+		DEBUGSTRMOUSE(dbgBuf);
 		return false;
 	}
 	con.m_SelLastScrollCheck = nCurTick;
@@ -3341,16 +3346,22 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	// Lets scroll window content
 	if ((crMouse.Y < con.m_sbi.srWindow.Top) || (y < SEL_MOUSE_AUTOSCROLL_PIX))
 	{
-		DEBUGSTRMOUSE(L"Mouse selection autoscroll buffer up\n");
+		const auto durationMs = nCurTick - con.m_SelClickTick;
+		const auto scrollLines = GetAutoscrollSelectionLines(-y);
+		msprintf(dbgBuf, countof(dbgBuf), L"Mouse selection autoscroll buffer up, duration=%u, delta=%i, lines=%u\n", durationMs, y, scrollLines);
+		DEBUGSTRMOUSE(dbgBuf);
 		crMouse.Y = std::max<SHORT>(0, con.m_sbi.srWindow.Top - 1);
-		DoScrollBuffer(SB_LINEUP);
+		DoScrollBuffer(SB_LINEUP, -1, scrollLines);
 		y = 0;
 	}
 	else if ((crMouse.Y > con.m_sbi.srWindow.Bottom) || (y > (nVConHeight - SEL_MOUSE_AUTOSCROLL_PIX)))
 	{
-		DEBUGSTRMOUSE(L"Mouse selection autoscroll buffer down\n");
+		const auto durationMs = nCurTick - con.m_SelClickTick;
+		const auto scrollLines = GetAutoscrollSelectionLines(y - nVConHeight);
+		msprintf(dbgBuf, countof(dbgBuf), L"Mouse selection autoscroll buffer down, duration=%u, delta=%i, lines=%u\n", durationMs, y - nVConHeight, scrollLines);
+		DEBUGSTRMOUSE(dbgBuf);
 		crMouse.Y = std::min<SHORT>(con.m_sbi.srWindow.Bottom + 1, con.m_sbi.dwSize.Y - 1);
-		DoScrollBuffer(SB_LINEDOWN);
+		DoScrollBuffer(SB_LINEDOWN, -1, scrollLines);
 		y = (nVConHeight - 1);
 	}
 
@@ -3876,11 +3887,46 @@ void CRealBuffer::SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse)
 void CRealBuffer::OnMouseSelectionStarted()
 {
 	con.m_sel.dwFlags |= CONSOLE_MOUSE_DOWN;
+	con.m_SelScrollBurst = 0;
+	gpConEmu->SetKillTimer(true, TIMER_SELECTION_ID, TIMER_SELECTION_ELAPSE);
 }
 
 void CRealBuffer::OnMouseSelectionStopped()
 {
 	con.m_sel.dwFlags &= ~CONSOLE_MOUSE_DOWN;
+	con.m_SelScrollBurst = 0;
+	gpConEmu->SetKillTimer(false, TIMER_SELECTION_ID, 0);
+}
+
+uint32_t CRealBuffer::GetAutoscrollSelectionLines(const int yDelta)
+{
+	uint32_t result = 1;
+	const uint32_t maxScrollLines = std::min<uint32_t>(20, GetTextHeight() / 4);
+	const auto cellSize = mp_RCon->VCon()->GetCellSize();
+
+	if (yDelta >= 0)
+	{
+		const auto curTick = GetTickCount();
+		if (!con.m_SelScrollBurst)
+			con.m_SelScrollBurst = curTick;
+		const auto durationSec = (curTick - con.m_SelScrollBurst) / 1000;
+		if (durationSec > 0)
+			result += static_cast<uint32_t>(std::log2(durationSec));
+	}
+	else
+	{
+		// if user returns mouse cursor to work area - reset time acceleration
+		con.m_SelScrollBurst = 0;
+	}
+
+	if (yDelta > cellSize.cy && cellSize.cy > 0)
+	{
+		const auto yResult = std::min<uint32_t>(maxScrollLines, yDelta / cellSize.cy);
+		if (yResult > result)
+			result = yResult;
+	}
+	
+	return result;
 }
 
 void CRealBuffer::SetSelectionFlags(const DWORD flags)

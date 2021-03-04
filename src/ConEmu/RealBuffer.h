@@ -147,6 +147,7 @@ private:
 	void OnMouseSelectionStarted();
 	// Stop changing selection with mouse move
 	void OnMouseSelectionStopped();
+	uint32_t GetAutoscrollSelectionLines(int yDelta);
 	void SetSelectionFlags(DWORD flags);
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = nullptr, HGLOBAL* phUnicode = nullptr);
@@ -273,7 +274,10 @@ protected:
 	struct RConInfo
 	{
 		CONSOLE_SELECTION_INFO m_sel;
-		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
+		DWORD m_SelClickTick;
+		DWORD m_SelDblClickTick;
+		DWORD m_SelLastScrollCheck; // last time when autoscrolling was done (to avoid too fast scroll)
+		DWORD m_SelScrollBurst; // set when autoscrolling is in progress (cursor is outside of console)
 		struct {
 			IntelligentSelectionState State; // former mb_IntelliStored
 			DWORD ClickTick; // To be sure if we need DblClick selection

@@ -173,6 +173,7 @@ public:
 	static void StopSignalAll();
 	static void DestroyAllVCon();
 	static void OnRConTimerCheck();
+	static void OnRConSelectionTimerCheck();
 	static void OnAlwaysShowScrollbar(bool abSync = true);
 	static void OnUpdateScrollInfo();
 	static void OnUpdateFarSettings();

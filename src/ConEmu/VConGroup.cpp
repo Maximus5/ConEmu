@@ -2250,18 +2250,28 @@ bool CVConGroup::isPictureView()
 
 void CVConGroup::OnRConTimerCheck()
 {
-	CVConGuard VCon;
-	CRealConsole* pRCon;
+	EnumVCon(evf_Visible, [](CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			auto* pRCon = pVCon->RCon();
+			if (pRCon)
+			{
+				pRCon->OnTimerCheck();
+			}
+			return true;
+		}, 0);
+}
 
-	for (size_t i = 0; i < countof(gp_VCon); i++)
-	{
-		if (!VCon.Attach(gp_VCon[i]))
-			continue;
-		pRCon = VCon->RCon();
-		if (!pRCon)
-			continue;
-		pRCon->OnTimerCheck();
-	}
+void CVConGroup::OnRConSelectionTimerCheck()
+{
+	EnumVCon(evf_Visible, [](CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			auto* pRCon = pVCon->RCon();
+			if (pRCon)
+			{
+				pRCon->OnSelectionTimerCheck();
+			}
+			return true;
+		}, 0);
 }
 
 // nIdx - 0 based

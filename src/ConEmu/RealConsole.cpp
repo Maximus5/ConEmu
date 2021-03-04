@@ -2631,7 +2631,7 @@ void CRealConsole::OnTimerCheck()
 		if ((gpSet->nTabFlashChanged < 0) || (tabs.nFlashCounter < gpSet->nTabFlashChanged))
 		{
 			InterlockedIncrement(&tabs.nFlashCounter);
-			mp_ConEmu->mp_TabBar->HighlightTab(tabs.mp_ActiveTab->Tab(), (tabs.nFlashCounter&1)!=0);
+			mp_ConEmu->mp_TabBar->HighlightTab(tabs.mp_ActiveTab->Tab(), (tabs.nFlashCounter & 1) != 0);
 		}
 	}
 
@@ -2641,27 +2641,32 @@ void CRealConsole::OnTimerCheck()
 
 	if (!isServerAlive())
 	{
-		_ASSERTE((mn_TermEventTick!=0 && mn_TermEventTick!=(DWORD)-1) && "Server was terminated, StopSignal was not called");
+		_ASSERTE((mn_TermEventTick != 0 && mn_TermEventTick != (DWORD)-1) && "Server was terminated, StopSignal was not called");
 		StopSignal();
 		return;
 	}
 
 	// А это наверное вообще излишне, проверим под дебагом, как жить будет
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	if (hConWnd && !IsWindow(hConWnd))
 	{
-		_ASSERTE((mn_TermEventTick!=0 && mn_TermEventTick!=(DWORD)-1) && "Console window was destroyed, StopSignal was not called");
+		_ASSERTE((mn_TermEventTick != 0 && mn_TermEventTick != (DWORD)-1) && "Console window was destroyed, StopSignal was not called");
 		return;
 	}
-	#endif
+#endif
+}
 
-	// Кроме того, здесь проверяется "нужно ли скроллить консоль во время выделения мышкой"
+void CRealConsole::OnSelectionTimerCheck()
+{
+	AssertThis();
+
+	if (InCreateRoot() || InRecreate() || !mp_ABuf)
+		return;
+
 	if (mp_ABuf->isSelectionPresent())
 	{
 		mp_ABuf->OnTimerCheckSelection();
 	}
-
-	return;
 }
 
 void CRealConsole::MonitorAssertTrap()
