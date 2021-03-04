@@ -74,12 +74,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
-#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
 #define DEBUGSTRTOPLEFT(s) //DEBUGSTR(s)
 #define DEBUGSTRTRUEMOD(s) //DEBUGSTR(s)
 #define DEBUGSTRLINK(s) //DEBUGSTR(s)
 #define DEBUGSTRSEL(s) //DEBUGSTR(s)
-#define DEBUGSTRTIMEOUTS(s) DEBUGSTR(s)
+#define DEBUGSTRTIMEOUTS(s) //DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSet->isLogging(2)
@@ -89,8 +89,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONSOLE_MOUSE_DOWN 8
 #endif
 
-#define SELMOUSEAUTOSCROLLDELTA 25
-#define SELMOUSEAUTOSCROLLPIX   2
+#define SEL_MOUSE_AUTOSCROLL_DELTA 25
+#define SEL_MOUSE_AUTOSCROLL_PIX   2
 
 #ifdef _DEBUG
 #define HEAPVAL MCHKHEAP
@@ -3296,29 +3296,28 @@ void CRealBuffer::ShowKeyBarHint(WORD nID)
 // If NO selection present - ensure that coordinates are inside our VCon (otherwise - exit)
 bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 {
-	// Хорошо бы скроллить выделение если мышка рядом с краем, а не только 'за'. Иначе в Fullsreen может быть сложно...
-	bool bMouse = ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) != 0);
+	const bool mouseSelection = ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) != 0);
 
 	if ((crMouse.X >= con.m_sbi.srWindow.Left) && (crMouse.X <= con.m_sbi.srWindow.Right)
-		&& ((!bMouse && (crMouse.Y >= con.m_sbi.srWindow.Top) && (crMouse.Y <= con.m_sbi.srWindow.Bottom))
-		|| (bMouse && (crMouse.Y > con.m_sbi.srWindow.Top) && (crMouse.Y < con.m_sbi.srWindow.Bottom))))
+		&& ((!mouseSelection && (crMouse.Y >= con.m_sbi.srWindow.Top) && (crMouse.Y <= con.m_sbi.srWindow.Bottom))
+		|| (mouseSelection && (crMouse.Y > con.m_sbi.srWindow.Top) && (crMouse.Y < con.m_sbi.srWindow.Bottom))))
 	{
 		DEBUGSTRMOUSE(L"Nothing need to be patched, coordinates are OK (1)\n");
 		return true;
 	}
 
-	int nVConHeight = mp_RCon->VCon()->GetVConHeight();
+	const int nVConHeight = mp_RCon->VCon()->GetVConHeight();
 
-	if (bMouse
-		&& ((crMouse.Y == con.m_sbi.srWindow.Top) && (y >= SELMOUSEAUTOSCROLLPIX))
-			|| ((crMouse.Y == con.m_sbi.srWindow.Bottom) && (y <= (nVConHeight-SELMOUSEAUTOSCROLLPIX))))
+	if (mouseSelection
+		&& ((crMouse.Y == con.m_sbi.srWindow.Top) && (y >= SEL_MOUSE_AUTOSCROLL_PIX))
+			|| ((crMouse.Y == con.m_sbi.srWindow.Bottom) && (y <= (nVConHeight-SEL_MOUSE_AUTOSCROLL_PIX))))
 	{
 		DEBUGSTRMOUSE(L"Nothing need to be patched, coordinates are OK (2)\n");
 		return true;
 	}
 
 	// In mouse selection only
-	if (!(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+	if (!mouseSelection
 		// And mouse button must be still pressed
 		|| !(con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN)
 		// And VCon must be active
@@ -3330,27 +3329,27 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	}
 
 	// Avoid too fast scrolling
-	DWORD nCurTick = GetTickCount();
-	DWORD nDelta = (nCurTick - con.m_SelLastScrollCheck);
-	if (nDelta < SELMOUSEAUTOSCROLLDELTA)
+	const DWORD nCurTick = GetTickCount();
+	const DWORD nDelta = (nCurTick - con.m_SelLastScrollCheck);
+	if (nDelta < SEL_MOUSE_AUTOSCROLL_DELTA)
 	{
-		DEBUGSTRMOUSE(L"Mouse selection autoscroll skipped (waiting 100ms)\n");
+		DEBUGSTRMOUSE(L"Mouse selection autoscroll skipped (waiting 25ms)\n");
 		return false;
 	}
 	con.m_SelLastScrollCheck = nCurTick;
 
 	// Lets scroll window content
-	if ((crMouse.Y < con.m_sbi.srWindow.Top) || (y < SELMOUSEAUTOSCROLLPIX))
+	if ((crMouse.Y < con.m_sbi.srWindow.Top) || (y < SEL_MOUSE_AUTOSCROLL_PIX))
 	{
-		DEBUGSTRMOUSE(L"Autoscrolling buffer one line up\n");
-		crMouse.Y = std::max(0,con.m_sbi.srWindow.Top-1);
+		DEBUGSTRMOUSE(L"Mouse selection autoscroll buffer up\n");
+		crMouse.Y = std::max<SHORT>(0, con.m_sbi.srWindow.Top - 1);
 		DoScrollBuffer(SB_LINEUP);
 		y = 0;
 	}
-	else if ((crMouse.Y > con.m_sbi.srWindow.Bottom) || (y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
+	else if ((crMouse.Y > con.m_sbi.srWindow.Bottom) || (y > (nVConHeight - SEL_MOUSE_AUTOSCROLL_PIX)))
 	{
-		DEBUGSTRMOUSE(L"Autoscrolling buffer one line down\n");
-		crMouse.Y = std::min(con.m_sbi.srWindow.Bottom+1,con.m_sbi.dwSize.Y-1);
+		DEBUGSTRMOUSE(L"Mouse selection autoscroll buffer down\n");
+		crMouse.Y = std::min<SHORT>(con.m_sbi.srWindow.Bottom + 1, con.m_sbi.dwSize.Y - 1);
 		DoScrollBuffer(SB_LINEDOWN);
 		y = (nVConHeight - 1);
 	}
@@ -3380,7 +3379,7 @@ void CRealBuffer::OnTimerCheckSelection()
 	MapWindowPoints(nullptr, mp_RCon->VCon()->GetView(), &ptCur, 1);
 	int nVConHeight = mp_RCon->VCon()->GetVConHeight();
 
-	if ((ptCur.y < SELMOUSEAUTOSCROLLPIX) || (ptCur.y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
+	if ((ptCur.y < SEL_MOUSE_AUTOSCROLL_PIX) || (ptCur.y > (nVConHeight-SEL_MOUSE_AUTOSCROLL_PIX)))
 	{
 		COORD crMouse = ScreenToBuffer(mp_RCon->VCon()->ClientToConsole(ptCur.x, ptCur.y));
 		int x = ptCur.x, y = ptCur.y;
@@ -3859,7 +3858,7 @@ wrap:
 	return lbSkip;
 }
 
-bool CRealBuffer::GetRBtnDrag(COORD* pcrMouse)
+bool CRealBuffer::GetRBtnDrag(COORD* pcrMouse) const
 {
 	if (pcrMouse)
 		*pcrMouse = con.crRBtnDrag;
@@ -3883,7 +3882,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		return false;
 	}
 
-	bool bWasSelection = isSelectionPresent();
+	const bool wasSelection = isSelectionPresent();
 
 	// Получить известные координаты символов
 	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
@@ -3894,15 +3893,15 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 
 	// Shift+LClick to mark selection start (StartSelection)
 	// and use Shift+LClick to ExpandSelection
-	bool bExtendSelection = (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP) && isMouseClickExtension();
+	const bool extendSelection = (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP) && isMouseClickExtension();
 
-	if ((messg == WM_LBUTTONDOWN && !bExtendSelection)
+	if ((messg == WM_LBUTTONDOWN && !extendSelection)
 		|| ((messg == WM_LBUTTONDBLCLK) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
 		)
 	{
 		bool lbStreamSelection = false;
 		BYTE vk = 0; // If selection was started with "modifier" we need to "release" it in the console
-		bool bTripleClick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
+		const bool tripleClick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
 
 		if (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION))
 		{
@@ -3911,7 +3910,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 		else
 		{
-			DWORD nPressed = gpConEmu->isSelectionModifierPressed(true);
+			const DWORD nPressed = gpConEmu->isSelectionModifierPressed(true);
 			if (nPressed)
 			{
 				// OK
@@ -3925,10 +3924,10 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 
 		con.m_sel.dwFlags &= ~CONSOLE_KEYMOD_MASK;
-		con.m_sel.dwFlags |= ((DWORD)vk) << 24;
+		con.m_sel.dwFlags |= static_cast<DWORD>(vk) << 24;
 
 		COORD crTo = cr;
-		if (bTripleClick)
+		if (tripleClick)
 		{
 			cr.X = 0;
 			crTo.X = GetBufferWidth()-1;
@@ -3937,12 +3936,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		#ifdef _DEBUG
 		wchar_t szLog[200]; swprintf_c(szLog, L"Selection: %s %s",
 			(messg == WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" : L"WM_LBUTTONDBLCLK",
-			bTripleClick ? L"bTripleClick" : L"");
+			tripleClick ? L"bTripleClick" : L"");
 		DEBUGSTRSEL(szLog);
 		#endif
 
 		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
-		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, bTripleClick ? WM_LBUTTONDBLCLK : WM_LBUTTONDOWN, bTripleClick ? &crTo : nullptr);
+		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, tripleClick ? WM_LBUTTONDBLCLK : WM_LBUTTONDOWN, tripleClick ? &crTo : nullptr);
 
 		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 
@@ -3951,7 +3950,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	else if ((messg == WM_LBUTTONDBLCLK) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)))
 	{
 		// Выделить слово под курсором (как в обычной консоли)
-		bool lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+		const bool streamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 
 		DEBUGSTRSEL(L"Selection: WM_LBUTTONDBLCLK - expanding etr_Word");
 
@@ -3960,7 +3959,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
 
 		// Выполнить выделение
-		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, true, WM_LBUTTONDBLCLK, &crTo);
+		StartSelection(streamSelection, crFrom.X, crFrom.Y, true, WM_LBUTTONDBLCLK, &crTo);
 
 		// Сейчас кнопка мышки отпущена, сброс
 		con.m_sel.dwFlags &= ~CONSOLE_MOUSE_DOWN;
@@ -3970,7 +3969,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	}
 	else if (
 		((messg == WM_MOUSEMOVE) && (con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN))
-		|| ((messg == WM_LBUTTONUP) && ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) || bExtendSelection))
+		|| ((messg == WM_LBUTTONUP) && ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) || extendSelection))
 		)
 	{
 		// При LBtnUp может быть несколько вариантов
@@ -3992,7 +3991,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 				messg = WM_LBUTTONUP;
 		}
 
-		if ((messg == WM_LBUTTONUP) && !(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && bExtendSelection)
+		if ((messg == WM_LBUTTONUP) && !(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && extendSelection)
 		{
 			con.m_SelClickTick = GetTickCount();
 		}
@@ -4013,7 +4012,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			//)
 		{
 			// Ignoring due DoubleClickTime
-			int nDbg = 0; UNREFERENCED_PARAMETER(nDbg);
+			std::ignore = 0;
 		}
 		else
 		{
@@ -4023,7 +4022,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			}
 			else
 			{
-				ExpandSelection(cr.X, cr.Y, bWasSelection);
+				ExpandSelection(cr.X, cr.Y, wasSelection);
 			}
 
 		}
@@ -4035,7 +4034,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			if (gpSet->isCTSAutoCopy)
 			{
 				//if ((con.m_sel.srSelection.Left != con.m_sel.srSelection.Right) || (con.m_sel.srSelection.Top != con.m_sel.srSelection.Bottom))
-				DWORD nPrevTick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) ? con.m_SelDblClickTick : con.m_SelClickTick;
+				const DWORD nPrevTick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) ? con.m_SelDblClickTick : con.m_SelClickTick;
 				if ((GetTickCount() - nPrevTick) > GetDoubleClickTime())
 				{
 					// If duration of dragging/marking with mouse key pressed

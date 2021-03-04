@@ -139,7 +139,7 @@ public:
 
 	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 
-	bool GetRBtnDrag(COORD* pcrMouse);
+	bool GetRBtnDrag(COORD* pcrMouse) const;
 	void SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse = nullptr);
 
 private:

@@ -56,7 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -111,19 +110,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLOGA(s) //OutputDebugStringA(s)
 #define DEBUGSTRLOGW(s) //DEBUGSTR(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRALTSRV(s) //DEBUGSTR(s)
 #define DEBUGSTRSTOP(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //LogFocusInfo(s)
 #define DEBUGSTRGUICHILDPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
-#define DEBUGSTRFARPID(s) DEBUGSTR(s)
+#define DEBUGSTRFARPID(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
-#define DEBUGSTRSEL(s) DEBUGSTR(s)
-#define DEBUGSTRTEXTSEL(s) DEBUGSTR(s)
-#define DEBUGSTRCLICKPOS(s) DEBUGSTR(s)
-#define DEBUGSTRCTRLBS(s) DEBUGSTR(s)
+#define DEBUGSTRSEL(s) //DEBUGSTR(s)
+#define DEBUGSTRTEXTSEL(s) //DEBUGSTR(s)
+#define DEBUGSTRCLICKPOS(s) //DEBUGSTR(s)
+#define DEBUGSTRCTRLBS(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
