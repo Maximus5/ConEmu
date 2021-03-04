@@ -75,10 +75,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
 #define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
-#define CONSOLE_DBLCLICK_SELECTION 0x0400 // двойным кликом выделено слово, пропустить WM_LBUTTONUP
+#define CONSOLE_DBLCLICK_SELECTION 0x0400 // word was selected by double click, skip WM_LBUTTONUP
 #define CONSOLE_LEFT_ANCHOR 0x0800 // If selection was started rightward
 #define CONSOLE_RIGHT_ANCHOR 0x1000 // If selection was started leftward
 #define CONSOLE_EXPANDED 0x2000 // Support Shift+LClick & Shift+LClick to mark start and end of the selection
+#define CONSOLE_TRIPLE_CLICK_SELECTION 0x4000 // line(s) was selected by triple click, skip WM_LBUTTONUP
 #define CONSOLE_KEYMOD_MASK 0xFF000000 // Здесь хранится модификатор, которым начали выделение мышкой
 
 #define PROCESS_WAIT_START_TIME RELEASEDEBUGTEST(1000,1000)

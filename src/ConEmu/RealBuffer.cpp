@@ -4001,7 +4001,63 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		if (tripleClick)
 		{
 			cr.X = 0;
-			crTo.X = GetBufferWidth()-1;
+			crTo.X = GetBufferWidth() - 1;
+			CRConDataGuard data;
+			if (GetData(data))
+			{
+				ConsoleLinePtr prev{};
+				ConsoleLinePtr next{};
+				const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+				const bool bBash = pApp ? pApp->CTSBashMargin() : false;
+				auto isOneLine = [&prev, &next, this, bBash]()
+				{
+					// some heuristics - no more than one space is allowed at the beginning of the next line
+					if (next.pChar[0] == L' ' && next.pChar[1] == L' ')
+						return false;
+					// If right or left edge of screen is "Frame" - force to line break!
+					if (IsForceLineBreakChar(prev.pChar[prev.nLen - 1]) || IsForceLineBreakChar(next.pChar[0]))
+						return false;
+					// no more than one-two spaces at the end of current line
+					if (prev.pChar[prev.nLen - 1] == L' '
+						&& ((prev.pChar[prev.nLen - 2] == L' ')
+							|| (bBash && (prev.pChar[prev.nLen - 2] == L' ' && prev.pChar[prev.nLen - 3] == L' '))))
+						return false;
+					return true;
+				};
+
+				// #TODO check with alternative buffer (full backscroll)
+				const int shiftY = data->m_sbi.srWindow.Top;
+				// go down
+				if (data->GetConsoleLine(crTo.Y - shiftY, prev) && prev.nLen > 4)
+				{
+					for (int checkY = static_cast<int>(crTo.Y); checkY < static_cast<int>(con.m_sbi.srWindow.Bottom);)
+					{
+						if (!data->GetConsoleLine((++checkY) - shiftY, next) || next.nLen <= 4)
+							break;
+						if (!isOneLine())
+							break;
+						// Ok, let's expand selection
+						crTo.Y = static_cast<SHORT>(checkY);
+						prev = next;
+					}
+				}
+				// go up
+				if (data->GetConsoleLine(cr.Y - shiftY, next) && next.nLen > 4)
+				{
+					for (int checkY = static_cast<int>(cr.Y); checkY > static_cast<int>(con.m_sbi.srWindow.Top);)
+					{
+						if (!data->GetConsoleLine((--checkY) - shiftY, prev) || prev.nLen <= 4)
+							break;
+						if (!isOneLine())
+							break;
+						// Ok, let's expand selection
+						cr.Y = static_cast<SHORT>(checkY);
+						next = prev;
+					}
+				}
+			}
+			// unexpected selection change on LBtnUp
+			SetSelectionFlags(con.m_sel.dwFlags | CONSOLE_TRIPLE_CLICK_SELECTION);
 		}
 
 		#ifdef _DEBUG
@@ -4072,8 +4128,9 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			&& ((((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
 					&& ((GetTickCount() - con.m_SelClickTick) <= GetDoubleClickTime()))
 				|| ((con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
-					&& ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime())))
-				)
+					&& ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime()))
+				|| ((con.m_sel.dwFlags & CONSOLE_TRIPLE_CLICK_SELECTION))
+				))
 			)
 			//&& ((messg == WM_LBUTTONUP)
 			//	|| ((messg == WM_MOUSEMOVE)
@@ -4166,6 +4223,24 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	}
 
 	return false;
+}
+
+bool CRealBuffer::IsForceLineBreakChar(const wchar_t c) const
+{
+	static wchar_t sPreLineBreak[] =
+	{
+		ucBox25,ucBox50,ucBox75,ucBox100,ucUpScroll,ucDnScroll,ucLeftScroll,ucRightScroll,ucArrowUp,ucArrowDown,
+		//ucNoBreakSpace, -- this is space, why it was blocked?
+		ucBoxDblVert,ucBoxSinglVert,ucBoxDblDownRight,ucBoxDblDownLeft,ucBoxDblUpRight,ucBoxDblUpLeft,ucBoxSinglDownRight,
+		ucBoxSinglDownLeft,ucBoxSinglUpRight,ucBoxSinglUpLeft,ucBoxSinglDownDblHorz,ucBoxSinglUpDblHorz,ucBoxDblDownDblHorz,
+		ucBoxDblUpDblHorz,ucBoxSinglDownHorz,ucBoxSinglUpHorz,ucBoxDblDownSinglHorz,ucBoxDblUpSinglHorz,ucBoxDblVertRight,
+		ucBoxDblVertLeft,ucBoxDblVertSinglRight,ucBoxDblVertSinglLeft,ucBoxSinglVertRight,ucBoxSinglVertLeft,
+		ucBoxDblHorz,ucBoxSinglHorz,ucBoxDblVertHorz,
+		// End
+		0 /*ASCIIZ!!!*/
+	};
+	const auto* found = wcschr(sPreLineBreak, c);
+	return (found != nullptr);
 }
 
 void CRealBuffer::DoCopyPaste(bool abCopy, bool abPaste)
@@ -5089,19 +5164,6 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	bool bDetectLines = pApp->CTSDetectLineEnd();
 	bool bBash = pApp->CTSBashMargin();
 
-	wchar_t sPreLineBreak[] =
-		{
-			ucBox25,ucBox50,ucBox75,ucBox100,ucUpScroll,ucDnScroll,ucLeftScroll,ucRightScroll,ucArrowUp,ucArrowDown,
-			//ucNoBreakSpace, -- this is space, why it was blocked?
-			ucBoxDblVert,ucBoxSinglVert,ucBoxDblDownRight,ucBoxDblDownLeft,ucBoxDblUpRight,ucBoxDblUpLeft,ucBoxSinglDownRight,
-			ucBoxSinglDownLeft,ucBoxSinglUpRight,ucBoxSinglUpLeft,ucBoxSinglDownDblHorz,ucBoxSinglUpDblHorz,ucBoxDblDownDblHorz,
-			ucBoxDblUpDblHorz,ucBoxSinglDownHorz,ucBoxSinglUpHorz,ucBoxDblDownSinglHorz,ucBoxDblUpSinglHorz,ucBoxDblVertRight,
-			ucBoxDblVertLeft,ucBoxDblVertSinglRight,ucBoxDblVertSinglLeft,ucBoxSinglVertRight,ucBoxSinglVertLeft,
-			ucBoxDblHorz,ucBoxSinglHorz,ucBoxDblVertHorz,
-			// End
-			0 /*ASCIIZ!!!*/
-		};
-
 	// Pre validations
 	if (srSelection_X1 > (srSelection_X2+(srSelection_Y2-srSelection_Y1)*nTextWidth))
 	{
@@ -5194,12 +5256,12 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 			if (m_Type == rbt_Primary)
 			{
-				pszCon = pszDataStart + con.nTextWidth*(Y+srSelection_Y1) + srSelection_X1;
+				pszCon = pszDataStart + con.nTextWidth * (Y + srSelection_Y1) + srSelection_X1;
 			}
 			else if (pszDataStart && (Y < nTextHeight))  // -V560
 			{
 				WARNING("Проверить для режима с прокруткой!");
-				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + srSelection_X1;
+				pszCon = pszDataStart + dump.crSize.X * (Y + srSelection_Y1) + srSelection_X1;
 			}
 
 			//LPCWSTR pszDstStart = pch;
@@ -5317,8 +5379,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 					// Allow maximum one space on the next line
 					&& ((pszNextLine[0] != L' ') || (pszNextLine[0] == L' ' && pszNextLine[1] != L' '))  // -V728
 					// If right or left edge of screen is "Frame" - force to line break!
-					&& !wcschr(sPreLineBreak, *(pch - 1))
-					&& !wcschr(sPreLineBreak, *pszNextLine))
+					&& !IsForceLineBreakChar(*(pch - 1))
+					&& !IsForceLineBreakChar(*pszNextLine))
 				{
 					// Пытаемся определить, новая это строка или просто перенос в Prompt?
 					if ((*(pch - 1) != L' ')
