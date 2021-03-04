@@ -3985,8 +3985,17 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		//if (cr.Y<0 || cr.Y>=(int)TextHeight())
 		//	cr.Y = GetMinMax(cr.Y, 0, TextHeight());
 
+		if ((messg == WM_MOUSEMOVE) && (con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+		{
+			// If we hasn't received the WM_LBUTTONUP event somehow, emulate it now
+			if (!isPressed(VK_LBUTTON))
+				messg = WM_LBUTTONUP;
+		}
+
 		if ((messg == WM_LBUTTONUP) && !(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && bExtendSelection)
+		{
 			con.m_SelClickTick = GetTickCount();
+		}
 
 		// Теперь проверки Double/Triple.
 		if ((messg == WM_LBUTTONUP)

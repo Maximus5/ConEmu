@@ -9904,7 +9904,16 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	CVConGuard VCon;
 
 	if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
+	{
 		pVCon = VCon.VCon();
+	}
+	else if (mb_MouseCaptured && CVConGroup::GetActiveVCon(&VCon) >= 0)
+	{
+		if (VCon->RCon()->isMouseSelectionPresent())
+			pVCon = VCon.VCon();
+		else
+			VCon.Release();
+	}
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : nullptr;
 	HWND hView = pVCon ? pVCon->GetView() : nullptr;
 	if (hView)
