@@ -13,6 +13,7 @@ compile.txt
 *.opensdf
 _VCBUILD/
 Test/
+enc_temp_folder/
 
 *.exe
 *.map
