@@ -91,6 +91,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 #include <unordered_set>
 
+#include "../common/MWnd.h"
+
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
@@ -10552,30 +10554,15 @@ void CRealConsole::OnDeactivate(int nNewNum)
 {
 	AssertThis();
 
-	HWND hFore = GetForegroundWindow();
-	HWND hGui = mp_VCon->GuiWnd();
+	const MWnd hFore = GetForegroundWindow();
+	const MWnd hGui = mp_VCon->GuiWnd();
 	if (hGui)
 		GuiWndFocusStore();
 
 	mp_VCon->SavePaneSnapshot();
 
 	ShowHideViews(FALSE);
-	//HWND hPic = isPictureView();
-	//if (hPic && IsWindowVisible(hPic)) {
-	//    mb_PicViewWasHidden = TRUE;
-	//	if (!apiShowWindow(hPic, SW_HIDE)) {
-	//		DisplayLastError(L"Can't hide PictuteView window!");
-	//	}
-	//}
 
-	// 111125 а зачем выделение сбрасывать при деактивации?
-	//if (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
-	//{
-	//	con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
-	//	//ReleaseCapture();
-	//}
-
-	// Чтобы все в одном месте было
 	OnGuiFocused(FALSE);
 
 	if ((hFore == ghWnd) // фокус был в ConEmu

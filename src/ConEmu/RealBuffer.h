@@ -143,6 +143,11 @@ public:
 	void SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse = nullptr);
 
 private:
+	// Expand/modify selection with mouse move
+	void OnMouseSelectionStarted();
+	// Stop changing selection with mouse move
+	void OnMouseSelectionStopped();
+	void SetSelectionFlags(DWORD flags);
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = nullptr, HGLOBAL* phUnicode = nullptr);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
