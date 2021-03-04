@@ -38,7 +38,7 @@ public:
 	RConStartArgsEx();
 	~RConStartArgsEx() override;
 
-	RConStartArgsEx(const RConStartArgsEx&) = delete;
+	RConStartArgsEx(const RConStartArgsEx& args);
 	RConStartArgsEx(RConStartArgsEx&&) = delete;
 	RConStartArgsEx& operator=(const RConStartArgsEx&) = delete;
 	RConStartArgsEx& operator=(RConStartArgsEx&&) = delete;

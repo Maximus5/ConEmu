@@ -54,6 +54,10 @@ RConStartArgsEx::~RConStartArgsEx()
 	SafeFree(this->pszTaskName);
 }
 
+RConStartArgsEx::RConStartArgsEx(const RConStartArgsEx& args)
+{
+	AssignFrom(args);
+}
 
 bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= false*/)
 {
