@@ -2171,8 +2171,11 @@ void SendStarted()
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 		gbWasBufferHeight = (pIn->StartStop.sbi.dwSize.Y > (pIn->StartStop.sbi.srWindow.Bottom - pIn->StartStop.sbi.srWindow.Top + 100));
 
-		print_timings(L"SendStarted.4");
-		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+		if (!gbAttachGuiClient || hOut)
+		{
+			print_timings(L"SendStarted.4");
+			pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+		}
 
 
 		BOOL bAsync = FALSE;
