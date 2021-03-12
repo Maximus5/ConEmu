@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DllOptions.h"
 #include "hlpConsole.h"
 #include "MainThread.h"
+#include "../common/MWnd.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -81,7 +82,7 @@ static const DWORD HIDDEN_SCREEN_POSITION = 32767;
 //int CShellProc::mn_InShellExecuteEx = 0;
 int gnInShellExecuteEx = 0;
 
-bool  CShellProc::mb_StartingNewGuiChildTab = 0;
+bool  CShellProc::mb_StartingNewGuiChildTab = false;
 DWORD CShellProc::mn_LastStartedPID = 0;
 PROCESS_INFORMATION CShellProc:: m_WaitDebugVsThread = {};
 
@@ -283,13 +284,13 @@ HWND CShellProc::FindCheckConEmuWindow()
 		mb_TempConEmuWnd = TRUE;
 	}
 
-	HWND h = FindWindowEx(nullptr, nullptr, VirtualConsoleClassMain, nullptr);
+	const MWnd h = FindWindowExW(nullptr, nullptr, VirtualConsoleClassMain, nullptr);
 	if (h)
 	{
 		ghConEmuWnd = h;
-		HWND hWork = FindWindowEx(h, nullptr, VirtualConsoleClassWork, nullptr);
+		const MWnd hWork = FindWindowExW(h, nullptr, VirtualConsoleClassWork, nullptr);
 		_ASSERTEX(hWork!=nullptr && "Workspace must be inside ConEmu"); // код расчитан на это
-		ghConEmuWndDC = FindWindowEx(h, nullptr, VirtualConsoleClass, nullptr);
+		ghConEmuWndDC = FindWindowExW(h, nullptr, VirtualConsoleClass, nullptr);
 		if (!ghConEmuWndDC)
 		{
 			// This may be, if ConEmu was started in "Detached" more,
@@ -315,12 +316,12 @@ void CShellProc::LogExitLine(const int rc, const int line) const
 	LogShellString(szInfo);
 }
 
-wchar_t* CShellProc::str2wcs(const char* psz, UINT anCP)
+wchar_t* CShellProc::str2wcs(const char* psz, const UINT anCP)
 {
 	if (!psz)
 		return nullptr;
-	int nLen = lstrlenA(psz);
-	wchar_t* pwsz = (wchar_t*)calloc((nLen+1),sizeof(wchar_t));
+	const int nLen = lstrlenA(psz);
+	wchar_t* pwsz = static_cast<wchar_t*>(calloc((nLen+1), sizeof(wchar_t)));
 	if (nLen > 0)
 	{
 		MultiByteToWideChar(anCP, 0, psz, nLen+1, pwsz, nLen+1);
@@ -333,11 +334,11 @@ wchar_t* CShellProc::str2wcs(const char* psz, UINT anCP)
 }
 char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 {
-	int nLen = lstrlen(pwsz);
-	char* psz = (char*)calloc((nLen+1),sizeof(char));
+	const int nLen = lstrlen(pwsz);
+	char* psz = static_cast<char*>(calloc((nLen+1), sizeof(char)));
 	if (nLen > 0)
 	{
-		WideCharToMultiByte(anCP, 0, pwsz, nLen+1, psz, nLen+1, 0, 0);
+		WideCharToMultiByte(anCP, 0, pwsz, nLen+1, psz, nLen+1, nullptr, nullptr);
 	}
 	else
 	{
@@ -346,14 +347,14 @@ char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 	return psz;
 }
 
-BOOL CShellProc::GetLogLibraries()
+BOOL CShellProc::GetLogLibraries() const
 {
 	if (m_SrvMapping.cbSize)
 		return (m_SrvMapping.nLoggingType == glt_Processes);
 	return FALSE;
 }
 
-const RConStartArgs* CShellProc::GetArgs()
+const RConStartArgs* CShellProc::GetArgs() const
 {
 	return &m_Args;
 }
@@ -1301,9 +1302,9 @@ bool CShellProc::IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam)
 	if (bAnsiCon)
 	{
 		//_ASSERTEX(FALSE && "AnsiCon execution will be blocked");
-		HANDLE hStdOut = GetStdHandle(STD_ERROR_HANDLE);
+		const MHandle hStdOut = GetStdHandle(STD_ERROR_HANDLE);
 		LPCWSTR sErrMsg = L"\nConEmu blocks ANSICON injection\n";
-		CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(csbi)};
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
 		if (GetConsoleScreenBufferInfo(hStdOut, &csbi) && (csbi.dwCursorPosition.X == 0))
 		{
 			sErrMsg++;
@@ -1704,7 +1705,8 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 				bDontForceInjects = bDetachedOrHidden = true;
 			}
 			// Detect creating "root" from mintty-like applications
-			else if ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)))
+			const bool childGuiConsole = ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)));
+			if (createDetachedProcess || childGuiConsole)
 			{
 				bDontForceInjects = bDetachedOrHidden = true;
 			}
@@ -1796,6 +1798,15 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	mn_ImageSubsystem = mn_ImageBits = 0;
 	bool bForceCutNewConsole = false;
 
+	#ifdef _DEBUG
+	// Force run through ConEmuC.exe. Only for debugging!
+	bool lbAlwaysAddConEmuC = false;
+	// ReSharper disable once CppInconsistentNaming
+	#define isDebugAddConEmuC lbAlwaysAddConEmuC
+	#else
+	#define isDebugAddConEmuC false
+	#endif
+	
 	// In some cases we need to pre-replace command line,
 	// for example, in cmd prompt: start -new_console:z
 	CEStr lsReplaceFile, lsReplaceParm;
@@ -2058,15 +2069,6 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	//	2. при вызовах ShellExecute/ShellExecuteEx, т.к. не факт,
 	//     что этот ShellExecute вызовет CreateProcess из kernel32 (который перехвачен).
 	//     В Win7 это может быть вызов других системных модулей (App-.....dll)
-
-	#ifdef _DEBUG
-	// Для принудительной вставки ConEmuC.exe - поставить true. Только для отладки!
-	// Force run through ConEmuC.exe. Only for debugging!
-	bool lbAlwaysAddConEmuC = false;
-	#define isDebugAddConEmuC lbAlwaysAddConEmuC
-	#else
-	#define isDebugAddConEmuC false
-	#endif
 
 	if ((mn_ImageBits == 0) && (mn_ImageSubsystem == 0) && !isDebugAddConEmuC)
 	{
@@ -2356,10 +2358,10 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsEx
 	{
 		if (*asFile == L'"')
 		{
-			LPCWSTR pszEnd = wcschr(asFile+1, L'"');
+			const auto* pszEnd = wcschr(asFile+1, L'"');
 			if (pszEnd)
 			{
-				size_t cchLen = (pszEnd - asFile) - 1;
+				const size_t cchLen = (pszEnd - asFile) - 1;
 				rsExeTmp.Set(asFile+1, cchLen);
 			}
 			else
@@ -2963,7 +2965,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			{
 				DWORD dwExitCode = 0;
 				GetExitCodeProcess(lpPI->hProcess, &dwExitCode);
-				int len = lstrlen(szDbgMsg);
+				const int len = lstrlen(szDbgMsg);
 				msprintf(szDbgMsg+len, cchLen-len,
 					L", Terminated!!! Code=%u", dwExitCode);
 			}
@@ -3000,13 +3002,12 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				_ASSERTE(wcschr(ms_ExeTmp,L'\\')!=nullptr);
 				lstrcpyn(pIn->PortableStarted.sAppFilePathName, ms_ExeTmp, countof(pIn->PortableStarted.sAppFilePathName));
 				pIn->PortableStarted.nPID = lpPI->dwProcessId;
-				HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnServerPID);
+				const MHandle hServer{ OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnServerPID), CloseHandle };
 				if (hServer)
 				{
 					HANDLE hDup = nullptr;
 					DuplicateHandle(GetCurrentProcess(), lpPI->hProcess, hServer, &hDup, 0, FALSE, DUPLICATE_SAME_ACCESS);
 					pIn->PortableStarted.hProcess = hDup;
-					CloseHandle(hServer);
 				}
 
 				CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, nullptr);
@@ -3250,32 +3251,35 @@ bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATIO
 
 	int iHookRc = -1;
 	CLastErrorGuard errGuard;
-	DWORD nResumeRC = -1;
+	DWORD nResumeRc = -1;
 
-	DWORD nPID = lpPI ? lpPI->dwProcessId : m_WaitDebugVsThread.dwProcessId;
-	HANDLE hProcess = lpPI ? lpPI->hProcess : m_WaitDebugVsThread.hProcess;
+	const DWORD nPID = lpPI ? lpPI->dwProcessId : m_WaitDebugVsThread.dwProcessId;
+	const MHandle hProcess{ lpPI ? lpPI->hProcess : m_WaitDebugVsThread.hProcess };
 	_ASSERTEX(hThread != nullptr);
 	ZeroStruct(m_WaitDebugVsThread);
 
 	bool bNotInitialized = true;
-	DWORD nErrCode;
-	DWORD nStartTick = GetTickCount(), nCurTick, nDelta = 0, nDeltaMax = 5000;
+	DWORD nErrCode = -1;
+	const DWORD nStartTick = GetTickCount();
+	DWORD nCurTick = -1;
+	DWORD nDelta = 0;
+	const DWORD nDeltaMax = 5000;
 
 	// DefTermHooker needs to know about process modules
 	// But it is impossible if process was not initialized yet
 	while (bNotInitialized
 		&& (WaitForSingleObject(hProcess, 0) == WAIT_TIMEOUT))
 	{
-		nResumeRC = ResumeThread(hThread);
+		nResumeRc = ResumeThread(hThread);
 		Sleep(50);
 		SuspendThread(hThread);  // -V720
 
 		// We need to ensure that process has been 'started'
 		// If not - CreateToolhelp32Snapshot will return ERROR_PARTIAL_COPY
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nPID);
+		MHandle hSnap{ CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nPID), CloseHandle };
 		if (hSnap && (hSnap != INVALID_HANDLE_VALUE))
 		{
-			CloseHandle(hSnap);
+			hSnap.Close();
 			bNotInitialized = false;
 		}
 		else
@@ -3294,7 +3298,7 @@ bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATIO
 	// *****************************************************
 	// if process was not terminated yet, call DefTermHooker
 	// *****************************************************
-	DWORD nProcessWait = WaitForSingleObject(hProcess, 0);
+	const DWORD nProcessWait = WaitForSingleObject(hProcess, 0);
 	if (nProcessWait == WAIT_TIMEOUT)
 	{
 		iHookRc = gpDefTerm->StartDefTermHooker(nPID, hProcess);
@@ -3305,16 +3309,21 @@ bool CShellProc::OnResumeDebuggeeThreadCalled(HANDLE hThread, PROCESS_INFORMATIO
 	if (lpPI)
 		ResumeThread(hThread);
 
+	std::ignore = nResumeRc;
+	std::ignore = nCurTick;
 	return (iHookRc == 0);
 }
 
 void CShellProc::OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess)
 {
+#ifdef _DEBUG
 	DWORD dwProcessID = 0;
 	if (abSucceeded && gfGetProcessId && ahProcess)
 	{
 		dwProcessID = gfGetProcessId(ahProcess);
 	}
+	std::ignore = dwProcessID;
+#endif
 
 	// InjectHooks & ResumeThread тут делать не нужно, просто вернуть параметры, если было переопределение
 	if (mlp_SaveExecInfoW)

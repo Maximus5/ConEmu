@@ -219,8 +219,8 @@ private:
 	};
 
 private:
-	wchar_t* str2wcs(const char* psz, UINT anCP);
-	char* wcs2str(const wchar_t* pwsz, UINT anCP);
+	static wchar_t* str2wcs(const char* psz, UINT anCP);
+	static char* wcs2str(const wchar_t* pwsz, UINT anCP);
 	bool IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam);
 	static bool PrepareNewConsoleInFile(
 				CmdOnCreateType aCmd, LPCWSTR& asFile, LPCWSTR& asParam,
@@ -258,8 +258,8 @@ public:
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
 				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/);
 	BOOL LoadSrvMapping(BOOL bLightCheck = FALSE);
-	BOOL GetLogLibraries();
-	const RConStartArgs* GetArgs();
+	BOOL GetLogLibraries() const;
+	const RConStartArgs* GetArgs() const;
 public:
 	CShellProc();
 	~CShellProc();
