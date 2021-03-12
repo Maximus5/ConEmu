@@ -237,7 +237,6 @@ private:
 	BOOL ChangeExecuteParams(enum CmdOnCreateType aCmd,
 				LPCWSTR asFile, LPCWSTR asParam,
 				ChangeExecFlags Flags, const RConStartArgs& args,
-				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd) const;
 	HWND FindCheckConEmuWindow();

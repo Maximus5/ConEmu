@@ -470,7 +470,6 @@ void CShellProc::CheckHooksDisabled()
 BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	LPCWSTR asFile, LPCWSTR asParam,
 	ChangeExecFlags Flags, const RConStartArgs& args,
-	DWORD& ImageBits, DWORD& ImageSubsystem,
 	LPWSTR* psFile, LPWSTR* psParam)
 {
 	if (!LoadSrvMapping())
@@ -497,7 +496,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0] != 0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0] != 0);
 	if (gbPrepareDefaultTerminal)
 	{
-		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
+		_ASSERTEX(mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
 	}
 	_ASSERTE(aCmd == eShellExecute || aCmd == eCreateProcess);
 
@@ -633,8 +632,8 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 						DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0;
 						if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem1, nCheckBits1))
 						{
-							ImageSubsystem = nCheckSybsystem1;
-							ImageBits = nCheckBits1;
+							mn_ImageSubsystem = nCheckSybsystem1;
+							mn_ImageBits = nCheckBits1;
 
 						}
 						else
@@ -712,18 +711,18 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 				// но если кто-то положил гуевый cmd.exe - ССЗБ
 				if (lstrcmpi(pszExeName, L"cmd.exe") == 0)
 				{
-					ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+					mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 					switch (m_SrvMapping.ComSpec.csBits)  // NOLINT(clang-diagnostic-switch-enum)
 					{
 					case csb_SameOS:
-						ImageBits = IsWindows64() ? 64 : 32;
+						mn_ImageBits = IsWindows64() ? 64 : 32;
 						break;
 					case csb_x32:  // NOLINT(bugprone-branch-clone)
-						ImageBits = 32;
+						mn_ImageBits = 32;
 						break;
 					default:
 					//case csb_SameApp:
-						ImageBits = WIN3264TEST(32,64);
+						mn_ImageBits = WIN3264TEST(32,64);
 						break;
 					}
 					bSkip = true;
@@ -734,8 +733,8 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 					DWORD nCheckSybsystem = 0, nCheckBits = 0;
 					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits))
 					{
-						ImageSubsystem = nCheckSybsystem;
-						ImageBits = nCheckBits;
+						mn_ImageSubsystem = nCheckSybsystem;
+						mn_ImageBits = nCheckBits;
 					}
 				}
 			}
@@ -746,10 +745,10 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 
 	lbUseDosBox = FALSE;
 
-	if ((ImageBits != 16) && lbComSpec && asParam && *asParam)
+	if ((mn_ImageBits != 16) && lbComSpec && asParam && *asParam)
 	{
 		// Could it be Dos-application starting with "cmd /c ..."?
-		if (ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
+		if (mn_ImageSubsystem != IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
 		{
 			LPCWSTR pszCmdLine = asParam;
 
@@ -764,8 +763,8 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 					{
 						if (nCheckSybsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE && nCheckBits == 16)
 						{
-							ImageSubsystem = nCheckSybsystem;
-							ImageBits = nCheckBits;
+							mn_ImageSubsystem = nCheckSybsystem;
+							mn_ImageBits = nCheckBits;
 							_ASSERTEX(asFile==nullptr);
 						}
 					}
@@ -779,7 +778,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 		lbUseDosBox = FALSE; // Don't set now
 		if ((workOptions_ & ShellWorkOptions::ConsoleMode))
 		{
-			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
+			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (mn_ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
 			_ASSERTEX(ourGuiExe == false);
 		}
 		else
@@ -788,15 +787,15 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 			ourGuiExe = true;
 		}
 	}
-	else if ((ImageBits == 32) || (ImageBits == 64)) //-V112
+	else if ((mn_ImageBits == 32) || (mn_ImageBits == 64)) //-V112
 	{
 		if (!(workOptions_ & ShellWorkOptions::ConsoleMode))
 			SetConsoleMode(true);
 
-		pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
+		pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (mn_ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 		_ASSERTEX(ourGuiExe == false);
 	}
-	else if (ImageBits == 16)
+	else if (mn_ImageBits == 16)
 	{
 		if (!(workOptions_ & ShellWorkOptions::ConsoleMode))
 			SetConsoleMode(true);
@@ -838,7 +837,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	else
 	{
 		// Если не смогли определить что это и как запускается - лучше не трогать
-		_ASSERTE(ImageBits==16||ImageBits==32||ImageBits==64);
+		_ASSERTE(mn_ImageBits == 16 || mn_ImageBits == 32 || mn_ImageBits == 64);
 		lbRc = FALSE;
 		goto wrap;
 	}
@@ -894,7 +893,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	#endif
 
 	// Starting CONSOLE application from GUI tab? This affect "Default terminal" too.
-	lbNewConsoleFromGui = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (gbPrepareDefaultTerminal || mb_isCurrentGuiClient);
+	lbNewConsoleFromGui = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (gbPrepareDefaultTerminal || mb_isCurrentGuiClient);
 
 	#if 0
 	if (lbNewGuiConsole)
@@ -1700,10 +1699,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		if (anShowCmd && *anShowCmd == 0)
 		{
 			// Historical (create process detached from parent console)
-			if (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE | CREATE_NO_WINDOW | DETACHED_PROCESS)))
-			{
-				bDontForceInjects = bDetachedOrHidden = true;
-			}
+			const bool createDetachedProcess = (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE | CREATE_NO_WINDOW | DETACHED_PROCESS)));
 			// Detect creating "root" from mintty-like applications
 			const bool childGuiConsole = ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)));
 			if (createDetachedProcess || childGuiConsole)
@@ -1806,7 +1802,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	#else
 	#define isDebugAddConEmuC false
 	#endif
-	
+
 	// In some cases we need to pre-replace command line,
 	// for example, in cmd prompt: start -new_console:z
 	CEStr lsReplaceFile, lsReplaceParm;
@@ -2186,7 +2182,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		_ASSERTE(lbChanged == false);
 
 		lbChanged = ChangeExecuteParams(aCmd, asFile, asParam,
-			NewConsoleFlags, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
+			NewConsoleFlags, m_Args, psFile, psParam);
 
 		if (!lbChanged)
 		{
