@@ -529,7 +529,7 @@ void ShowServerStartedMsgBox(LPCWSTR asCmdLine)
 #ifdef SHOW_SERVER_STARTED_MSGBOX
 	wchar_t szTitle[100]; swprintf_c(szTitle, L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
 	const wchar_t* pszCmdLine = asCmdLine;
-	MessageBox(nullptr,pszCmdLine,szTitle,0);
+	MessageBoxW(nullptr,pszCmdLine,szTitle,0);
 #endif
 }
 

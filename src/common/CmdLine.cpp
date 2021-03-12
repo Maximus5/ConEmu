@@ -1006,20 +1006,27 @@ wrap:
 	if (options)
 	{
 		// validate cmd quotation rules
-		if (isNeedCmd && !szExe.IsEmpty())
+		if (!szExe.IsEmpty())
 		{
-			if (leadingQuotes == 1)
+			if (isNeedCmd)
 			{
-				if (IsQuotationNeeded(szExe) || (exeIsQuoted && argumentsPtr && wcschr(argumentsPtr, L'"') != nullptr))
-					startEndQuot = StartEndQuot::NeedAdd;
-				else if (!exeIsQuoted)
-					startEndQuot = StartEndQuot::NeedCut;
-				else
+				if (leadingQuotes == 1)
+				{
+					if (IsQuotationNeeded(szExe) || (exeIsQuoted && argumentsPtr && wcschr(argumentsPtr, L'"') != nullptr))
+						startEndQuot = StartEndQuot::NeedAdd;
+					else if (!exeIsQuoted)
+						startEndQuot = StartEndQuot::NeedCut;
+					else
+						startEndQuot = StartEndQuot::DontChange;
+				}
+				else if (leadingQuotes >= 2)
+				{
 					startEndQuot = StartEndQuot::DontChange;
+				}
 			}
-			else if (leadingQuotes >= 2)
+			else if (leadingQuotes == 1 && !exeIsQuoted)
 			{
-				startEndQuot = StartEndQuot::DontChange;
+				startEndQuot = StartEndQuot::NeedCut;
 			}
 		}
 		// result
