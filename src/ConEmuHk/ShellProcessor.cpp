@@ -1021,7 +1021,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	{
 		if (args.InjectsDisable == crb_On)
 		{
-			_wcscat_c((*psParam), nCchSize, L"/NOINJECT");
+			_wcscat_c((*psParam), nCchSize, L"/NOINJECT ");
 		}
 
 		_ASSERTE(((*psParam)[0] == L'\0') || (*((*psParam) + wcslen(*psParam) - 1) == L' '));
