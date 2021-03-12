@@ -187,28 +187,21 @@ CShellProc::~CShellProc()
 		free(mlp_ExecInfoA);
 	if (mlp_ExecInfoW)
 		free(mlp_ExecInfoW);
-
-	if (hOle32)
-	{
-		FreeLibrary(hOle32);
-	}
 }
 
 bool CShellProc::InitOle32()
 {
-	if (hOle32)
+	if (hOle32.IsValid())
 		return true;
 
-	hOle32 = LoadLibrary(L"Ole32.dll");
-	if (!hOle32)
+	if (!hOle32.Load(L"Ole32.dll"))
 		return false;
 
-	CoInitializeEx_f = (CoInitializeEx_t)GetProcAddress(hOle32, "CoInitializeEx");
-	CoCreateInstance_f = (CoCreateInstance_t)GetProcAddress(hOle32, "CoCreateInstance");
-	if (!CoInitializeEx_f || !CoCreateInstance_f)
+	if (!hOle32.GetProcAddress("CoInitializeEx", CoInitializeEx_f)
+		|| !hOle32.GetProcAddress("CoCreateInstance", CoCreateInstance_f))
 	{
 		_ASSERTEX(CoInitializeEx_f && CoCreateInstance_f);
-		FreeLibrary(hOle32);
+		hOle32.Free();
 		return false;
 	}
 

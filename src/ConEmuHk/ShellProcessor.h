@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
+#include "../common/MModule.h"
 #include "../common/RConStartArgs.h"
 #include <memory>
 
@@ -289,7 +290,7 @@ public:
 	bool GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArgs, CEStr& rsWorkDir);
 	bool InitOle32();
 protected:
-	HMODULE hOle32 = nullptr;
+	MModule hOle32{};
 	typedef HRESULT (WINAPI* CoInitializeEx_t)(LPVOID pvReserved, DWORD dwCoInit);
 	typedef HRESULT (WINAPI* CoCreateInstance_t)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
 	CoInitializeEx_t CoInitializeEx_f = nullptr;
