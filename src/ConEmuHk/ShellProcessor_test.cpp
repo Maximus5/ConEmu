@@ -189,7 +189,7 @@ TEST_F(ShellProcessor, Far300)
 
 	fileMock->MockFile(LR"(C:\mingw\bin\mingw32-make.exe)", 512, IMAGE_SUBSYSTEM_WINDOWS_CUI, 32);
 	fileMock->MockFile(LR"(C:\DosGames\Prince\PRINCE.EXE)", 512, IMAGE_SUBSYSTEM_DOS_EXECUTABLE, 16);
-	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use
+	fileMock->MockFile(LR"(C:\1 @\a.cmd)", 128, IMAGE_SUBSYSTEM_BATCH_FILE, 32); // on bitness we decide ConEmuC.exe or ConEmuC64.exe to use, overrided by comspec settings
 
 	enum class Function { CreateW, ShellW };
 	struct TestInfo
@@ -204,21 +204,26 @@ TEST_F(ShellProcessor, Far300)
 	TestInfo tests[] = {
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"(mingw32-make "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\mingw\bin\mingw32-make.exe "1.cpp" )"},
+			nullptr,
+			LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C C:\mingw\bin\mingw32-make.exe "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr,
+			LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 		{Function::CreateW,
 			LR"(C:\mingw\bin\mingw32-make.exe)", LR"("C:\mingw\bin\mingw32-make.exe" "1.cpp" )",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
+			nullptr,
+			LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\mingw\bin\mingw32-make.exe" "1.cpp" )"},
 
 		{Function::CreateW,
 			nullptr, LR"(""C:\1 @\a.cmd"")",
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			nullptr,
+			LR"("%ConEmuBaseDirTest%\)" ConEmuC_EXE_3264 R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 
 		{Function::CreateW,
 			LR"(C:\1 @\a.cmd)", nullptr, // important to have two double quotes, otherwise cmd will strip one and fail to find the file
-			nullptr, LR"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			nullptr,
+			LR"("%ConEmuBaseDirTest%\)" ConEmuC_EXE_3264 R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		
 		// #TODO: Add DosBox mock/test
 		{Function::CreateW,
@@ -295,14 +300,14 @@ TEST_F(ShellProcessor, Far175)
 		{Function::CreateA,
 			nullptr, R"(""C:\1 @\a.cmd"")",
 			nullptr,
-			R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe", "ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /K ""C:\1 @\a.cmd"")",
 			nullptr,
 			R"("%ConEmuBaseDirTest%\ConEmuC.exe" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /K ""C:\1 @\a.cmd"")"},
 		{Function::ShellA,
 			R"(C:\Windows\system32\cmd.exe)", R"(/C ""C:\1 @\a.cmd" -new_console")",
-			R"(%ConEmuBaseDirTest%\ConEmuC.exe)",
+			R"(%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe", "ConEmuC64.exe"),
 			R"(%ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C "C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd" -new_console")"},
 		{Function::CreateA,
 			nullptr, R"("C:\Windows\system32\cmd.exe" /C ""C:\1 @\a.cmd"")",

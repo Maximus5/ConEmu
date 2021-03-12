@@ -245,6 +245,7 @@ private:
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const;
 	CreatePrepareData OnCreateProcessPrepare(const DWORD* anCreationFlags, DWORD dwFlags, WORD wShowWindow, DWORD dwX, DWORD dwY);
 	bool OnCreateProcessResult(PrepareExecuteResult prepareResult, const CreatePrepareData& state, DWORD* anCreationFlags, WORD& siShowWindow, DWORD& siFlags);
+	DWORD GetComspecBitness() const;
 
 	// Validates either ghConEmuWndDC or IsDefTermEnabled
 	static bool IsInterceptionEnabled();

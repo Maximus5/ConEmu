@@ -712,19 +712,7 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 				if (lstrcmpi(pszExeName, L"cmd.exe") == 0)
 				{
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-					switch (m_SrvMapping.ComSpec.csBits)  // NOLINT(clang-diagnostic-switch-enum)
-					{
-					case csb_SameOS:
-						mn_ImageBits = IsWindows64() ? 64 : 32;
-						break;
-					case csb_x32:  // NOLINT(bugprone-branch-clone)
-						mn_ImageBits = 32;
-						break;
-					default:
-					//case csb_SameApp:
-						mn_ImageBits = WIN3264TEST(32,64);
-						break;
-					}
+					mn_ImageBits = GetComspecBitness();
 					bSkip = true;
 				}
 
@@ -1471,10 +1459,15 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 	{
 		// gh-681: NodeJSPortable.exe just runs "Server.cmd"
 		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
+		{
 			mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+			mn_ImageBits = GetComspecBitness();
+		}
 
 		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+		{
 			SetChildGui();
+		}
 
 		if (gbPrepareDefaultTerminal)
 		{
@@ -2751,6 +2744,20 @@ bool CShellProc::OnCreateProcessResult(const PrepareExecuteResult prepareResult,
 	}
 
 	return siChanged;
+}
+
+DWORD CShellProc::GetComspecBitness() const
+{
+	switch (m_SrvMapping.ComSpec.csBits)
+	{
+	case csb_SameOS:
+		return IsWindows64() ? 64 : 32;
+	case csb_x32:  // NOLINT(bugprone-branch-clone)
+		return 32;
+	case csb_SameApp:
+	default:
+		return WIN3264TEST(32, 64);
+	}
 }
 
 // returns FALSE if need to block execution
