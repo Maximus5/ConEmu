@@ -53,25 +53,25 @@ const wchar_t gszAnalogues[32] =
 
 // bool isCharAltFont(ucs32 inChar) - app defined
 
-bool isCharPseudographics(ucs32 inChar)
+bool isCharPseudographics(const ucs32 inChar)
 {
-	bool isPseudo = ((inChar >= 0x2013) && (inChar <= 0x25C4));
+	const bool isPseudo = ((inChar >= 0x2013) && (inChar <= 0x25C4));
 	return isPseudo;
 }
 
 // Some pseudographics characters may be shrinked freely
-bool isCharPseudoFree(ucs32 inChar)
+bool isCharPseudoFree(const ucs32 inChar)
 {
-	bool isFree = (inChar == ucBoxSinglHorz) || (inChar == ucBoxDblHorz);
+	const bool isFree = (inChar == ucBoxSinglHorz) || (inChar == ucBoxDblHorz);
 	return isFree;
 }
 
 // These are "frame" characters, which has either
 // * any vertical (even partial) line
 // * or Up/Down arrows (scrollers)
-bool isCharBorderVertical(ucs32 inChar)
+bool isCharBorderVertical(const ucs32 inChar)
 {
-	bool isVert = ((inChar >= ucBoxSinglVert)
+	const bool isVert = ((inChar >= ucBoxSinglVert)
 		&& ((inChar <= ucBoxSinglUpHorz)
 			|| ((inChar >= ucBoxDblVert) && (inChar <= ucBoxDblVertHorz))
 			|| ((inChar == ucArrowUp) || (inChar == ucArrowDown))
@@ -79,25 +79,25 @@ bool isCharBorderVertical(ucs32 inChar)
 	return isVert;
 }
 
-bool isCharProgress(ucs32 inChar)
+bool isCharProgress(const ucs32 inChar)
 {
-	bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
+	const bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
 	return isProgress;
 }
 
-bool isCharScroll(ucs32 inChar)
+bool isCharScroll(const ucs32 inChar)
 {
-	bool isScrollbar = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100
+	const bool isScrollbar = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100
 	                    || inChar == ucUpScroll || inChar == ucDnScroll);
 	return isScrollbar;
 }
 
-bool isCharTriangles(ucs32 inChar)
+bool isCharTriangles(const ucs32 inChar)
 {
 	return ((inChar == ucTrgLeft) || (inChar == ucTrgRight));
 }
 
-bool isCharSeparate(ucs32 inChar)
+bool isCharSeparate(const ucs32 inChar)
 {
 	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
 	// Например, 0xFEFF на некоторых шрифтах вообще переключает GDI на какой-то левый шрифт O_O
@@ -158,9 +158,9 @@ bool isCharSeparate(ucs32 inChar)
 
 // All symbols, which may be displayed as "space"
 // And we don't care (here) about Zero-Width spaces!
-bool isCharSpace(ucs32 inChar)
+bool isCharSpace(const ucs32 inChar)
 {
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
+	const bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
 		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
 			&& ((inChar <= 0x200A)      // 0x2000..0x200A - Different typographical non-zero spaces
 				|| (inChar == 0x205F)   // Medium Math Space
@@ -174,10 +174,10 @@ bool isCharSpace(ucs32 inChar)
 }
 
 // Same as isCharSpace, but without ‘CJK Wide Space’
-bool isCharSpaceSingle(ucs32 inChar)
+bool isCharSpaceSingle(const ucs32 inChar)
 {
 	//TODO: Tabs (\t 0x09)?
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
+	const bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
 		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
 			&& ((inChar <= 0x200A)      // 0x2000..0x200A - Different typographical non-zero spaces
 				|| (inChar == 0x205F)   // Medium Math Space
@@ -190,9 +190,9 @@ bool isCharSpaceSingle(ucs32 inChar)
 	return isSpace;
 }
 
-bool isCharRTL(ucs32 inChar)
+bool isCharRTL(const ucs32 inChar)
 {
-	bool isRtl = (inChar >= 0x05BE)
+	const bool isRtl = (inChar >= 0x05BE)
 		&& (((inChar <= 0x08AC)
 			&& ((inChar == 0x05BE)
 				|| (inChar == 0x05C0) || (inChar == 0x05C3) || (inChar == 0x05C6)
@@ -232,17 +232,17 @@ bool isCharRTL(ucs32 inChar)
 	return isRtl;
 }
 
-bool isCharCJK(ucs32 inChar)
+bool isCharCJK(const ucs32 inChar)
 {
 	return is_char_cjk(inChar);
 }
 
-bool isCharComining(ucs32 inChar)
+bool isCharCombining(const ucs32 inChar)
 {
 	return is_char_combining(inChar);
 }
 
-bool isCharNonWord(ucs32 inChar)
+bool isCharNonWord(const ucs32 inChar)
 {
 	if (isCharSpace(inChar)
 		|| isCharSeparate(inChar)
@@ -252,7 +252,7 @@ bool isCharNonWord(ucs32 inChar)
 	return false;
 }
 
-bool isCharPunctuation(ucs32 inChar)
+bool isCharPunctuation(const ucs32 inChar)
 {
 	// .,!:;?()<>[]{}¡¿
 	return ((inChar <= 0xBF)
