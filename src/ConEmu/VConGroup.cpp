@@ -4305,11 +4305,18 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx& args, bool abAllowScript
 				const int nLen = lstrlen(args.pszSpecialCmd);
 				_ASSERTE(nLen > 4);
 				// Cut first quote
-				_ASSERTE(args.pszSpecialCmd[0] == L'"' && args.pszSpecialCmd[1] == L'"');
-				wmemmove(args.pszSpecialCmd, args.pszSpecialCmd+1, nLen);
+				_ASSERTE(args.pszSpecialCmd[0] == L'"' && wcschr(args.pszSpecialCmd + 1, L'"') != nullptr);
+				wmemmove(args.pszSpecialCmd, args.pszSpecialCmd + 1, nLen);
 				// And trim one end quote
-				_ASSERTE(args.pszSpecialCmd[nLen-2] == L'"' && args.pszSpecialCmd[nLen-1] == 0);
-				args.pszSpecialCmd[nLen-2] = 0;
+				wchar_t* lastQuot = wcsrchr(args.pszSpecialCmd, L'"');
+				if (lastQuot == nullptr)
+				{
+					_ASSERTE(args.pszSpecialCmd[nLen - 2] == L'"' && args.pszSpecialCmd[nLen - 1] == 0);
+				}
+				else
+				{
+					*lastQuot = (*(lastQuot + 1) == L'\0') ? L'\0' : L' ';
+				}
 			}
 			else if (bNeedCmd && opt.startEndQuot == StartEndQuot::NeedAdd)
 			{
