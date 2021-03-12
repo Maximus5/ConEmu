@@ -20,6 +20,17 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.3.12
+* gh-2280: Let's tripple click select long lines wrapped on several rows (same AI as in copying selected text).
+* Correct double-click selection condition (was unselected unexpectedly in some cases, e.g. dblclick over comma).
+* Let's triple click select last line trimming trailing spaces.
+* gh-2292: Programs failed to run with `-new_console:i` switch from existing consoles.
+* gh-2212: Fix command execution from Far Manager (files with commas, unquoted batches).
+* gh-2279: Allow commands like `-run "cmd /k echo Hello world"`.
+* Executor: choose ConEmuC bitness according to ComSpec settings.
+* l10n: translations were updated
+
+
 2021.3.4
 * gh-2212: Fix executer in Far 1.75 (commands with redirections).
 * gh-2249, gh-2248: ANSI: Fix new line processing (screen issues).
