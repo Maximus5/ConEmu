@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CmdArg.h"
 
 #define CmdEscapeNeededChars  L"<>()&|^\""
-#define QuotationNeededChars  (L" " CmdEscapeNeededChars)
+#define QuotationNeededChars  (L" ," CmdEscapeNeededChars)
 
 
 const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=nullptr);
