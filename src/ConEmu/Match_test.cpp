@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NEED_FIX_FAILED_TEST L"\1"
 
 
-TEST(CMatch, UnitTests)
+TEST(Match, Hyperlinks)
 {
 	CEStr szDir;
 	GetDirectory(szDir);
@@ -160,6 +160,26 @@ TEST(CMatch, UnitTests)
 			etr_AnyClickable, false, {}},
 	};
 
+	auto intersect = [](const int start1, const int end1, const int start2, const int end2)
+	{
+		// [1, 4) [4, 10)
+		if (end1 <= start2) return false;
+		if (end2 <= start1) return false;
+		if (start2 >= end1) return false;
+		if (start1 >= end2) return false;
+		// [1, 4) [3, 8)
+		// [4, 8) [1, 6)
+		// [4, 8) [1, 10)
+		// [1, 10) [4, 8)
+		return true;
+	};
+	EXPECT_FALSE(intersect(1, 4, 4, 10));
+	EXPECT_FALSE(intersect(4, 10, 1, 4));
+	EXPECT_TRUE(intersect(1, 4, 3, 8));
+	EXPECT_TRUE(intersect(4, 8, 1, 6));
+	EXPECT_TRUE(intersect(4, 8, 1, 10));
+	EXPECT_TRUE(intersect(1, 10, 4, 8));
+
 	auto unitTestMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText)
 	{
 		// ReSharper disable CppJoinDeclarationAndAssignment
@@ -193,7 +213,7 @@ TEST(CMatch, UnitTests)
 		}
 	};
 
-	auto unitTestNoMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd)
+	auto unitTestNoMatch = [&match, &intersect](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd)
 	{
 		int iRc;
 		CRConDataGuard data;
@@ -202,9 +222,10 @@ TEST(CMatch, UnitTests)
 		{
 			iRc = match.Match(etr, asLine, anLineLen, i, data, 0);
 
-			if (iRc > 0)
+			if (etr == etr_AnyClickable && iRc > 0)
 			{
-				FAIL() << L"Match: must NOT be found; line=" << asLine;
+				FAIL() << L"Match: must NOT be found; line=" << asLine
+					<< L" in=[" << match.mn_MatchLeft << L"," << match.mn_MatchRight << L") from=" << i;
 				// ReSharper disable once CppUnreachableCode
 				break;
 			}
@@ -259,4 +280,44 @@ TEST(CMatch, UnitTests)
 	}
 
 	::SetCurrentDirectoryW(szDir);
+}
+
+TEST(Match, Words)
+{
+	auto testMatch = [](const wchar_t* source, const int from, const int to, const wchar_t* expected)
+	{
+		CMatch match([](LPCWSTR asSrc, CEStr&) {return false; });
+		CRConDataGuard dummyData;
+
+		for (int i = from; i <= to; ++i)
+		{
+			const int rcLen = match.Match(etr_Word, source, lstrlen(source), i, dummyData, 0);
+			EXPECT_LT(0, rcLen);
+			EXPECT_STREQ(match.ms_Match.c_str(L""), expected) << L"source=" << source << L" from=" << i;
+		}
+	};
+
+	const wchar_t wxiWarning[] = LR"(test C:\SRC\Setup\ConEmu_Conditions.wxi(8): warning)";
+	// #TODO Should be without "(8)" ending
+	testMatch(wxiWarning, 6, 38, LR"(C:\SRC\Setup\ConEmu_Conditions.wxi(8))");
+
+	const wchar_t dirFolderInfo[] = L"15.03.2021  00:18    <DIR>          .del-git  ";
+	testMatch(dirFolderInfo, 0, 9, L"15.03.2021");
+	testMatch(dirFolderInfo, 12, 16, L"00:18");
+	// #TODO should be only "<"
+	testMatch(dirFolderInfo, 21, 21, L"<DIR>");
+	// #TODO should be only "DIR"
+	testMatch(dirFolderInfo, 22, 22, L"<DIR>");
+	// #TODO should be only "DIR"
+	testMatch(dirFolderInfo, 23, 24, L"DIR");
+	// #TODO should be either "<DIR>" or ">"
+	testMatch(dirFolderInfo, 25, 25, L"DIR");
+	// #TODO should be only " "
+	testMatch(dirFolderInfo, 26, 26, L"DIR> ");
+	testMatch(dirFolderInfo, 27, 34, L" ");
+	// #TODO should be only " "
+	testMatch(dirFolderInfo, 35, 35, L" .del-git");
+	testMatch(dirFolderInfo, 36, 43, L".del-git");
+	// #TODO should be only " "
+	testMatch(dirFolderInfo, 44, 44, L".del-git ");
 }
