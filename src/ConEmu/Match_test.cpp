@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "Match.h"
 #include "RConData.h"
-#include "RealConsole.h"
 #include <unordered_set>
 #include "../UnitTests/gtest.h"
 
@@ -47,24 +46,24 @@ TEST(CMatch, UnitTests)
 	CEStr szDir;
 	GetDirectory(szDir);
 
-	std::wstring last_checked_file;
-	std::unordered_set<std::wstring> known_files = {
+	std::wstring lastCheckedFile;
+	std::unordered_set<std::wstring> knownFiles = {
 		L"license.txt", L"portable.txt", L"whatsnew-conemu.txt", L"abc.cpp", L"def.h",
-		L"c:\\abc.xls", L"file.ext", L"makefile", L"c:\\sources\\conemu\\realconsole.cpp"
-		L"defresolve.cpp", L"conemuc.cpp", L"1.c", L"file.cpp", L"common\\pipeserver.h",
-		L"c:\\sources\\farlib\\farctrl.pas", L"farctrl.pas", L"script.ps1", L"c:\\tools\\release.ps1",
-		L"abc.py", L"/src/class.c", L"c:\\vc\\unicode_far\\macro.cpp",
+		LR"(c:\abc.xls)", L"file.ext", L"makefile", LR"(c:\sources\conemu\realconsole.cpp)",
+		L"defresolve.cpp", L"conemuc.cpp", L"1.c", L"file.cpp", LR"(common\pipeserver.h)",
+		LR"(c:\sources\farlib\farctrl.pas)", L"farctrl.pas", L"script.ps1", LR"(c:\tools\release.ps1)",
+		L"abc.py", L"/src/class.c", LR"(c:\vc\unicode_far\macro.cpp)",
 	};
-	CMatch match([&known_files, &last_checked_file](LPCWSTR asSrc, CEStr&) {
-		last_checked_file = asSrc;
-		const auto found = known_files.count(last_checked_file);
+	CMatch match([&knownFiles, &lastCheckedFile](LPCWSTR asSrc, CEStr&) {
+		lastCheckedFile = asSrc;
+		const auto found = knownFiles.count(lastCheckedFile);
 		return found;
 	});
 	struct TestMatch {
-		LPCWSTR src; ExpandTextRangeType etr;
-		bool bMatch; LPCWSTR matches[5];
-		LPCWSTR pszTestCurDir;
-	} Tests[] = {
+		LPCWSTR src{ nullptr }; ExpandTextRangeType etr{};
+		bool bMatch{ false }; LPCWSTR matches[5]{};
+		LPCWSTR pszTestCurDir{ nullptr };
+	} tests[] = {
 		// Hyperlinks
 		// RA layer request failed: PROPFIND request failed on '/svn': PROPFIND of '/svn': could
 		// not connect to server (http://farmanager.googlecode.com) at /usr/lib/perl5/site_perl/Git/SVN.pm line 148
@@ -159,11 +158,11 @@ TEST(CMatch, UnitTests)
 			etr_AnyClickable, false, {}},
 		{L"\t" L"m_abc.func(1,2,3)" L"\t",
 			etr_AnyClickable, false, {}},
-		{nullptr}
 	};
 
-	auto UnitTestMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText)
+	auto unitTestMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText)
 	{
+		// ReSharper disable CppJoinDeclarationAndAssignment
 		int iRc, iCmp;
 		CRConDataGuard data;
 
@@ -174,11 +173,13 @@ TEST(CMatch, UnitTests)
 			if (iRc <= 0)
 			{
 				FAIL() << L"Match: must be found; line=" << asLine << L"; match=" << asMatchText;
+				// ReSharper disable once CppUnreachableCode
 				break;
 			}
-			else if (match.mn_MatchLeft != anMatchStart || match.mn_MatchRight != anMatchEnd)
+			if (match.mn_MatchLeft != anMatchStart || match.mn_MatchRight != anMatchEnd)
 			{
 				FAIL() << L"Match: do not match required range; line=" << asLine << L"; match=" << asMatchText;
+				// ReSharper disable once CppUnreachableCode
 				break;
 			}
 
@@ -186,12 +187,13 @@ TEST(CMatch, UnitTests)
 			if (iCmp != 0)
 			{
 				FAIL() << L"Match: iCmp != 0; line=" << asLine << L"; match=" << asMatchText;
+				// ReSharper disable once CppUnreachableCode
 				break;
 			}
 		}
 	};
 
-	auto UnitTestNoMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd)
+	auto unitTestNoMatch = [&match](ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd)
 	{
 		int iRc;
 		CRConDataGuard data;
@@ -203,51 +205,54 @@ TEST(CMatch, UnitTests)
 			if (iRc > 0)
 			{
 				FAIL() << L"Match: must NOT be found; line=" << asLine;
+				// ReSharper disable once CppUnreachableCode
 				break;
 			}
 		}
 	};
 
-	for (INT_PTR i = 0; Tests[i].src; i++)
+	for (const auto& test : tests)
 	{
-		if (Tests[i].src[0] == NEED_FIX_FAILED_TEST[0])
+		if (test.src[0] == NEED_FIX_FAILED_TEST[0])
 		{
-			wcdbg("FIX_ME") << (Tests[i].src + wcslen(NEED_FIX_FAILED_TEST)) << std::endl;
+			wcdbg("FIX_ME") << (test.src + wcslen(NEED_FIX_FAILED_TEST)) << std::endl;
 			continue;
 		}
 
-		INT_PTR nStartIdx;
-		int iSrcLen = lstrlen(Tests[i].src) - 1;
-		_ASSERTE(Tests[i].src && Tests[i].src[iSrcLen] == L'\t');
+		int nStartIdx;
+		const int iSrcLen = lstrlen(test.src) - 1;
+		_ASSERTE(test.src && test.src[iSrcLen] == L'\t');
 
 		// Loop through matches
 		int iMatchNo = 0, iPrevStart = 0;
 		while (true)
 		{
-			if (Tests[i].bMatch)
+			if (test.bMatch)
 			{
-				int iMatchLen = lstrlen(Tests[i].matches[iMatchNo]);
-				LPCWSTR pszFirst = wcsstr(Tests[i].src, Tests[i].matches[iMatchNo]);
+				const int iMatchLen = lstrlen(test.matches[iMatchNo]);
+				const auto* pszFirst = wcsstr(test.src, test.matches[iMatchNo]);
 				_ASSERTE(pszFirst);
-				nStartIdx = (pszFirst - Tests[i].src);
+				nStartIdx = static_cast<int>(pszFirst - test.src);
 
-				UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, iPrevStart, nStartIdx-1);
-				iPrevStart = nStartIdx+iMatchLen;
-				UnitTestMatch(Tests[i].etr, Tests[i].src, iSrcLen, nStartIdx, iPrevStart-1, Tests[i].matches[iMatchNo]);
+				unitTestNoMatch(test.etr, test.src, iSrcLen, iPrevStart, nStartIdx - 1);
+				iPrevStart = nStartIdx + iMatchLen;
+				unitTestMatch(test.etr, test.src, iSrcLen, nStartIdx, iPrevStart - 1, test.matches[iMatchNo]);
 			}
 			else
 			{
+				// ReSharper disable once CppAssignedValueIsNeverUsed
 				nStartIdx = 0;
-				UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, 0, iSrcLen);
+				unitTestNoMatch(test.etr, test.src, iSrcLen, 0, iSrcLen);
 				break;
 			}
 
 			// More matches waiting?
-			if (Tests[i].matches[++iMatchNo] == nullptr)
+			if (test.matches[++iMatchNo] == nullptr)
 			{
-				UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, iPrevStart, iSrcLen);
+				unitTestNoMatch(test.etr, test.src, iSrcLen, iPrevStart, iSrcLen);
 				break;
 			}
+			std::ignore = nStartIdx;
 		}
 		//_ASSERTE(iRc == lstrlen(p->txtMatch));
 		//_ASSERTE(match.m_Type == p->etrMatch);
