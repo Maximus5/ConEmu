@@ -243,7 +243,7 @@ private:
 
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
-	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = nullptr);
+	ExpandTextRangeType ExpandTextRange(const COORD crClick, COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = nullptr);
 	bool StoreLastTextRange(ExpandTextRangeType etr);
 
 	void PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTableExt, CharAttr** pcaTableOrg);

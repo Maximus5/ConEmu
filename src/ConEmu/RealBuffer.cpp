@@ -2974,7 +2974,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 	COORD crEnd = crStart;
 	CEStr szText;
 	ExpandTextRangeType rc = CanProcessHyperlink(crStart)
-		? ExpandTextRange(crStart, crEnd, etr_AnyClickable, &szText)
+		? ExpandTextRange(crStart, crStart, crEnd, etr_AnyClickable, &szText)
 		: etr_None;
 	bool bChanged = con.etrWasChanged || (con.etr.etrLast != rc);
 	if (memcmp(&crStart, &con.etr.mcr_FileLineStart, sizeof(crStart)) != 0
@@ -4096,16 +4096,14 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		DEBUGSTRSEL(L"Selection: WM_LBUTTONDBLCLK - expanding etr_Word");
 
 		// Нужно получить координаты слова
-		COORD crFrom = cr, crTo = cr;
-		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
+		COORD crFrom{}, crTo{};
+		ExpandTextRange(cr, crFrom/*[Out]*/, crTo/*[Out]*/, etr_Word);
 
-		// Выполнить выделение
 		StartSelection(streamSelection, crFrom.X, crFrom.Y, true, WM_LBUTTONDBLCLK, &crTo);
 
-		// Сейчас кнопка мышки отпущена, сброс
-		OnMouseSelectionStopped();
+		// mouse button is still pressed
 
-		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
+		// WARNING!!! After StartSelection the active buffer could change, stop processing.
 		return true;
 	}
 	else if (
@@ -4678,10 +4676,9 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 				|| (!bLeftward && ((cr.X + 1) < GetBufferWidth()))
 				))
 		{
-			COORD crFrom = cr;
-			COORD crTo = crFrom;
+			COORD crFrom{}, crTo{};
 			// Either by `word`
-			if ((etr = ExpandTextRange(crFrom, crTo, etr_Word)) != etr_None)
+			if ((etr = ExpandTextRange(cr, crFrom, crTo, etr_Word)) != etr_None)
 			{
 				COORD& crNew = (bLeftward ? crFrom : crTo);
 				if (crNew.X != cr.X)
@@ -7020,9 +7017,10 @@ WORD CRealBuffer::GetConOutMode()
 	return con.m_dwConsoleOutMode;
 }
 
-ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText /*= nullptr*/)
+ExpandTextRangeType CRealBuffer::ExpandTextRange(const COORD crClick, COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText /*= nullptr*/)
 {
 	ExpandTextRangeType result = etr_None;
+	crFrom = crClick; crTo = crClick;
 
 	// crFrom/crTo must be absolute coordinates
 	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetBufferHeight());
