@@ -67,24 +67,16 @@ const wchar_t gszSpacing[] = MATCH_SPACINGS; // Пробел, таб, остал
 const wchar_t gszQuotStart[] = L"‘«`\'([<{";
 const wchar_t gszQuotEnd[] = L"’»`\')]>}";
 
-CMatch::CMatch(std::function<bool(LPCWSTR asSrc, CEStr& szFull)>&& GetFileFromConsole)
-	:m_Type(etr_None)
-	,mn_Row(-1), mn_Col(-1)
-	,mn_MatchLeft(-1), mn_MatchRight(-1)
-	,mn_Start(-1), mn_End(-1)
-	,mn_SrcLength(-1)
-	,mn_SrcFrom(-1)
-	,GetFileFromConsole_(std::move(GetFileFromConsole))
+CMatch::CMatch(std::function<bool(LPCWSTR asSrc, CEStr& szFull)>&& getFileFromConsole)
+	: getFileFromConsole_(std::move(getFileFromConsole))
 {
-	ms_Protocol[0] = 0;
 }
 
 CMatch::~CMatch()
 {
 }
 
-// Returns the length of matched string
-int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, CRConDataGuard& data, int nFromLine)
+int CMatch::Match(const ExpandTextRangeType etr, const wchar_t* asLine, const int anLineLen, const int anFrom, CRConDataGuard& data, const int nFromLine)
 {
 	m_Type = etr_None;
 	ms_Match.Clear();
@@ -236,7 +228,7 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 		return false;
 
 	CEStr szFullPath;
-	if (!GetFileFromConsole_(pszFile, szFullPath))
+	if (!getFileFromConsole_(pszFile, szFullPath))
 		return false;
 
 	rnLen = anLen;
@@ -445,19 +437,19 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 	}
 
 	const wchar_t szLeftBkt[] = L"<({[", szRightBkt[] = L">)}]";
-	int iStopOnRghtBkt = -1;
+	int iStopOnRightBkt = -1;
 
 	// Trim leading punctuation except of "." (accept dot-files like ".bashrc")
 	while (((rnStart+1) < rnEnd)
 		&& (asLine[rnStart] != L'.') && isCharPunctuation(asLine[rnStart]))
 	{
-		if (iStopOnRghtBkt == -1)
+		if (iStopOnRightBkt == -1)
 		{
 			const wchar_t* pchLeftBkt = wcschr(szLeftBkt, asLine[rnStart]);
 			if (pchLeftBkt)
 			{
-				iStopOnRghtBkt = (int)(pchLeftBkt - szLeftBkt);
-				_ASSERTE(iStopOnRghtBkt > 0 && (size_t)iStopOnRghtBkt < wcslen(szRightBkt));
+				_ASSERTE(pchLeftBkt >= szLeftBkt && (pchLeftBkt - szLeftBkt) < wcslen(szRightBkt));
+				iStopOnRightBkt = static_cast<int>(pchLeftBkt - szLeftBkt);
 			}
 		}
 		rnStart++;
@@ -468,7 +460,7 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 	while (((rnEnd+1) < anLineLen)
 		&& !(cmpFunc(asLine[rnEnd+1])))
 	{
-		if ((iStopOnRghtBkt >= 0) && (asLine[rnEnd+1] == szRightBkt[iStopOnRghtBkt]))
+		if ((iStopOnRightBkt >= 0) && (asLine[rnEnd+1] == szRightBkt[iStopOnRightBkt]))
 		{
 			bStopOnBkt = true;
 			break;

@@ -41,34 +41,42 @@ class CMatch
 {
 public:
 	// What was found
-	ExpandTextRangeType m_Type;
+	ExpandTextRangeType m_Type = etr_None;
 	// That may be converted, cleared or expanded...
 	CEStr ms_Match;
 	// Compiler errors - row, col
-	int mn_Row, mn_Col;
+	int mn_Row = -1, mn_Col = -1;
 	// When that was URL, this contains the protocol
-	wchar_t ms_Protocol[32];
+	wchar_t ms_Protocol[32] = L"";
 	// Left/right indexes of matched string in the ms_SrcLine
-	int mn_MatchLeft, mn_MatchRight;
+	int mn_MatchLeft = -1, mn_MatchRight = -1;
 
 	// Indexes in the source string, informational
-	int mn_Start, mn_End;
+	int mn_Start = -1, mn_End = -1;
 
-	// What was the source
-	CEStr m_SrcLine/*Copy of the source buffer (one line)*/;
-	int mn_SrcLength/*Current length*/;
-	int mn_SrcFrom/*Cursor pos*/;
+	// What was the source, Copy of the source buffer (one line)
+	CEStr m_SrcLine;
+	int mn_SrcLength = -1;
+	//Cursor pos
+	int mn_SrcFrom = -1;
 
 protected:
-	std::function<bool(LPCWSTR asSrc, CEStr& szFull)> GetFileFromConsole_;
+	std::function<bool(LPCWSTR asSrc, CEStr& szFull)> getFileFromConsole_;
 
 public:
-	CMatch(std::function<bool(LPCWSTR asSrc, CEStr& szFull)>&& GetFileFromConsole);
+	CMatch(std::function<bool(LPCWSTR asSrc, CEStr& szFull)>&& getFileFromConsole);
 	~CMatch();
 
 public:
-	// Returns the length of matched string
-	int Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, CRConDataGuard& data, int nFromLine);
+	/// @brief Returns the length of matched string
+	/// @param etr ExpandTextRangeType flags
+	/// @param asLine Source text, may be NOT 0-terminated
+	/// @param anLineLen Length of buffer
+	/// @param anFrom Cursor pos (index, where we start range expanding)
+	/// @param data CRConDataGuard
+	/// @param nFromLine line index in data
+	/// @return 0 - if not found, otherwise the length of the found (matched) fragment
+	int Match(ExpandTextRangeType etr, const wchar_t* asLine, int anLineLen, int anFrom, CRConDataGuard& data, int nFromLine);
 
 protected:
 	static bool IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint);
