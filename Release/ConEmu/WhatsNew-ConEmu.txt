@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.3.14
+* gh-327: Allow expand selection after DblClick.
+
+
 2021.3.12
 * gh-2280: Let's tripple click select long lines wrapped on several rows (same AI as in copying selected text).
 * Correct double-click selection condition (was unselected unexpectedly in some cases, e.g. dblclick over comma).
