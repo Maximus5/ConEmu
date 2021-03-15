@@ -204,7 +204,7 @@ BEGIN
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,232,50,66,8
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,302,50,59,8
     CONTROL         "Auto save window size and position on exit",cbAutoSaveSizePos,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,26,166,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,26,258,8
     RTEXT           "Y:",stWindowPosY,302,65,10,8
     RTEXT           "Width:",stWndWidth,13,65,43,8
     RTEXT           "Height:",stWndHeight,107,65,45,8
@@ -268,8 +268,8 @@ BEGIN
     CONTROL         "Dynamic scrollbar range (backscroll buffer)",cbScrollbarDynamic,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,131,363,8
     GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,158,375,59
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,171,144,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,171,79,8
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,171,160,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,171,160,8
     RTEXT           "Frame width:",stFrameWidth,10,186,84,8
     EDITTEXT        tHideCaptionAlwaysFrame,98,184,40,12,ES_AUTOHSCROLL
     RTEXT           "Appear delay:",stFrameAppear,142,186,82,8
@@ -377,7 +377,7 @@ BEGIN
     CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,120,175,8
     GROUPBOX        "Minimize ConEmu automatically",gbMinimizeAction,4,140,375,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,153,199,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,153,350,8
     GROUPBOX        "Minimize when Esc pressed",gbMinimizeOnEsc,4,168,375,29
     CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,181,105,8
     CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,120,181,55,8
@@ -1050,7 +1050,7 @@ BEGIN
     COMBOBOX        tStatusFontHeight,176,22,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Charset:",stStatusFontCharset,209,24,36,8
     COMBOBOX        tStatusFontCharset,250,22,60,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Show status bar",cbShowStatusBar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,1,75,8
+    CONTROL         "Show status bar",cbShowStatusBar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,1,95,8
     RTEXT           "Back:",stStatusColorBack,13,41,26,8
     EDITTEXT        tc35,44,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "",c35,92,40,12,12,SS_NOTIFY | SS_SUNKEN
@@ -1154,7 +1154,7 @@ BEGIN
     EDITTEXT        tThumbCacheFolder,14,274,298,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_VISIBLE | WS_DISABLED
     EDITTEXT        tThumbSupportedExtensions,88,234,228,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
     LTEXT           "Supported extensions:",IDC_STATIC,8,236,78,8,NOT WS_VISIBLE | WS_DISABLED
-    CONTROL         "Preview frame",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,147,62,10
+    CONTROL         "Preview frame",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,147,75,10
     CONTROL         "Current item frame",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,147,77,10
     PUSHBUTTON      "&Apply",bApplyViewSettings,9,197,59,12
     CONTROL         "Restore on Far startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
@@ -1580,7 +1580,7 @@ BEGIN
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,71,49,264,12
     EDITTEXT        tDarker,342,49,30,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Allow background plugins (Far Manager)",cbBgAllowPlugin,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,73,144,10
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,73,360,10
     RTEXT           "Darkening:",stDarkerPlugin,8,87,60,8,WS_DISABLED
     CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,71,86,264,12
     EDITTEXT        tDarkerPlugin,342,86,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
