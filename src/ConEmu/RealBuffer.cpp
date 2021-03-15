@@ -3944,7 +3944,21 @@ void CRealBuffer::SetSelectionFlags(const DWORD flags)
 				OnMouseSelectionStopped();
 		}
 
+		if (!(con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && (flags & CONSOLE_DBLCLICK_SELECTION))
+		{
+			con.m_SelDblClickRightAnchor = COORD{ con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom };
+		}
+
 		con.m_sel.dwFlags = flags;
+	}
+}
+
+void CRealBuffer::SetSelectionAnchor(int x, int y)
+{
+	const auto cr = MakeCoord(x, y);
+	if (con.m_sel.dwSelectionAnchor != cr)
+	{
+		con.m_sel.dwSelectionAnchor = cr;
 	}
 }
 
@@ -4156,15 +4170,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 		else
 		{
-			if (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
-			{
-				SetSelectionFlags(con.m_sel.dwFlags & ~CONSOLE_DBLCLICK_SELECTION);
-			}
-			else
-			{
-				ExpandSelection(cr.X, cr.Y, wasSelection);
-			}
-
+			ExpandSelection(cr.X, cr.Y, wasSelection);
 		}
 
 		if (messg == WM_LBUTTONUP)
@@ -4511,7 +4517,7 @@ done:
 		SetSelectionFlags(CONSOLE_SELECTION_IN_PROGRESS | CONSOLE_TEXT_SELECTION | CONSOLE_LEFT_ANCHOR);
 		const COORD crStartBuf = ScreenToBuffer(crStart);
 		const COORD crEndBuf = ScreenToBuffer(crEnd);
-		con.m_sel.dwSelectionAnchor = crStartBuf;
+		SetSelectionAnchor(crStartBuf.X, crStartBuf.Y);
 		con.m_sel.srSelection.Left = crStartBuf.X;
 		con.m_sel.srSelection.Top = crStartBuf.Y;
 		con.m_sel.srSelection.Right = crEndBuf.X;
@@ -4587,16 +4593,16 @@ void CRealBuffer::StartSelection(bool abTextMode, SHORT anX /*= -1*/, SHORT anY 
 		anY = GetBufferHeight()-1;
 	}
 
-	COORD cr = {anX,anY};
+	const COORD cr = {anX,anY};
 
-	if (cr.X<0 || cr.X>=GetBufferWidth() || cr.Y<0 || cr.Y>=GetBufferHeight())
+	if (cr.X < 0 || cr.X >= GetBufferWidth() || cr.Y < 0 || cr.Y >= GetBufferHeight())
 	{
-		_ASSERTE(cr.X>=0 && cr.X<GetBufferWidth());
-		_ASSERTE(cr.Y>=0 && cr.Y<GetBufferHeight());
+		_ASSERTE(cr.X >= 0 && cr.X < GetBufferWidth());
+		_ASSERTE(cr.Y >= 0 && cr.Y < GetBufferHeight());
 		return; // Ошибка в координатах
 	}
 
-	DWORD vkMod = con.m_sel.dwFlags & CONSOLE_KEYMOD_MASK;
+	const DWORD vkMod = con.m_sel.dwFlags & CONSOLE_KEYMOD_MASK;
 	if (vkMod && !abByMouse)
 	{
 		DoSelectionStop(); // Чтобы Фар не думал, что все еще нажат модификатор
@@ -4607,7 +4613,8 @@ void CRealBuffer::StartSelection(bool abTextMode, SHORT anX /*= -1*/, SHORT anY 
 		| (abTextMode ? CONSOLE_TEXT_SELECTION : CONSOLE_BLOCK_SELECTION)
 		| (anAnchorFlag & (CONSOLE_LEFT_ANCHOR | CONSOLE_RIGHT_ANCHOR))
 		| (abByMouse ? vkMod : 0));
-	con.m_sel.dwSelectionAnchor = cr;
+	SetSelectionAnchor(cr.X, cr.Y);
+	con.m_SelDblClickRightAnchor = cr;
 	con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
 	_ASSERTE(cr.Y>=GetBufferPosY() && cr.Y<GetBufferHeight());
@@ -4864,8 +4871,8 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 	}
 	else
 	{
-		COORD anchor = con.m_sel.dwSelectionAnchor;
-		SMALL_RECT srSel = con.m_sel.srSelection;
+		const COORD anchor = con.m_sel.dwSelectionAnchor;
+		const SMALL_RECT srSel = con.m_sel.srSelection;
 		// Switch Left/Right members
 		if ((cr.Y > anchor.Y)
 		        || ((cr.Y == anchor.Y) && (cr.X > anchor.X)))
@@ -4877,14 +4884,13 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 				{
 					if ((anchor.X + 1) < GetBufferWidth())
 					{
-						con.m_sel.dwSelectionAnchor.X++;
+						SetSelectionAnchor(con.m_sel.dwSelectionAnchor.X + 1, con.m_sel.dwSelectionAnchor.Y);
 					}
 					else
 					{
 						if ((con.m_sel.dwSelectionAnchor.Y + 1) < GetBufferHeight())
 						{
-							con.m_sel.dwSelectionAnchor.X = 0;
-							con.m_sel.dwSelectionAnchor.Y++;
+							SetSelectionAnchor(0, con.m_sel.dwSelectionAnchor.Y + 1);
 						}
 						else
 						{
@@ -4896,16 +4902,30 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 				else if (((anchor.X + 1) < GetBufferWidth())
 					&& (cr.X >= (anchor.X /*+ ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) ? 1 : 0)*/)))
 				{
-					con.m_sel.dwSelectionAnchor.X++;
+					SetSelectionAnchor(con.m_sel.dwSelectionAnchor.X + 1, con.m_sel.dwSelectionAnchor.Y);
 					cr.X = std::max(cr.X, con.m_sel.dwSelectionAnchor.X);
 					SetSelectionFlags((con.m_sel.dwFlags & ~CONSOLE_RIGHT_ANCHOR) | CONSOLE_LEFT_ANCHOR);
 				}
 			}
 			con.m_sel.srSelection.Left = con.m_sel.dwSelectionAnchor.X;
+			if (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+			{
+				COORD crFrom{}, crTo{};
+				ExpandTextRange(cr, crFrom, crTo, etr_Word);
+				cr = crTo;
+			}
 			con.m_sel.srSelection.Right = cr.X;
 		}
 		else
 		{
+			if (!(con.m_sel.dwFlags & CONSOLE_RIGHT_ANCHOR))
+			{
+				_ASSERTE(con.m_sel.dwSelectionAnchor.Y == con.m_SelDblClickRightAnchor.Y);
+				if (con.m_sel.dwSelectionAnchor.Y == con.m_SelDblClickRightAnchor.Y)
+				{
+					SetSelectionAnchor(con.m_SelDblClickRightAnchor.X, con.m_SelDblClickRightAnchor.Y);
+				}
+			}
 			// Extending selection leftward, if it was rightward selection?
 			if (con.m_sel.dwFlags & CONSOLE_LEFT_ANCHOR)
 			{
@@ -4913,22 +4933,27 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 				{
 					if (con.m_sel.dwSelectionAnchor.X > 0)
 					{
-						con.m_sel.dwSelectionAnchor.X--;
+						SetSelectionAnchor(con.m_sel.dwSelectionAnchor.X - 1, con.m_sel.dwSelectionAnchor.Y);
 					}
 					else
 					{
-						con.m_sel.dwSelectionAnchor.X = GetBufferWidth() - 1;
-						con.m_sel.dwSelectionAnchor.Y--;
+						SetSelectionAnchor(GetBufferWidth() - 1, con.m_sel.dwSelectionAnchor.Y - 1);
 					}
 					SetSelectionFlags((con.m_sel.dwFlags & ~CONSOLE_LEFT_ANCHOR) | CONSOLE_RIGHT_ANCHOR);
 				}
 				else if ((anchor.X > 1)
 					&& ((cr.X /*+ ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) ? 1 : 0)*/) < anchor.X))
 				{
-					con.m_sel.dwSelectionAnchor.X--;
+					SetSelectionAnchor(con.m_sel.dwSelectionAnchor.X - 1, con.m_sel.dwSelectionAnchor.Y);
 					cr.X = std::min(cr.X, con.m_sel.dwSelectionAnchor.X);
 					SetSelectionFlags((con.m_sel.dwFlags & ~CONSOLE_LEFT_ANCHOR) | CONSOLE_RIGHT_ANCHOR);
 				}
+			}
+			if (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)
+			{
+				COORD crFrom{}, crTo{};
+				ExpandTextRange(cr, crFrom, crTo, etr_Word);
+				cr = crFrom;
 			}
 			con.m_sel.srSelection.Left = cr.X;
 			con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
@@ -5698,29 +5723,29 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		|| (bBS = VkState.IsEqual(VK_BACK, cvk_Naked)))
 		)
 	{
-		bool bCopyBeforeErase = (bShiftDel || bCtrlX);
-		CONSOLE_SELECTION_INFO sel = con.m_sel;
-		COORD cur = con.m_sbi.dwCursorPosition;
-		COORD anch = sel.dwSelectionAnchor;
+		const bool bCopyBeforeErase = (bShiftDel || bCtrlX);
+		const CONSOLE_SELECTION_INFO sel = con.m_sel;
+		const COORD cur = con.m_sbi.dwCursorPosition;
+		const COORD anchor = sel.dwSelectionAnchor;
 		if (bKeyDown
 			// If this was one-line selection
 			&& (sel.srSelection.Top == sel.srSelection.Bottom)
 			// And cursor position matches anchor position
-			&& (cur.Y == anch.Y)
-			&& (((cur.X == anch.X) && (anch.X == sel.srSelection.Left) && (sel.srSelection.Right >= cur.X))
-				|| ((cur.X == (anch.X+1)) && (anch.X == sel.srSelection.Right) && (sel.srSelection.Left <= cur.X))
+			&& (cur.Y == anchor.Y)
+			&& (((cur.X == anchor.X) && (anchor.X == sel.srSelection.Left) && (sel.srSelection.Right >= cur.X))
+				|| ((cur.X == (anchor.X+1)) && (anchor.X == sel.srSelection.Right) && (sel.srSelection.Left <= cur.X))
 				)
 			)
 		{
 			DoSelectionFinalize(bCopyBeforeErase, cm_CopySel, VkState.Vk);
 			// Now post sequence of keys
 			UINT vkPostKey = 0; LPCWSTR pszKey = nullptr;
-			if ((anch.X == sel.srSelection.Left) && (cur.X == anch.X)
+			if ((anchor.X == sel.srSelection.Left) && (cur.X == anchor.X)
 				&& (sel.srSelection.Right >= sel.srSelection.Left))
 			{
 				vkPostKey = VK_DELETE; pszKey = L"Delete";
 			}
-			else if ((anch.X == sel.srSelection.Right)
+			else if ((anchor.X == sel.srSelection.Right)
 				&& (sel.srSelection.Right >= sel.srSelection.Left))
 			{
 				vkPostKey = VK_BACK; pszKey = L"Backspace";
