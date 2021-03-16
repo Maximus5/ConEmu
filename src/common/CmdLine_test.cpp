@@ -352,6 +352,22 @@ TEST(CmdLine, IsNeedCmd)
 	gbVerifyIgnoreAsserts = false; // restore default
 }
 
+TEST(CmdLine, IsCmdInternalCommand)
+{
+	EXPECT_FALSE(IsCmdInternalCommand(nullptr));
+	EXPECT_FALSE(IsCmdInternalCommand(L""));
+	EXPECT_FALSE(IsCmdInternalCommand(L"start.exe"));
+	EXPECT_FALSE(IsCmdInternalCommand(L"path\\file"));
+	EXPECT_FALSE(IsCmdInternalCommand(L"path/file"));
+
+	EXPECT_TRUE(IsCmdInternalCommand(L"Activate"));
+	EXPECT_TRUE(IsCmdInternalCommand(L"call"));
+	EXPECT_TRUE(IsCmdInternalCommand(L"DIR"));
+	EXPECT_TRUE(IsCmdInternalCommand(L"MoVe"));
+	EXPECT_TRUE(IsCmdInternalCommand(L"SetLocal"));
+	EXPECT_TRUE(IsCmdInternalCommand(L"Y"));
+}
+
 TEST(CmdLine, DemangleArg)
 {
 	struct StrTests { wchar_t szTest[100], szCmp[100]; }

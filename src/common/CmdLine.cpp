@@ -57,16 +57,15 @@ namespace
 		L"\0Y\0\0";
 }
 
-bool IsCmdInternalCommand(const CEStr& cmd)
+bool IsCmdInternalCommand(const wchar_t* cmd)
 {
-	const bool bHasExt = (wcschr(cmd, L'.') != nullptr);
-	if (bHasExt)
+	if (!cmd || !*cmd || wcspbrk(cmd, L".\\/"))
 		return false;
 	bool isCommand = false;
 	const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
 	while (*internalCommand)
 	{
-		if (cmd.Compare(internalCommand, false) == 0)
+		if (lstrcmpiW(cmd, internalCommand) == 0)
 		{
 			isCommand = true;
 			break;
@@ -74,7 +73,7 @@ bool IsCmdInternalCommand(const CEStr& cmd)
 		internalCommand += wcslen(internalCommand) + 1;
 	}
 	return isCommand;
-};
+}
 
 // Returns true on changes
 // bDeQuote:  replace two "" with one "

@@ -108,6 +108,9 @@ struct NeedCmdOptions
 /// <returns>true - if to execute a command we have to add "cmd.exe /c ...", false - asCmdLine could be executed intact</returns>
 bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options = nullptr);
 
+/// @brief Checks if cmd is one of cmd.exe or tcc.exe internal commands, like "set", "echo", etc.
+bool IsCmdInternalCommand(const wchar_t* cmd);
+
 bool IsQuotationNeeded(LPCWSTR pszPath);
 bool IsNonPrintable(wchar_t chr);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
