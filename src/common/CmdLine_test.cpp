@@ -222,7 +222,10 @@ TEST(CmdLine, IsNeedCmd)
 		L"%windir%\\system32\\cmd.exe",
 		false, StartEndQuot::DontChange, true, true);
 	TestIsNeedCmd(false, L"\"dir > test.log\"",
-		L"",
+		L"dir",
+		true, StartEndQuot::NeedCut, true, false);
+	TestIsNeedCmd(false, L"dir > \"test.log\"",
+		L"dir",
 		true, StartEndQuot::DontChange, true, false);
 	TestIsNeedCmd(true, L"\"cmd /k Hello world\"",
 		L"%windir%\\system32\\cmd.exe",
@@ -339,6 +342,12 @@ TEST(CmdLine, IsNeedCmd)
 	TestIsNeedCmd(false, L"\"C:\\1\\d.cmd\" 2 \"test\"",
 		L"C:\\1\\d.cmd",
 		true, StartEndQuot::NeedAdd, true, false);
+	TestIsNeedCmd(false, L"\"set path\"",
+		L"set",
+		true, StartEndQuot::NeedCut, true, false);
+	TestIsNeedCmd(false, L"\"dir C:\\\"",
+		L"dir",
+		true, StartEndQuot::NeedCut, true, false);
 
 	gbVerifyIgnoreAsserts = false; // restore default
 }

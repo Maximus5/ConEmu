@@ -57,6 +57,25 @@ namespace
 		L"\0Y\0\0";
 }
 
+bool IsCmdInternalCommand(const CEStr& cmd)
+{
+	const bool bHasExt = (wcschr(cmd, L'.') != nullptr);
+	if (bHasExt)
+		return false;
+	bool isCommand = false;
+	const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
+	while (*internalCommand)
+	{
+		if (cmd.Compare(internalCommand, false) == 0)
+		{
+			isCommand = true;
+			break;
+		}
+		internalCommand += wcslen(internalCommand) + 1;
+	}
+	return isCommand;
+};
+
 // Returns true on changes
 // bDeQuote:  replace two "" with one "
 // bDeEscape: process special symbols: ^e^[^r^n^t^b
@@ -617,6 +636,17 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 		szTemp.Set(command, (nextBreak - command));
 		_ASSERTE(szTemp[(nextBreak - command)] == 0);
 
+		// one of cmd internal commands?
+		if (!szTemp.IsEmpty() && !IsFilePath(szTemp, true) && !wcspbrk(szTemp.c_str(), L":\\/")
+			&& !wcspbrk(szTemp.c_str(), ILLEGAL_CHARACTERS) && !wcspbrk(szTemp.c_str(), SPECIAL_CMD_CHARACTERS)
+			&& IsCmdInternalCommand(szTemp))
+		{
+			rsArguments = SkipNonPrintable(nextBreak);
+			szExe.Set(szTemp);
+			result = true;
+			break;
+		}
+
 		// If this is a full path without environment variables
 		if (!szTemp.IsEmpty()
 			&& ((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
@@ -841,25 +871,6 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 	}
 	else
 	{
-		auto isCmdInternalCommand = [](const CEStr& cmd)
-		{
-			const bool bHasExt = (wcschr(cmd, L'.') != nullptr);
-			if (bHasExt)
-				return false;
-			bool isCommand = false;
-			const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
-			while (*internalCommand)
-			{
-				if (cmd.Compare(internalCommand, false) == 0)
-				{
-					isCommand = true;
-					break;
-				}
-				internalCommand += wcslen(internalCommand) + 1;
-			}
-			return isCommand;
-		};
-
 		// Illegal characters in the executable we parse from the command line.
 		// We can't run the program as it's path is invalid, so let's try it to "cmd.exe /c ..."
 		if (wcspbrk(szExe, ILLEGAL_CHARACTERS))
@@ -868,7 +879,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 			CmdArg testCmd;
 			bool isInternalCmd = false;
 			if (NextArg(pwszCopy, testCmd))
-				isInternalCmd = isCmdInternalCommand(testCmd);
+				isInternalCmd = IsCmdInternalCommand(testCmd);
 			#endif
 			szExe.Clear();
 			rootIsCmdExe = true;
@@ -881,7 +892,7 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* o
 		{
 			const bool bHasExt = (wcschr(szExe, L'.') != nullptr);
 			// Let's check if it's a processor command, e.g. "DIR"
-			if (isCmdInternalCommand(szExe))
+			if (IsCmdInternalCommand(szExe))
 			{
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
@@ -1255,7 +1266,7 @@ bool IsQuotationNeeded(LPCWSTR pszPath)
 	bool bNeeded = false;
 	if (pszPath)
 	{
-		bNeeded = (wcspbrk(pszPath, QuotationNeededChars) != 0);
+		bNeeded = (wcspbrk(pszPath, QuotationNeededChars) != nullptr);
 	}
 	return bNeeded;
 }
