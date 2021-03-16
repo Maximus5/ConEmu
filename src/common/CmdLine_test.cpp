@@ -32,16 +32,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "../UnitTests/gtest.h"
 #include "../UnitTests/test_mock_file.h"
+#include <vector>
 
 #include "CmdLine.h"
-
-
 #include "EnvVar.h"
 #include "execute.h"
 #include "MStrDup.h"
 #include "RConStartArgsEx.h"
 
 extern bool gbVerifyIgnoreAsserts;
+std::vector<std::wstring> GetCmdInternalCommands();
 
 TEST(CmdLine, NextArg_Switches)
 {
@@ -354,17 +354,26 @@ TEST(CmdLine, IsNeedCmd)
 
 TEST(CmdLine, IsCmdInternalCommand)
 {
+	const auto commands = GetCmdInternalCommands();
+	auto sortedCommands{ commands };
+	std::sort(sortedCommands.begin(), sortedCommands.end());
+	EXPECT_EQ(sortedCommands, commands);
+	
 	EXPECT_FALSE(IsCmdInternalCommand(nullptr));
 	EXPECT_FALSE(IsCmdInternalCommand(L""));
+	EXPECT_FALSE(IsCmdInternalCommand(L"%comspec%"));
 	EXPECT_FALSE(IsCmdInternalCommand(L"start.exe"));
 	EXPECT_FALSE(IsCmdInternalCommand(L"path\\file"));
 	EXPECT_FALSE(IsCmdInternalCommand(L"path/file"));
+	EXPECT_FALSE(IsCmdInternalCommand(L"windows"));
+	EXPECT_FALSE(IsCmdInternalCommand(L"YY"));
 
 	EXPECT_TRUE(IsCmdInternalCommand(L"Activate"));
 	EXPECT_TRUE(IsCmdInternalCommand(L"call"));
 	EXPECT_TRUE(IsCmdInternalCommand(L"DIR"));
 	EXPECT_TRUE(IsCmdInternalCommand(L"MoVe"));
 	EXPECT_TRUE(IsCmdInternalCommand(L"SetLocal"));
+	EXPECT_TRUE(IsCmdInternalCommand(L"window"));
 	EXPECT_TRUE(IsCmdInternalCommand(L"Y"));
 }
 

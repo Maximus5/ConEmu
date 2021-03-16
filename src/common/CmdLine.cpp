@@ -47,32 +47,42 @@ namespace
 	const wchar_t SPECIAL_CMD_CHARACTERS[] = L"&|<>^";
 
 	// The commands, which we shall not try to expand/convert into "*.exe"
-	const wchar_t* const CMD_INTERNAL_COMMANDS =
-		L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE"
-		L"\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE"
-		L"\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY"
-		L"\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD"
-		L"\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS"
-		L"\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW"
-		L"\0Y\0\0";
+	const wchar_t* const CMD_INTERNAL_COMMANDS[] = {
+		L"ACTIVATE", L"ALIAS", L"ASSOC", L"ATTRIB", L"BEEP", L"BREAK", L"CALL", L"CDD", L"CHCP", L"COLOR", L"COPY", L"DATE", L"DEFAULT", L"DEL", L"DELAY", L"DESCRIBE",
+		L"DETACH", L"DIR", L"DIRHISTORY", L"DIRS", L"DRAWBOX", L"DRAWHLINE", L"DRAWVLINE", L"ECHO", L"ECHOERR", L"ECHOS", L"ECHOSERR", L"ENDLOCAL", L"ERASE",
+		L"ERRORLEVEL", L"ESET", L"EXCEPT", L"EXIST", L"EXIT", L"FFIND", L"FOR", L"FREE", L"FTYPE", L"GLOBAL", L"GOTO", L"HELP", L"HISTORY", L"IF", L"IFF", L"INKEY",
+		L"INPUT", L"KEYBD", L"KEYS", L"LABEL", L"LIST", L"LOG", L"MD", L"MEMORY", L"MKDIR", L"MOVE", L"MSGBOX", L"NOT", L"ON", L"OPTION", L"PATH", L"PAUSE", L"POPD",
+		L"PROMPT", L"PUSHD", L"RD", L"REBOOT", L"REN", L"RENAME", L"RMDIR", L"SCREEN", L"SCRPUT", L"SELECT", L"SET", L"SETDOS", L"SETLOCAL", L"SHIFT", L"SHRALIAS",
+		L"START", L"TEE", L"TIME", L"TIMER", L"TITLE", L"TOUCH", L"TREE", L"TRUENAME", L"TYPE", L"UNALIAS", L"UNSET", L"VER", L"VERIFY", L"VOL", L"VSCRPUT", L"WINDOW",
+		L"Y" };
 }
+
+#if defined(CE_UNIT_TEST) && CE_UNIT_TEST==1
+#include <vector>
+#include <string>
+std::vector<std::wstring> GetCmdInternalCommands()
+{
+	std::vector<std::wstring> commands;
+	commands.reserve(countof(CMD_INTERNAL_COMMANDS));
+	for (const auto* internalCommand: CMD_INTERNAL_COMMANDS)
+	{
+		commands.push_back(internalCommand);
+	}
+	return commands;
+}
+#endif
 
 bool IsCmdInternalCommand(const wchar_t* cmd)
 {
 	if (!cmd || !*cmd || wcspbrk(cmd, L".\\/"))
 		return false;
-	bool isCommand = false;
-	const wchar_t* internalCommand = CMD_INTERNAL_COMMANDS;
-	while (*internalCommand)
-	{
-		if (lstrcmpiW(cmd, internalCommand) == 0)
+	auto* found = std::bsearch(cmd, CMD_INTERNAL_COMMANDS, countof(CMD_INTERNAL_COMMANDS), sizeof(wchar_t*),
+		[](const void* a, const void* b) -> int
 		{
-			isCommand = true;
-			break;
-		}
-		internalCommand += wcslen(internalCommand) + 1;
-	}
-	return isCommand;
+			const auto cmp = lstrcmpiW(static_cast<const wchar_t*>(a), *static_cast<const wchar_t* const*>(b));
+			return cmp;
+		});
+	return found != nullptr;
 }
 
 // Returns true on changes
