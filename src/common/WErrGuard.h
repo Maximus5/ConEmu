@@ -29,24 +29,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "Common.h"
+#include "defines.h"
 
 // Use it as:
-// ScopedObject(CLastErrorGuard)();
+// ScopedObject(CLastErrorGuard);
 
-class CLastErrorGuard
+class CLastErrorGuard final
 {
 protected:
-	DWORD mn_LastError;
+	DWORD lastError_;
 public:
 	CLastErrorGuard()
+		: lastError_(GetLastError())
 	{
-		mn_LastError = GetLastError();
 		// RtlGetLastNtStatus?
-	};
+	}
+
 	~CLastErrorGuard()
 	{
-		SetLastError(mn_LastError);
+		SetLastError(lastError_);
 		// RtlNtStatusToDosError?
 	}
+
+	CLastErrorGuard(const CLastErrorGuard&) = delete;
+	CLastErrorGuard(CLastErrorGuard&&) = delete;
+	CLastErrorGuard& operator=(const CLastErrorGuard&) = delete;
+	CLastErrorGuard& operator=(CLastErrorGuard&&) = delete;
 };
