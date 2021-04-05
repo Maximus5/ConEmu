@@ -367,6 +367,7 @@ TEST(CmdLine, IsCmdInternalCommand)
 	EXPECT_FALSE(IsCmdInternalCommand(L"path/file"));
 	EXPECT_FALSE(IsCmdInternalCommand(L"windows"));
 	EXPECT_FALSE(IsCmdInternalCommand(L"YY"));
+	EXPECT_FALSE(IsCmdInternalCommand(L"YYY"));
 
 	EXPECT_TRUE(IsCmdInternalCommand(L"Activate"));
 	EXPECT_TRUE(IsCmdInternalCommand(L"call"));
