@@ -83,7 +83,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 		{
 			wchar_t szLog[100];
 			lbProcessEvent = true;
-			LogString(L"  ---  CtrlC/CtrlBreak recieved");
+			LogString(L"  ---  CtrlC/CtrlBreak received (MSG64)");
 			DWORD dwMode = 0;
 			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwMode);
 
@@ -148,7 +148,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 
 			if (nLastEventTick && (GetTickCount() - nLastEventTick) > 2000)
 			{
-				OutputDebugString(L".\n");
+				DEBUGLOGINPUT(L"  ---  mouse event\n");
 			}
 
 			wchar_t szDbg[60];
@@ -765,12 +765,18 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 				if (ir[j].EventType == KEY_EVENT
 					&& (ir[j].Event.KeyEvent.wVirtualKeyCode == 'C' || ir[j].Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
 					&& (      // Удерживается ТОЛЬКО Ctrl
-					(ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-					((ir[j].Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-					== (ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)))
+						(ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+						((ir[j].Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
+							== (ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)))
 					)
 				{
-					DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
+					DWORD dwMode = 0;
+					GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwMode);
+					const auto processedInput = (dwMode & ENABLE_PROCESSED_INPUT) == ENABLE_PROCESSED_INPUT;
+					LogString(CEStr(L"  ---  CtrlC/CtrlBreak received",
+						ir[j].Event.KeyEvent.bKeyDown ? L", KeyDown" : L", KeyUp",
+						processedInput ? L", disabled ENABLE_PROCESSED_INPUT" : nullptr,
+						L" (input thread)").c_str(L""));
 				}
 			}
 			#endif

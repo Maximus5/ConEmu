@@ -3343,12 +3343,7 @@ bool LogString(LPCSTR asText)
 		#ifdef _DEBUG
 		if (asText && *asText)
 		{
-			wchar_t* pszWide = lstrdupW(asText);
-			if (pszWide)
-			{
-				DEBUGSTR(pszWide);
-				free(pszWide);
-			}
+			DEBUGSTR(CEStr(lstrdupW(asText), asText[strlen(asText) - 1] == '\n' ? nullptr : L"\n").c_str(L""));
 		}
 		#endif
 		return false;
@@ -3373,7 +3368,10 @@ bool LogString(LPCWSTR asText)
 
 	if (!gpLogSize)
 	{
-		DEBUGSTR(asText);
+		if (asText && *asText)
+		{
+			DEBUGSTR(CEStr(asText, asText[wcslen(asText) - 1] == L'\n' ? nullptr : L"\n").c_str(L""));
+		}
 		return false;
 	}
 

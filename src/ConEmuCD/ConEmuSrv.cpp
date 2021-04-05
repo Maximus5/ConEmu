@@ -4497,13 +4497,13 @@ bool WorkerServer::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RE
 
 	if (!gState.realConWnd_)
 	{
-		DEBUGSTRSIZE(L"SetConsoleSize: Skipped due to gState.realConWnd==NULL");
+		DEBUGSTRSIZE(L"SetConsoleSize: Skipped due to gState.realConWnd==NULL\n");
 		return FALSE;
 	}
 
 	if (gpWorker->CheckHwFullScreen())
 	{
-		DEBUGSTRSIZE(L"SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		DEBUGSTRSIZE(L"SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE\n");
 		LogString("SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
 		return FALSE;
 	}
@@ -4526,7 +4526,7 @@ bool WorkerServer::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RE
 		// Ресайз выполнять только в нити RefreshThread. Поэтому если нить другая - ждем...
 		if (this->dwRefreshThread && dwCurThId != this->dwRefreshThread)
 		{
-			DEBUGSTRSIZE(L"SetConsoleSize: Waiting for RefreshThread");
+			DEBUGSTRSIZE(L"SetConsoleSize: Waiting for RefreshThread\n");
 
 			ResetEvent(gpSrv->hReqSizeChanged);
 			if (InterlockedIncrement(&gpSrv->nRequestChangeSize) <= 0)
@@ -4574,12 +4574,12 @@ bool WorkerServer::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RE
 		}
 	}
 
-	DEBUGSTRSIZE(L"SetConsoleSize: Started");
+	DEBUGSTRSIZE(L"SetConsoleSize: Started\n");
 
 	MSectionLock rcs;
 	if (gpSrv->pReqSizeSection && !rcs.Lock(gpSrv->pReqSizeSection, TRUE, 30000))
 	{
-		DEBUGSTRSIZE(L"SetConsoleSize: !!!Failed to lock section!!!");
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!Failed to lock section!!!\n");
 		_ASSERTE(FALSE);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -4602,7 +4602,7 @@ bool WorkerServer::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RE
 	if (!GetConsoleScreenBufferInfo(ghConOut, &csbi))
 	{
 		const DWORD nErrCode = GetLastError();
-		DEBUGSTRSIZE(L"SetConsoleSize: !!!GetConsoleScreenBufferInfo failed!!!");
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!GetConsoleScreenBufferInfo failed!!!\n");
 		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo was failed");
 		SetLastError(nErrCode ? nErrCode : ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -4612,7 +4612,7 @@ bool WorkerServer::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RE
 
 	if (!AdaptConsoleFontSize(crNewSize))
 	{
-		DEBUGSTRSIZE(L"SetConsoleSize: !!!AdaptConsoleFontSize failed!!!");
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!AdaptConsoleFontSize failed!!!\n");
 		lbRc = FALSE;
 		goto wrap;
 	}
@@ -4652,7 +4652,7 @@ bool WorkerServer::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RE
 	}
 
 #ifdef _DEBUG
-	DEBUGSTRSIZE(lbRc ? L"SetConsoleSize: FINISHED" : L"SetConsoleSize: !!! FAILED !!!");
+	DEBUGSTRSIZE(lbRc ? L"SetConsoleSize: FINISHED" : L"SetConsoleSize: !!! FAILED !!!\n");
 #endif
 
 wrap:
@@ -4769,7 +4769,7 @@ bool WorkerServer::ApplyConsoleSizeBuffer(
 	bool lbRc = true;
 	dwErr = 0;
 
-	DEBUGSTRSIZE(L"SetConsoleSize: ApplyConsoleSizeBuffer started");
+	DEBUGSTRSIZE(L"SetConsoleSize: ApplyConsoleSizeBuffer started\n");
 
 	RECT rcConPos = {};
 	GetWindowRect(gState.realConWnd_, &rcConPos);

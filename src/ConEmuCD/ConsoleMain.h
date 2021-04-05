@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //	#define SHOW_STARTED_MSGBOX  // immediately after ConEmuC.exe process start show MessageBox, allows debugger attach
 #define PRINT_COMSPEC(f,a) //wprintf(f,a) // prints to ConOut Comspec mode information
-#define _DEBUGSTR(s) //OutputDebugString(s)
+#define _DEBUGSTR(s) OutputDebugString(s)
 
 #elif defined(__GNUC__)
 //	#define SHOW_STARTED_MSGBOX  // immediately after ConEmuC.exe process start show MessageBox, allows debugger attach
