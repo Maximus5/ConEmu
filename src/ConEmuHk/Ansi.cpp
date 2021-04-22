@@ -1219,8 +1219,8 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, L
 			if (!gbIsXTermOutput)
 			{
 				_ASSERTE(FALSE && "XTerm mode was not enabled!");
-				gbIsXTermOutput = true;
 				DBG_XTERM(L"xTermOutput=ON due gh-1402 LineFeed");
+				SetIsXTermOutput(true);
 			}
 			curFishLineFeed = true;
 		}
@@ -4479,8 +4479,8 @@ void CEAnsi::DoneTermMode()
 	if (gbIsXTermOutput && (gPrevConOutMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 	{
 		// If XTerm was enabled already before process start, no need to disable it
-		gbIsXTermOutput = false; // just reset
 		DBG_XTERM(L"xTermOutput=OFF due previous !ENABLE_VIRTUAL_TERMINAL_PROCESSING in DoneTermMode");
+		SetIsXTermOutput(false); // just reset
 	}
 
 	if (gbIsVimProcess)
@@ -4527,6 +4527,14 @@ void CEAnsi::StartXTermMode(const bool bStart)
 	ChangeTermMode(tmc_TerminalType, bStart ? te_xterm : te_win32);
 }
 
+void CEAnsi::SetIsXTermOutput(const bool value)
+{
+	if (gbIsXTermOutput != value)
+	{
+		gbIsXTermOutput = value;
+	}
+}
+
 void CEAnsi::DebugXtermOutput(const wchar_t* message)
 {
 #ifdef _DEBUG
@@ -4540,9 +4548,9 @@ void CEAnsi::DebugXtermOutput(const wchar_t* message)
 void CEAnsi::StartXTermOutput(const bool bStart)
 {
 	// Remember last mode
-	gbIsXTermOutput = bStart;
+	SetIsXTermOutput(bStart);
 	// Set AutoLfNl according to mode
-	gDisplayOpt.AutoLfNl = bStart ? FALSE : TRUE;
+	SetAutoLfNl(bStart ? false : true);
 }
 
 void CEAnsi::RefreshXTermModes()
@@ -4560,7 +4568,10 @@ void CEAnsi::RefreshXTermModes()
 
 void CEAnsi::SetAutoLfNl(const bool autoLfNl)
 {
-	gDisplayOpt.AutoLfNl = autoLfNl;
+	if (static_cast<bool>(gDisplayOpt.AutoLfNl) != autoLfNl)
+	{
+		gDisplayOpt.AutoLfNl = autoLfNl;
+	}
 }
 
 bool CEAnsi::IsAutoLfNl()

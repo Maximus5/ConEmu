@@ -142,29 +142,50 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			return outputCheckResult;
 		};
 
-		if ((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) || (CEAnsi::gbIsXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)))
+		#ifdef _DEBUG
+		if (!isOutput())
+		{
+			static DWORD prevInputMode = 0;
+			if (prevInputMode != dwMode)
+			{
+				if ((prevInputMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT))
+				{
+					if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
+					{
+						_ASSERTE(FALSE && "ENABLE_VIRTUAL_TERMINAL_INPUT On");
+					}
+					else
+					{
+						_ASSERTE(FALSE && "ENABLE_VIRTUAL_TERMINAL_INPUT Off");
+					}
+				}
+				prevInputMode = dwMode;
+			}
+		}
+		#endif
+
+		const bool enableVirtualTerminalInput = (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0;
+		if (enableVirtualTerminalInput
+			|| (CEAnsi::gWasXTermModeSet[tmc_TerminalType].value == te_xterm && !enableVirtualTerminalInput))
 		{
 			if (!isOutput())
 			{
 				static void* xtermEnabledFor = nullptr;
-				const bool enableXterm = (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0;
 
 				#ifdef _DEBUG
 				const auto* hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 				#endif
 				const bool isInput = HandleKeeper::IsInputHandle(hConsoleHandle);
 				const bool allowChange = isInput
-					|| (!enableXterm && xtermEnabledFor == hConsoleHandle);
+					|| (!enableVirtualTerminalInput && xtermEnabledFor == hConsoleHandle);
 
 				if (allowChange)
 				{
-					CEAnsi::ChangeTermMode(tmc_TerminalType, enableXterm ? te_xterm : te_win32);
 					DBG_XTERM(enableVirtualTerminalInput ? L"term=XTerm due ENABLE_VIRTUAL_TERMINAL_INPUT" : L"term=Win32 due !ENABLE_VIRTUAL_TERMINAL_INPUT");
+					CEAnsi::ChangeTermMode(tmc_TerminalType, enableVirtualTerminalInput ? te_xterm : te_win32);
 
-					xtermEnabledFor = enableXterm ? hConsoleHandle : nullptr;
+					xtermEnabledFor = enableVirtualTerminalInput ? hConsoleHandle : nullptr;
 				}
-				//if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
-				//	CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
 			}
 		}
 

@@ -129,6 +129,8 @@ public:
 	static struct TermModeSet {
 		DWORD value, pid;
 	} gWasXTermModeSet[tmc_Last];
+	static void SetIsXTermOutput(bool value);
+	static void DebugXtermOutput(const wchar_t* message);
 
 protected:
 	static int NextNumber(LPCWSTR& asMS);
