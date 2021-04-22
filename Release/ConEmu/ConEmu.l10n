@@ -431,6 +431,7 @@
       "ja": "3rd-state 手段とは,コンソールがReadConsoleにあるかどうかを検出しようとすることです.これをbashで使用する場合は,チェックボックスを 'On' にします(third stateは使用しないでください).",
       "es": "3er-estado indica que 'intenta detectar si el terminal está en modo ReadConsole', si lo quieres usar con bash - activa la casilla (no uses el 3er-estado)",
       "pl": "3-stan oznacza „spróbuj wykryć, czy konsola jest w ReadConsole”, jeśli chcesz używać tego z bash - zaznacz pole wyboru „Włącz” (nie używaj trzeciego stanu)",
+      "it_IT": "3 ° stato significa \"prova a rilevare se la console è in ReadConsole\", se vuoi usarlo con bash - spunta la casella (non usare il 3° stato)",
       "id": 2344 }
     ,
     "cbCTSDeleteLeftWord": {
@@ -638,6 +639,9 @@
       "pl": [ "ON - kursor emuluje zachowanie konsoli (rodzaj odwrócenia kolorów)\n"
             , "OFF - kursor jest biały (color#15) na ciemnym tle,\n"
             , "i czarny (color#0) na jasnym tle; również to pole wyboru wpływa na wygląd kursorów „Block”" ],
+      "it_IT": [ "ON - il cursore emula il comportamento della console (tipo inversione dei colori)\r\n"
+            , "OFF - il cursore è bianco (colore #15) su sfondi scuri,\r\n"
+            , "e nero (colore #0) su sfondi chiari; questa casella influisce sull'aspetto del cursore 'Blocco'" ],
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
@@ -648,6 +652,7 @@
       "ja": "実際のコンソールでカーソルサイズを無視し,常に指定されたサイズのカーソルを表示する",
       "es": "Ignorar tamaño del cursor en el terminal real, mostrar siempre el cursor con el tamaño especificado",
       "pl": "Zignoruj ​​rozmiar kursora w prawdziwej konsoli, zawsze pokazuj kursor o określonym rozmiarze",
+      "it_IT": "Ignorare le dimensioni del cursore nella console reale, mostra sempre il cursore con le dimensioni specificate",
       "id": 1655 }
     ,
     "cbDebugSteps": {
@@ -665,6 +670,8 @@
             , "Ej.: pasos de comunicación con plugin." ],
       "pl": [ "Pokaż informacje o debugowaniu w tytule ConEmu\n"
             , "Na przykład. plugin \"kroki komunikacji\"." ],
+      "it_IT": [ "Visualizzare alcune informazioni di debug nel titolo ConEmu\r\n"
+            , "Es. passaggi dei plugin di comunicazione." ],
       "id": 1551 }
     ,
     "cbDefTermAgressive": {
@@ -1219,6 +1226,10 @@
             , "polecenia konsoli. Pełna moc wyjściowa konsoli\n"
             , "(do określonej liczby linii) będzie\n"
             , "dostępne poprzez Far makro (CtrlO.reg)" ],
+      "it_IT": [ "Espansione automatica del buffer in base a specificato numero di linee,\r\n"
+            , "mentre Far esegue comandi della console.\r\n"
+            , "Output completo della console (fino al conteggio specificato delle righe)\r\n"
+            , "sarà disponibile tramite macro Far (CtrlO.reg)" ],
       "id": 1534 }
     ,
     "cbMinToTray": {
@@ -1833,7 +1844,7 @@
             , "en la zona superior de la ventana de ConEmu" ],
       "pl": [ "Pokaż zakładki (wszystkie otwarte panele, edytory i przeglądarki)\n"
             , "w górnej części okna ConEmu" ],
-      "it_IT": [ "Mostra schede (tutti i pannelli aperti, gli editor e visulizzatori)\r\n"
+      "it_IT": [ "Mostra schede (tutti i pannelli aperti, gli editor e visualizzatori)\r\n"
             , "sulla parte superiore della finestra di ConEmu" ],
       "id": 2288 }
     ,
@@ -2271,6 +2282,7 @@
       "ja": " '太字' のフォントプロパティを反転する背景色のインデックスを選択します(デフォルトは赤#12)",
       "es": "Seleccionar índice de color de fondo para el cual se invertirán las propiedades del tipo 'Negrita' (por defecto Rojo #12)",
       "pl": "Wybierz indeks koloru tła, dla którego właściwości czcionki \"Pogrubienie\" zostaną odwrócone (domyślnie jest to czerwony #12)",
+      "it_IT": "Indice colore da scegliere per aggiungere la proprietà 'Grassetto' al carattere (predefinito è Rosso #13)",
       "id": 1577 }
     ,
     "lbExtendFontItalicIdx": {
@@ -2281,6 +2293,7 @@
       "ja": "'Italic'フォントのプロパティを反転する背景色のインデックスを選択します(デフォルトはMagenta#13)",
       "es": "Elegir el índice del color de fondo para el cual la propiedad 'itálica' se invertirá (por defecto es Magenta #13)",
       "pl": "Wybierz indeks koloru tła, dla którego właściwości czcionki \"Kursywa\" zostaną odwrócone (domyślnie jest to Magenta #13)",
+      "it_IT": "Indice colore da scegliere per aggiungere la proprietà 'Corsivo' al carattere (predefinito è Magenta #13)",
       "id": 2300 }
     ,
     "lbExtendFontNormalIdx": {
@@ -2291,6 +2304,7 @@
       "ja": "太字または斜体のフォントプロパティが反転されている場合,ConEmuは背景をデフォルトの色に変更することがあります(デフォルトは青#1)",
       "es": "Cuando se invierten los tipos de letra Negrita e Itálica, ConEmu puede cambiar el fondo al color por defecto (Azul #1)",
       "pl": "Kiedy właściwość czcionki Pogrubienie lub Kursywa została odwrócona, ConEmu może zmienić tło na domyślny kolor (domyślnie niebieski #1)",
+      "it_IT": "Quando la proprietà grassetto o corsivo del carattere è stata invertita, ConEmu può modificare lo sfondo in colore predefinito (predefinito è Blu #1)",
       "id": 2301 }
     ,
     "lbGotoEditorCmd": {
@@ -3097,6 +3111,8 @@
             , "El máximo valor es 32766." ],
       "pl": [ "Długość bufora przewijania wstecznego w wierszach.\n"
             , "Maksymalna obsługiwana wartość to 32766." ],
+      "it_IT": [ "Lunghezza del buffer di scorrimento in righe.\r\n"
+            , "Il valore massimo supportato è 32766." ],
       "id": 1535 }
     ,
     "tOptionSearch": {
@@ -3775,6 +3791,10 @@
             , "Użyj liczb do określenia rozmiaru w komórkach\n"
             , "Użyj znaku procentu (np. \"40%\") dla rozmiaru względnego monitora\n"
             , "Użyj przyrostka \"px\" (np. \"800px\"), aby uzyskać ścisły rozmiar piksela" ],
+      "it_IT": [ "ALtezza della finestra della console\n"
+            , "Usa solo numeri per la dimensioni in celle\n"
+            , "Usa il segno percentuale (es. '40%') per le dimensioni relative al monitor\n"
+            , "Usa il suffisso 'px' (es. '800px') per dimensione fissa in pixel" ],
       "id": 2282 }
     ,
     "tWndWidth": {
@@ -3806,6 +3826,10 @@
             , "Użyj liczb do określenia rozmiaru w komórkach\n"
             , "Użyj znaku procentu (np. \"40%\") dla rozmiaru względnego monitora\n"
             , "Użyj przyrostka \"px\" (np. \"800px\"), aby uzyskać ścisły rozmiar piksela" ],
+      "it_IT": [ "Larghezza della finestra della console\r\n"
+            , "Usa solo numeri per la dimensioni in celle\r\n"
+            , "Usa il segno percentuale (es. '40%') per le dimensioni relative al monitor\r\n"
+            , "Usa il suffisso 'px' (es. '800px') per dimensione fissa in pixel" ],
       "id": 2281 }
     ,
     "tWndX": {
@@ -3823,6 +3847,8 @@
             , "En pixels" ],
       "pl": [ "Lewy górny róg ConEmu w trybie normalnym\n"
             , "To jest w pikselach" ],
+      "it_IT": [ "Angolo in alto a destra della finestra di ConEmu in modalità Normale\r\n"
+            , "Specificare in pixel" ],
       "id": 2295 }
     ,
     "tWndY": {
@@ -3840,6 +3866,8 @@
             , "En pixels" ],
       "pl": [ "Lewy górny róg ConEmu w trybie normalnym\n"
             , "To jest w pikselach" ],
+      "it_IT": [ "Angolo in alto a destra della finestra di ConEmu in modalità Normale\n"
+            , "Specificare in pixel" ],
       "id": 2296 }
     ,
     "vkAltEnter": {
@@ -4776,6 +4804,7 @@
       "ja": "別のコンソールバッファを表示する(最後のコマンド出力)",
       "es": "Mostrar buffer alternativo del terminal (salida del último comando)",
       "pl": "Pokaż alternatywny bufor konsoli (dane wyjściowe ostatniego polecenia)",
+      "it_IT": "Mostra buffer console alternativo (output dell'ultimo comando)",
       "id": 2254 }
     ,
     "vkMultiBuffer": {
@@ -5462,6 +5491,7 @@
       "ja": "セットアップ 'ホットキー'",
       "es": "Configurar 'Combinaciones'",
       "pl": "Skonfiguruj \"Klawisze skrótów\"",
+      "it_IT": "Imposta 'Combo'",
       "id": 2500 }
     ,
     "vkWinAltP": {
@@ -5493,6 +5523,7 @@
       "ja": "セットアップ 'タスク'",
       "es": "Configurar 'Tareas'",
       "pl": "Skonfiguruj \"Zadania\"",
+      "it_IT": "Imposta 'Attività'",
       "id": 2726 }
     ,
     "vkWinDown": {
@@ -6902,7 +6933,7 @@
       "zh": "设置任务",
       "de": "Aufgaben einrichten...",
       "pl": "Zadania konfiguracyjne...",
-      "it_IT": "Imposta attività...",
+      "it_IT": "Impostazioni attività...",
       "id": 140 }
     ,
     "lng_MenuSplit2Bottom": {
@@ -9565,6 +9596,7 @@
       "ja": "ロングコンソール出力",
       "es": "Salida de terminal larga",
       "pl": "Długie wyjście konsoli",
+      "it_IT": "Output console lungo",
       "id": 1534 }
     ,
     "cbMapShiftEscToEsc": {
@@ -10193,6 +10225,7 @@
       "ja": "最近使った モード",
       "es": "Modo reciente",
       "pl": "Ostatni tryb",
+      "it_IT": "Modalità recente",
       "id": 1533 }
     ,
     "cbTabSelf": {
@@ -10225,6 +10258,7 @@
       "ja": "オーバーレイアイコン(Win7以上)",
       "es": "Mostrar icono superpuesto (Win7 o posterior)",
       "pl": "Pokaż ikonę nakładki (Win7 i wyżej)",
+      "it_IT": "Mostra sovrimpressione all'icona (Win7 e superiore)",
       "id": 2491 }
     ,
     "cbTaskbarProgress": {
@@ -10356,6 +10390,7 @@
       "ja": "ConEmuワークスペースのセンターコンソール",
       "es": "Centrar terminal en el área de ConEmu",
       "pl": "ConEmu w obszarze roboczym konsoli środkowej",
+      "it_IT": "Console centrate nell'area di lavoro di ConEmu",
       "id": 1570 }
     ,
     "cbUnicodeRangesApply": {
@@ -10475,6 +10510,7 @@
       "ja": "カレントウィンドウのサイズと位置を保存して表示する",
       "es": "Mostrar && almacenar la posición y tamaño de la ventana",
       "pl": "Pokaż i przechowuj bieżący rozmiar i pozycję okna",
+      "it_IT": "Mostra && memorizza dimensioni e posizione correnti della finestra",
       "id": 2417 }
     ,
     "cbUseInjects": {
@@ -10686,6 +10722,7 @@
       "ja": "使用されているコマンドプロセッサ",
       "es": "Intérprete de comandos usado",
       "pl": "Używany procesor poleceń",
+      "it_IT": "Processore di comando utilizzato",
       "id": 2155 }
     ,
     "gbComspecBits": {
@@ -10750,6 +10787,7 @@
       "ja": "コンソールバッファの高さ",
       "es": "Altura del buffer del terminal",
       "pl": "Wysokość bufora konsoli",
+      "it_IT": "Altezza buffer console",
       "id": 2894 }
     ,
     "gbCopyingOverride": {
