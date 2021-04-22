@@ -3496,11 +3496,21 @@ void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal)
 {
 	if (!gpLogSize) return;
 
-	LPCWSTR pszLabel = asName ? asName : L"???";
+	const auto* pszLabel = asName ? asName : L"???";
 	CEStr lsInfo;
-	INT_PTR cchLen = lstrlen(pszLabel) + 80;
+	const INT_PTR cchLen = lstrlen(pszLabel) + 80;
 	swprintf_c(lsInfo.GetBuffer(cchLen), cchLen/*#SECURELEN*/, L"Mode %s changed: old=x%04X new=x%04X", pszLabel, oldVal, newVal);
 	LogString(lsInfo);
+}
+
+void DebugXtermOutput(const wchar_t* message)
+{
+#ifdef _DEBUG
+	wchar_t dbgOut[512];
+	msprintf(dbgOut, countof(dbgOut), L"XTerm: %s PID=%u TID=%u: %s\n",
+		PointToName(gsExePathName), GetCurrentProcessId(), GetCurrentThreadId(), message);
+	OutputDebugStringW(dbgOut);
+#endif
 }
 
 

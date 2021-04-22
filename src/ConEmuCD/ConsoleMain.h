@@ -173,6 +173,7 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal);
 bool LogString(LPCSTR asText);
 bool LogString(LPCWSTR asText);
+void DebugXtermOutput(const wchar_t* message);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo = nullptr);
 
 bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette);

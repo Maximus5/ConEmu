@@ -49,9 +49,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #define WINE_PRINT_PROC_INFO
 #define DUMP_PROC_INFO(s,n,p) //DumpProcInfo(s,n,p)
+#define DBG_XTERM(x) DebugXtermOutput(x)
 #else
 #undef WINE_PRINT_PROC_INFO
 #define DUMP_PROC_INFO(s,n,p)
+#define DBG_XTERM(x)
 #endif
 
 
@@ -525,6 +527,10 @@ void ConProcess::RefreshXRequests(MSectionLock& CS)
 			CESERVER_REQ* in = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD) * 3);
 			if (in)
 			{
+				#ifdef _DEBUG
+				wchar_t buffer[80];
+				DBG_XTERM(msprintf(buffer, countof(buffer), L"XRequests chage: command=%u value=%u pid=%u", m, value, pid));
+				#endif
 				in->dwData[0] = static_cast<TermModeCommand>(m);
 				in->dwData[1] = value;  // NOLINT(clang-diagnostic-array-bounds)
 				in->dwData[2] = pid;  // NOLINT(clang-diagnostic-array-bounds)

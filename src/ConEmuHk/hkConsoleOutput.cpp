@@ -30,8 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 	#define DebugString(x) //OutputDebugString(x)
+	#define DBG_XTERM(x) //CEAnsi::DebugXtermOutput(x)
 #else
 	#define DebugString(x) //OutputDebugString(x)
+	#define DBG_XTERM(x)
 #endif
 
 #include "../common/Common.h"
@@ -157,6 +159,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 				if (allowChange)
 				{
 					CEAnsi::ChangeTermMode(tmc_TerminalType, enableXterm ? te_xterm : te_win32);
+					DBG_XTERM(enableVirtualTerminalInput ? L"term=XTerm due ENABLE_VIRTUAL_TERMINAL_INPUT" : L"term=Win32 due !ENABLE_VIRTUAL_TERMINAL_INPUT");
 
 					xtermEnabledFor = enableXterm ? hConsoleHandle : nullptr;
 				}
@@ -171,6 +174,8 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		{
 			if (isOutput())
 			{
+				DBG_XTERM(enableXterm ? L"xTermOutput=ON due ENABLE_VIRTUAL_TERMINAL_PROCESSING" : L"xTermOutput=OFF due !ENABLE_VIRTUAL_TERMINAL_PROCESSING");
+				DBG_XTERM(enableXterm ? L"AutoLfNl=OFF due ENABLE_VIRTUAL_TERMINAL_PROCESSING" : L"AutoLfNl=ON due !ENABLE_VIRTUAL_TERMINAL_PROCESSING");
 				CEAnsi::StartXTermOutput(enableXterm);
 			}
 		}
@@ -179,6 +184,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		{
 			if (isOutput())
 			{
+				DBG_XTERM(autoLfNl ? L"AutoLfNl=ON due DISABLE_NEWLINE_AUTO_RETURN" : L"AutoLfNl=OFF due DISABLE_NEWLINE_AUTO_RETURN");
 				CEAnsi::SetAutoLfNl(autoLfNl);
 			}
 		}

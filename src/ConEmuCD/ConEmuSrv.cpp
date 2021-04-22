@@ -87,6 +87,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef ASSERT_UNWANTED_SIZE
 #endif
 
+#ifdef _DEBUG
+#define DBG_XTERM(x) DebugXtermOutput(x)
+#else
+#define DBG_XTERM(x)
+#endif
+
 //Used to store and restore console screen buffers in cmd_AltBuffer
 MConHandle gPrimaryBuffer(nullptr), gAltBuffer(nullptr);
 USHORT gnPrimaryBufferLastRow = 0; // last detected written row in gPrimaryBuffer
@@ -3964,6 +3970,8 @@ int WorkerServer::ReadConsoleInfo()
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
 		LogModeChange(L"ConOutMode", gpSrv->dwConsoleOutMode, ldwConsoleMode);
+		DBG_XTERM(msprintf(dbgBuffer, countof(dbgBuffer), L"ConOutMode changed: old=0x%04X new=0x%04X", gpSrv->dwConsoleOutMode, ldwConsoleMode));
+
 		gpSrv->dwConsoleOutMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
 	}
 

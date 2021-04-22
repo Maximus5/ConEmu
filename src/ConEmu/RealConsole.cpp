@@ -126,6 +126,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTEXTSEL(s) //DEBUGSTR(s)
 #define DEBUGSTRCLICKPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRCTRLBS(s) //DEBUGSTR(s)
+#define DEBUG_XTERM(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -6209,11 +6210,15 @@ bool CRealConsole::StartStopTermMode(TermModeCommand mode, ChangeTermAction acti
 
 void CRealConsole::StartStopXTerm(const DWORD nPID, const bool xTerm)
 {
+	wchar_t szInfo[100];
 	if (gpSet->isLogging())
 	{
-		wchar_t szInfo[100];
-		swprintf_c(szInfo, L"StartStopXTerm(nPID=%u, xTerm=%u)", nPID, (UINT)xTerm);
+		swprintf_c(szInfo, L"StartStopXTerm(nPID=%u, xTerm=%u)", nPID, static_cast<UINT>(xTerm));
 		LogString(szInfo);
+	}
+	else
+	{
+		DEBUG_XTERM(msprintf(szInfo, countof(szInfo), L"XTerm: %s: %s pid=%u", ConEmu_EXE_3264, xTerm ? L"On" : L"Off", nPID));
 	}
 
 	if (!nPID || !xTerm)

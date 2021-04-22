@@ -81,9 +81,11 @@ static DWORD gAnsiTlsIndex = 0;
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
 #define DebugStringA(x) OutputDebugStringA(x)
+#define DBG_XTERM(x) //CEAnsi::DebugXtermOutput(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
+#define DBG_XTERM(x) //CEAnsi::DebugXtermOutput(x)
 #endif
 
 /* ************ Globals ************ */
@@ -1218,6 +1220,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleOutput, L
 			{
 				_ASSERTE(FALSE && "XTerm mode was not enabled!");
 				gbIsXTermOutput = true;
+				DBG_XTERM(L"xTermOutput=ON due gh-1402 LineFeed");
 			}
 			curFishLineFeed = true;
 		}
@@ -3885,16 +3888,34 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleO
 					// ESC ] 9 ; 10 ST
 					// ESC ] 9 ; 10 ; 1 ST
 					if (!gbIsXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] == 1))
+					{
+						DBG_XTERM(L"xTermOutput=ON due ESC]9;10;1ST");
+						DBG_XTERM(L"AutoLfNl=OFF due ESC]9;10;1ST");
+						DBG_XTERM(L"term=XTerm due ESC]9;10;1ST");
 						CEAnsi::StartXTermMode(true);
+					}
 					// ESC ] 9 ; 10 ; 0 ST
 					else if (Code.ArgC >= 3 || Code.ArgV[2] == 0)
+					{
+						DBG_XTERM(L"xTermOutput=OFF due ESC]9;10;0ST");
+						DBG_XTERM(L"AutoLfNl=ON due ESC]9;10;0ST");
+						DBG_XTERM(L"term=Win32 due ESC]9;10;0ST");
 						CEAnsi::StartXTermMode(false);
+					}
 					// ESC ] 9 ; 10 ; 3 ST
 					else if (Code.ArgC >= 3 || Code.ArgV[2] == 3)
+					{
+						DBG_XTERM(L"xTermOutput=ON due ESC]9;10;3ST");
+						DBG_XTERM(L"AutoLfNl=OFF due ESC]9;10;3ST");
 						CEAnsi::StartXTermOutput(true);
+					}
 					// ESC ] 9 ; 10 ; 2 ST
 					else if (Code.ArgC >= 3 || Code.ArgV[2] == 2)
+					{
+						DBG_XTERM(L"xTermOutput=OFF due ESC]9;10;2ST");
+						DBG_XTERM(L"AutoLfNl=ON due ESC]9;10;2ST");
 						CEAnsi::StartXTermOutput(false);
+					}
 				}
 				else if (Code.ArgSZ[3] == L'1' && Code.ArgSZ[4] == L';')
 				{
@@ -4032,6 +4053,9 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t writeConsoleW, HANDLE hConsoleO
 {
 	if (!gbIsXTermOutput && !gnWriteProcessed)
 	{
+		DBG_XTERM(L"xTermOutput=ON due Vim start");
+		DBG_XTERM(L"AutoLfNl=OFF due Vim start");
+		DBG_XTERM(L"term=XTerm due Vim start");
 		CEAnsi::StartXTermMode(true);
 	}
 
@@ -4400,6 +4424,9 @@ HANDLE CEAnsi::StopVimTerm()
 {
 	if (gbIsXTermOutput)
 	{
+		DBG_XTERM(L"xTermOutput=OFF due Vim stop");
+		DBG_XTERM(L"AutoLfNl=ON due Vim stop");
+		DBG_XTERM(L"term=Win32 due Vim stop");
 		CEAnsi::StartXTermMode(false);
 	}
 
@@ -4431,6 +4458,9 @@ void CEAnsi::InitTermMode()
 
 	if (needSetXterm)
 	{
+		DBG_XTERM(L"xTermOutput=ON due ENABLE_VIRTUAL_TERMINAL_PROCESSING in InitTermMode");
+		DBG_XTERM(L"AutoLfNl=OFF due ENABLE_VIRTUAL_TERMINAL_PROCESSING in InitTermMode");
+		DBG_XTERM(L"term=XTerm due ENABLE_VIRTUAL_TERMINAL_PROCESSING in InitTermMode");
 		StartXTermMode(true);
 	}
 
@@ -4450,14 +4480,19 @@ void CEAnsi::DoneTermMode()
 	{
 		// If XTerm was enabled already before process start, no need to disable it
 		gbIsXTermOutput = false; // just reset
+		DBG_XTERM(L"xTermOutput=OFF due previous !ENABLE_VIRTUAL_TERMINAL_PROCESSING in DoneTermMode");
 	}
-	
+
 	if (gbIsVimProcess)
 	{
+		DBG_XTERM(L"StopVimTerm in DoneTermMode");
 		StopVimTerm();
 	}
 	else if (CEAnsi::gbIsXTermOutput)
 	{
+		DBG_XTERM(L"xTermOutput=OFF in DoneTermMode");
+		DBG_XTERM(L"AutoLfNl=ON in DoneTermMode");
+		DBG_XTERM(L"term=Win32 in DoneTermMode");
 		StartXTermMode(false);
 	}
 }
@@ -4490,6 +4525,16 @@ void CEAnsi::StartXTermMode(const bool bStart)
 
 	// Remember last mode and pass to server
 	ChangeTermMode(tmc_TerminalType, bStart ? te_xterm : te_win32);
+}
+
+void CEAnsi::DebugXtermOutput(const wchar_t* message)
+{
+#ifdef _DEBUG
+	wchar_t dbgOut[512];
+	msprintf(dbgOut, countof(dbgOut), L"XTerm: %s PID=%u TID=%u: %s\n",
+		gsExeName, GetCurrentProcessId(), GetCurrentThreadId(), message);
+	OutputDebugStringW(dbgOut);
+#endif
 }
 
 void CEAnsi::StartXTermOutput(const bool bStart)
