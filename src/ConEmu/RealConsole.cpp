@@ -6207,7 +6207,7 @@ bool CRealConsole::StartStopTermMode(TermModeCommand mode, ChangeTermAction acti
 	return StartStopTermMode(nActivePID, mode, newValue);
 }
 
-void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
+void CRealConsole::StartStopXTerm(const DWORD nPID, const bool xTerm)
 {
 	if (gpSet->isLogging())
 	{
@@ -9948,13 +9948,13 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 	{
 		wchar_t szPrefix[128];
 		swprintf_c(szPrefix, L"CRealConsole::RecreateProcess, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
-			(DWORD)(DWORD_PTR)mp_VCon->GetView(), (UINT)args->Detached, (UINT)args->RunAsAdministrator);
+			LODWORD(mp_VCon->GetView()), static_cast<UINT>(args->Detached), static_cast<UINT>(args->RunAsAdministrator));
 		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<nullptr>");
 		LogString(pszInfo ? pszInfo : szPrefix);
 		SafeFree(pszInfo);
 	}
 
-	bool bCopied = m_Args.AssignFrom(*args, true);
+	const bool bCopied = m_Args.AssignFrom(*args, true);
 
 	// Don't leave security information (passwords) in memory
 	if (args->pszUserName)

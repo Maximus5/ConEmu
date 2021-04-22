@@ -70,6 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SrvPipes.h"
 #include "Queue.h"
 #include "StartEnv.h"
+#include "../common/MHandle.h"
 
 #ifdef _DEBUG
 	//#define DEBUG_SLEEP_NUMLCK
@@ -111,6 +112,8 @@ void SrvInfo::InitFields()
 {
 	TopLeft.Reset();
 }
+
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void SrvInfo::FinalizeFields()
 {
 }
@@ -156,13 +159,13 @@ WorkerServer& WorkerServer::Instance()
 }
 
 // static callback for ServerInitFont
-int WorkerServer::FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *, DWORD FontType, LPARAM lParam)
+int WorkerServer::FontEnumProc(ENUMLOGFONTEX* fontInfo, NEWTEXTMETRICEX*, const DWORD fontType, const LPARAM lParam)
 {
-	if ((FontType & TRUETYPE_FONTTYPE) == TRUETYPE_FONTTYPE)
+	if ((fontType & TRUETYPE_FONTTYPE) == TRUETYPE_FONTTYPE)
 	{
 		// OK, suitable
 		*reinterpret_cast<bool*>(lParam) = true;
-		Instance().consoleFontName_.Set(lpelfe->elfLogFont.lfFaceName);
+		Instance().consoleFontName_.Set(fontInfo->elfLogFont.lfFaceName);
 		return FALSE;
 	}
 
@@ -3862,14 +3865,16 @@ int WorkerServer::ReadConsoleInfo()
 
 	//int liRc = 1;
 	BOOL lbChanged = gpSrv->pConsole->bDataChanged; // Если что-то еще не отослали - сразу TRUE
-	CONSOLE_SELECTION_INFO lsel = {0}; // apiGetConsoleSelectionInfo
-	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
-	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode;
-	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
-	HANDLE hOut = (HANDLE)ghConOut;
+	CONSOLE_SELECTION_INFO lsel = {}; // apiGetConsoleSelectionInfo
+	CONSOLE_CURSOR_INFO lci = {}; // GetConsoleCursorInfo
+	DWORD ldwConsoleCP = 0, ldwConsoleOutputCP = 0, ldwConsoleMode;
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {}; // MyGetConsoleScreenBufferInfo
+	HANDLE hOut = static_cast<HANDLE>(ghConOut);
 	HANDLE hStdOut = nullptr;
-	HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
-	//DWORD nConInMode = 0;
+	const MHandle hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+	#ifdef _DEBUG
+	wchar_t dbgBuffer[128];
+	#endif
 
 	if (hOut == INVALID_HANDLE_VALUE)
 		hOut = hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -3901,7 +3906,7 @@ int WorkerServer::ReadConsoleInfo()
 
 		gpSrv->dwCiRc = 0;
 
-		if (memcmp(&gpSrv->ci, &lci, sizeof(gpSrv->ci)))
+		if (memcmp(&gpSrv->ci, &lci, sizeof(gpSrv->ci)) != 0)
 		{
 			gpSrv->ci = lci;
 			lbChanged = TRUE;
@@ -3932,15 +3937,16 @@ int WorkerServer::ReadConsoleInfo()
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
 		LogModeChange(L"ConInMode", gpSrv->dwConsoleInMode, ldwConsoleMode);
+		DBG_XTERM(msprintf(dbgBuffer, countof(dbgBuffer), L"ConInMode changed: old=0x%04X new=0x%04X", gpSrv->dwConsoleInMode, ldwConsoleMode));
 
 		if ((ldwConsoleMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != (gpSrv->dwConsoleInMode & ENABLE_VIRTUAL_TERMINAL_INPUT))
 		{
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD));
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR) + 3 * sizeof(DWORD));
 			if (pIn)
 			{
 				pIn->dwData[0] = tmc_ConInMode;
-				pIn->dwData[1] = ldwConsoleMode;
-				pIn->dwData[2] = this->RootProcessId();
+				pIn->dwData[1] = ldwConsoleMode;  // NOLINT(clang-diagnostic-array-bounds)
+				pIn->dwData[2] = this->RootProcessId();  // NOLINT(clang-diagnostic-array-bounds)
 				CESERVER_REQ* pOut = ExecuteGuiCmd(gState.realConWnd_, pIn, gState.realConWnd_);
 				ExecuteFreeResult(pIn);
 				ExecuteFreeResult(pOut);
@@ -3965,7 +3971,7 @@ int WorkerServer::ReadConsoleInfo()
 
 	if (!MyGetConsoleScreenBufferInfo(hOut, &lsbi))
 	{
-		DWORD dwErr = GetLastError();
+		const DWORD dwErr = GetLastError();
 		_ASSERTE(FALSE && "!!! ReadConsole::MyGetConsoleScreenBufferInfo failed !!!");
 
 		this->consoleInfo.dwSbiRc = dwErr ? dwErr : -1;

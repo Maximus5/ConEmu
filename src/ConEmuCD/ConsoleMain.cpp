@@ -3512,7 +3512,7 @@ static void UndoConsoleWindowZoom()
 	if (IsZoomed(gState.realConWnd_))
 	{
 		SendMessage(gState.realConWnd_, WM_SYSCOMMAND, SC_RESTORE, 0);
-		DWORD dwStartTick = GetTickCount();
+		const DWORD dwStartTick = GetTickCount();
 
 		do
 		{

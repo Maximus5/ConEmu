@@ -29,8 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #ANSI This file is expected to be moved almost completely to ConEmuCD
 
 #include "../common/defines.h"
-#include <WinError.h>
-#include <WinNT.h>
+#include <winerror.h>
+#include <winnt.h>
 #include <tchar.h>
 #include <limits>
 #include <chrono>
@@ -4422,7 +4422,7 @@ void CEAnsi::InitTermMode()
 			}
 		}
 	}
-	
+
 	if (gbIsVimProcess)
 	{
 		StartVimTerm(true);
@@ -4476,7 +4476,9 @@ void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*
 	}
 
 	if (mode < countof(gWasXTermModeSet))
-		gWasXTermModeSet[mode] = {value, nPID ? nPID : GetCurrentProcessId()};
+	{
+		gWasXTermModeSet[mode] = { value, nPID ? nPID : GetCurrentProcessId() };
+	}
 }
 
 void CEAnsi::StartXTermMode(const bool bStart)

@@ -522,12 +522,12 @@ void ConProcess::RefreshXRequests(MSectionLock& CS)
 			// Update
 			xFixedRequests[m] = value;
 			// and inform the GUI
-			CESERVER_REQ* in = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*3);
+			CESERVER_REQ* in = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD) * 3);
 			if (in)
 			{
-				in->dwData[0] = (TermModeCommand)m;
-				in->dwData[1] = value;
-				in->dwData[2] = pid;
+				in->dwData[0] = static_cast<TermModeCommand>(m);
+				in->dwData[1] = value;  // NOLINT(clang-diagnostic-array-bounds)
+				in->dwData[2] = pid;  // NOLINT(clang-diagnostic-array-bounds)
 				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gState.realConWnd_, in, gState.realConWnd_);
 				ExecuteFreeResult(pGuiOut);
 			}

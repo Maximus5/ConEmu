@@ -315,7 +315,7 @@ public:
 	DWORD GetLastActiveFarPid() const;
 
 protected:
-	static int CALLBACK FontEnumProc(ENUMLOGFONTEX* lpelfe, NEWTEXTMETRICEX* lpntme, DWORD FontType, LPARAM lParam);
+	static int CALLBACK FontEnumProc(ENUMLOGFONTEX* fontInfo, NEWTEXTMETRICEX* lpntme, DWORD fontType, LPARAM lParam);
 
 	void ApplyProcessSetEnvCmd();
 	void ApplyEnvironmentCommands(LPCWSTR pszCommands);
