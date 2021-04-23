@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.4.22
+* gh-2212: Fix running `set path` from Far Manager 1.75.
+* gh-2302: Fix terminal mode returning to Far Manager from xterm commands.
+* Pixel-hint the icons.
+* Visibility improvements for some long string in settings dialogs.
+* l10n: translations were updated
+
+
 2021.3.14
 * gh-327: Allow expand selection after DblClick.
 
