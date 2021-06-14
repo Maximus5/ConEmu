@@ -2674,7 +2674,7 @@ static void CreateDockerTask()
 			// "%DOCKER_TOOLBOX_INSTALL_PATH%\\docker-quickstart-terminal.ico"
 			// but it's displayed badly in our tabs at the moment
 			L"/dir \"%DOCKER_TOOLBOX_INSTALL_PATH%\" /icon \"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe\"",
-			L"%DOCKER_TOOLBOX_INSTALL_PATH%\\..\\Git\\usr\\bin\\bash.exe",
+			L"\"%DOCKER_TOOLBOX_INSTALL_PATH%\\..\\Git\\usr\\bin\\bash.exe\"",
 			L"bash.exe",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\bash.exe",
 			L"%ProgramFiles%\\Git\\usr\\bin\\bash.exe", L"%ProgramW6432%\\Git\\usr\\bin\\bash.exe",
