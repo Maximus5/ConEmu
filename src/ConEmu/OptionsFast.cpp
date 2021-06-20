@@ -2631,7 +2631,7 @@ static void CreateWslTask()
 		// #TODO Find the appropriate icon of WSL distro
 		struct WslCreator
 		{
-			const CEStr& wslLoader;
+			const wchar_t* wslLoader;
 			AppFoundList& taskCreator;
 
 			static bool WINAPI WslTaskCallback(HKEY hkDistr, const wchar_t* pszSubkeyName, LPARAM lParam)
