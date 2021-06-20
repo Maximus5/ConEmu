@@ -969,12 +969,16 @@ bool Settings::isTransparentAllowed()
 
 // true - не допускать Gaps в Normal режиме. Подгонять размер окна точно под консоль.
 // false - размер окна - свободный (попиксельно)
-bool Settings::isIntegralSize()
+bool Settings::isIntegralSize() const
 {
 	if (mb_IntegralSize)
 		return false;
 
 	if (isQuakeStyle || gpConEmu->mp_Inside)
+		return false;
+
+	if ((wndWidth.Style == ss_Percents && wndWidth.Value == 100)
+		|| (wndHeight.Style == ss_Percents && wndHeight.Value == 100))
 		return false;
 
 	#if 0

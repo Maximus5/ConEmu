@@ -844,7 +844,7 @@ struct Settings
 		//reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
 		bool isUseCurrentSizePos; // Show in settings dialog and save current window size/pos
 
-		bool isIntegralSize();
+		bool isIntegralSize() const;
 
 	private:
 		// При закрытии окна крестиком - сохранять только один раз,
