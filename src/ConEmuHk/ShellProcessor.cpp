@@ -2856,7 +2856,12 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		return TRUE; // don't intercept, pass to kernel
 	}
 
-	const size_t cbLocalStartupInfoSize = std::max<size_t>(sizeof(STARTUPINFOW), (*ppStartupInfo)->cb);
+	// VS 2019 passes cb==0 while starting console applications (run & debug)
+	// ruby.exe passes cb==0 while starting powershell
+	const DWORD cbParamStartupInfoSize = (*ppStartupInfo)->cb ? (*ppStartupInfo)->cb
+		: IsBadReadPtr(*ppStartupInfo, sizeof(STARTUPINFOW)) ? 0 : static_cast<DWORD>(sizeof(STARTUPINFOW));
+
+	const size_t cbLocalStartupInfoSize = std::max<size_t>(sizeof(STARTUPINFOW), cbParamStartupInfoSize);
 	m_lpStartupInfoW.reset(static_cast<LPSTARTUPINFOW>(calloc(1, cbLocalStartupInfoSize)));
 	if (!m_lpStartupInfoW)
 	{
@@ -2865,9 +2870,11 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 
 	auto* lpSi = m_lpStartupInfoW.get();
-	if ((*ppStartupInfo)->cb)
+	if (cbParamStartupInfoSize)
 	{
-		memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, (*ppStartupInfo)->cb);
+		memmove_s(lpSi, cbLocalStartupInfoSize, *ppStartupInfo, cbParamStartupInfoSize);
+		if (!lpSi->cb)
+			lpSi->cb = cbParamStartupInfoSize;
 
 		#ifdef DEBUG_SHELL_LOG_OUTPUT
 		wchar_t dbgBuf[200];
@@ -2879,7 +2886,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 	else
 	{
-		lpSi->cb = sizeof(*lpSi); // VS 2019 passes cb==0 while starting console applications (run & debug)
+		lpSi->cb = sizeof(*lpSi);
 		LogShellString(L"OnCreateProcessW creating new default STARTUPINFOW");
 	}
 
@@ -2903,9 +2910,11 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	const bool changed = (prepareResult == PrepareExecuteResult::Modified);
 
 	// patch flags and variables based on decision
-	const bool needChangeSi = OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags)
-		|| (lpSi->hStdOutput != (*ppStartupInfo)->hStdOutput || lpSi->dwFlags != (*ppStartupInfo)->dwFlags);
-	if (needChangeSi)
+	const bool siWasChanged = OnCreateProcessResult(prepareResult, state, anCreationFlags, lpSi->wShowWindow, lpSi->dwFlags);
+	const bool needChangeSiParam = siWasChanged
+		|| (lpSi->hStdOutput != (*ppStartupInfo)->hStdOutput)
+		|| (lpSi->dwFlags != (*ppStartupInfo)->dwFlags);
+	if (needChangeSiParam)
 	{
 		*ppStartupInfo = lpSi;
 	}

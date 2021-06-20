@@ -306,10 +306,11 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD ldwCreationFlags = dwCreationFlags;
+	auto* ourStartupInfo = lpStartupInfo;
 
 	if (ph && ph->PreCallBack)
 	{
-		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, ourStartupInfo, lpProcessInformation);
 
 		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
@@ -317,7 +318,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	}
 
 	CShellProc* sp = new CShellProc();
-	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, const_cast<LPCWSTR*>(&lpCommandLine), &lpCurrentDirectory, &ldwCreationFlags, &lpStartupInfo))
+	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, const_cast<LPCWSTR*>(&lpCommandLine), &lpCurrentDirectory, &ldwCreationFlags, &ourStartupInfo))
 	{
 		delete sp;
 		SetLastError(ERROR_FILE_NOT_FOUND);
@@ -364,7 +365,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	else
 	#endif
 	{
-		lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, ourStartupInfo, lpProcessInformation);
 	}
 	dwErr = GetLastError();
 
@@ -372,20 +373,26 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	force_print_timings(L"CreateProcessW - done");
 	#endif
 
-	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
-	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
-	delete sp;
-
 	#ifdef SHOWCREATEPROCESSTICK
 	force_print_timings(L"OnCreateProcessFinished - done");
 	#endif
 
+	#ifdef _DEBUG
+	if (ourStartupInfo != lpStartupInfo)
+	{
+		//_ASSERTE(FALSE && "lpStartupInfo was changed");
+	}
+	#endif
 
 	if (ph && ph->PostCallBack)
 	{
-		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, ourStartupInfo, lpProcessInformation);
 		ph->PostCallBack(&args);
 	}
+
+	// if lbParamsChanged == true - ConEmuC.exe will take care of injects
+	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
+	delete sp;
 
 	SetLastError(dwErr);
 	return lbRc;
