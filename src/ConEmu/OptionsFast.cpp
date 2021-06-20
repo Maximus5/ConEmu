@@ -2623,7 +2623,7 @@ static void CreateWslTask()
 	#ifndef _WIN64
 	MWow64Disable wow; wow.Disable(); // We need 64-bit version of system32
 	#endif
-	wchar_t wslLoader[] = L"%windir%\\system32\\wsl.exe";
+	const wchar_t wslLoader[] = L"%windir%\\system32\\wsl.exe";
 	const CEStr expanded(ExpandEnvStr(wslLoader));
 	const bool wslExists = FileExists(expanded);
 	if (wslExists)
