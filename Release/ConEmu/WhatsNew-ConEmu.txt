@@ -20,6 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.6.20
+* New code signing certificate is used! Windows SmartScreen could show warnings until reputation level is back.
+* Disable taskbar overlay icon by default.
+* gh-2327: Disable integral size for '100%' width or height.
+* gh-2296: Fix `vagrant up` commmand execution (5a5a84200 regression fix).
+
+
 2021.4.22
 * gh-2212: Fix running `set path` from Far Manager 1.75.
 * gh-2302: Fix terminal mode returning to Far Manager from xterm commands.
