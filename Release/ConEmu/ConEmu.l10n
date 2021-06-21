@@ -177,6 +177,8 @@
             , "（仅对新控制台有效）" ],
       "de": [ "ANSI-Sequenzen protokollieren\n"
             , "(wirkt sich nur auf neue Fenster aus)" ],
+      "ja": [ "console log を ANSI 形式で書き込む\r\n"
+            , "(新規コンソールでのみ有効)" ],
       "es": [ "Escribir secuencias ANSI al log del terminal\r\n"
             , "(afecta sólo a terminales nuevos)" ],
       "pl": [ "Napisz do sekwencji ANSI dziennika konsoli\n"
