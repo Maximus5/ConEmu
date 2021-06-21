@@ -43,7 +43,7 @@ call "%~dp0GetCurVer.cmd"
 
 rem Update PortableApps and Chocolatey versions
 if "%SKIP_UPD%" == "YES" goto skip_upd
-powershell -noprofile -command "%~dp0UpdateDeployVersions.ps1" %CurVerBuild%
+powershell -noprofile -ExecutionPolicy RemoteSigned -command "%~dp0UpdateDeployVersions.ps1" %CurVerBuild%
 :skip_upd
 
 set "daily_md=%CONEMU_WWW%_posts\.daily.md"

@@ -83,26 +83,26 @@ if /I "%~2" == "-deploy" goto do_deploy
 rem echo on
 
 rem Update versions in all release files (msi, portableapps, nuget, etc.)
-powershell -noprofile -command "%~dp0Deploy\UpdateDeployVersions.ps1" %BUILD_NO%
+powershell -noprofile -ExecutionPolicy RemoteSigned -command "%~dp0Deploy\UpdateDeployVersions.ps1" %BUILD_NO%
 if errorlevel 1 goto err
 
 
 rem set ConEmuHooks=OFF
 
 echo [93;40mVersion from WhatsNew-ConEmu.txt[0m
-%MINGWRT%\head -n 30 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt" | %windir%\system32\find "20%BUILD_NO:~0,2%.%BUILD_NO:~2,2%.%BUILD_NO:~4,2%"
+"%MINGWRT%\head" -n 30 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt" | %windir%\system32\find "20%BUILD_NO:~0,2%.%BUILD_NO:~2,2%.%BUILD_NO:~4,2%"
 if errorlevel 1 (
-%MINGWRT%\head -n 30 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt" | %MINGWRT%\tail -n -16
+"%MINGWRT%\head" -n 30 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt" | "%MINGWRT%\tail" -n -16
 echo/
 echo [1;31;40mBuild number was not described in WhatsNew-ConEmu.txt![0m
 echo/
 )
 
 echo [93;40mVersion from PortableApps[0m
-type %ver_info% | %MINGWRT%\grep -E "^(PackageVersion|DisplayVersion)"
+type %ver_info% | "%MINGWRT%\grep" -E "^(PackageVersion|DisplayVersion)"
 
 echo [93;40mVersion from version.h[0m
-type %ver_hdr% | %MINGWRT%\grep -G "^#define MVV_"
+type %ver_hdr% | "%MINGWRT%\grep" -G "^#define MVV_"
 
 rem Don't wait for confirmation - build number was already confirmed...
 rem echo/
@@ -169,7 +169,7 @@ goto fin
 
 :tch
 cd %1
-%MINGWRT%\touch %2 %3 %4
+"%MINGWRT%\touch" %2 %3 %4
 cd ..
 goto :EOF
 
