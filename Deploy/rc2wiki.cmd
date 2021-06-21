@@ -1,1 +1,1 @@
-powershell -noprofile -command "%~dp0rc2json.ps1" -mode "wiki"
+powershell -noprofile -ExecutionPolicy RemoteSigned -command "%~dp0rc2json.ps1" -mode "wiki"

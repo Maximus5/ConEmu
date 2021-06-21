@@ -6,6 +6,6 @@ echo Examp: new-class RealConsole CRealCosole
 exit /b 1
 )
 
-powershell -noprofile -command "& {%~dp0NewClass.ps1 '%~1' '%~2'}"
+powershell -noprofile -ExecutionPolicy RemoteSigned -command "& {%~dp0NewClass.ps1 '%~1' '%~2'}"
 
 call "%~dp0add-src.cmd" "%~1.cpp" "%~1.h"

@@ -15,7 +15,7 @@ if exist %DEST_FILE% del %DEST_FILE%
 find "<UACExecutionLevel>RequireAdministrator</UACExecutionLevel>" Executor.vcxproj 1> nul
 if errorlevel 1 (
   echo RequireAdministrator should be set in project, patching...
-  powershell -noprofile .\patch_project.ps1
+  powershell -noprofile -ExecutionPolicy RemoteSigned .\patch_project.ps1
 )
 
 find "<UACExecutionLevel>RequireAdministrator</UACExecutionLevel>" Executor.vcxproj 1> nul

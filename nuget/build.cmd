@@ -11,7 +11,7 @@ if exist "%~dp0..\Deploy\user_env.cmd" (
 )
 
 call "%~dp0..\Deploy\GetCurVer.cmd"
-powershell -noprofile -command "%~dp0..\Deploy\UpdatePackageVersions.ps1" %CurVerBuild%
+powershell -noprofile -ExecutionPolicy RemoteSigned -command "%~dp0..\Deploy\UpdatePackageVersions.ps1" %CurVerBuild%
 if errorlevel 1 (
   call cecho "Failed to update Chocolatey and Nuget packages"
   exit /b 100
