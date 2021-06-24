@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.6.24
+* gh-2323: Fix 'busy' cursor in Far Manager 3.0 build 5817+.
+* gh-2323: Edit box for Far hourglass timeout (ms).
+* gh-2324: Path containing `%DOCKER_TOOLBOX_INSTALL_PATH%` have to be quoted (by trolzen).
+* gh-2261: Far executor fix.
+* l10n: translations were updated
+
+
 2021.6.20
 * New code signing certificate is used! Windows SmartScreen could show warnings until reputation level is back.
 * Disable taskbar overlay icon by default.
