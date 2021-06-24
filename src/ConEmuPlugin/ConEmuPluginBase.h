@@ -230,6 +230,8 @@ public:
 protected:
 	void LoadPanelTabsFromRegistry();
 
+	static void TouchReadPeekConsoleInputsMark(int Peek /*= -1*/);
+
 public:
 	virtual bool    CheckPanelExist() = 0;
 	virtual bool    ExecuteSynchroApi() = 0;

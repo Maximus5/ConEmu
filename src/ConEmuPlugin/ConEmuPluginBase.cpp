@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRACTIVATE(s) //DEBUGSTR(s)
 #define DEBUGSTRCURDIR(s) //DEBUGSTR(s)
+#define DEBUGSTRTOUCHINPUT(s) //DEBUGSTR(s)
 
 
 #include "PluginHeader.h"
@@ -4547,15 +4548,39 @@ void CPluginBase::TouchReadPeekConsoleInputs(int Peek /*= -1*/)
 		return;
 	}
 
+	#ifdef _DEBUG
+	static DWORD nLastTick;
+	const DWORD nCurTick = GetTickCount();
+	const DWORD nDelta = nCurTick - nLastTick;
+	wchar_t debugInfo[100];
+	#endif
+
 	// Во время макросов - считаем, что Фар "думает"
 	if (!Plugin()->IsMacroActive())
 	{
 		SetEvent(ghFarAliveEvent);
+		#ifdef _DEBUG
+		msprintf(debugInfo, countof(debugInfo), L"FarAlive: true, delay was %u ms", nDelta);
+		DEBUGSTRTOUCHINPUT(debugInfo);
+		nLastTick = nCurTick;
+		#endif
+	}
+	else
+	{
+		#ifdef _DEBUG
+		msprintf(debugInfo, countof(debugInfo), L"FarAlive: false due to isMacro, delay was %u ms", nDelta);
+		DEBUGSTRTOUCHINPUT(debugInfo);
+		#endif
 	}
 
 	//gpFarInfo->nFarReadIdx++;
 	//gpFarInfoMapping->nFarReadIdx = gpFarInfo->nFarReadIdx;
 
+	TouchReadPeekConsoleInputsMark(Peek);
+}
+
+void CPluginBase::TouchReadPeekConsoleInputsMark(int Peek /*= -1*/)
+{
 #ifdef _DEBUG
 	if (Peek == -1)
 		return;

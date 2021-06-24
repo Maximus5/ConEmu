@@ -417,7 +417,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	//mp_ConsoleData = nullptr;
 	//mp_FarInfo = nullptr;
 	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
-	mn_LastFarReadTick = 0;
+	mn_LastFarReadTick = mn_LastFarAliveTick = 0;
 	//ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 	//mh_ColorMapping = nullptr;
 	//mp_ColorHdr = nullptr;
@@ -3154,6 +3154,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				{
 					//mn_LastFarReadIdx = -1;
 					mn_LastFarReadTick = 0;
+					mn_LastFarAliveTick = 0;
 					nLastFarPID = nCurFarPID;
 
 					// Переоткрывать мэппинг при смене PID фара
@@ -3177,45 +3178,38 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				}
 
 				bool bAlive = false;
-
-				//if (nCurFarPID && mn_LastFarReadIdx != mp_ConsoleInfo->nFarReadIdx) {
 				if (nCurFarPID && m_FarInfo.cbSize && m_FarAliveEvent.Open())
 				{
-					DWORD nCurTick = GetTickCount();
-
-					// Чтобы опрос события не шел слишком часто.
-					if (mn_LastFarReadTick == 0 ||
-					        (nCurTick - mn_LastFarReadTick) >= (FAR_ALIVE_TIMEOUT/2))
+					const DWORD aliveCurTick = GetTickCount();
+					const DWORD aliveReadDelta = aliveCurTick - mn_LastFarReadTick;
+					// Don't call Wait too often
+					if (mn_LastFarReadTick == 0 || aliveReadDelta >= (gpSet->nFarHourglassDelay /4))
 					{
 						//if (WaitForSingleObject(mh_FarAliveEvent, 0) == WAIT_OBJECT_0)
 						if (m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
 						{
-							mn_LastFarReadTick = nCurTick ? nCurTick : 1;
+							mn_LastFarAliveTick = mn_LastFarReadTick = aliveCurTick ? aliveCurTick : 1;
 							bAlive = true; // живой
+							_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
 						}
 						#ifdef _DEBUG
-						else
+						else if (aliveReadDelta > gpSet->nFarHourglassDelay)
 						{
-							mn_LastFarReadTick = nCurTick - FAR_ALIVE_TIMEOUT - 1;
-							bAlive = false; // занят
+							mn_LastFarReadTick = aliveCurTick - gpSet->nFarHourglassDelay - 1; // don't get too away
+							bAlive = false; // Far is buzy
 						}
 						#endif
 					}
 					else
 					{
-						bAlive = true; // еще не успело протухнуть
+						bAlive = (aliveReadDelta < gpSet->nFarHourglassDelay); // Should be yet valid
+						_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
 					}
-
-					//if (mn_LastFarReadIdx != mp_FarInfo->nFarReadIdx) {
-					//	mn_LastFarReadIdx = mp_FarInfo->nFarReadIdx;
-					//	mn_LastFarReadTick = GetTickCount();
-					//	DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
-					//	bAlive = true;
-					//}
 				}
 				else
 				{
 					bAlive = true; // если нет фаровского плагина, или это не фар
+					_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
 				}
 
 				//if (!bAlive) {
@@ -3223,20 +3217,6 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				//}
 				if (bActive)
 				{
-					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в mp_ConEmu, а не в этом instance RCon!");
-
-					#ifdef _DEBUG
-					if (!IsDebuggerPresent())
-					{
-						bool lbIsAliveDbg = isAlive();
-
-						if (lbIsAliveDbg != bAlive)
-						{
-							_ASSERTE(lbIsAliveDbg == bAlive);
-						}
-					}
-					#endif
-
 					if (bLastAlive != bAlive || !bLastAliveActive)
 					{
 						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
@@ -15542,30 +15522,17 @@ bool CRealConsole::isAlive()
 {
 	AssertThisRet(false);
 
-	if (GetFarPID(TRUE)!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/)
+	bool lbAlive = true;
+
+	if (GetFarPID(TRUE) != 0 && mn_LastFarReadTick)
 	{
-		bool lbAlive;
-		DWORD nLastReadTick = mn_LastFarReadTick;
-
-		if (nLastReadTick)
-		{
-			DWORD nCurTick = GetTickCount();
-			DWORD nDelta = nCurTick - nLastReadTick;
-
-			if (nDelta < FAR_ALIVE_TIMEOUT)
-				lbAlive = true;
-			else
-				lbAlive = false;
-		}
-		else
-		{
-			lbAlive = false;
-		}
-
-		return lbAlive;
+		const DWORD nLastReadTick = mn_LastFarReadTick;
+		const DWORD nCurTick = GetTickCount();
+		const DWORD nDelta = nCurTick - nLastReadTick;
+		lbAlive = nLastReadTick && (nDelta < gpSet->nFarHourglassDelay);
 	}
 
-	return true;
+	return lbAlive;
 }
 
 LPCWSTR CRealConsole::GetConStatus()

@@ -11615,7 +11615,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 		{
 			if (pRCon)
 			{
-				BOOL lbAlive = pRCon->isAlive();
+				const bool lbAlive = pRCon->isAlive();
 				if (!lbAlive)
 				{
 					hCur = mh_CursorAppStarting;

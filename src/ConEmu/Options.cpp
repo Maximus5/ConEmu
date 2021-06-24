@@ -795,7 +795,7 @@ void Settings::InitSettings()
 	bShowFarWindows = true;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isMouseDragWindow = true;
-	isFarHourglass = true; nFarHourglassDelay = 500;
+	isFarHourglass = true; nFarHourglassDelay = 2000;
 	isDisableFarFlashing = false; isDisableAllFlashing = false;
 	isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true; isDropUseMenu = 2;
 	//nLDragKey = 0; nRDragKey = VK_LCONTROL;

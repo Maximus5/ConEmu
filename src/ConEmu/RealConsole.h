@@ -71,8 +71,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //... and so on
 
 
-#define FAR_ALIVE_TIMEOUT gpSet->nFarHourglassDelay //1000
-
 #define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
 #define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
 #define CONSOLE_DBLCLICK_SELECTION 0x0400 // word was selected by double click, skip WM_LBUTTONUP
@@ -868,8 +866,14 @@ class CRealConsole
 		bool LogInput(INPUT_RECORD* pRec);
 		bool RecreateProcessStart();
 		void RequestStartup(bool bForce = false);
-		//
+
+		// CEFARALIVEEVENT, used to check if Far is reading console input (is alive)
 		MEvent m_FarAliveEvent;
+		// last tick when m_FarAliveEvent was checked
+		DWORD mn_LastFarReadTick;
+		// last tick when m_FarAliveEvent was set
+		DWORD mn_LastFarAliveTick;
+
 		MPipe<CESERVER_REQ_HDR,CESERVER_REQ_HDR> m_GetDataPipe;
 		MEvent m_ConDataChanged;
 		// CECONMAPNAME
@@ -893,7 +897,6 @@ class CRealConsole
 		void CloseColorMapping();
 		//
 		DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx;
-		DWORD mn_LastFarReadTick;
 		bool OpenFarMapData();
 		void CloseFarMapData(MSectionLock* pCS = nullptr);
 		bool OpenMapHeader(bool abFromAttach = false);
