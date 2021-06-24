@@ -1469,6 +1469,11 @@
       "ko_KR": "Win+Number, Win+Arrows, Alt+Esc, Alt+Tab 등의 가로 채기를 허용합니다",
       "id": 1649 }
     ,
+    "cbIntegralSize": {
+      "en": [ "When checked, ConEmu windows size is changed proportionally to console cells.\n"
+            , "Option is disabled automatically for Quake and Inside modes, and for 100% window width or height." ],
+      "id": 2594 }
+    ,
     "cbItalic": {
       "en": "Main font italic",
       "ru": "Курсивное начертание текста в консоли",
@@ -3486,6 +3491,10 @@
       "ko": "ConEmu가 초점을 잃으면 내용이 흐려질 수 있습니다. 여기서 \"낮은 시프트\" (어두운 색상을 더 밝게 함)를 지정할 수 있습니다.",
       "ko_KR": "ConEmu가 초점을 잃으면 내용이 흐려질 수 있습니다. 여기서 \"낮은 시프트\" (어두운 색상을 더 밝게 함)를 지정할 수 있습니다.",
       "id": 1624 }
+    ,
+    "tFarHourglass": {
+      "en": "Far Manager not-responding duration in milliseconds before changing mouse cursor to AppStarting",
+      "id": 3111 }
     ,
     "tFontCharset": {
       "en": "Main font charset",
@@ -11130,16 +11139,16 @@
       "id": 1765 }
     ,
     "cbFarHourglass": {
-      "en": "Change mouse cursor if busy",
-      "ru": "Изменить курсор мыши, если занят",
+      "en": "Change mouse cursor if busy (ms)",
+      "ru": "Изменить курсор мыши, если занят (мс)",
       "_zh": "如果没有响应，鼠标变沙漏形状",
-      "de": "Mauszeiger ändern wenn beschäftigt",
-      "ja": "ビジー状態の場合はマウスカーソルを変更する",
-      "es": "Cambiar cursor del ratón si está ocupado",
-      "pl": "Zmień kursor myszy, jeśli jest zajęty",
-      "it_IT": "Cambia cursore mouse se occupato",
-      "ko": "바쁜 경우 마우스 커서 변경",
-      "ko_KR": "바쁜 경우 마우스 커서 변경",
+      "de": "Mauszeiger ändern wenn beschäftigt (ms)",
+      "_ja": "ビジー状態の場合はマウスカーソルを変更する",
+      "_es": "Cambiar cursor del ratón si está ocupado",
+      "_pl": "Zmień kursor myszy, jeśli jest zajęty",
+      "_it_IT": "Cambia cursore mouse se occupato",
+      "_ko": "바쁜 경우 마우스 커서 변경",
+      "_ko_KR": "바쁜 경우 마우스 커서 변경",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
