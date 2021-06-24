@@ -1032,7 +1032,7 @@ wrap:
 			{
 				if (leadingQuotes == 1)
 				{
-					if (IsQuotationNeeded(szExe) || (exeIsQuoted && argumentsPtr && wcschr(argumentsPtr, L'"') != nullptr))
+					if (IsQuotationNeeded(szExe) || (exeIsQuoted && argumentsPtr && (*argumentsPtr == 0 || wcschr(argumentsPtr, L'"') != nullptr)))
 						startEndQuot = StartEndQuot::NeedAdd;
 					else if (!exeIsQuoted)
 						startEndQuot = StartEndQuot::NeedCut;

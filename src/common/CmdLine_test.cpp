@@ -336,6 +336,9 @@ TEST(CmdLine, IsNeedCmd)
 	TestIsNeedCmd(false, L"\"C:\\1\\d,2.cmd\"",
 		L"C:\\1\\d,2.cmd",
 		true, StartEndQuot::NeedAdd, true, false);
+	TestIsNeedCmd(false, L"\"C:\\1=\\a.cmd\"",
+		L"C:\\1=\\a.cmd",
+		true, StartEndQuot::NeedAdd, true, false);
 	TestIsNeedCmd(false, L"\"C:\\1\\d.cmd 2 test\"",
 		L"C:\\1\\d.cmd",
 		true, StartEndQuot::NeedCut, true, false);
