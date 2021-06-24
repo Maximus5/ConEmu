@@ -248,6 +248,7 @@ static LngPredefined gsDataHints[] = {
 	{ tCursorMinSize,          L"Specified minimal size of cursor in pixels (regardless of ‘Fixed cursor size’)" },
 	{ tFadeHigh,               L"When ConEmu loses focus, its contents may be faded. You may specify here \"high shift\" (which makes light colors darker)." },
 	{ tFadeLow,                L"When ConEmu loses focus, its contents may be faded. You may specify here \"low shift\" (which makes dark colors lighter)." },
+	{ tFarHourglass,           L"Far Manager not-responding duration in milliseconds before changing mouse cursor to AppStarting" },
 	{ tFontCharset,            L"Main font charset" },
 	{ tFontFace,               L"Face name for main font" },
 	{ tFontFace2,              L"Font face used to draw pseudographics or specified range of symbols.\r\nE.g. main - \"Consolas\", additional - \"Segoe UI\"." },

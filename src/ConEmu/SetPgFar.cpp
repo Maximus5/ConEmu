@@ -66,6 +66,7 @@ LRESULT CSetPgFar::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbKeyBarRClick, gpSet->isKeyBarRClick);
 
 	checkDlgButton(hDlg, cbFarHourglass, gpSet->isFarHourglass);
+	SetDlgItemInt(hDlg, tFarHourglass, gpSet->nFarHourglassDelay, false);
 
 	checkDlgButton(hDlg, cbExtendUCharMap, gpSet->isExtendUCharMap);
 
@@ -166,6 +167,14 @@ LRESULT CSetPgFar::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		}
 		break;
 	} // case tTabConsole: case tTabViewer: case tTabEditor: case tTabEditorMod:
+
+	case tFarHourglass:
+	{
+		BOOL ok = FALSE;
+		const UINT value = GetDlgItemInt(hDlg, tFarHourglass, &ok, FALSE);
+		gpSet->nFarHourglassDelay = (ok && value) ? value : 2000;
+		break;
+	} // case tFarHourglass:
 
 	default:
 		_ASSERTE(FALSE && "EditBox was not processed");
