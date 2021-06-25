@@ -381,22 +381,25 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 const wchar_t* msprintf(wchar_t* lpOut, size_t cchOutMax, const wchar_t* lpFmt, ...);
 const char* msprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, ...);
 const wchar_t* mvsprintf(wchar_t* lpOut, size_t cchOutMax, const wchar_t* lpFmt, va_list argptr);
-const char* mvsprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, const va_list argptr);
+const char* mvsprintf(char* lpOut, size_t cchOutMax, const char* lpFmt, va_list argptr);
 
 int lstrcmpni(LPCSTR asStr1, LPCSTR asStr2, int cchMax);
 int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax);
 int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase);
 
 #define _wcscpy_c(Dst,cchDest,Src) StringCchCopyW(Dst, cchDest, Src)
-#define _wcscpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); StringCchCopyNW(Dst, cchDest, Src, cchSrc); }
+#define _wcscpyn_c(Dst,cchDest,Src,cchSrc) { StringCchCopyNW(Dst, cchDest, Src, cchSrc); }
 #define _wcscat_c(Dst,cchDest,Src) StringCchCatW(Dst, cchDest, Src)
 #define _wcscatn_c(Dst,cchDest,Src,cchSrc) { \
-			_ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); size_t nDestLen = lstrlen(Dst); \
-			if (((INT_PTR)(nDestLen+1)) >= ((INT_PTR)cchDest) || (cchSrc<0)) DebugBreak(); else StringCchCopyNW(Dst+nDestLen,cchDest-nDestLen,Src,cchSrc); \
+			const size_t nDestLen = lstrlen(Dst); \
+			if (((INT_PTR)(nDestLen + 1)) >= ((INT_PTR)(cchDest)) || ((cchSrc) < 0)) \
+				DebugBreak(); \
+			else \
+				StringCchCopyNW((Dst) + nDestLen, (cchDest) - nDestLen, Src, cchSrc); \
 		}
 #define _strcpy_c(Dst,cchDest,Src) StringCchCopyA(Dst, cchDest, Src)
 #define _strcat_c(Dst,cchDest,Src) StringCchCatA(Dst, cchDest, Src)
-#define _strcpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); StringCchCopyNA(Dst, cchDest, Src, cchSrc); }
+#define _strcpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)(cchDest))>=((INT_PTR)(cchSrc))); StringCchCopyNA(Dst, cchDest, Src, cchSrc); }
 
 #define lstrempty(s) (!(s) || !*(s))
 #define lstrnempty(s) ((s) && *(s))

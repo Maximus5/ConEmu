@@ -12155,7 +12155,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 			wchar_t szClass[128];
 			if (GetClassName(hPoint, szClass, countof(szClass))
-				&& (lstrcmp(szClass, VirtualConsoleClass) == 0 || lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+				&& (lstrcmp(szClass, VirtualConsoleClass) == 0 || lstrcmp(szClass, VirtualConsoleClassMain) == 0)) //-V501
 			{
 				mp_Tip->HideTip();
 			}

@@ -537,7 +537,7 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 {
 	if (asConfigName && *asConfigName)
 	{
-		_wcscpyn_c(ConfigName, countof(ConfigName), asConfigName, countof(ConfigName));
+		_wcscpyn_c(ConfigName, countof(ConfigName), asConfigName, wcslen(asConfigName));
 		ConfigName[countof(ConfigName)-1] = 0; //checkpoint
 		wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\");
 		wcscat_c(ConfigPath, ConfigName);

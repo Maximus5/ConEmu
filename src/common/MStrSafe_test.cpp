@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <limits>
 
-extern bool gbVerifyIgnoreAsserts;
+extern bool gbVerifyIgnoreAsserts;  // NOLINT(readability-redundant-declaration)
 
 TEST(MStrSafe, CompareIgnoreCaseNullsA)
 {
@@ -183,4 +183,65 @@ TEST(MStrSafe, msprintf)
 	EXPECT_STREQ(wBuf, L"Abcd");
 	
 	gbVerifyIgnoreAsserts = false;
+}
+
+TEST(MStrSafe, wcscpyn_c)
+{
+	wchar_t data[16] = L"";
+
+	wmemset(data, L' ', countof(data) - 1);
+	_wcscpyn_c(data, countof(data), L"abc", 3);
+	EXPECT_STREQ(data, L"abc");
+
+	wmemset(data, L' ', countof(data) - 1);
+	_wcscpyn_c(data, countof(data), L"abcd", 2);
+	EXPECT_STREQ(data, L"ab");
+
+	wmemset(data, L' ', countof(data) - 1);
+	_wcscpyn_c(data, 4, L"123456", 6);
+	EXPECT_STREQ(data, L"123");
+
+	wmemset(data, L' ', countof(data) - 1);
+	_wcscpyn_c(data, countof(data), L"qwerty", 10);
+	EXPECT_STREQ(data, L"qwerty");
+}
+
+TEST(MStrSafe, strcpyn_c)
+{
+	char data[16] = "";
+
+	memset(data, ' ', countof(data) - 1);
+	_strcpyn_c(data, countof(data), "abc", 3);
+	EXPECT_STREQ(data, "abc");
+
+	memset(data, ' ', countof(data) - 1);
+	_strcpyn_c(data, countof(data), "abcd", 2);
+	EXPECT_STREQ(data, "ab");
+
+	memset(data, ' ', countof(data) - 1);
+	_strcpyn_c(data, 4, "123456", 6);
+	EXPECT_STREQ(data, "123");
+
+	memset(data, ' ', countof(data) - 1);
+	_strcpyn_c(data, countof(data), "qwerty", 10);
+	EXPECT_STREQ(data, "qwerty");
+}
+
+TEST(MStrSafe, wcscatn_c)
+{
+	wchar_t data[16] = L"";
+
+	_wcscpyn_c(data, countof(data), L"abc", 3);
+	_wcscatn_c(data, countof(data), L"qwerty", 3);
+	EXPECT_STREQ(data, L"abcqwe");
+
+	_wcscpyn_c(data, 10, L"abc", 3);
+	EXPECT_STREQ(data, L"abc");
+	_wcscatn_c(data, 10, L"qwerty123456", 10);
+	EXPECT_STREQ(data, L"abcqwerty");
+
+	// wmemset(data, L'x', countof(data) - 1);
+	// data[countof(data) - 1] = L'\0';
+	// EXPECT_THROW(_wcscatn_c(data, countof(data), L"qwerty", 3)); -- generates DebugBreak()
+	// EXPECT_STREQ(data, L"ab");
 }
