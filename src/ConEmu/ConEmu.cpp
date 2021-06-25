@@ -6477,12 +6477,12 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* p
 				RConStartArgsEx parsedArgs;
 				pGrp->ParseGuiArgs(&parsedArgs);
 
-				if (lstrempty(pArgs->pszStartupDir) && lstrnempty(parsedArgs.pszStartupDir))
+				if (IsStrEmpty(pArgs->pszStartupDir) && IsStrNotEmpty(parsedArgs.pszStartupDir))
 					ExchangePtr(pArgs->pszStartupDir, parsedArgs.pszStartupDir);
-				if (lstrempty(pArgs->pszIconFile) && lstrnempty(parsedArgs.pszIconFile))
+				if (IsStrEmpty(pArgs->pszIconFile) && IsStrNotEmpty(parsedArgs.pszIconFile))
 					ExchangePtr(pArgs->pszIconFile, parsedArgs.pszIconFile);
 
-				if (lstrnempty(pArgs->pszIconFile))
+				if (IsStrNotEmpty(pArgs->pszIconFile))
 				{
 					// Функция сама проверит - можно или нет менять иконку приложения
 					SetWindowIcon(pArgs->pszIconFile);

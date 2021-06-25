@@ -401,8 +401,8 @@ int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase);
 #define _strcat_c(Dst,cchDest,Src) StringCchCatA(Dst, cchDest, Src)
 #define _strcpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)(cchDest))>=((INT_PTR)(cchSrc))); StringCchCopyNA(Dst, cchDest, Src, cchSrc); }
 
-#define lstrempty(s) (!(s) || !*(s))
-#define lstrnempty(s) ((s) && *(s))
+#define IsStrEmpty(s) (!(s) || !*(s))
+#define IsStrNotEmpty(s) ((s) && *(s))
 
 template <size_t size>
 const wchar_t* ltow_s(int value, wchar_t (&buffer)[size], int radix)

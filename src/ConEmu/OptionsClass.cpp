@@ -535,7 +535,7 @@ LPCWSTR CSettings::GetConfigName()
 
 void CSettings::SetConfigName(LPCWSTR asConfigName)
 {
-	if (asConfigName && *asConfigName)
+	if (IsStrNotEmpty(asConfigName))
 	{
 		_wcscpyn_c(ConfigName, countof(ConfigName), asConfigName, wcslen(asConfigName));
 		ConfigName[countof(ConfigName)-1] = 0; //checkpoint
