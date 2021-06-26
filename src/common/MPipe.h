@@ -58,14 +58,14 @@ class MPipeBase
 		wchar_t ms_Module[32] = L"ConEmu";
 		wchar_t ms_Error[MAX_PATH*2] = L"";
 
-		HANDLE mh_Pipe = NULL, mh_Heap = NULL, mh_TermEvent = NULL;
+		HANDLE mh_Pipe = nullptr, mh_Heap = nullptr, mh_TermEvent = nullptr;
 		bool mb_Overlapped = false;
 		OVERLAPPED m_Ovl = {};
 
 		using CancelIo_t = BOOL (WINAPI*)(HANDLE hFile);
 		using CancelIoEx_t = BOOL (WINAPI*)(HANDLE hFile, LPOVERLAPPED lpOverlapped);
-		CancelIo_t _CancelIo = nullptr;
-		CancelIoEx_t _CancelIoEx = nullptr;
+		CancelIo_t cancelIo_ = nullptr;
+		CancelIoEx_t cancelIoEx_ = nullptr;
 
 		void* mp_Out = nullptr;
 		size_t mn_OutSize = 0, mn_MaxOutSize = 0;
@@ -80,7 +80,9 @@ class MPipeBase
 
 		/// Allocate buffer *mp_Out* and store (optional) *pPart* read before
 		/// @param nAllSize size in bytes
-		void* AllocateBuffer(size_t nAllSize, void* pPart = nullptr, size_t cbPart = 0)
+		/// @param pPart Partially retrieved head of the message
+		/// @param cbPart Size of pPart in bytes
+		void* AllocateBuffer(size_t nAllSize, void* pPart = nullptr, const size_t cbPart = 0)
 		{
 			if (!mp_Out || mn_MaxOutSize < nAllSize)
 			{
@@ -88,9 +90,9 @@ class MPipeBase
 
 				if (!ptrNew)
 				{
-					_ASSERTE(ptrNew!=NULL);  // -V547
+					_ASSERTE(ptrNew!=nullptr);  // -V547
 					msprintf(ms_Error, countof(ms_Error), L"%s: Can't allocate %u bytes!", ms_Module, nAllSize);
-					return FALSE;
+					return nullptr;
 				}
 
 				if (pPart && cbPart)
@@ -98,7 +100,7 @@ class MPipeBase
 					memmove(ptrNew, pPart, cbPart); //-V106
 				}
 
-				if (mp_Out) HeapFree(mh_Heap, 0, mp_Out);
+				ReleaseBuffer();
 
 				mn_MaxOutSize = nAllSize;
 				mp_Out = ptrNew;
@@ -108,7 +110,7 @@ class MPipeBase
 
 		void SetHandle(HANDLE hPipe)
 		{
-			_ASSERTE(mh_Pipe == NULL);
+			_ASSERTE(mh_Pipe == nullptr);
 			Close();
 			mh_Pipe = hPipe;
 		}
@@ -117,15 +119,22 @@ class MPipeBase
 		MPipeBase()
 			: mh_Heap(GetProcessHeap())
 		{
-			_ASSERTE(mh_Heap!=NULL);
-			MModule kernel(L"kernel32.dll");
-			kernel.GetProcAddress("CancelIo", _CancelIo);
-			kernel.GetProcAddress("CancelIoEx", _CancelIoEx);
+			_ASSERTE(mh_Heap!=nullptr);
+			const MModule kernel(L"kernel32.dll");
+			kernel.GetProcAddress("CancelIo", cancelIo_);
+			kernel.GetProcAddress("CancelIoEx", cancelIoEx_);
 		}
 
-		void SetTimeout(DWORD anTimeout)
+		MPipeBase(const MPipeBase&) = delete;
+		MPipeBase(MPipeBase&&) = delete;
+		MPipeBase& operator=(const MPipeBase&) = delete;
+		MPipeBase& operator=(MPipeBase&&) = delete;
+
+		virtual ~MPipeBase()
 		{
-			// #PIPE Если anTimeout!=-1 - создавать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout
+			Close();
+			MPipeBase::ReleaseBuffer();
+			_ASSERTE(mn_CloseCount == mn_OpenCount);
 		}
 
 		void SetTermEvent(HANDLE hTermEvent)
@@ -133,51 +142,49 @@ class MPipeBase
 			mh_TermEvent = hTermEvent;
 		}
 
-		virtual ~MPipeBase()
-		{
-			Close();
-			ReleaseBuffer();
-			_ASSERTE(mn_CloseCount==mn_OpenCount);
-		}
-
 		virtual void ReleaseBuffer()
 		{
+			if (mp_Out)
+			{
+				HeapFree(mh_Heap, 0, mp_Out);
+				mp_Out = nullptr;
+			}
 		}
 
-		virtual void Close()
+		void Close()
 		{
 			if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
 			{
 				++mn_CloseCount;
-				if (_CancelIoEx)
-					_CancelIoEx(mh_Pipe, NULL);
-				else if (_CancelIo)
-					_CancelIo(mh_Pipe);
+				if (cancelIoEx_)
+					cancelIoEx_(mh_Pipe, nullptr);
+				else if (cancelIo_)
+					cancelIo_(mh_Pipe);
 				CloseHandle(mh_Pipe);
 			}
 			if (m_Ovl.hEvent)
 			{
 				SafeCloseHandle(m_Ovl.hEvent);
-				m_Ovl.hEvent = NULL;
+				m_Ovl.hEvent = nullptr;
 			}
 
-			mh_Pipe = NULL;
+			mh_Pipe = nullptr;
 		}
 
 		// Informational
-		LPCWSTR GetErrorText()
+		LPCWSTR GetErrorText() const
 		{
 			return ms_Error;
 		}
 
-		DWORD GetErrorCode()
+		DWORD GetErrorCode() const
 		{
 			return mn_ErrCode;
 		}
 };
 
 template <class T_IN, class T_OUT>
-class MPipe : public MPipeBase
+class MPipe final : public MPipeBase
 {
 	protected:
 		WCHAR ms_PipeName[MAX_PATH] = L"";
@@ -189,16 +196,16 @@ class MPipe : public MPipeBase
 		{
 		};
 
-		virtual void ReleaseBuffer() override
+		void ReleaseBuffer() override
 		{
 			if (mp_Out && mp_Out != &m_Tmp)
 			{
 				if (mh_Heap)
 					HeapFree(mh_Heap, 0, mp_Out);
 				else
-					_ASSERTE(mh_Heap!=NULL);  // -V547
+					_ASSERTE(mh_Heap != nullptr);  // -V547
 			}
-			mp_Out = NULL;
+			mp_Out = nullptr;
 		}
 
 		void InitName(const wchar_t* asModule, const wchar_t *aszTemplate, const wchar_t *Parm1, DWORD Parm2)
@@ -215,10 +222,10 @@ class MPipe : public MPipeBase
 			if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
 				return true;
 
-			mb_Overlapped = (mh_TermEvent != NULL);
-			if (mb_Overlapped && (m_Ovl.hEvent == NULL))
+			mb_Overlapped = (mh_TermEvent != nullptr);
+			if (mb_Overlapped && (m_Ovl.hEvent == nullptr))
 			{
-				m_Ovl.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+				m_Ovl.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 			}
 
 			mh_Pipe = ExecuteOpenPipe(ms_PipeName, ms_Error, ms_Module, 0, 0, mb_Overlapped, mh_TermEvent);
@@ -228,11 +235,11 @@ class MPipe : public MPipeBase
 				SetErrorCode(GetLastError());
 				++mn_FailCount;
 				_ASSERTE(mh_Pipe != INVALID_HANDLE_VALUE);
-				mh_Pipe = NULL;
+				mh_Pipe = nullptr;
 			}
 
 			++mn_OpenCount;
-			return (mh_Pipe!=NULL);
+			return (mh_Pipe!=nullptr);
 		}
 
 		bool Transact(const T_IN* apIn, DWORD anInSize, const T_OUT** rpOut)
@@ -246,6 +253,7 @@ class MPipe : public MPipeBase
 			ms_Error[0] = 0;
 			*rpOut = &m_Tmp;
 
+			// ReSharper disable once CppDeclaratorNeverUsed
 			DEBUGTEST(DWORD nOpenTick = GetTickCount());
 
 			// If pipe is opened already, function just returns true
@@ -259,7 +267,7 @@ class MPipe : public MPipeBase
 			memmove_s(&m_In, sizeof(m_In), apIn, std::min<size_t>(anInSize, sizeof(m_In)));
 
 			bool fSuccess = false;
-			DWORD cbRead, dwErr, cbReadBuf, nOverlappedWait;
+			DWORD cbRead, cbReadBuf, nOverlappedWait;
 
 			// Send a message to the pipe server and read the response.
 			cbRead = 0;
@@ -267,26 +275,31 @@ class MPipe : public MPipeBase
 
 			if (mp_Out && (mn_MaxOutSize > sizeof(m_Tmp)))
 			{
-				ptrOut = (T_OUT*)mp_Out;
-				cbReadBuf = (DWORD)std::min<size_t>(mn_MaxOutSize, std::numeric_limits<DWORD>::max());
-				*rpOut = (T_OUT*)mp_Out;
+				ptrOut = static_cast<T_OUT*>(mp_Out);
+				cbReadBuf = static_cast<DWORD>(std::min<size_t>(mn_MaxOutSize, std::numeric_limits<DWORD>::max()));
+				*rpOut = static_cast<T_OUT*>(mp_Out);
 			}
 			else
 			{
 				ptrOut = &m_Tmp;
-				cbReadBuf = (DWORD)sizeof(m_Tmp);
+				cbReadBuf = static_cast<DWORD>(sizeof(m_Tmp));
 			}
 
+			// ReSharper disable once CppLocalVariableMayBeConst
 			DEBUGTEST(DWORD nStartTick = GetTickCount());
 
 			//SetLastError(0);
 
 			// #PIPE Зависала при закрытии консоли?
-			fSuccess = TransactNamedPipe(mh_Pipe, (LPVOID)apIn, anInSize, ptrOut, cbReadBuf, &cbRead, mb_Overlapped ? &m_Ovl : NULL);
-			dwErr = fSuccess ? 0 : GetLastError();
+			fSuccess = TransactNamedPipe(
+				mh_Pipe, const_cast<void*>(static_cast<const void*>(apIn)), anInSize,
+				ptrOut, cbReadBuf, &cbRead, mb_Overlapped ? &m_Ovl : nullptr);
+			DWORD dwErr = fSuccess ? 0 : GetLastError();
 			SetErrorCode(dwErr);
 
+			// ReSharper disable once CppDeclaratorNeverUsed
 			DEBUGTEST(DWORD nStartTick2 = GetTickCount());
+			// ReSharper disable once CppTooWideScope
 			DEBUGTEST(DWORD nTickOvl = 0);
 
 			// MSDN: If the operation cannot be completed immediately,
@@ -319,8 +332,9 @@ class MPipe : public MPipeBase
 			}
 
 			#ifdef _DEBUG
-			DWORD nEndTick = GetTickCount();
-			DWORD nDelta = nEndTick - nStartTick;
+			const DWORD nEndTick = GetTickCount();
+			const DWORD nDelta = nEndTick - nStartTick;
+			// ReSharper disable once CppDeclaratorNeverUsed
 			int nTermWait = mh_TermEvent ? WaitForSingleObject(mh_TermEvent, 0) : -1;
 			if (nDelta >= TRANSACT_WARN_TIMEOUT && !IsDebuggerPresent())
 			{
@@ -342,7 +356,7 @@ class MPipe : public MPipeBase
 				DWORD nCmd = 0;
 
 				if (anInSize >= sizeof(CESERVER_REQ_HDR))
-					nCmd = ((CESERVER_REQ_HDR*)apIn)->nCmd;
+					nCmd = static_cast<const CESERVER_REQ_HDR*>(apIn)->nCmd;
 
 				msprintf(ms_Error, countof(ms_Error), L"%s: TransactNamedPipe failed, Cmd=%i, ErrCode=%u!", ms_Module, nCmd, dwErr);
 				++mn_FailCount;
@@ -356,34 +370,34 @@ class MPipe : public MPipeBase
 				_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));  // -V547
 				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Only %i bytes received, required %i bytes at least!",
-				          ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
+				          ms_Module, cbRead, static_cast<DWORD>(sizeof(CESERVER_REQ_HDR)));
 				return false;
 			}
 
-			if (((CESERVER_REQ_HDR*)apIn)->nCmd != ((CESERVER_REQ_HDR*)&m_In)->nCmd)
+			if (static_cast<const CESERVER_REQ_HDR*>(apIn)->nCmd != static_cast<const CESERVER_REQ_HDR*>(&m_In)->nCmd)
 			{
-				_ASSERTE(((CESERVER_REQ_HDR*)apIn)->nCmd == ((CESERVER_REQ_HDR*)&m_In)->nCmd);
+				_ASSERTE((static_cast<const CESERVER_REQ_HDR*>(apIn))->nCmd == (static_cast<const CESERVER_REQ_HDR*>(&m_In))->nCmd);
 				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Invalid CmdID=%i received, required CmdID=%i!",
-				          ms_Module, ((CESERVER_REQ_HDR*)apIn)->nCmd, ((CESERVER_REQ_HDR*)&m_In)->nCmd);
+				          ms_Module, static_cast<const CESERVER_REQ_HDR*>(apIn)->nCmd, static_cast<const CESERVER_REQ_HDR*>(&m_In)->nCmd);
 				return false;
 			}
 
-			if (((CESERVER_REQ_HDR*)ptrOut)->nVersion != CESERVER_REQ_VER)
+			if (static_cast<CESERVER_REQ_HDR*>(ptrOut)->nVersion != CESERVER_REQ_VER)
 			{
-				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->nVersion == CESERVER_REQ_VER);
+				_ASSERTE((static_cast<CESERVER_REQ_HDR*>(ptrOut))->nVersion == CESERVER_REQ_VER);
 				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Old version packet received (%i), required (%i)!",
-				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->nCmd, CESERVER_REQ_VER);
+				          ms_Module, static_cast<CESERVER_REQ_HDR*>(ptrOut)->nCmd, CESERVER_REQ_VER);
 				return false;
 			}
 
-			if (((CESERVER_REQ_HDR*)ptrOut)->cbSize < cbRead)
+			if (static_cast<CESERVER_REQ_HDR*>(ptrOut)->cbSize < cbRead)
 			{
-				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->cbSize >= cbRead);
+				_ASSERTE((static_cast<CESERVER_REQ_HDR*>(ptrOut))->cbSize >= cbRead);
 				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Invalid packet size (%i), must be greater or equal to %i!",
-				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->cbSize, cbRead);
+				          ms_Module, static_cast<CESERVER_REQ_HDR*>(ptrOut)->cbSize, cbRead);
 				return false;
 			}
 
@@ -393,9 +407,9 @@ class MPipe : public MPipeBase
 
 			if (dwErr == ERROR_MORE_DATA)
 			{
-				int nAllSize = ((CESERVER_REQ_HDR*)ptrOut)->cbSize;
+				int nAllSize = static_cast<CESERVER_REQ_HDR*>(ptrOut)->cbSize;
 
-				if (!mp_Out || (int)mn_MaxOutSize < nAllSize)
+				if (!mp_Out || static_cast<int>(mn_MaxOutSize) < nAllSize)
 				{
 					if (!AllocateBuffer(nAllSize, ptrOut, cbRead))
 					{
@@ -407,8 +421,8 @@ class MPipe : public MPipeBase
 					memmove(mp_Out, &m_Tmp, cbRead); //-V106
 				}
 
-				*rpOut = (T_OUT*)mp_Out;
-				LPBYTE ptrData = ((LPBYTE)mp_Out)+cbRead; //-V104
+				*rpOut = static_cast<T_OUT*>(mp_Out);
+				LPBYTE ptrData = static_cast<LPBYTE>(mp_Out) + cbRead; //-V104
 				nAllSize -= cbRead;
 
 				while (nAllSize>0)
@@ -416,7 +430,7 @@ class MPipe : public MPipeBase
 					DEBUGTEST(nMoreDataTick[1] = GetTickCount());
 					// Read from the pipe if there is more data in the message.
 					//WARNING: Если в буфере пайпа данных меньше чем nAllSize - повиснем!
-					fSuccess = ReadFile(mh_Pipe, ptrData, nAllSize, &cbRead, mb_Overlapped ? &m_Ovl : NULL);
+					fSuccess = ReadFile(mh_Pipe, ptrData, nAllSize, &cbRead, mb_Overlapped ? &m_Ovl : nullptr);
 					dwErr = fSuccess ? 0 : GetLastError();
 					SetErrorCode(dwErr);
 
@@ -475,7 +489,7 @@ class MPipe : public MPipeBase
 					_ASSERTE(dwErr != ERROR_MORE_DATA);  // -V547
 					//	BYTE cbTemp[512];
 					//	while (1) {
-					//		fSuccess = ReadFile( mh_Pipe, cbTemp, 512, &cbRead, NULL);
+					//		fSuccess = ReadFile( mh_Pipe, cbTemp, 512, &cbRead, nullptr);
 					//		dwErr = GetLastError();
 					//		SaveErrorCode(dwErr);
 					//		// Exit if an error other than ERROR_MORE_DATA occurs.
@@ -486,7 +500,8 @@ class MPipe : public MPipeBase
 
 				DEBUGTEST(nMoreDataTick[4] = GetTickCount());
 
-				// Надо ли это?
+				// Is that required?
+				// ReSharper disable once CppAssignedValueIsNeverUsed
 				fSuccess = FlushFileBuffers(mh_Pipe);
 
 				DEBUGTEST(nMoreDataTick[5] = GetTickCount());
@@ -496,11 +511,11 @@ class MPipe : public MPipeBase
 		};
 };
 
-class MPipeDual
+class MPipeDual final
 {
 protected:
 	MPipeBase read_pipe, write_pipe;
-	HANDLE mh_client_read = NULL, mh_client_write = NULL;
+	HANDLE mh_client_read = nullptr, mh_client_write = nullptr;
 
 public:
 	/// ctor for server side
@@ -537,8 +552,13 @@ public:
 		write_pipe.SetHandle(hWrite);
 	}
 
+	MPipeDual(const MPipeDual&) = delete;
+	MPipeDual(MPipeDual&&) = delete;
+	MPipeDual& operator=(const MPipeDual&) = delete;
+	MPipeDual& operator=(MPipeDual&&) = delete;
+
 	/// dtor, close handles
-	virtual ~MPipeDual()
+	~MPipeDual()
 	{
 		Close();
 	}
@@ -571,9 +591,9 @@ public:
 			rc.first = dst[0];
 			rc.second = dst[1];
 			CloseHandle(mh_client_read);
-			mh_client_read = NULL;
+			mh_client_read = nullptr;
 			CloseHandle(mh_client_write);
-			mh_client_write = NULL;
+			mh_client_write = nullptr;
 		}
 		return rc;
 	}
@@ -592,7 +612,7 @@ public:
 
 		DWORD written = 0;
 
-		if (!WriteFile(write_pipe.mh_Pipe, &size, sizeof(size), &written, NULL) || written != sizeof(size))
+		if (!WriteFile(write_pipe.mh_Pipe, &size, sizeof(size), &written, nullptr) || written != sizeof(size))
 		{
 			write_pipe.SetErrorCode(::GetLastError());
 			msprintf(write_pipe.ms_Error, countof(write_pipe.ms_Error),
@@ -601,7 +621,7 @@ public:
 			return false;
 		}
 
-		if (!WriteFile(write_pipe.mh_Pipe, data, size, &written, NULL) || written != size)
+		if (!WriteFile(write_pipe.mh_Pipe, data, size, &written, nullptr) || written != size)
 		{
 			write_pipe.SetErrorCode(::GetLastError());
 			msprintf(write_pipe.ms_Error, countof(write_pipe.ms_Error),
@@ -627,9 +647,9 @@ public:
 		std::pair<void*,uint32_t> rc = {};
 		DWORD avail = 0, read = 0; uint32_t data_size = 0;
 
-		if (blocking || (PeekNamedPipe(read_pipe.mh_Pipe, NULL, 0, NULL, &avail, NULL) && avail >= sizeof(data_size)))
+		if (blocking || (PeekNamedPipe(read_pipe.mh_Pipe, nullptr, 0, nullptr, &avail, nullptr) && avail >= sizeof(data_size)))
 		{
-			if (!ReadFile(read_pipe.mh_Pipe, &data_size, sizeof(data_size), &read, NULL) || read != sizeof(data_size))
+			if (!ReadFile(read_pipe.mh_Pipe, &data_size, sizeof(data_size), &read, nullptr) || read != sizeof(data_size))
 			{
 				read_pipe.SetErrorCode(::GetLastError());
 				msprintf(read_pipe.ms_Error, countof(read_pipe.ms_Error),
@@ -639,7 +659,7 @@ public:
 			}
 
 			rc.first = read_pipe.AllocateBuffer(std::max<uint32_t>(data_size, 64));
-			if (!ReadFile(read_pipe.mh_Pipe, rc.first, data_size, &read, NULL) || read != data_size)
+			if (!ReadFile(read_pipe.mh_Pipe, rc.first, data_size, &read, nullptr) || read != data_size)
 			{
 				read_pipe.SetErrorCode(::GetLastError());
 				msprintf(read_pipe.ms_Error, countof(read_pipe.ms_Error),

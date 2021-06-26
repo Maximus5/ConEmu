@@ -369,7 +369,7 @@ void CVConGroup::RemoveGroup()
 		CVConGroup* p = GetAnotherGroup();
 		if (!p)
 		{
-			_ASSERTE(p);
+			_ASSERTE(p); //-V571
 		}
 		else
 		{
@@ -707,8 +707,8 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 			}
 			else
 			{
-				// Тут нас интересует только X/Y
-				lbPosChanged = memcmp(&rcCurCon, &rcDC, sizeof(POINT))!=0
+				// Here we take care only about upper-left corner (X/Y)
+				lbPosChanged = memcmp(&rcCurCon, &rcDC, sizeof(POINT))!=0 //-V512
 					|| memcmp(&rcCurBack, &rcNewCon, sizeof(RECT))!=0;
 			}
 
@@ -885,7 +885,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 	CVConGuard VCon(apVCon);
 	if (!apVCon->mp_Group)
 	{
-		_ASSERTE(apVCon->mp_Group);
+		_ASSERTE(apVCon->mp_Group); //-V571
 		return false;
 	}
 
@@ -1326,7 +1326,7 @@ void CVConGroup::MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon)
 	CVConGroup* pGroup = GetRootOfVCon(pVConCurrent);
 	if (!pGroup)
 	{
-		_ASSERTE(pGroup);
+		_ASSERTE(pGroup); //-V571
 		return;
 	}
 
@@ -5738,7 +5738,7 @@ void CVConGroup::ReSizePanes(RECT workspace)
 	if (!gp_VActive)
 	{
 		// Еще нету никого
-		_ASSERTE(gp_VActive);
+		_ASSERTE(gp_VActive); //-V571
 		return;
 	}
 
@@ -5966,7 +5966,7 @@ wchar_t* CVConGroup::GetTasks()
 		CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
 		if (!pRoot)
 		{
-			_ASSERTE(pRoot);
+			_ASSERTE(pRoot); //-V571
 			continue;
 		}
 		// Already appended?

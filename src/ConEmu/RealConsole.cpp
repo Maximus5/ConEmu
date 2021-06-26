@@ -1303,11 +1303,11 @@ bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, anConemuC_PID);
 		if (!hProcess || hProcess == INVALID_HANDLE_VALUE)
 		{
-			hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
+			hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID); //-V773
 		}
 	}
 
-	if (!hProcess)
+	if (!hProcess || hProcess == INVALID_HANDLE_VALUE)
 	{
 		DisplayLastError(L"Can't open ConEmuC process! Attach is impossible!", dwErr = GetLastError());
 		return false;
@@ -2074,7 +2074,7 @@ int CRealConsole::EvalPromptCtrlBSCount(const AppSettings* pApp)
 		}
 
 		// Take line above?
-		if (!prev_line || !crFrom.Y || !data->GetConsoleLine(crFrom.Y-1, line) || !line.pChar)
+		if (!prev_line || !crFrom.Y || !data->GetConsoleLine(crFrom.Y-1, line))
 			break;
 		--crFrom.Y;
 		crFrom.X = line.nLen;
@@ -5720,7 +5720,7 @@ void CRealConsole::DoFindText(int nDirection)
 
 	if (gpSet->FindOptions.bFreezeConsole)
 	{
-		if (mp_ABuf->m_Type == rbt_Primary)
+		if (mp_ABuf->m_Type == rbt_Primary) //-V637
 		{
 			if (LoadAlternativeConsole(lam_FullBuffer) && (mp_ABuf->m_Type != rbt_Primary))
 			{

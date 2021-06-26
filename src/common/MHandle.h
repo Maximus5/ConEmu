@@ -82,7 +82,7 @@ public:
 
 	MHandle Duplicate(const DWORD desiredAccess, const bool inheritHandle = false) const
 	{
-		MHandle result{nullptr, CloseHandle};
+		MHandle result{ nullptr, CloseHandle };
 		if (HasHandle())
 		{
 			auto* currentProcess = GetCurrentProcess();

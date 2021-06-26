@@ -498,7 +498,7 @@ bool CRConData::GetConsoleLine(int nLine, ConsoleLinePtr& rpLine) const
 		rpLine.nLen = nWidth;
 	}
 
-	return true;
+	return (rpLine.pChar != nullptr);
 }
 
 bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelFull, bool& bRightPanel, RECT& rRightPanel, RECT& rRightPanelFull)

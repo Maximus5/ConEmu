@@ -612,7 +612,7 @@ void CSetPgDebug::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTic
 	case CECMD_POSTCONMSG:
 		swprintf_c(pData->szExtra,
 			L"HWND=x%08X, Msg=%u, wParam=" WIN3264TEST(L"x%08X",L"x%08X%08X") L", lParam=" WIN3264TEST(L"x%08X",L"x%08X%08X") L": ",
-			pInfo->Msg.hWnd, pInfo->Msg.nMsg, WIN3264WSPRINT(pInfo->Msg.wParam), WIN3264WSPRINT(pInfo->Msg.lParam));
+			pInfo->Msg.hWnd.GetPortableHandle(), pInfo->Msg.nMsg, WIN3264WSPRINT(pInfo->Msg.wParam), WIN3264WSPRINT(pInfo->Msg.lParam));
 		GetClassName(pInfo->Msg.hWnd, pData->szExtra+lstrlen(pData->szExtra), countof(pData->szExtra)-lstrlen(pData->szExtra));
 		break;
 	case CECMD_NEWCMD:
