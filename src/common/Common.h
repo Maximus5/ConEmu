@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    168
+#define CESERVER_REQ_VER    169
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1353,6 +1353,7 @@ struct ConEmuConsoleInfo
 	HWND2 DCWindow;
 	HWND2 ChildGui;
 	DWORD ServerPID;
+	HWND2 BackWindow;
 };
 
 // CEGUIINFOMAPNAME L"ConEmuGuiInfoMapping.%u" ( % == dwGuiProcessId )

@@ -2384,6 +2384,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 				CRealConsole* pRCon = pVCon->RCon();
 				ci.Console = pRCon->ConWnd();
 				ci.DCWindow = pVCon->GetView();
+				ci.BackWindow = pVCon->GetBack();
 				ci.ChildGui = pVCon->GuiWnd();
 				ci.Flags = (pVCon->isActive(false) ? ccf_Active : ccf_None)
 					| (pVCon->isVisible() ? ccf_Visible : ccf_None)
