@@ -210,7 +210,7 @@ BOOL IsProcessDebugged(DWORD nPID)
 	
 	if (_CheckRemoteDebuggerPresent)
 	{
-		HANDLE hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
+		auto* const hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
 		if (hProcess)
 		{
 			BOOL lb = FALSE;
@@ -232,28 +232,29 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	HANDLE hPipe = nullptr;
 	DWORD dwErr = 0, dwMode = 0;
 	BOOL fSuccess = FALSE;
-	DWORD dwStartTick = GetTickCount();
-	DWORD nSleepError = 10;
+	const DWORD dwStartTick = GetTickCount();
+	const DWORD nSleepError = 10;
 	// допустимое количество обломов, отличных от ERROR_PIPE_BUSY. после каждого - Sleep(nSleepError);
 	// Увеличим допустимое количество попыток, иначе облом наступает раньше секунды ожидания
 	const int nDefaultTries = 100;
 	int nTries = nDefaultTries;
 	// nTimeout должен ограничивать ВЕРХНЮЮ границу времени ожидания
 	_ASSERTE(EXECUTE_CMD_OPENPIPE_TIMEOUT >= nTimeout);
-	DWORD nOpenPipeTimeout = nTimeout ? std::min<DWORD>(nTimeout, EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
+	const DWORD nOpenPipeTimeout = nTimeout ? std::min<DWORD>(nTimeout, EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
 	_ASSERTE(nOpenPipeTimeout > 0);
-	DWORD nWaitPipeTimeout = std::min<DWORD>(250, nOpenPipeTimeout);
+	const DWORD nWaitPipeTimeout = std::min<DWORD>(250, nOpenPipeTimeout);
 
 	BOOL bWaitPipeRc = FALSE, bWaitCalled = FALSE;
 	DWORD nWaitPipeErr = 0;
 	DWORD nDuration = 0;
-	DWORD nStopWaitRc = (DWORD)-1;
+	DWORD nStopWaitRc = static_cast<DWORD>(-1);
 
 	#ifdef DEBUG_RETRY_PIPE_OPEN_DLG
 	wchar_t szDbgMsg[512], szTitle[128];
 	#endif
 
-	// WinXP SP1 и выше
+	// WinXP SP1 and higher
+	// ReSharper disable once CppDeclaratorNeverUsed
 	DEBUGTEST(BOOL lbServerIsDebugged = nServerPID ? IsProcessDebugged(nServerPID) : FALSE);
 
 	
@@ -261,7 +262,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 
 
 	// Try to open a named pipe; wait for it, if necessary.
-	while (1)
+	while (true)
 	{
 		hPipe = CreateFile(
 		            szPipeName,     // pipe name
@@ -309,10 +310,13 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		{
 			if ((nTries > 0) && (nDuration < nOpenPipeTimeout))
 			{
+				// ReSharper disable once CppAssignedValueIsNeverUsed
 				bWaitCalled = TRUE;
 
 				// All pipe instances are busy, so wait for a while (not more 500 ms).
+				// ReSharper disable once CppAssignedValueIsNeverUsed
 				bWaitPipeRc = WaitNamedPipe(szPipeName, nWaitPipeTimeout);
+				// ReSharper disable once CppAssignedValueIsNeverUsed
 				nWaitPipeErr = GetLastError();
 				UNREFERENCED_PARAMETER(bWaitPipeRc); UNREFERENCED_PARAMETER(nWaitPipeErr);
 				// -- 120602 раз они заняты (но живы), то будем ждать, пока не освободятся
@@ -386,11 +390,13 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 
 #ifdef _DEBUG
 	DWORD nCurState = 0, nCurInstances = 0;
+	// ReSharper disable once CppDeclaratorNeverUsed
 	BOOL bCurState = GetNamedPipeHandleState(hPipe, &nCurState, &nCurInstances, nullptr, nullptr, nullptr, 0);
 #endif
 
 	// The pipe connected; change to message-read mode.
 	dwMode = CE_PIPE_READMODE;
+	// ReSharper disable once CppAssignedValueIsNeverUsed
 	fSuccess = SetNamedPipeHandleState(
 	               hPipe,    // pipe handle
 	               &dwMode,  // new pipe mode
@@ -446,10 +452,10 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
 
 	if (nSize)
 	{
-		DWORD nErr = GetLastError();
+		const DWORD nErr = GetLastError();
 		
 		// Обязательно с обнулением выделяемой памяти
-		pIn = (CESERVER_REQ*)calloc(nSize, 1);
+		pIn = static_cast<CESERVER_REQ*>(calloc(nSize, 1));
 
 		if (pIn)
 		{
@@ -465,14 +471,14 @@ bool ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_
 {
 	if (!ppCmd || (pcbCurMaxSize < nSize))
 	{
-		DWORD nErr = GetLastError();
+		const DWORD nErr = GetLastError();
 		ExecuteFreeResult(ppCmd);
 		ppCmd = ExecuteNewCmd(nCmd, nSize);
 		if (ppCmd != nullptr)
 		{
 			// Обмен данными идет и между 32bit & 64bit процессами, размеры __int64 недопустимы
-			_ASSERTE(nSize == (DWORD)nSize);
-			pcbCurMaxSize = (DWORD)nSize;
+			_ASSERTE(nSize == static_cast<DWORD>(nSize));
+			pcbCurMaxSize = static_cast<DWORD>(nSize);
 			ppCmd->hdr.nLastError = nErr;
 		}
 	}
@@ -495,19 +501,17 @@ bool ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 {
 	if (!hConWnd)
-		return FALSE;
+		return false;
 
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> SrvInfoMapping;
 	SrvInfoMapping.InitName(CECONMAPNAME, LODWORD(hConWnd));
 	const CESERVER_CONSOLE_MAPPING_HDR* pInfo = SrvInfoMapping.Open();
-	if (!pInfo)
-		return FALSE;
-	else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-		return FALSE;
-	else
+	if (!pInfo || pInfo->nProtocolVersion != CESERVER_REQ_VER)
 	{
-		memmove(&SrvMapping, pInfo, std::min<size_t>(pInfo->cbSize, sizeof(SrvMapping)));
+		return false;
 	}
+
+	memmove(&SrvMapping, pInfo, std::min<size_t>(pInfo->cbSize, sizeof(SrvMapping)));
 	SrvInfoMapping.CloseMap();
 
 	return (SrvMapping.cbSize != 0);
@@ -521,14 +525,12 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 	MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
 	GuiInfoMapping.InitName(CEGUIINFOMAPNAME, nConEmuPID);
 	const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
-	if (!pInfo)
-		return FALSE;
-	else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-		return FALSE;
-	else
+	if (!pInfo || pInfo->nProtocolVersion != CESERVER_REQ_VER)
 	{
-		memmove(&GuiMapping, pInfo, std::min<size_t>(pInfo->cbSize, sizeof(GuiMapping)));
+		return false;
 	}
+
+	memmove(&GuiMapping, pInfo, std::min<size_t>(pInfo->cbSize, sizeof(GuiMapping)));
 	GuiInfoMapping.CloseMap();
 
 	return (GuiMapping.cbSize != 0);

@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
+// ReSharper disable once CppUnusedIncludeDirective
 #include "../common/CEStr.h"
 
 struct MacroInstance
