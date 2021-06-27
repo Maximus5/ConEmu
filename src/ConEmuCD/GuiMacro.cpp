@@ -69,7 +69,7 @@ static BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 		return TRUE; // continue search
 
 	// If called "-GuiMacro:0" we need to find first GUI window!
-	const bool bConClass = isConsoleClass(szClass);
+	const bool bConClass = IsConsoleClass(szClass);
 	if (!p->nPID && bConClass)
 		return TRUE; // continue search
 

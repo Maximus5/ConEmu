@@ -481,7 +481,7 @@ public:
 			if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
 				//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
 				|| ((bSkipShell || !mb_ExplorerHookAllowed) && bShellTrayWnd) // Do not hook explorer windows?
-				|| isConsoleClass(szClass))
+				|| IsConsoleClass(szClass))
 			{
 				#ifdef USEDEBUGSTRDEFTERM
 				swprintf_c(szInfo, L"DefTerm::CheckForeground x%08X PID=%u ignored by class",

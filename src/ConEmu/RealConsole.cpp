@@ -4874,7 +4874,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, CEStr& curCmdBuffer, LPCWST
 			// But current console window handle may not initialized yet, try to check it
 			#ifdef _DEBUG
 			GetClassName(hCurFore, szForeClass, countof(szForeClass));
-			_ASSERTE(!isConsoleClass(szForeClass)); // Some other GUI application was started by user?
+			_ASSERTE(!IsConsoleClass(szForeClass)); // Some other GUI application was started by user?
 			#endif
 			bMeFore = true;
 		}

@@ -491,7 +491,7 @@ void OnConWndChanged(HWND ahNewConWnd)
 	{
 		#ifdef _DEBUG
 			wchar_t sClass[64]; GetClassName(ahNewConWnd, sClass, countof(sClass));
-			_ASSERTEX(isConsoleClass(sClass));
+			_ASSERTEX(IsConsoleClass(sClass));
 		#endif
 
 		if (ghConWnd != ahNewConWnd)
@@ -2577,7 +2577,7 @@ HWND WINAPI GetRealConsoleWindow()
 {
 	HWND hConWnd = myGetConsoleWindow();
 
-	_ASSERTEX(hConWnd==nullptr || isConsoleWindow(hConWnd));
+	_ASSERTEX(hConWnd==nullptr || IsConsoleWindow(hConWnd));
 
 	return hConWnd;
 }

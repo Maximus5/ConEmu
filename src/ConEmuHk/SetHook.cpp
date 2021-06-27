@@ -787,7 +787,7 @@ bool StartupHooks()
 	if (ghConWnd)
 	{
 		GetClassName(ghConWnd, sClass, countof(sClass));
-		_ASSERTE(isConsoleClass(sClass));
+		_ASSERTE(IsConsoleClass(sClass));
 	}
 
 	prepare_timings;

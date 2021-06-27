@@ -248,7 +248,7 @@ protected:
 		if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
 			return TRUE; // continue search
 
-		const bool bConClass = isConsoleClass(szClass);
+		const bool bConClass = IsConsoleClass(szClass);
 		if (bConClass)
 			return TRUE; // continue search
 

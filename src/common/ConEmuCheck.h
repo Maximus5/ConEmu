@@ -99,8 +99,8 @@ HWND myGetConsoleWindow();
 typedef HWND(WINAPI* GetConsoleWindow_T)();
 //extern GetConsoleWindow_T gfGetRealConsoleWindow;
 
-bool isConsoleClass(LPCWSTR asClass);
-bool isConsoleWindow(HWND hWnd);
+bool IsConsoleClass(LPCWSTR asClass);
+bool IsConsoleWindow(HWND hWnd);
 
 //LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue);
 int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns);

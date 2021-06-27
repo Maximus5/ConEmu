@@ -7181,7 +7181,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				// Запускается новая консоль в режиме "администратора"?
 				if (CVConGroup::isInCreateRoot())
 				{
-					if (isConsoleWindow(hNewFocus))
+					if (IsConsoleWindow(hNewFocus))
 					{
 						lbSetFocus = true;
 					}

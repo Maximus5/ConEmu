@@ -1165,7 +1165,7 @@ void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDi
 	ExecuteFreeResult(pIn);
 }
 
-bool isConsoleClass(LPCWSTR asClass)
+bool IsConsoleClass(LPCWSTR asClass)
 {
 	if ((asClass && *asClass)
 		&& (
@@ -1177,7 +1177,7 @@ bool isConsoleClass(LPCWSTR asClass)
 	return false;
 }
 
-bool isConsoleWindow(HWND hWnd)
+bool IsConsoleWindow(HWND hWnd)
 {
 	wchar_t szClass[64] = L"";
 
@@ -1185,7 +1185,7 @@ bool isConsoleWindow(HWND hWnd)
 		return false;
 	if (!GetClassName(hWnd, szClass, countof(szClass)))
 		return false;
-	if (!isConsoleClass(szClass))
+	if (!IsConsoleClass(szClass))
 		return false;
 
 	// But when process is hooked, GetConsoleClass will return "proper" name
@@ -1198,7 +1198,7 @@ bool isConsoleWindow(HWND hWnd)
 	{
 		if (GetClassName(h, szClassPtr, countof(szClassPtr)))
 		{
-			if (isConsoleClass(szClassPtr))
+			if (IsConsoleClass(szClassPtr))
 			{
 				_ASSERTE(FALSE && "RealConsole handle was not retrieved properly!");
 				return false;
@@ -1221,7 +1221,7 @@ HWND myGetConsoleWindow()
 	{
 		hConWnd = gfGetRealConsoleWindow();
 		// If the function pointer was set - it must be proper function
-		_ASSERTEX(hConWnd==nullptr || isConsoleWindow(hConWnd));
+		_ASSERTEX(hConWnd==nullptr || IsConsoleWindow(hConWnd));
 		return hConWnd;
 	}
 
@@ -1250,7 +1250,7 @@ HWND myGetConsoleWindow()
 
 			// Regardless of GetClassName result, it may be VirtualConsoleClass
 			HWND h = (HWND)GetWindowLongPtr(hConWnd, WindowLongDCWnd_ConWnd);
-			if (h && IsWindow(h) && isConsoleWindow(h))
+			if (h && IsWindow(h) && IsConsoleWindow(h))
 			{
 				hConWnd = h;
 			}

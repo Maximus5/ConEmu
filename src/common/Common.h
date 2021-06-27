@@ -102,7 +102,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #define RealConsoleClass L"ConsoleWindowClass"
 #define WineConsoleClass L"WineConsoleClass"
-// functions isConsoleClass & isConsoleWindow are defined in ConEmuCheck.cpp
+// functions IsConsoleClass & IsConsoleWindow are defined in ConEmuCheck.cpp
 
 // GetWindowLong for VirtualConsoleClassBack
 #define WindowLongBack_ConWnd 0  // 4 bytes data

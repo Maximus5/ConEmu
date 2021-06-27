@@ -476,7 +476,7 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		}
 	}
 
-	wcscpy_c(Info.szType, isConsoleClass(Info.szClass) ? szTypeCon : szTypeGui);
+	wcscpy_c(Info.szType, IsConsoleClass(Info.szClass) ? szTypeCon : szTypeGui);
 	return true;
 }
 
