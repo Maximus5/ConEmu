@@ -28,9 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
+#include "ConEmuCheck.h"
 #include "MProcess.h"
-#include "CmdLine.h"
-#include "Monitors.h"
 #include "WConsole.h"
 #include "WObjects.h"
 
@@ -138,7 +137,7 @@ BOOL apiGetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_C
 		return FALSE;
 	}
 
-	BOOL lbRc = GetCurrentConsoleFontEx(hConsoleOutput, bMaximumWindow, lpConsoleCurrentFontEx);
+	const BOOL lbRc = GetCurrentConsoleFontEx(hConsoleOutput, bMaximumWindow, lpConsoleCurrentFontEx);
 
 	#ifdef _DEBUG
 	if (lbRc && (lpConsoleCurrentFontEx->dwFontSize.Y > 10))
@@ -146,7 +145,8 @@ BOOL apiGetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_C
 		static bool bWarned = false;
 		if (!bWarned && !g_IgnoreSetLargeFont)
 		{
-			_ASSERTE(FALSE && "GetCurrentConsoleFontEx detects large RealConsole font");
+			// For PseudoConsole Windows returns font with size 16 (by default?)
+			_ASSERTE(IsPseudoConsoleWindow(GetConsoleWindow()) && "GetCurrentConsoleFontEx detects large RealConsole font");
 			bWarned = TRUE;
 		}
 	}

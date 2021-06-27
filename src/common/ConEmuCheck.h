@@ -90,6 +90,7 @@ struct ConEmuWindows
 };
 
 ConEmuWindows GetConEmuWindows(HWND realConsole);
+ConEmuWindows GetConEmuWindowsFromEnv();
 
 // RealConsole window
 HWND myGetConsoleWindow();
@@ -101,6 +102,7 @@ typedef HWND(WINAPI* GetConsoleWindow_T)();
 
 bool IsConsoleClass(LPCWSTR asClass);
 bool IsConsoleWindow(HWND hWnd);
+bool IsPseudoConsoleWindow(HWND hWnd);
 
 //LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue);
 int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns);

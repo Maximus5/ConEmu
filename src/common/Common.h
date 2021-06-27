@@ -101,6 +101,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ConEmuPanelViewClass L"ConEmuPanelView" // Used in Far Manager plugin
 
 #define RealConsoleClass L"ConsoleWindowClass"
+#define PseudoConsoleClass L"PseudoConsoleWindow"
 #define WineConsoleClass L"WineConsoleClass"
 // functions IsConsoleClass & IsConsoleWindow are defined in ConEmuCheck.cpp
 

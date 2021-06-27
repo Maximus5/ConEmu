@@ -315,7 +315,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 {
 	// If neither hMacroInstance nor gState.conemuWnd_ was set - Macro will fail most likely
 	// Skip assertion show for IsConEmu, it's used in tests
-	_ASSERTE(inst.hConEmuWnd!=NULL || gState.conemuWnd_!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
+	_ASSERTE(inst.hConEmuWnd!=NULL || gState.realConWnd_!=NULL || gState.conemuWnd_!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
 
 	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";
 	wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";
@@ -342,11 +342,12 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 		return CERR_GUIMACRO_FAILED;
 	}
 
-	HWND hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : gState.realConWnd_;
+	auto* const hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : GetConEmuWindows(gState.realConWnd_).ConEmuRoot;
+	_ASSERTE(hCallWnd != nullptr);
 
 	// Все что в asCmdArg - выполнить в Gui
 	int iRc = CERR_GUIMACRO_FAILED;
-	int nLen = lstrlen(asCmdArg);
+	const int nLen = lstrlen(asCmdArg);
 	//SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
@@ -359,6 +360,8 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 	pOut = ConEmuGuiRpc(hCallWnd).SetOwner(gState.realConWnd_).SetIgnoreAbsence().Execute(pIn);
 
 	LogString(L"DoGuiMacro: CECMD_GUIMACRO finished");
+
+	_ASSERTE(pOut != nullptr);
 
 	if (pOut)
 	{

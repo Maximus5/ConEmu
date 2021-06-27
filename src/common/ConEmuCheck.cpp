@@ -1167,7 +1167,7 @@ void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDi
 
 bool IsConsoleClass(LPCWSTR asClass)
 {
-	if ((asClass && *asClass)
+	if (IsStrNotEmpty(asClass)
 		&& (
 			(lstrcmp(asClass, RealConsoleClass) == 0)
 			|| (lstrcmp(asClass, WineConsoleClass) == 0)
@@ -1208,6 +1208,18 @@ bool IsConsoleWindow(HWND hWnd)
 
 	// Well, it's a RealConsole
 	return true;
+}
+
+bool IsPseudoConsoleWindow(HWND hWnd)
+{
+	wchar_t szClass[64] = L"";
+
+	if (!hWnd)
+		return false;
+	if (!GetClassName(hWnd, szClass, countof(szClass)))
+		return false;
+	const int cmp = lstrcmp(szClass, PseudoConsoleClass);
+	return (cmp == 0);
 }
 
 GetConsoleWindow_T gfGetRealConsoleWindow = nullptr;
@@ -1253,6 +1265,14 @@ HWND myGetConsoleWindow()
 			if (h && IsWindow(h) && IsConsoleWindow(h))
 			{
 				hConWnd = h;
+			}
+			else if (IsPseudoConsoleWindow(hConWnd))
+			{
+				const auto wndFromEnv = GetConEmuWindowsFromEnv();
+				if (wndFromEnv.RealConWnd && IsConsoleWindow(wndFromEnv.RealConWnd))
+				{
+					hConWnd = wndFromEnv.RealConWnd;
+				}
 			}
 		}
 	}
@@ -1316,6 +1336,40 @@ ConEmuWindows GetConEmuWindows(HWND realConsole)
 	return result;
 }
 
+ConEmuWindows GetConEmuWindowsFromEnv()
+{
+	ConEmuWindows result{};
+	const DWORD envCchMax = 32;
+	wchar_t guiPidStr[envCchMax] = L"", srvPidStr[envCchMax] = L"";
+	if (GetEnvironmentVariableW(ENV_CONEMUPID_VAR_W, guiPidStr, envCchMax)
+		&& GetEnvironmentVariableW(ENV_CONEMUSERVERPID_VAR_W, srvPidStr, envCchMax)
+		&& IsStrNotEmpty(guiPidStr) && IsStrNotEmpty(srvPidStr))
+	{
+		const DWORD guiPID = wcstoul(guiPidStr, nullptr, 10);
+		const DWORD srvPID = wcstoul(srvPidStr, nullptr, 10);
+
+		if (!result.ConEmuHwnd)
+		{
+			ConEmuGuiMapping guiMapping{};
+			guiMapping.cbSize = sizeof(guiMapping);
+			if (guiPID && LoadGuiMapping(guiPID, guiMapping))
+			{
+				for (const auto& console : guiMapping.Consoles)
+				{
+					if (console.ServerPID == srvPID)
+					{
+						result.RealConWnd = console.Console;
+						result.ConEmuHwnd = console.DCWindow;
+						result.ConEmuRoot = guiMapping.hGuiWnd;
+						break;
+					}
+				}
+			}
+		}
+	}
+	return result;
+}
+
 HWND GetConEmuHWND(const ConEmuWndType aiType)
 {
 	const DWORD nLastErr = GetLastError();
@@ -1328,11 +1382,7 @@ HWND GetConEmuHWND(const ConEmuWndType aiType)
 		goto wrap;
 	}
 
-	// Сначала пробуем Mapping консоли (вдруг есть?)
-	if (!result.ConEmuRoot)
-	{
-		result = GetConEmuWindows(realConsoleWnd);
-	}
+	result = GetConEmuWindows(realConsoleWnd);
 
 wrap:
 	SetLastError(nLastErr);
