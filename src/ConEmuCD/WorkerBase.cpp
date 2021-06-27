@@ -87,7 +87,7 @@ WorkerBase::WorkerBase()
 	gpLocalSecurity = LocalSecurity();
 
 	// This could be nullptr when process was started as detached
-	gState.realConWnd_ = GetConEmuHWND(2);
+	gState.realConWnd_ = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 	gbVisibleOnStartup = IsWindowVisible(gState.realConWnd_);
 	gnSelfPID = GetCurrentProcessId();
 	gdwMainThreadId = GetCurrentThreadId();

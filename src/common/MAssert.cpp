@@ -280,7 +280,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 #ifdef _DEBUG
 	if (!abNoPipe && (gAllowAssertThread == am_Pipe))
 	{
-		HWND hConWnd = GetConEmuHWND(2);
+		HWND hConWnd = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 		HWND hGuiWnd = ghConEmuWnd;
 
 		// -- искать - нельзя. Если мы НЕ в ConEmu - нельзя стучаться в другие копии!!!

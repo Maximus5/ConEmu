@@ -93,7 +93,7 @@ bool StdCon::AttachParentConsole(const DWORD parentPid)
 				bAttach = attachConsoleFn(parentPid);
 				if (bAttach)
 				{
-					gState.realConWnd_ = GetConEmuHWND(2);
+					gState.realConWnd_ = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 					gbVisibleOnStartup = IsWindowVisible(gState.realConWnd_);
 					break;
 				}

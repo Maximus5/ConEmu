@@ -329,7 +329,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 				gState.realConWnd_ = nullptr;
 			else
-				gState.realConWnd_ = GetConEmuHWND(2);
+				gState.realConWnd_ = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 
 			gnSelfPID = GetCurrentProcessId();
 			gfnSearchAppPaths = SearchAppPaths;
@@ -1709,7 +1709,7 @@ wrap:
 	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
 	PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConEmuHWND(2), L"Finalizing", (gState.runMode_ == RunMode::Server) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(ConEmuWndType::ConsoleWindow), L"Finalizing", (gState.runMode_ == RunMode::Server) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 #endif
 
 	#ifdef VALIDATE_AND_DELAY_ON_TERMINATE
@@ -1960,7 +1960,7 @@ wrap:
 		iRc = gnExitCode;
 
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConEmuHWND(2), L"Exiting", (gState.runMode_ == RunMode::Server) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(ConEmuWndType::ConsoleWindow), L"Exiting", (gState.runMode_ == RunMode::Server) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 #endif
 	if (gpSrv)
 	{
@@ -2048,7 +2048,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		_ASSERTE(gState.runMode_ == RunMode::Undefined);
 
 		// ReSharper disable once CppLocalVariableMayBeConst
-		HWND hConEmu = GetConEmuHWND(1/*Gui Main window*/);
+		HWND hConEmu = GetConEmuHWND(ConEmuWndType::GuiMainWindow);
 		if (!hConEmu || !IsWindow(hConEmu))
 		{
 			iRc = CERR_GUI_NOT_FOUND;
@@ -2133,7 +2133,7 @@ DoEvents:
 
 	if (Parm->Flags & slsf_OnAllocConsole)
 	{
-		gState.realConWnd_ = GetConEmuHWND(2);
+		gState.realConWnd_ = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 		LoadSrvInfoMap();
 		//TODO: Request AltServer state from MainServer?
 
@@ -2427,7 +2427,7 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 	{
 		BOOL lbNeedVisible = FALSE;
 
-		if (!gState.realConWnd_) gState.realConWnd_ = GetConEmuHWND(2);
+		if (!gState.realConWnd_) gState.realConWnd_ = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 
 		if (gState.realConWnd_)  // Если консоль была скрыта
 		{
@@ -2753,7 +2753,7 @@ void SendStarted()
 
 	//crNewSize = gpSrv->sbi.dwSize;
 	//_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
-	HWND hConWnd = GetConEmuHWND(2);
+	HWND hConWnd = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 
 	if (!gnSelfPID)
 	{

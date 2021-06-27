@@ -1385,7 +1385,7 @@ bool CPluginBase::RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, b
 			pIn->NewCmd.SetCommand(pszCommand);
 			pIn->NewCmd.SetEnvStrings(strs.strings_, strs.cchLength_);
 
-			HWND hGuiRoot = GetConEmuHWND(1);
+			HWND hGuiRoot = GetConEmuHWND(ConEmuWndType::GuiMainWindow);
 			CESERVER_REQ* pOut = ExecuteGuiCmd(hGuiRoot, pIn, FarHwnd);
 			if (pOut)
 			{
@@ -1581,7 +1581,7 @@ bool CPluginBase::Attach2Gui(bool bLeaveOpened /*= false*/)
 	wchar_t* pszSlash = nullptr;
 	DWORD nStartWait = 255;
 
-	if (GetConEmuHWND(0/*Gui console DC window*/))
+	if (GetConEmuHWND(ConEmuWndType::GuiDcWindow))
 	{
 		ShowMessageGui(CECantStartServer4, MB_ICONSTOP|MB_SYSTEMMODAL);
 		goto wrap;
@@ -1627,7 +1627,7 @@ bool CPluginBase::Attach2Gui(bool bLeaveOpened /*= false*/)
 
 	gdwServerPID = 0;
 	//TODO("У сервера пока не получается менять шрифт в консоли, которую создал FAR");
-	//SetConsoleFontSizeTo(GetConEmuHWND(2), 6, 4, L"Lucida Console");
+	//SetConsoleFontSizeTo(GetConEmuHWND(ConEmuWndType::ConsoleWindow), 6, 4, L"Lucida Console");
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
 
@@ -2612,8 +2612,8 @@ void CPluginBase::InitHWND()
 	//  aiType==0: Gui console DC window
 	//        ==1: Gui Main window
 	//        ==2: Console window
-	FarHwnd = GetConEmuHWND(2/*Console window*/);
-	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
+	FarHwnd = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
+	ghConEmuWndDC = GetConEmuHWND(ConEmuWndType::GuiDcWindow);
 	gbWasDetached = (ghConEmuWndDC == nullptr);
 	gbFarWndVisible = IsWindowVisible(FarHwnd);
 
@@ -2805,7 +2805,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 			// Может быть ConEmu свалилось
 			if (!IsWindow(ghConEmuWndDC) && ghConEmuWndDC)
 			{
-				HWND hConWnd = GetConEmuHWND(2);
+				HWND hConWnd = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 
 				if ((hConWnd && !IsWindow(hConWnd))
 					|| (!gbWasDetached && FarHwnd && !IsWindow(FarHwnd)))
@@ -3949,7 +3949,7 @@ void CPluginBase::cmd_ConSetFont(LPVOID pCommandData)
 
 	if (pFont && pFont->cbSize == sizeof(CESERVER_REQ_SETFONT))
 	{
-		SetConsoleFontSizeTo(GetConEmuHWND(2), pFont->inSizeY, pFont->inSizeX, pFont->sFontName);
+		SetConsoleFontSizeTo(GetConEmuHWND(ConEmuWndType::ConsoleWindow), pFont->inSizeY, pFont->inSizeX, pFont->sFontName);
 	}
 }
 
@@ -4266,7 +4266,7 @@ bool CPluginBase::FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 		In.SetSize.nBufferHeight = gpFarInfo->bBufferSupport ? -1 : 0;
 		In.SetSize.size.X = nNewWidth; In.SetSize.size.Y = nNewHeight;
 		DWORD nSrvPID = (gpConMapInfo && gpConMapInfo->nAltServerPID) ? gpConMapInfo->nAltServerPID : gdwServerPID;
-		CESERVER_REQ* pOut = ExecuteSrvCmd(nSrvPID, &In, GetConEmuHWND(2));
+		CESERVER_REQ* pOut = ExecuteSrvCmd(nSrvPID, &In, GetConEmuHWND(ConEmuWndType::ConsoleWindow));
 
 		if (pOut)
 		{
@@ -5384,7 +5384,7 @@ BOOL /*WINAPI*/ CPluginBase::OnConsoleDetaching(HookCallbackArg* pArgs)
 // Функции вызываются в основной нити, вполне можно дергать FAR-API
 BOOL /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 {
-	FarHwnd = GetConEmuHWND(2);
+	FarHwnd = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 	gbFarWndVisible = IsWindowVisible(FarHwnd);
 
 	if (gbWasDetached)

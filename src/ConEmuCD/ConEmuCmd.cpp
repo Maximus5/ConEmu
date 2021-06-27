@@ -103,7 +103,7 @@ int WorkerComspec::Init()
 	// Правда нужно проверить, что там происходит с ghConOut.Close(),...
 	// Размер должен менять сам GUI, через серверный ConEmuC!
 #ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(ConEmuWndType::ConsoleWindow), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
 #endif
 	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
 	gbComspecInitCalled = TRUE; // Нельзя вызывать ComspecDone, если не было вызова ComspecInit
@@ -225,7 +225,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 						MCHKHEAP;
 						memmove(pIn->Data, pszPostAliases, nPostAliasSize);
 						MCHKHEAP;
-						CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn, GetConEmuHWND(2), FALSE, 0, TRUE);
+						CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn, GetConEmuHWND(ConEmuWndType::ConsoleWindow), FALSE, 0, TRUE);
 						MCHKHEAP;
 
 						if (pOut) ExecuteFreeResult(pOut);
@@ -272,7 +272,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
 
 	#ifdef _DEBUG
-	HWND hWndCon = GetConEmuHWND(2);
+	HWND hWndCon = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 	#endif
 
 	// Тут нужна реальная, а не скорректированная информация!
@@ -289,7 +289,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 	//PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
 	#ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConEmuHWND(ConEmuWndType::ConsoleWindow), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
 	#endif
 
 	#ifdef _DEBUG

@@ -198,12 +198,12 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 
 			}
 			break;
-		
+
 		case DLL_THREAD_ATTACH:
 			break;
 		case DLL_THREAD_DETACH:
 			break;
-		
+
 		case DLL_PROCESS_DETACH:
 			{
 				CloseBuffers();
@@ -256,7 +256,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 bool isCharSpace(wchar_t inChar)
 {
 	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0
 		/*|| (inChar>=0x2000 && inChar<=0x200F)
 		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
 	return isSpace;
@@ -266,11 +266,11 @@ bool isCharSpace(wchar_t inChar)
 BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
 {
 	_ASSERTE(gbInitialized);
-	
+
 	h = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (!GetConsoleScreenBufferInfo(h, &csbi))
 		return FALSE;
-	
+
 	if (gbFarBufferMode)
 	{
 		// Фар занимает нижнюю часть консоли. Прилеплен к левому краю
@@ -288,13 +288,13 @@ BOOL GetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWo
 		srWork.Right = csbi.dwSize.X - 1;
 		srWork.Bottom = csbi.dwSize.Y - 1;
 	}
-	
+
 	if (srWork.Left < 0 || srWork.Top < 0 || srWork.Left > srWork.Right || srWork.Top > srWork.Bottom)
 	{
 		_ASSERTE(srWork.Left >= 0 && srWork.Top >= 0 && srWork.Left <= srWork.Right && srWork.Top <= srWork.Bottom);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -367,7 +367,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 	}
 
 	// Проверить, не изменился ли HWND окна отрисовки (DC)...
-	HWND hCon = GetConEmuHWND(0);
+	HWND hCon = GetConEmuHWND(ConEmuWndType::GuiDcWindow);
 	if (!hCon)
 	{
 		CloseBuffers();
@@ -376,20 +376,21 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 	}
 	if (hCon != ghVConWnd)
 	{
+		ghRConWnd = GetConEmuHWND(ConEmuWndType::ConsoleWindow);
+
 		#ifdef _DEBUG
 		// Even with minhook GetConsoleWindow must be set to trampolined function
-		HWND hApiCon = GetConsoleWindow();
-		HWND hRealCon = GetConEmuHWND(2);
-		HWND hRootWnd = GetConEmuHWND(1);
+		auto* const hApiCon = GetConsoleWindow();
+		auto* const hRealCon = ghRConWnd;
+		// ReSharper disable once CppDeclaratorNeverUsed
+		auto* const hRootWnd = GetConEmuHWND(ConEmuWndType::GuiMainWindow);
 		_ASSERTE(hApiCon == hRealCon);
 		#endif
-
-		ghRConWnd = GetConEmuHWND(2);
 
 		ghVConWnd = hCon;
 		CloseBuffers();
 
-		
+
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		RequestLocalServerParm prm = {sizeof(prm), slsf_RequestTrueColor|slsf_GetCursorEvent|slsf_GetFarCommitEvent};
 		int iFRc = RequestLocalServer(&prm);
@@ -432,7 +433,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		//		ghFarCommitUpdateSrv = prm.hFarCommitEvent;
 		//	}
 		}
-		
+
 		#ifdef USE_COMMIT_EVENT
 		if (!LoadSrvMapping(ghRConWnd, SrvMapping))
 		{
@@ -449,19 +450,19 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 			//TODO: Сбросить флаги валидности ячеек?
 			gpTrueColor->locked = TRUE;
 		}
-		
+
 		#ifdef USE_COMMIT_EVENT
 		if (!gbBatchStarted)
 		{
 			gbBatchStarted = true;
-			
+
 			if (!ghBatchEvent)
 				ghBatchEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-				
+
 			if (ghBatchEvent)
 			{
 				ResetEvent(ghBatchEvent);
-				
+
 				// Если еще не регистрировались...
 				if (!gnBatchRegPID || gnBatchRegPID != SrvMapping.nServerPID)
 				{
@@ -485,12 +486,12 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 						ExecuteFreeResult(pIn);
 					}
 				}
-				
+
 			}
 		}
 		#endif
 	}
-	
+
 	return (gpTrueColor!=NULL);
 }
 
@@ -532,7 +533,7 @@ void CloseBuffers()
 //		int G = (Color & 0xFF00) >> 8;
 //		int R = (Color & 0xFF);
 //		int nMax = Max(B,Max(R,G));
-//		
+//
 //		Index =
 //			(((B+32) > nMax) ? 1 : 0) |
 //			(((G+32) > nMax) ? 2 : 0) |
@@ -604,14 +605,14 @@ void CloseBuffers()
 //		else
 //			Con |= 8;
 //	}
-//	
+//
 //	Con |= (Index<<4);
 //}
 
 //TODO: Юзкейс понят неправильно.
-//TODO: Это не "всего видимого экрана", это "цвет по умолчанию". То, что соответствует 
+//TODO: Это не "всего видимого экрана", это "цвет по умолчанию". То, что соответствует
 //TODO: "Screen Text" и "Screen Background" в свойствах консоли. То, что задаётся командой
-//TODO: color в cmd.exe. То, что будет использовано если в консоль просто писать 
+//TODO: color в cmd.exe. То, что будет использовано если в консоль просто писать
 //TODO: по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 {
@@ -1947,7 +1948,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	}
 	
 	// Заменить на дескриптор окна GUI
-	Parm.hConsole = GetConEmuHWND(1);
+	Parm.hConsole = GetConEmuHWND(ConEmuWndType::GuiMainWindow);
 	
 	// Найти HWND GUI
 	wchar_t szMapName[128];

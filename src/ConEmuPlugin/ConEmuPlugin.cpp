@@ -153,7 +153,7 @@ HWND WINAPI GetFarHWND2(int anConEmuOnly)
 		if (IsWindow(ghConEmuWndDC))
 		{
 			if (anConEmuOnly == 2)
-				return GetConEmuHWND(1);
+				return GetConEmuHWND(ConEmuWndType::GuiMainWindow);
 			return ghConEmuWndDC;
 		}
 

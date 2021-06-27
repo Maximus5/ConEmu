@@ -161,7 +161,7 @@ int DebuggerInfo::RunDebugger()
 	wchar_t szInfo[128];
 	StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\n" CE_CONEMUC_NAME_W " PID = %u\nDebug PID = %u",
 	                GetCurrentProcessId(), gpWorker->RootProcessId());
-	MessageBox(GetConEmuHWND(2), szInfo, CE_CONEMUC_NAME_W L".Debugger", 0);
+	MessageBox(GetConEmuHWND(ConEmuWndType::ConsoleWindow), szInfo, CE_CONEMUC_NAME_W L".Debugger", 0);
 	#endif
 
 	if (this->szDebuggingCmdLine.IsEmpty())

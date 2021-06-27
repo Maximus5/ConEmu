@@ -63,13 +63,33 @@ enum CmdOnCreateType
 // 1 -- NO ConEmu (simple console mode)
 int ConEmuCheck(HWND* ahConEmuWnd);
 
+// Parameter for GetConEmuHWND
+enum class ConEmuWndType
+{
+	// Gui console DC window
+	GuiDcWindow = 0,
+	// Gui Main window
+	GuiMainWindow = 1,
+	// RealConsole window
+	ConsoleWindow = 2,
+	// Dedicated VCon window responsible for padding around GuiDcWindow
+	GuiBackWindow = 3,
+};
 
-// Returns HWND of ...
-//  aiType==0: Gui console DC window
-//        ==1: Gui Main window
-//        ==2: Console window
-//        ==3: Back window
-HWND GetConEmuHWND(int aiType);
+/// @brief Returns HWND of requested type from current console/process
+/// @param aiType value from enum ConEmuWndType
+/// @return HWND of nullptr
+HWND GetConEmuHWND(ConEmuWndType aiType);
+
+struct ConEmuWindows
+{
+	HWND ConEmuHwnd = nullptr;
+	HWND ConEmuRoot = nullptr;
+	HWND ConEmuBack = nullptr;
+	HWND RealConWnd = nullptr;
+};
+
+ConEmuWindows GetConEmuWindows(HWND realConsole);
 
 // RealConsole window
 HWND myGetConsoleWindow();

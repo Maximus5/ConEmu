@@ -1281,121 +1281,73 @@ HWND myGetConsoleWindow()
 #endif
 }
 
-// Returns HWND of ...
-//  aiType==0: Gui console DC window
-//        ==1: Gui Main window
-//        ==2: Console window
-//        ==3: Back window
-HWND GetConEmuHWND(int aiType)
+ConEmuWindows GetConEmuWindows(HWND realConsole)
 {
-	//CESERVER_REQ *pIn = nullptr;
-	//CESERVER_REQ *pOut = nullptr;
-	DWORD nLastErr = GetLastError();
-	HWND FarHwnd = nullptr, ConEmuHwnd = nullptr, ConEmuRoot = nullptr, ConEmuBack = nullptr;
-	size_t cchMax = 128;
-	wchar_t *szGuiPipeName = nullptr;
+	ConEmuWindows result{};
+	CESERVER_CONSOLE_MAPPING_HDR* p = nullptr;
+	const size_t cchMax = 128;
+	wchar_t guiMappingName[cchMax] = L"";
 
-	FarHwnd = myGetConsoleWindow();
-	if (!FarHwnd || (aiType == 2))
+	msprintf(guiMappingName, cchMax, CECONMAPNAME, LODWORD(realConsole));
+#ifdef _DEBUG
+	size_t nSize = sizeof(*p);
+#endif
+	auto* hMapping = OpenFileMapping(FILE_MAP_READ, FALSE, guiMappingName);
+	if (hMapping)
 	{
-		goto wrap;
-		//SetLastError(nLastErr);
-		//return nullptr;
+		const DWORD nFlags = FILE_MAP_READ;
+		p = static_cast<CESERVER_CONSOLE_MAPPING_HDR*>(MapViewOfFile(hMapping, nFlags, 0, 0, 0));
 	}
 
-	szGuiPipeName = (wchar_t*)malloc(cchMax*sizeof(*szGuiPipeName));
-	if (!szGuiPipeName)
+	if (p && p->hConEmuRoot && IsWindow(p->hConEmuRoot))
 	{
-		_ASSERTE(szGuiPipeName!=nullptr);
-		return nullptr;
+		// Успешно
+		result.ConEmuRoot = p->hConEmuRoot;
+		result.ConEmuHwnd = p->hConEmuWndDc;
+		result.ConEmuBack = p->hConEmuWndBack;
+		result.RealConWnd = realConsole;
+	}
+
+	if (p)
+		UnmapViewOfFile(p);
+	if (hMapping)
+		CloseHandle(hMapping);
+
+	return result;
+}
+
+HWND GetConEmuHWND(const ConEmuWndType aiType)
+{
+	const DWORD nLastErr = GetLastError();
+	HWND realConsoleWnd = nullptr;
+	ConEmuWindows result{};
+
+	realConsoleWnd = myGetConsoleWindow();
+	if (!realConsoleWnd || (aiType == ConEmuWndType::ConsoleWindow))
+	{
+		goto wrap;
 	}
 
 	// Сначала пробуем Mapping консоли (вдруг есть?)
-	if (!ConEmuRoot)
+	if (!result.ConEmuRoot)
 	{
-		// создание этого объекта не позволяет отказаться от CRT (создается __chkstk)
-		//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-		//ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd); 
-		//CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
-
-		CESERVER_CONSOLE_MAPPING_HDR* p = nullptr;
-
-		msprintf(szGuiPipeName, cchMax, CECONMAPNAME, LODWORD(FarHwnd));
-		#ifdef _DEBUG
-		size_t nSize = sizeof(*p);
-		#endif
-		HANDLE hMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szGuiPipeName);
-		if (hMapping)
-		{
-			DWORD nFlags = FILE_MAP_READ;
-			p = (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hMapping, nFlags,0,0,0);
-		}
-
-		if (p && p->hConEmuRoot && IsWindow(p->hConEmuRoot))
-		{
-			// Успешно
-			ConEmuRoot = p->hConEmuRoot;
-			ConEmuHwnd = p->hConEmuWndDc;
-			ConEmuBack = p->hConEmuWndBack;
-		}
-
-		if (p)
-			UnmapViewOfFile(p);
-		if (hMapping)
-			CloseHandle(hMapping);
+		result = GetConEmuWindows(realConsoleWnd);
 	}
-
-#if 0
-	// Сервер не мог подцепиться БЕЗ создания мэппинга, поэтому CECMD_GETGUIHWND можно не делать
-	if (!ConEmuRoot)
-	{
-		//BOOL lbRc = FALSE;
-		pIn = (CESERVER_REQ*)calloc(1,sizeof(CESERVER_REQ));
-
-		ExecutePrepareCmd(pIn, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
-		//swprintf_c(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)FarHwnd);
-		msprintf(szGuiPipeName, cchMax, CEGUIPIPENAME, L".", (DWORD)FarHwnd);
-		// Таймаут уменьшим, т.к. на результат не надеемся
-		pOut = ExecuteCmd(szGuiPipeName, pIn, 250, FarHwnd);
-
-		if (!pOut)
-		{
-			goto wrap;
-		}
-
-		if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != pIn->hdr.nCmd)
-		{
-			ExecuteFreeResult(pOut);
-			pOut = nullptr;
-			goto wrap;
-		}
-
-		ConEmuRoot = (HWND)pOut->dwData[0];
-		ConEmuHwnd = (HWND)pOut->dwData[1];
-		// Сервер не мог подцепиться БЕЗ создания мэппинга, поэтому CECMD_GETGUIHWND не должен был пройти успешно
-		_ASSERTE(ConEmuRoot == nullptr);
-		ExecuteFreeResult(pOut);
-		pOut = nullptr;
-	}
-#endif
 
 wrap:
 	SetLastError(nLastErr);
-	//if (pIn)
-	//	free(pIn);
-	if (szGuiPipeName)
-		free(szGuiPipeName);
 
 	switch (aiType)
 	{
-	case 3:
-		return ConEmuBack;
-	case 2:
-		return FarHwnd;
-	case 0:
-		return ConEmuHwnd;
-	default: // aiType == 1
-		return ConEmuRoot;
+	case ConEmuWndType::GuiBackWindow:
+		return result.ConEmuBack;
+	case ConEmuWndType::ConsoleWindow:
+		return realConsoleWnd;
+	case ConEmuWndType::GuiDcWindow:
+		return result.ConEmuHwnd;
+	case ConEmuWndType::GuiMainWindow:
+	default:
+		return result.ConEmuRoot;
 	}
 }
 
@@ -1407,7 +1359,7 @@ int ConEmuCheck(HWND* ahConEmuWnd)
 {
 	//int nChk = -1;
 	HWND ConEmuWnd = nullptr;
-	ConEmuWnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
+	ConEmuWnd = GetConEmuHWND(ConEmuWndType::GuiDcWindow);
 
 	// Если хотели узнать хэндл - возвращаем его
 	if (ahConEmuWnd) *ahConEmuWnd = ConEmuWnd;

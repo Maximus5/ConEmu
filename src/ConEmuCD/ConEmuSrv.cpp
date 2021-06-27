@@ -2361,7 +2361,7 @@ void WorkerServer::CheckConEmuHwnd()
 	{
 		// Если уж ничего не помогло...
 		LogFunction(L"GetConEmuHWND");
-		gState.conemuWnd_ = GetConEmuHWND(1/*Gui Main window*/);
+		gState.conemuWnd_ = GetConEmuHWND(ConEmuWndType::GuiMainWindow);
 	}
 
 	if (gState.conemuWnd_)
@@ -3697,8 +3697,8 @@ int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 		goto wrap;
 	}
 
-	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
-	lhConWnd = gState.conemuWndDC_; // GetConEmuHWND(2);
+	// 111101 - было "GetConEmuHWND(ConEmuWndType::ConsoleWindow)", но GetConsoleWindow теперь перехватывается.
+	lhConWnd = gState.conemuWndDC_; // GetConEmuHWND(ConEmuWndType::ConsoleWindow);
 
 	if (!lhConWnd)
 	{
