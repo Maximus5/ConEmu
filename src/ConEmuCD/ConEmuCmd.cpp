@@ -388,25 +388,11 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 	if (!hConWnd)
 	{
 		// This may be ConEmuC started from WSL or connector
-		CEStr guiPid(GetEnvVar(ENV_CONEMUPID_VAR_W));
-		CEStr srvPid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
-		if (guiPid && srvPid)
+		const auto windows = GetConEmuWindowsFromEnv();
+		if (windows.RealConWnd && windows.ConEmuRoot)
 		{
-			DWORD GuiPID = wcstoul(guiPid, nullptr, 10);
-			DWORD SrvPID = wcstoul(srvPid, nullptr, 10);
-			ConEmuGuiMapping GuiMapping = { sizeof(GuiMapping) };
-			if (GuiPID && LoadGuiMapping(GuiPID, GuiMapping))
-			{
-				for (size_t i = 0; i < countof(GuiMapping.Consoles); ++i)
-				{
-					if (GuiMapping.Consoles[i].ServerPID == SrvPID)
-					{
-						hConWnd = GuiMapping.Consoles[i].Console;
-						hConEmu = GuiMapping.hGuiWnd;
-						break;
-					}
-				}
-			}
+			hConWnd = windows.RealConWnd;
+			hConEmu = windows.ConEmuRoot;
 		}
 	}
 
