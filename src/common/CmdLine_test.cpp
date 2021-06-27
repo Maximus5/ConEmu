@@ -43,6 +43,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern bool gbVerifyIgnoreAsserts;
 std::vector<std::wstring> GetCmdInternalCommands();
 
+static std::ostream& operator<<(std::ostream& out, StartEndQuot const& e)
+{
+	auto asString = [](StartEndQuot const& e) -> std::string
+	{
+		switch (e) {
+		case StartEndQuot::DontChange:
+			return "DontChange";
+		case StartEndQuot::NeedCut:
+			return "NeedCut";
+		case StartEndQuot::NeedAdd:
+			return "NeedAdd";
+		default:
+			return std::to_string(static_cast<int>(e));
+		}
+	};
+	return out << asString(e);
+}
+
 TEST(CmdLine, NextArg_Switches)
 {
 	LPCWSTR pszCmd =
@@ -121,6 +139,35 @@ TEST(CmdLine, NextArg_NeedCmd)
 		const bool result = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe);
 		EXPECT_EQ(result, test.expected) << L"cmd: " << test.pszCmd;
 	}
+}
+
+TEST(CmdLine, IsCmdRedirection)
+{
+	auto testRedirection = [](LPCWSTR testCommand, const bool expectedResult)
+	{
+		const bool result = IsCmdRedirection(testCommand);
+		EXPECT_EQ(result, expectedResult) << "cmd: " << testCommand;
+	};
+
+	testRedirection(nullptr, false);
+	testRedirection(LR"()", false);
+	testRedirection(LR"(cmd.exe)", false);
+	testRedirection(LR"("cmd.exe")", false);
+
+	testRedirection(LR"(test < input)", true);
+	testRedirection(LR"(test > output)", true);
+	testRedirection(LR"(test < input > output)", true);
+	testRedirection(LR"("test" < input)", true);
+	testRedirection(LR"("test" > output)", true);
+	testRedirection(LR"("test" < input > output)", true);
+	testRedirection(LR"(dir | find "abc")", true);
+	testRedirection(LR"(git pull && git status)", true);
+	
+	testRedirection(LR"(cmd "test < input")", false);
+	testRedirection(LR"(test "<" input)", false);
+	testRedirection(LR"(echo "|" find "abc")", false);
+	testRedirection(LR"(echo "some | text")", false);
+	testRedirection(LR"(echo "command & test")", false);
 }
 
 namespace
@@ -337,6 +384,9 @@ TEST(CmdLine, IsNeedCmd)
 		L"C:\\1\\d,2.cmd",
 		true, StartEndQuot::NeedAdd, true, false);
 	TestIsNeedCmd(false, L"\"C:\\1=\\a.cmd\"",
+		L"C:\\1=\\a.cmd",
+		true, StartEndQuot::NeedAdd, true, false);
+	TestIsNeedCmd(false, L"\"C:\\1=\\a.cmd\" hello",
 		L"C:\\1=\\a.cmd",
 		true, StartEndQuot::NeedAdd, true, false);
 	TestIsNeedCmd(false, L"\"C:\\1\\d.cmd 2 test\"",

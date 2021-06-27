@@ -98,6 +98,11 @@ struct NeedCmdOptions
 	bool alwaysConfirmExit = false;
 };
 
+/// @brief Returns true of command line contains redirections or pipelines
+/// @param asParameters The command line arguments, executable may be absent here
+/// @return true/false
+bool IsCmdRedirection(LPCWSTR asParameters);
+
 /// <summary>
 /// Determines if we need a cmd.exe to run the command line.
 /// </summary>

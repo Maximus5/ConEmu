@@ -45,6 +45,8 @@ namespace
 	const wchar_t ILLEGAL_CHARACTERS[] = L"?*<>|";
 	// Cmd special characters - pipelines, redirections, escaping
 	const wchar_t SPECIAL_CMD_CHARACTERS[] = L"&|<>^";
+	// Cmd special characters - pipelines, redirections
+	const wchar_t REDIRECTION_CMD_CHARACTERS[] = L"&|<>";
 
 	// The commands, which we shall not try to expand/convert into "*.exe"
 	const wchar_t* const CMD_INTERNAL_COMMANDS[] = {
@@ -692,6 +694,27 @@ bool GetFilePathFromSpaceDelimitedString(const wchar_t* commandLine, CEStr& szEx
 	return result;
 }
 
+bool IsCmdRedirection(LPCWSTR asParameters)
+{
+	if (IsStrEmpty(asParameters))
+		return false;
+	if (wcspbrk(asParameters, REDIRECTION_CMD_CHARACTERS) == nullptr)
+		return false;
+
+	CmdArg next;
+	const wchar_t* nextStart = nullptr;
+	const wchar_t* param = asParameters;
+	while ((param = NextArg(param, next, &nextStart)) != nullptr)
+	{
+		if (wcspbrk(next.c_str(L""), REDIRECTION_CMD_CHARACTERS) == nullptr)
+			continue;
+		if (!next.m_bQuoted)
+			return true;
+	}
+
+	return false;
+}
+
 bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe, NeedCmdOptions* options /*= nullptr*/)
 {
 	// do we need to add leading "cmd.exe /c "
@@ -1032,7 +1055,8 @@ wrap:
 			{
 				if (leadingQuotes == 1)
 				{
-					if (IsQuotationNeeded(szExe) || (exeIsQuoted && argumentsPtr && (*argumentsPtr == 0 || wcschr(argumentsPtr, L'"') != nullptr)))
+					const bool quotationNeeded = IsQuotationNeeded(szExe);
+					if (quotationNeeded || (exeIsQuoted && !IsCmdRedirection(argumentsPtr)))
 						startEndQuot = StartEndQuot::NeedAdd;
 					else if (!exeIsQuoted)
 						startEndQuot = StartEndQuot::NeedCut;
