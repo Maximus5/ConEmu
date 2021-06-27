@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.6.27
+* gh-2261: Far executor fix.
+* gh-2329: Support GuiMacro run from PseudoConsoles.
+  For proper work of ConEmu environment variables ConEmuPID and ConEmuServerPID
+  should be set properly. Variables are set by ConEmuC (console server)
+  but they also have to be inherited by processes running in the
+  PseudoConsole (Windows 10 feature).
+
+
 2021.6.24
 * gh-2323: Fix 'busy' cursor in Far Manager 3.0 build 5817+.
 * gh-2323: Edit box for Far hourglass timeout (ms).
