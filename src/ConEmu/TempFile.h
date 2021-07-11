@@ -53,7 +53,7 @@ public:
 
 	~TempFile();
 
-	ErrorInfo CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl);
+	bool CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, ErrorInfo& ec);
 
 	bool IsValid() const;
 	void Release(bool deleteFile = true);

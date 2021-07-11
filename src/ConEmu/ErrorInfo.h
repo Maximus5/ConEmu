@@ -36,11 +36,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class ErrorInfo final : public std::exception
 {
 	CEStr what_;
-	unsigned errorCode_;
+	unsigned errorCode_;  // NOLINT(clang-diagnostic-unused-private-field)
 	bool error_;
 public:
 	ErrorInfo();
 
+	explicit ErrorInfo(const wchar_t* error);
 	ErrorInfo(const wchar_t* format, unsigned errCode);
 	ErrorInfo(const wchar_t* format, const wchar_t* arg, unsigned errCode);
 	ErrorInfo(const wchar_t* format, const wchar_t* asArg1, const wchar_t* asArg2, unsigned errCode);

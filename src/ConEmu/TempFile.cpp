@@ -63,7 +63,8 @@ TempFile::TempFile()
 
 TempFile::TempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl)
 {
-	CreateTempFile(asDir, asFileNameTempl);
+	ErrorInfo ec{};
+	CreateTempFile(asDir, asFileNameTempl, ec);
 }
 
 TempFile::~TempFile()
@@ -71,9 +72,10 @@ TempFile::~TempFile()
 	Release(true);
 }
 
-ErrorInfo TempFile::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl)
+bool TempFile::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, ErrorInfo& ec)
 {
 	try {
+		ec.ClearError();
 		Release();
 
 		CEStr szDir;
@@ -172,12 +174,13 @@ ErrorInfo TempFile::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl)
 			throw ErrorInfo(L"Can't create temp file(%s), code=%u", path_, dwErr);
 		}
 
-		return ErrorInfo();
+		return true;
 	}
 	catch (const ErrorInfo& ex)
 	{
+		ec = ex;
 		Release();
-		return ex;
+		return false;
 	}
 }
 

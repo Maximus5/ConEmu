@@ -59,18 +59,18 @@ struct CEDownloadInfo
 	CEDownloadErrorArg Args[3];
 
 	// For simplification of logging
-	wchar_t* GetFormatted(bool bAppendNewLine) const
+	CEStr GetFormatted(bool bAppendNewLine) const
 	{
 		if (!strFormat)
-			return NULL;
+			return {};
 		// Format string length
 		size_t cchTotal = lstrlen(strFormat);
 		if (bAppendNewLine && strFormat[cchTotal-1] == L'\n')
 			bAppendNewLine = false;
 		// If no arguments - just return copy of format string
 		if (argCount == 0)
-			return lstrmerge(strFormat, bAppendNewLine?L"\n":NULL);
-		cchTotal += 1 + (bAppendNewLine?1:0);
+			return CEStr(strFormat, bAppendNewLine ? L"\n" : nullptr);
+		cchTotal += 1 + (bAppendNewLine ? 1 : 0);
 		// Calculate size of additional (arguments) length
 		for (size_t i = 0; i < argCount; i++)
 		{
@@ -85,15 +85,16 @@ struct CEDownloadInfo
 			else
 			{
 				_ASSERTE(Args[i].argType == at_Uint || Args[i].argType == at_Str);
-				return NULL;
+				return {};
 			}
 		}
-		wchar_t* pszAll = (wchar_t*)calloc(cchTotal, sizeof(*pszAll));
-		if (!pszAll)
-			return FALSE;
+		CEStr pszAll;
+		if (!pszAll.GetBuffer(cchTotal))
+			return {};
 		// Does not matter, what type of arguments put into msprintf
-		msprintf(pszAll, cchTotal, strFormat, Args[0].strArg, Args[1].strArg, Args[2].strArg);
-		if (bAppendNewLine) _wcscat_c(pszAll, cchTotal, L"\n");
+		msprintf(pszAll.data(), cchTotal, strFormat, Args[0].strArg, Args[1].strArg, Args[2].strArg);
+		if (bAppendNewLine)
+			pszAll.Append(L"\n");
 		// Done
 		return pszAll;
 	};

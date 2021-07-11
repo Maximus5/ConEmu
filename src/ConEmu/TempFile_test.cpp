@@ -91,3 +91,21 @@ TEST(TempFile, CreateDontDelete)
 	EXPECT_TRUE(DeleteFileW(fileName));
 	EXPECT_FALSE(FileExists(fileName));
 }
+
+TEST(TempFile, ObjMove)
+{
+	CEStr fileName;
+	{
+		TempFile file(testTempDir, L"TestFile.tmp");
+		EXPECT_TRUE(file.IsValid());
+		fileName.Set(file.GetFilePath());
+		EXPECT_TRUE(FileExists(fileName));
+
+		const TempFile file2 = std::move(file);
+		EXPECT_FALSE(file.IsValid());  // NOLINT(bugprone-use-after-move) -- intended check
+		EXPECT_TRUE(file2.IsValid());
+		EXPECT_TRUE(FileExists(fileName));
+		EXPECT_STREQ(fileName.c_str(), file2.GetFilePath());
+	}
+	EXPECT_FALSE(FileExists(fileName));
+}

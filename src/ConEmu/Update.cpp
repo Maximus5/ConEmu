@@ -59,28 +59,6 @@ CConEmuUpdate::CConEmuUpdate()
 {
 	_ASSERTE(isMainThread());
 
-	mb_InCheckProcedure = FALSE;
-	mn_CheckThreadId = 0;
-	mh_CheckThread = nullptr;
-	mb_RequestTerminate = false;
-	mp_Set = nullptr;
-	mps_ErrorLock = new MSectionSimple(true);
-	ms_LastErrorInfo = nullptr;
-	mn_InShowMsgBox = 0;
-	mn_ErrorInfoCount = 0;
-	mn_ErrorInfoSkipCount = 0;
-	mb_InetMode = false;
-	mb_DroppedMode = false;
-	mn_InternetContentReady = mn_PackageSize = 0;
-	mpsz_DeleteIniFile = nullptr;
-	mpsz_DeletePackageFile = mpsz_DeleteBatchFile = nullptr;
-	mpsz_PendingPackageFile = mpsz_PendingBatchFile = nullptr;
-	m_UpdateStep = UpdateStep::NotStarted;
-	mb_NewVersionAvailable = false;
-	ms_NewVersion[0] = ms_SkipVersion[0] = 0;
-	ms_VerOnServer[0] = ms_VerOnServerRA[0] = ms_CurVerInfo[0] = 0;
-	mpsz_ConfirmSource = nullptr;
-
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 	swprintf_c(ms_OurVersion, L"%02u%02u%02u%s",
 		(MVV_1%100), MVV_2, MVV_3, szVer4);
@@ -121,48 +99,43 @@ CConEmuUpdate::~CConEmuUpdate()
 
 	Inet.Deinit(true);
 
-	SafeFree(mpsz_ConfirmSource);
+	msz_ConfirmSource.Clear();
 
-	if (((m_UpdateStep == UpdateStep::ExitAndUpdate) || (m_UpdateStep == UpdateStep::PostponeUpdate)) && mpsz_PendingBatchFile)
+	if (((m_UpdateStep == UpdateStep::ExitAndUpdate) || (m_UpdateStep == UpdateStep::PostponeUpdate)) && msz_PendingBatchFile.IsValid())
 	{
 		WaitAllInstances();
 
 		wchar_t szCmd[] = L"cmd.exe";
-		const size_t cchParmMax = wcslen(mpsz_PendingBatchFile) + wcslen(szCmd) + 16;
-		wchar_t *pszParm = (wchar_t*)calloc(cchParmMax,sizeof(*pszParm));
 		// Double quotation is required due to cmd dequote rules
-		const CEStr szParm(L"/c \"\"", mpsz_PendingBatchFile, L"\"\"");
+		const CEStr szParm(L"/c \"\"", msz_PendingBatchFile.GetFilePath(), L"\"\"");
 
 		// Наверное на Elevated процесс это не распространится, но для четкости - взведем флажок
 		SetEnvironmentVariable(ENV_CONEMU_INUPDATE_W, ENV_CONEMU_INUPDATE_YES);
 
 		// ghWnd уже закрыт
-		const auto nShellRc = INT_PTR(ShellExecute(
+		const auto nShellRc = reinterpret_cast<INT_PTR>(ShellExecute(
 			nullptr, bNeedRunElevation ? L"runas" : L"open", szCmd, szParm.ms_Val,
 			nullptr, SW_SHOWMINIMIZED));
 		if (nShellRc <= 32)
 		{
 			wchar_t szErrInfo[MAX_PATH*4];
 			swprintf_c(szErrInfo,
-				L"Failed to start update batch\n%s\nError code=%i", mpsz_PendingBatchFile, (int)nShellRc);
+				L"Failed to start update batch\n%s\nError code=%i", msz_PendingBatchFile.GetFilePath(), (int)nShellRc);
 			MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, L"ConEmu", nullptr, false);
 
-			DeleteFile(mpsz_PendingBatchFile);
+			msz_PendingBatchFile.Release(true);
 			if (!(mp_Set && mp_Set->isUpdateLeavePackages))
-				DeleteFile(mpsz_PendingPackageFile);
+				msz_PendingPackageFile.Release(true);
 		}
 	}
-	SafeFree(mpsz_PendingBatchFile);
-	SafeFree(mpsz_PendingPackageFile);
+	msz_PendingBatchFile.Release(false);
+	msz_PendingPackageFile.Release(false);
 
 	if (mp_Set)
 	{
 		delete mp_Set;
 		mp_Set = nullptr;
 	}
-
-	SafeDelete(mps_ErrorLock);
-	SafeFree(ms_LastErrorInfo);
 }
 
 void CConEmuUpdate::StartCheckProcedure(const UpdateCallMode callMode)
@@ -227,14 +200,18 @@ void CConEmuUpdate::StartCheckProcedure(const UpdateCallMode callMode)
 	}
 
 	if (gpConEmu)
-		gpConEmu->LogString(abShowMessages ? L"Update: starting in manual mode" : L"Update: starting in automatic mode");
+	{
+		gpConEmu->LogString(callMode != UpdateCallMode::Automatic
+			? L"Update: starting in manual mode"
+			: L"Update: starting in automatic mode");
+	}
 
 	mb_InCheckProcedure = TRUE;
 	mh_CheckThread = apiCreateThread(CheckThreadProc, this, &mn_CheckThreadId, "AutoUpdateThread");
 	if (!mh_CheckThread)
 	{
 		mb_InCheckProcedure = FALSE;
-		DWORD nErrCode = GetLastError();
+		const DWORD nErrCode = GetLastError();
 		wcscpy_c(szErrMsg, L"ConEmu automatic update check failed!\r\n");
 		if (nErrCode == ERROR_ACCESS_DENIED) wcscat_c(szErrMsg, L"Check your antivirus software\r\n");
 		wcscat_c(szErrMsg, L"\r\nCreateThread(CheckThreadProc) failed\r\n");
@@ -278,19 +255,8 @@ void CConEmuUpdate::StopChecking()
 	DeleteBadTempFiles();
 	m_UpdateStep = UpdateStep::NotStarted;
 
-	if (mpsz_PendingBatchFile)
-	{
-		if (*mpsz_PendingBatchFile)
-			DeleteFile(mpsz_PendingBatchFile);
-		SafeFree(mpsz_PendingBatchFile);
-	}
-
-	if (mpsz_PendingPackageFile)
-	{
-		if (*mpsz_PendingPackageFile && !(mp_Set && mp_Set->isUpdateLeavePackages))
-			DeleteFile(mpsz_PendingPackageFile);
-		SafeFree(mpsz_PendingPackageFile);
-	}
+	msz_PendingBatchFile.Release(true);
+	msz_PendingPackageFile.Release(true);
 }
 
 LRESULT CConEmuUpdate::ShowLastError(LPARAM apObj)
@@ -300,10 +266,10 @@ LRESULT CConEmuUpdate::ShowLastError(LPARAM apObj)
 	CEStr szError; // (wchar_t*)apErrText;
 	{
 		MSectionLockSimple CS;
-		if (CS.Lock(gpUpd->mps_ErrorLock, 5000))
+		if (CS.Lock(&gpUpd->ms_ErrorLock, 5000))
 		{
 			szError.Set(gpUpd->ms_LastErrorInfo);
-			SafeFree(gpUpd->ms_LastErrorInfo);
+			gpUpd->ms_LastErrorInfo.Clear();
 		}
 		else
 		{
@@ -334,7 +300,7 @@ LRESULT CConEmuUpdate::QueryConfirmationCallback(LPARAM lParam)
 DWORD CConEmuUpdate::CheckThreadProc(LPVOID lpParameter)
 {
 	DWORD nRc = 0;
-	CConEmuUpdate *pUpdate = (CConEmuUpdate*)lpParameter;
+	CConEmuUpdate *pUpdate = static_cast<CConEmuUpdate*>(lpParameter);
 	_ASSERTE(pUpdate!=nullptr && pUpdate->mn_CheckThreadId==GetCurrentThreadId());
 
 	SAFETRY
@@ -443,195 +409,200 @@ bool CConEmuUpdate::IsUpdatePackage(LPCWSTR asFilePath)
 bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 {
 	bool bRc = false;
-	LPCWSTR pszName, pszExt;
 	HANDLE hTarget = nullptr;
-	wchar_t *pszLocalPackage = nullptr, *pszBatchFile = nullptr;
+	TempFile pszLocalPackage;
+	TempFile pszBatchFile;
 	DWORD nLocalCRC = 0;
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
 	int iConfirmUpdate = -1;
+	ErrorInfo error{};
 
-	LPCWSTR pszPackPref = L"conemupack.";
-	size_t lnPackPref = _tcslen(pszPackPref);
-	LPCWSTR pszSetupPref = L"conemusetup.";
-	size_t lnSetupPref = _tcslen(pszSetupPref);
+	const wchar_t pszPackPref[] = L"conemupack.";
+	const size_t lnPackPref = _tcslen(pszPackPref);
+	const wchar_t  pszSetupPref[] = L"conemusetup.";
+	const size_t lnSetupPref = _tcslen(pszSetupPref);
+
+	const wchar_t* pszName = PointToName(asDownloadedPackage);
+	const wchar_t* pszExt = PointToExt(pszName);
 
 	_ASSERTE(gpConEmu && isMainThread());
+	
+	try {
 
-	if (InUpdate() != UpdateStep::NotStarted)
-	{
-		MBoxError(L"Checking for updates already started");
-		goto wrap;
-	}
-
-	if (mb_InCheckProcedure)
-	{
-		Assert(mb_InCheckProcedure==FALSE);
-		goto wrap;
-	}
-
-	DeleteBadTempFiles();
-	Inet.Deinit(true);
-
-	pszName = PointToName(asDownloadedPackage);
-	pszExt = PointToExt(pszName);
-	if (!pszName || !*pszName || !pszExt || !*pszExt)
-	{
-		AssertMsg(L"Invalid asDownloadedPackage");
-		goto wrap;
-	}
-
-	// Запомнить текущие параметры обновления
-	if (!mp_Set)
-		mp_Set = new ConEmuUpdateSettings;
-	mp_Set->LoadFrom(&gpSet->UpdSet);
-
-	m_ManualCallMode = UpdateCallMode::Manual;
-
-	mb_RequestTerminate = false;
-
-	// Don't clear it here, must be cleared by display procedure
-	_ASSERTE(ms_LastErrorInfo == nullptr);
-
-	ms_NewVersion[0] = 0;
-
-	if ((lstrcmpni(pszName, pszPackPref, lnPackPref) == 0)
-		&& (lstrcmpi(pszExt, L".7z") == 0)
-		&& (((pszExt - pszName) - lnPackPref + 1) < sizeof(ms_NewVersion)))
-	{
-		// Check it was NOT installed with "Setupper"
-		if (mp_Set->UpdateDownloadSetup() == 1)
+		if (InUpdate() != UpdateStep::NotStarted)
 		{
-			DontEnable de;
-			LPCWSTR pszConfirm = L"ConEmu was installed with setup!\nAre you sure to update installation with 7zip?";
-			int iBtn = MsgBox(pszConfirm, MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO|MB_DEFBUTTON2, ms_DefaultTitle, nullptr, false);
-			if (iBtn != IDYES)
+			const wchar_t* errMsg = L"Checking for updates already started";
+			MBoxError(errMsg);
+			throw ErrorInfo(errMsg);
+		}
+
+		if (mb_InCheckProcedure)
+		{
+			Assert(mb_InCheckProcedure == FALSE);
+			throw ErrorInfo(L"Already in the check procedure");
+		}
+
+		DeleteBadTempFiles();
+		Inet.Deinit(true);
+
+		if (!pszName || !*pszName || !pszExt || !*pszExt)
+		{
+			AssertMsg(L"Invalid asDownloadedPackage");
+			throw ErrorInfo(L"Invalid asDownloadedPackage");
+		}
+
+		// Запомнить текущие параметры обновления
+		if (!mp_Set)
+			mp_Set = new ConEmuUpdateSettings;
+		mp_Set->LoadFrom(&gpSet->UpdSet);
+
+		m_ManualCallMode = UpdateCallMode::Manual;
+
+		mb_RequestTerminate = false;
+
+		// Don't clear it here, must be cleared by display procedure
+		_ASSERTE(ms_LastErrorInfo == nullptr);
+
+		ms_NewVersion[0] = 0;
+
+		if ((lstrcmpni(pszName, pszPackPref, lnPackPref) == 0)
+			&& (lstrcmpi(pszExt, L".7z") == 0)
+			&& (((pszExt - pszName) - lnPackPref + 1) < sizeof(ms_NewVersion)))
+		{
+			// Check it was NOT installed with "Setupper"
+			if (mp_Set->UpdateDownloadSetup() == 1)
 			{
-				goto wrap;
+				DontEnable de;
+				const LPCWSTR pszConfirm = L"ConEmu was installed with setup!\nAre you sure to update installation with 7zip?";
+				const int iBtn = MsgBox(pszConfirm, MB_ICONEXCLAMATION | MB_SETFOREGROUND | MB_SYSTEMMODAL | MB_YESNO | MB_DEFBUTTON2, ms_DefaultTitle, nullptr, false);
+				if (iBtn != IDYES)
+				{
+					throw ErrorInfo(L"Installer installation, don't update with 7zip");
+				}
 			}
+
+			if (!Check7zipInstalled())
+			{
+				// TODO: Download 7za.exe from conemu.github.io
+				throw ErrorInfo(L"7zip is not found");
+			}
+
+			// Forcing usage of 7zip package!
+			mp_Set->isUpdateDownloadSetup = 2;
+
+			//if (!CanUpdateInstallation())
+			//{
+			//	// Значит 7zip обломается при попытке распаковки
+			//	goto wrap;
+			//}
+
+			// OK
+			const size_t nLen = (pszExt - pszName) - lnPackPref;
+			wmemmove_s(ms_NewVersion, countof(ms_NewVersion), pszName + lnPackPref, nLen);
+			ms_NewVersion[nLen] = 0;
 		}
-
-		if (!Check7zipInstalled())
-			goto wrap; // Error already reported
-
-		// Forcing usage of 7zip package!
-		mp_Set->isUpdateDownloadSetup = 2;
-
-		//if (!CanUpdateInstallation())
-		//{
-		//	// Значит 7zip обломается при попытке распаковки
-		//	goto wrap;
-		//}
-
-		// OK
-		size_t nLen = (pszExt - pszName) - lnPackPref;
-		wmemmove(ms_NewVersion, pszName+lnPackPref, nLen);
-		ms_NewVersion[nLen] = 0;
-	}
-	else if ((lstrcmpni(pszName, pszSetupPref, lnSetupPref) == 0)
-		&& (lstrcmpi(pszExt, L".exe") == 0)
-		&& (((pszExt - pszName) - lnSetupPref + 1) < sizeof(ms_NewVersion)))
-	{
-		// Must be installed with "Setupper"
-		if (mp_Set->UpdateDownloadSetup() != 1)
+		else if ((lstrcmpni(pszName, pszSetupPref, lnSetupPref) == 0)
+			&& (lstrcmpi(pszExt, L".exe") == 0)
+			&& (((pszExt - pszName) - lnSetupPref + 1) < sizeof(ms_NewVersion)))
 		{
-			MBoxError(L"ConEmu was not installed with setup! Can't update!");
-			goto wrap;
+			// Must be installed with "Setupper"
+			if (mp_Set->UpdateDownloadSetup() != 1)
+			{
+				const wchar_t* errMsg = L"ConEmu was not installed with setup! Can't update!";
+				MBoxError(errMsg);
+				throw ErrorInfo(errMsg);
+			}
+
+			// OK
+			const size_t nLen = (pszExt - pszName) - lnSetupPref;
+			wmemmove_s(ms_NewVersion, countof(ms_NewVersion), pszName + lnSetupPref, nLen);
+			ms_NewVersion[nLen] = 0;
+		}
+		else
+		{
+			const wchar_t* errMsg = L"Invalid asDownloadedPackage (2)";
+			AssertMsg(errMsg);
+			throw ErrorInfo(errMsg);
 		}
 
-		// OK
-		size_t nLen = (pszExt - pszName) - lnSetupPref;
-		wmemmove(ms_NewVersion, pszName+lnSetupPref, nLen);
-		ms_NewVersion[nLen] = 0;
-	}
-	else
-	{
-		AssertMsg(L"Invalid asDownloadedPackage (2)");
-		goto wrap;
-	}
+
+		// Сразу проверим, как нужно будет запускаться
+		bNeedRunElevation = NeedRunElevation();
+
+		// StartLocalUpdate - запуск обновления из локального пакета
+
+		mb_InetMode = false;
+		mb_DroppedMode = true;
 
 
-	// Сразу проверим, как нужно будет запускаться
-	bNeedRunElevation = NeedRunElevation();
+		if (!pszLocalPackage.CreateTempFile(mp_Set->szUpdateDownloadPath, PointToName(asDownloadedPackage), error))
+			throw ErrorInfo(error);
+		pszLocalPackage.CloseFile();
 
-	// StartLocalUpdate - запуск обновления из локального пакета
+		lbDownloadRc = DownloadFile(asDownloadedPackage, pszLocalPackage.GetFilePath(), nLocalCRC, TRUE);
+		if (!lbDownloadRc)
+			throw ErrorInfo(L"Failed to download the file");
 
-	mb_InetMode = false;
-	mb_DroppedMode = true;
+		if (mb_RequestTerminate)
+			throw ErrorInfo(L"Update cancelled, termination was requested");
 
+		pszBatchFile = CreateBatchFile(pszLocalPackage.GetFilePath());
+		if (!pszBatchFile.IsValid())
+			throw ErrorInfo(L"Failed to create update batch file");
 
+		iConfirmUpdate = static_cast<int>(gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmUpdate)));
+		if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
+			throw ErrorInfo(L"Update cancelled because of confirmation");
 
-	pszLocalPackage = CreateTempFile(mp_Set->szUpdateDownloadPath, PointToName(asDownloadedPackage), hTarget);
-	CloseHandle(hTarget);
-	if (!pszLocalPackage)
-		goto wrap;
+		Assert(m_ManualCallMode == UpdateCallMode::Manual);
+		Assert(!msz_PendingBatchFile.IsValid());
 
-	lbDownloadRc = DownloadFile(asDownloadedPackage, pszLocalPackage, nLocalCRC, TRUE);
-	if (!lbDownloadRc)
-		goto wrap;
+		msz_PendingPackageFile = std::move(pszLocalPackage);
+		msz_PendingBatchFile = std::move(pszBatchFile);
 
-
-	if (mb_RequestTerminate)
-		goto wrap;
-
-	pszBatchFile = CreateBatchFile(pszLocalPackage);
-	if (!pszBatchFile)
-		goto wrap;
-
-	iConfirmUpdate = gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmUpdate));
-	if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
-	{
-		goto wrap;
-	}
-
-	Assert(m_ManualCallMode==UpdateCallMode::Manual);
-	Assert(mpsz_PendingBatchFile==nullptr);
-
-	mpsz_PendingPackageFile = pszLocalPackage;
-	pszLocalPackage = nullptr;
-	mpsz_PendingBatchFile = pszBatchFile;
-	pszBatchFile = nullptr;
-	if (iConfirmUpdate == IDYES)
-	{
-		m_UpdateStep = UpdateStep::ExitAndUpdate;
-		if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
-	}
-	else
-	{
-		m_UpdateStep = UpdateStep::PostponeUpdate;
-		if (gpConEmu) gpConEmu->UpdateProgress();
-	}
-	lbExecuteRc = TRUE;
-
-wrap:
-	_ASSERTE(mpsz_DeletePackageFile==nullptr);
-	mpsz_DeletePackageFile = nullptr;
-	if (pszLocalPackage)
-	{
-		if (*pszLocalPackage && (!lbDownloadRc || (!lbExecuteRc && !mp_Set->isUpdateLeavePackages)))
-			mpsz_DeletePackageFile = pszLocalPackage;
-			//DeleteFile(pszLocalPackage);
+		if (iConfirmUpdate == IDYES)
+		{
+			m_UpdateStep = UpdateStep::ExitAndUpdate;
+			if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
+		}
 		else
-			SafeFree(pszLocalPackage);
+		{
+			m_UpdateStep = UpdateStep::PostponeUpdate;
+			if (gpConEmu) gpConEmu->UpdateProgress();
+		}
+		lbExecuteRc = TRUE;
+		return true;
 	}
-
-	_ASSERTE(mpsz_DeleteBatchFile==nullptr);
-	mpsz_DeleteBatchFile = nullptr;
-	if (pszBatchFile)
+	catch (const ErrorInfo& ex)
 	{
-		if (*pszBatchFile && !lbExecuteRc)
-			mpsz_DeleteBatchFile = pszBatchFile;
-			//DeleteFile(pszBatchFile);
-		else
-			SafeFree(pszBatchFile);
-	}
+		if (gpConEmu)
+			gpConEmu->LogString(ex.What());
+		
+		_ASSERTE(!msz_DeletePackageFile.IsValid());
+		msz_DeletePackageFile.Release();
+		if (pszLocalPackage.IsValid())
+		{
+			if (!lbDownloadRc || (!lbExecuteRc && !mp_Set->isUpdateLeavePackages))
+				msz_DeletePackageFile = std::move(pszLocalPackage);
+			else
+				pszLocalPackage.Release();
+		}
 
-	if (!lbExecuteRc)
-	{
+		_ASSERTE(!msz_DeleteBatchFile.IsValid());
+		msz_DeleteBatchFile.Release();
+		if (pszBatchFile.IsValid())
+		{
+			if (!lbExecuteRc)
+				msz_DeleteBatchFile = std::move(pszBatchFile);
+			else
+				pszBatchFile.Release();
+		}
+
 		m_UpdateStep = UpdateStep::NotStarted;
 		mb_DroppedMode = false;
-	}
 
-	return bRc;
+		return false;
+	}
 }
 
 void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szServerRA)[100], wchar_t (&szInfo)[100])
@@ -690,251 +661,263 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 DWORD CConEmuUpdate::CheckProcInt()
 {
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
-	wchar_t *pszLocalPackage = nullptr, *pszBatchFile = nullptr;
-	wchar_t *pszSource, *pszEnd;
+	TempFile szLocalPackage;
+	TempFile szBatchFile;
+	wchar_t* pszSource, * pszEnd;
 	DWORD nSrcLen, nSrcCRC, nLocalCRC = 0;
-	bool lbSourceLocal;
+	bool lbSourceLocal = false;
 	int iConfirmUpdate = -1;
 
-	#if 0
-	// Under Windows7 we may get a debug warning
-	// if conhost.exe was not found yet for all
-	// started consoles...
-	if (m_ManualCallMode == UpdateCallMode::Automatic)
-		Sleep(2500);
-	#endif
-
-	_ASSERTE(m_UpdateStep==UpdateStep::NotStarted);
-	m_UpdateStep = UpdateStep::Check;
-
-	DeleteBadTempFiles();
-
-	if (gpConEmu)
-		gpConEmu->LogString(L"Update: Initializing internet");
-
-	// This implies Inet.Deinit(false) too
-	if (!Inet.Init(this))
+	try
 	{
+
+#if 0
+		// Under Windows7 we may get a debug warning
+		// if conhost.exe was not found yet for all
+		// started consoles...
+		if (m_ManualCallMode == UpdateCallMode::Automatic)
+			Sleep(2500);
+#endif
+
+		_ASSERTE(m_UpdateStep == UpdateStep::NotStarted);
+		m_UpdateStep = UpdateStep::Check;
+
+		DeleteBadTempFiles();
+
 		if (gpConEmu)
-			gpConEmu->LogString(L"Update: Internet failed");
-		goto wrap;
-	}
+			gpConEmu->LogString(L"Update: Initializing internet");
 
-	// Download and parse latest version information
-	while (!LoadVersionInfoFromServer())
-	{
-		const LRESULT lRetryRc = (!gpConEmu || m_ManualCallMode == UpdateCallMode::Automatic || mb_RequestTerminate)
-			? IDCANCEL
-			: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, (LPARAM)szRetryVersionIniCheck);
-
-		// Error must be already shown or logged, clear it
-		if (ms_LastErrorInfo)
+		// This implies Inet.Deinit(false) too
+		if (!Inet.Init(this))
 		{
-			MSectionLockSimple CS;
-			if (CS.Lock(mps_ErrorLock, 5000))
+			const wchar_t* errInfo = L"Update: Internet failed";
+			if (gpConEmu)
+				gpConEmu->LogString(errInfo);
+			throw ErrorInfo(errInfo);
+		}
+
+		// Download and parse latest version information
+		while (!LoadVersionInfoFromServer())
+		{
+			const LRESULT lRetryRc = (!gpConEmu || m_ManualCallMode == UpdateCallMode::Automatic || mb_RequestTerminate)
+				? IDCANCEL
+				: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, reinterpret_cast<LPARAM>(szRetryVersionIniCheck));
+
+			// Error must be already shown or logged, clear it
+			if (ms_LastErrorInfo)
 			{
-				SafeFree(ms_LastErrorInfo);
+				MSectionLockSimple CS;
+				if (CS.Lock(&ms_ErrorLock, 5000))
+				{
+					ms_LastErrorInfo.Release();
+				}
+			}
+
+			if (lRetryRc != IDRETRY)
+			{
+				throw ErrorInfo(L"Update cancelled after confirmation");
 			}
 		}
 
-		if (lRetryRc != IDRETRY)
+		if ((lstrcmpi(ms_NewVersion, ms_OurVersion) <= 0)
+			// If user declined the update in that session - don't suggest that version on hourly update checks
+			|| (m_ManualCallMode == UpdateCallMode::Automatic && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
 		{
-			goto wrap;
-		}
-	}
+			mb_NewVersionAvailable = false;
 
-	if ((lstrcmpi(ms_NewVersion, ms_OurVersion) <= 0)
-		// If user declined the update in that session - don't suggest that version on hourly update checks
-		|| (m_ManualCallMode == UpdateCallMode::Automatic && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
-	{
-		mb_NewVersionAvailable = false;
+			if (m_ManualCallMode != UpdateCallMode::Automatic)
+			{
+				// No newer %s version is available
+				gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::NotStarted));
+			}
 
-		if (m_ManualCallMode != UpdateCallMode::Automatic)
-		{
-			// No newer %s version is available
-			gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::NotStarted));
+			throw ErrorInfo(L"Update cancelled, no newer version was found");
 		}
 
-		goto wrap;
-	}
-
-	pszSource = ms_SourceFull.ms_Val;
-	nSrcLen = wcstoul(pszSource, &pszEnd, 10);
-	if (!nSrcLen || !pszEnd || *pszEnd != L',' || *(pszEnd+1) != L'x')
-	{
-		ReportError(L"Invalid format in version description (size)\n%s", (LPCWSTR)ms_SourceFull, 0);
-		goto wrap;
-	}
-	mn_PackageSize = nSrcLen;
-	pszSource = pszEnd+2;
-	nSrcCRC = wcstoul(pszSource, &pszEnd, 16);
-	if (!nSrcCRC || !pszEnd || *pszEnd != L',')
-	{
-		ReportError(L"Invalid format in version description (CRC32)\n%s", (LPCWSTR)ms_SourceFull, 0);
-		goto wrap;
-	}
-	pszSource = pszEnd+1;
-	lbSourceLocal = IsLocalFile(pszSource);
-
-	if (mb_RequestTerminate)
-		goto wrap;
-
-	// It returns true, if updating with "exe" installer.
-	if (!Check7zipInstalled())
-		goto wrap; // Error already reported
-
-	SafeFree(mpsz_ConfirmSource);
-	mpsz_ConfirmSource = lstrdup(pszSource);
-
-	if (gpConEmu && !gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmDownload)))
-	{
-		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
-		wcscpy_c(ms_SkipVersion, ms_NewVersion);
-		goto wrap;
-	}
-
-	mn_InternetContentReady = 0;
-	m_UpdateStep = UpdateStep::Downloading;
-	// May be null, if update package was dropped on ConEmu icon
-	if (gpConEmu && ghWnd)
-	{
-		gpConEmu->UpdateProgress();
-	}
-
-	// Download the package
-	while (!mb_RequestTerminate)
-	{
-		HANDLE hTarget = nullptr;
-		LARGE_INTEGER liSize = {};
-		lbDownloadRc = FALSE;
-
-		if (gpConEmu)
+		pszSource = ms_SourceFull.ms_Val;
+		nSrcLen = wcstoul(pszSource, &pszEnd, 10);
+		if (!nSrcLen || !pszEnd || *pszEnd != L',' || *(pszEnd + 1) != L'x')
 		{
-			CEStr lsInfo(L"Update: Downloading package: ", pszSource);
-			gpConEmu->LogString(lsInfo);
+			ReportError(L"Invalid format in version description (size)\n%s", ms_SourceFull, 0);
+			throw ErrorInfo(L"Update cancelled, invalid format, size");
+		}
+		mn_PackageSize = nSrcLen;
+		pszSource = pszEnd + 2;
+		nSrcCRC = wcstoul(pszSource, &pszEnd, 16);
+		if (!nSrcCRC || !pszEnd || *pszEnd != L',')
+		{
+			ReportError(L"Invalid format in version description (CRC32)\n%s", ms_SourceFull, 0);
+			throw ErrorInfo(L"Update cancelled, invalid format, CRC32");
+		}
+		pszSource = pszEnd + 1;
+		lbSourceLocal = IsLocalFile(pszSource);
+
+		if (mb_RequestTerminate)
+			throw ErrorInfo(L"Update cancelled, termination was requested");
+
+		// It returns true, if updating with "exe" installer.
+		if (!Check7zipInstalled())
+			throw ErrorInfo(L"Update cancelled, 7zip is not installed"); // Error already reported
+
+		msz_ConfirmSource.Set(pszSource);
+
+		if (gpConEmu && !gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmDownload)))
+		{
+			// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
+			wcscpy_c(ms_SkipVersion, ms_NewVersion);
+			throw ErrorInfo(L"Update cancelled, version skipped");
 		}
 
-		_ASSERTE(!ms_TemplFilename.IsEmpty());
-		pszLocalPackage = CreateTempFile(mp_Set->szUpdateDownloadPath, ms_TemplFilename, hTarget);
-		CloseHandle(hTarget);
-		if (pszLocalPackage)
+		mn_InternetContentReady = 0;
+		m_UpdateStep = UpdateStep::Downloading;
+		// May be null, if update package was dropped on ConEmu icon
+		if (gpConEmu && ghWnd)
 		{
-			// liSize returns only .LowPart yet
-			lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, nLocalCRC, TRUE, &liSize);
+			gpConEmu->UpdateProgress();
+		}
+
+		// Download the package
+		while (!mb_RequestTerminate)
+		{
+			LARGE_INTEGER liSize = {};
+			lbDownloadRc = FALSE;
+
+			if (gpConEmu)
+			{
+				CEStr lsInfo(L"Update: Downloading package: ", pszSource);
+				gpConEmu->LogString(lsInfo);
+			}
+
+			_ASSERTE(!ms_TemplFilename.IsEmpty());
+			ErrorInfo error;
+			if (!szLocalPackage.CreateTempFile(mp_Set->szUpdateDownloadPath, ms_TemplFilename, error))
+			{
+				ReportErrorInt(error);
+			}
+			else
+			{
+				szLocalPackage.CloseFile();
+				// liSize returns only .LowPart yet
+				lbDownloadRc = DownloadFile(pszSource, szLocalPackage.GetFilePath(), nLocalCRC, TRUE, &liSize);
+				if (lbDownloadRc)
+				{
+					wchar_t szInfo[2048];
+					if (liSize.HighPart || liSize.LowPart != nSrcLen)
+					{
+						swprintf_c(szInfo, L"%s\nRequired size=%u, local size=%u", pszSource, nSrcLen, liSize.LowPart);
+						ReportError(L"Downloaded file does not match\n%s\n%s", szLocalPackage.GetFilePath(), szInfo, 0);
+						lbDownloadRc = FALSE;
+					}
+					else if (nLocalCRC != nSrcCRC)
+					{
+						swprintf_c(szInfo, L"Required CRC32=x%08X, local CRC32=x%08X", nSrcCRC, nLocalCRC);
+						ReportError(L"Invalid local file\n%s\n%s", szLocalPackage.GetFilePath(), szInfo, 0);
+						lbDownloadRc = FALSE;
+					}
+				}
+			}
+
+			// Succeeded
 			if (lbDownloadRc)
+				break;
+
+			// Now we show an error even in automatic mode because
+			// the download was started after user confirmation
+			const LRESULT lRetryRc = (!gpConEmu || mb_RequestTerminate)
+				? IDCANCEL
+				: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, (LPARAM)szRetryPackageDownload);
+
+			// Error must be already shown or logged, clear it
+			if (ms_LastErrorInfo)
 			{
-				wchar_t szInfo[2048];
-				if (liSize.HighPart || liSize.LowPart != nSrcLen)
+				MSectionLockSimple CS;
+				if (CS.Lock(&ms_ErrorLock, 5000))
 				{
-					swprintf_c(szInfo, L"%s\nRequired size=%u, local size=%u", pszSource, nSrcLen, liSize.LowPart);
-					ReportError(L"Downloaded file does not match\n%s\n%s", pszLocalPackage, szInfo, 0);
-					lbDownloadRc = FALSE;
+					ms_LastErrorInfo.Clear();
 				}
-				else if (nLocalCRC != nSrcCRC)
-				{
-					swprintf_c(szInfo, L"Required CRC32=x%08X, local CRC32=x%08X", nSrcCRC, nLocalCRC);
-					ReportError(L"Invalid local file\n%s\n%s", pszLocalPackage, szInfo, 0);
-					lbDownloadRc = FALSE;
-				}
+			}
+
+			if (lRetryRc != IDRETRY)
+			{
+				throw ErrorInfo(L"Update cancelled after confirmation");
 			}
 		}
 
-		// Succeeded
-		if (lbDownloadRc)
-			break;
+		Inet.Deinit(true);
 
-		// Now we show an error even in automatic mode because
-		// the download was started after user confirmation
-		LRESULT lRetryRc = (!gpConEmu || mb_RequestTerminate)
-			? IDCANCEL
-			: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, (LPARAM)szRetryPackageDownload);
+		if (mb_RequestTerminate)
+			throw ErrorInfo(L"Update cancelled, termination was requested");
 
-		// Error must be already shown or logged, clear it
-		if (ms_LastErrorInfo)
+		if (gpConEmu)
+			gpConEmu->LogString(L"Update: Creating update script");
+
+		szBatchFile = CreateBatchFile(szLocalPackage.GetFilePath());
+		if (!szBatchFile.IsValid())
+			throw ErrorInfo(L"Failed to create update batch file");
+
+		iConfirmUpdate = static_cast<int>(gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmUpdate)));
+		if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
 		{
-			MSectionLockSimple CS;
-			if (CS.Lock(mps_ErrorLock, 5000))
-			{
-				SafeFree(ms_LastErrorInfo);
-			}
+			// If user declined the update in that session - don't suggest that version on hourly update checks
+			wcscpy_c(ms_SkipVersion, ms_NewVersion);
+			throw ErrorInfo(L"Update cancelled, version skipped by user");
 		}
 
-		if (lRetryRc != IDRETRY)
+		msz_PendingPackageFile = std::move(szLocalPackage);
+		msz_PendingBatchFile = std::move(szBatchFile);
+
+		if (gpConEmu)
+			gpConEmu->LogString(L"Update: Ready to update on exit");
+		if (iConfirmUpdate == IDYES)
 		{
-			goto wrap;
+			m_UpdateStep = UpdateStep::ExitAndUpdate;
+			if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
 		}
+		else
+		{
+			m_UpdateStep = UpdateStep::PostponeUpdate;
+			if (gpConEmu) gpConEmu->UpdateProgress();
+		}
+
+		lbExecuteRc = TRUE;
+	}
+	catch (const ErrorInfo& ex)
+	{
+		if (gpConEmu)
+			gpConEmu->LogString(ex.What());
+
+		if (!lbExecuteRc && gpConEmu && ms_LastErrorInfo)
+		{
+			gpConEmu->CallMainThread(false, ShowLastError, reinterpret_cast<LPARAM>(this));
+		}
+
+		_ASSERTE(!msz_DeletePackageFile.IsValid());
+		msz_DeletePackageFile.Release();
+		if (szLocalPackage.IsValid())
+		{
+			if (!lbDownloadRc || (!lbExecuteRc && !mp_Set->isUpdateLeavePackages))
+				msz_DeletePackageFile = std::move(szLocalPackage);
+			else
+				szLocalPackage.Release();
+		}
+
+		_ASSERTE(!msz_DeleteBatchFile.IsValid());
+		msz_DeleteBatchFile.Release();
+		if (szBatchFile.IsValid())
+		{
+			if (!lbExecuteRc)
+				msz_DeleteBatchFile = std::move(szBatchFile);
+			else
+				szBatchFile.Release();
+		}
+
+		if (!lbExecuteRc)
+			m_UpdateStep = UpdateStep::NotStarted;
 	}
 
 	Inet.Deinit(true);
 
-	if (mb_RequestTerminate)
-		goto wrap;
-
-	if (gpConEmu)
-		gpConEmu->LogString(L"Update: Creating update script");
-
-	pszBatchFile = CreateBatchFile(pszLocalPackage);
-	if (!pszBatchFile)
-		goto wrap;
-
-	iConfirmUpdate = gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmUpdate));
-	if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
-	{
-		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
-		wcscpy_c(ms_SkipVersion, ms_NewVersion);
-		goto wrap;
-	}
-	mpsz_PendingPackageFile = pszLocalPackage;
-	pszLocalPackage = nullptr;
-	mpsz_PendingBatchFile = pszBatchFile;
-	pszBatchFile = nullptr;
-	if (gpConEmu)
-		gpConEmu->LogString(L"Update: Ready to update on exit");
-	if (iConfirmUpdate == IDYES)
-	{
-		m_UpdateStep = UpdateStep::ExitAndUpdate;
-		if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
-	}
-	else
-	{
-		m_UpdateStep = UpdateStep::PostponeUpdate;
-		if (gpConEmu) gpConEmu->UpdateProgress();
-	}
-	lbExecuteRc = TRUE;
-
-wrap:
-	if (!lbExecuteRc && gpConEmu && ms_LastErrorInfo)
-	{
-		gpConEmu->CallMainThread(false, ShowLastError, (LPARAM)this);
-	}
-
-	_ASSERTE(mpsz_DeletePackageFile==nullptr);
-	mpsz_DeletePackageFile = nullptr;
-	if (pszLocalPackage)
-	{
-		if (*pszLocalPackage && (!lbDownloadRc || (!lbExecuteRc && !mp_Set->isUpdateLeavePackages)))
-			mpsz_DeletePackageFile = pszLocalPackage;
-			//DeleteFile(pszLocalPackage);
-		else
-			SafeFree(pszLocalPackage);
-	}
-
-	_ASSERTE(mpsz_DeleteBatchFile==nullptr);
-	mpsz_DeleteBatchFile = nullptr;
-	if (pszBatchFile)
-	{
-		if (*pszBatchFile && !lbExecuteRc)
-			mpsz_DeleteBatchFile = pszBatchFile;
-			//DeleteFile(pszBatchFile);
-		else
-			SafeFree(pszBatchFile);
-	}
-
-	if (!lbExecuteRc)
-		m_UpdateStep = UpdateStep::NotStarted;
-
-	Inet.Deinit(true);
-
+	std::ignore = lbSourceLocal;
 	mb_InCheckProcedure = FALSE;
 	return 0;
 }
@@ -949,107 +932,107 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 	LPCWSTR pszUpdateVerLocation = nullptr;
 	wchar_t szSection[64], szItem[64];
 
-	// Logging
-	if (gpConEmu)
-	{
-		CEStr lsInfo(L"Update: Loading versions from server: ", pszUpdateVerLocationSet);
-		gpConEmu->LogString(lsInfo);
-	}
+	try {
 
-	ms_VersionUrlCheck.Set(pszUpdateVerLocationSet);
-
-	// Erase previous temp file if any
-	if (!ms_TempUpdateVerLocation.IsEmpty())
-	{
-		DeleteFile(ms_TempUpdateVerLocation);
-		ms_TempUpdateVerLocation.Clear();
-	}
-
-	// We need to download information? Or it it is located in the intranet?
-	if (IsLocalFile(pszUpdateVerLocationSet))
-	{
-		pszUpdateVerLocation = pszUpdateVerLocationSet;
-	}
-	else
-	{
-		HANDLE hInfo = nullptr;
-		BOOL bInfoRc;
-		DWORD crc;
-
-		// Create temporary file
-		ms_TempUpdateVerLocation = CreateTempFile(mp_Set->szUpdateDownloadPath/*L"%TEMP%"*/, L"ConEmuVersion.ini", hInfo);
-		CloseHandle(hInfo);
-		if (ms_TempUpdateVerLocation.IsEmpty())
-			goto wrap;
-		pszUpdateVerLocation = (LPCWSTR)ms_TempUpdateVerLocation;
-
-		// And download file from server
-		bInfoRc = DownloadFile(pszUpdateVerLocationSet, pszUpdateVerLocation, crc);
-		if (!bInfoRc)
+		// Logging
+		if (gpConEmu)
 		{
-			goto wrap;
+			const CEStr lsInfo(L"Update: Loading versions from server: ", pszUpdateVerLocationSet);
+			gpConEmu->LogString(lsInfo);
 		}
-	}
 
-	// Logging
-	if (gpConEmu)
+		ms_VersionUrlCheck.Set(pszUpdateVerLocationSet);
+
+		// Erase previous temp file if any
+		ms_TempUpdateVerLocation.Release(true);
+
+		// We need to download information? Or it it is located in the intranet?
+		if (IsLocalFile(pszUpdateVerLocationSet))
+		{
+			pszUpdateVerLocation = pszUpdateVerLocationSet;
+		}
+		else
+		{
+			DWORD crc;
+			ErrorInfo errInfo;
+
+			// Create temporary file
+			if (!ms_TempUpdateVerLocation.CreateTempFile(mp_Set->szUpdateDownloadPath/*L"%TEMP%"*/, L"ConEmuVersion.ini", errInfo))
+				throw ErrorInfo(errInfo);
+			ms_TempUpdateVerLocation.CloseFile();
+			pszUpdateVerLocation = ms_TempUpdateVerLocation.GetFilePath();
+
+			// And download file from server
+			const BOOL bInfoRc = DownloadFile(pszUpdateVerLocationSet, pszUpdateVerLocation, crc);
+			if (!bInfoRc)
+			{
+				throw ErrorInfo(L"Failed to download update version information");
+			}
+		}
+
+		// Logging
+		if (gpConEmu)
+		{
+			const CEStr lsInfo(L"Update: Checking version information: ", pszUpdateVerLocation);
+			gpConEmu->LogString(lsInfo);
+		}
+
+		// What version user prefers?
+		_wcscpy_c(szSection, countof(szSection),
+			(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? sectionConEmuStable
+			: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? sectionConEmuPreview
+			: sectionConEmuDevel);
+		_wcscpy_c(szItem, countof(szItem), (mp_Set->UpdateDownloadSetup() == 1) ? L"location_exe" : L"location_arc");
+
+		// Check the ini-file
+		if (!GetPrivateProfileString(szSection, L"version", L"", ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation) || !*ms_NewVersion)
+		{
+			ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet, pszUpdateVerLocation);
+			throw ErrorInfo(L"Update version information is invalid");
+		}
+
+		// URL may not contain file name at all, compile it (predefined)
+		if (mp_Set->UpdateDownloadSetup() == 1)
+			ms_TemplFilename = CEStr(L"ConEmuSetup.", ms_NewVersion, L".exe");
+		else
+			ms_TemplFilename = CEStr(L"ConEmuPack.", ms_NewVersion, L".7z");
+
+		ms_SourceFull.Clear();
+
+		if (!GetPrivateProfileString(szSection, szItem, L"", ms_SourceFull.GetBuffer(1024), 1024, pszUpdateVerLocation)
+			|| ms_SourceFull.IsEmpty())
+		{
+			ReportBrokenIni(szSection, szItem, pszUpdateVerLocationSet, pszUpdateVerLocation);
+			throw ErrorInfo(L"Update version information is invalid");
+		}
+
+		GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_VerOnServerRA, ms_CurVerInfo);
+
+		bOk = true;
+	}
+	catch (const ErrorInfo& ex)
 	{
-		CEStr lsInfo(L"Update: Checking version information: ", pszUpdateVerLocation);
-		gpConEmu->LogString(lsInfo);
+		if (gpConEmu)
+			gpConEmu->LogString(ex.What());
 	}
-
-	// What version user prefers?
-	_wcscpy_c(szSection, countof(szSection),
-		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? sectionConEmuStable
-		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? sectionConEmuPreview
-		: sectionConEmuDevel);
-	_wcscpy_c(szItem, countof(szItem), (mp_Set->UpdateDownloadSetup()==1) ? L"location_exe" : L"location_arc");
-
-	// Check the ini-file
-	if (!GetPrivateProfileString(szSection, L"version", L"", ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation) || !*ms_NewVersion)
-	{
-		ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet, pszUpdateVerLocation);
-		goto wrap;
-	}
-
-	// URL may not contain file name at all, compile it (predefined)
-	if (mp_Set->UpdateDownloadSetup()==1)
-		ms_TemplFilename = lstrmerge(L"ConEmuSetup.", ms_NewVersion, L".exe");
-	else
-		ms_TemplFilename = lstrmerge(L"ConEmuPack.", ms_NewVersion, L".7z");
-
-	ms_SourceFull.Clear();
-
-	if (!GetPrivateProfileString(szSection, szItem, L"", ms_SourceFull.GetBuffer(1024), 1024, pszUpdateVerLocation)
-		|| ms_SourceFull.IsEmpty())
-	{
-		ReportBrokenIni(szSection, szItem, pszUpdateVerLocationSet, pszUpdateVerLocation);
-		goto wrap;
-	}
-
-	GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_VerOnServerRA, ms_CurVerInfo);
-
-	bOk = true;
-wrap:
 	return bOk;
 }
 
-wchar_t* CConEmuUpdate::CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix /*= nullptr*/)
+CEStr CConEmuUpdate::CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix /*= nullptr*/)
 {
-	wchar_t* pszMsg = lstrmerge(
+	return CEStr(
 		L"Versions on server\n",
-		(LPCWSTR)ms_VersionUrlCheck,
+		ms_VersionUrlCheck,
 		L"\n",
 		abRightAligned ? ms_VerOnServerRA : ms_VerOnServer,
 		asSuffix);
-	return pszMsg;
 }
 
 LRESULT CConEmuUpdate::QueryRetryVersionCheck(LPARAM lParam)
 {
 	LRESULT lRc = IDCANCEL;
 	CEStr szError;
-	LPCWSTR pszMessage = (LPCWSTR)lParam;
+	const wchar_t* pszMessage = reinterpret_cast<const wchar_t*>(lParam);
 
 	// if the termination was requested
 	if (!gpUpd || !gpConEmu || gpUpd->mb_RequestTerminate)
@@ -1072,14 +1055,14 @@ LRESULT CConEmuUpdate::QueryRetryVersionCheck(LPARAM lParam)
 	if (gpUpd->ms_LastErrorInfo)
 	{
 		MSectionLockSimple CS;
-		if (CS.Lock(gpUpd->mps_ErrorLock, 5000))
+		if (CS.Lock(&gpUpd->ms_ErrorLock, 5000))
 		{
-			szError = lstrmerge(pszMessage, L"\n\n", gpUpd->ms_LastErrorInfo);
-			SafeFree(gpUpd->ms_LastErrorInfo);
+			szError = CEStr(pszMessage, L"\n\n", gpUpd->ms_LastErrorInfo);
+			gpUpd->ms_LastErrorInfo.Clear();
 		}
 		else
 		{
-			szError = lstrmerge(pszMessage, L"\n\n", L"Updater error was occurred but we failed to lock it");
+			szError = CEStr(pszMessage, L"\n\n", L"Updater error was occurred but we failed to lock it");
 		}
 	}
 	else
@@ -1101,18 +1084,18 @@ wrap:
 	return lRc;
 }
 
-wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
+TempFile CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 {
 	BOOL lbRc = FALSE;
-	HANDLE hBatch = nullptr;
-	wchar_t* pszBatch = nullptr;
-	wchar_t* pszCommand = nullptr;
+	TempFile pszBatch;
+	CEStr pszCommand;
 	LPCWSTR pszWorkDir = nullptr;
 	BOOL lbWrite;
 	DWORD nLen, nWritten;
 	char szOem[4096];
 	LPCWSTR pszFormat = nullptr;
 	size_t cchCmdMax = 0;
+	ErrorInfo error;
 
 	wchar_t szPID[16]; swprintf_c(szPID, L"%u", GetCurrentProcessId());
 	// Setupper bitness will be corrected in mp_Set->UpdateExeCmdLine
@@ -1120,16 +1103,18 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 
 	if (!gpConEmu)
 	{
-		ReportError(L"CreateBatchFile failed, gpConEmu==nullptr", 0); goto wrap;
+		ReportError(L"CreateBatchFile failed, gpConEmu==nullptr", 0);
+		goto wrap;
 	}
 
-	pszBatch = CreateTempFile(mp_Set->szUpdateDownloadPath, L"ConEmuUpdate.cmd", hBatch);
-	if (!pszBatch)
+	if (!pszBatch.CreateTempFile(mp_Set->szUpdateDownloadPath, L"ConEmuUpdate.cmd", error))
+	{
 		goto wrap;
+	}
 
 	#define WRITE_BATCH_A(s) \
 		nLen = lstrlenA(s); \
-		lbWrite = WriteFile(hBatch, s, nLen, &nWritten, nullptr); \
+		lbWrite = WriteFile(pszBatch.GetHandle(), s, nLen, &nWritten, nullptr); \
 		if (!lbWrite || (nLen != nWritten)) { ReportError(L"WriteBatch failed, code=%u", GetLastError()); goto wrap; }
 
 	#define WRITE_BATCH_W(s) \
@@ -1160,9 +1145,14 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 				ReportError(L"Invalid %s update command (%s)", (mp_Set->UpdateDownloadSetup()==1) ? L"exe" : L"arc", pszFormat, 0);
 				goto wrap;
 			}
-			pszCommand = (wchar_t*)malloc((cchCmdMax+1)*sizeof(wchar_t));
+			if (!pszCommand.GetBuffer(cchCmdMax + 1))
+			{
+				ReportError(L"Invalid %s update command (%s), allocation of %i bytes failed",
+					(mp_Set->UpdateDownloadSetup() == 1) ? L"exe" : L"arc", pszFormat, static_cast<DWORD>(cchCmdMax + 1));
+				goto wrap;
+			}
 		}
-		wchar_t* pDst = pszCommand;
+		wchar_t* pDst = pszCommand.data();
 		LPCWSTR pszMacro;
 		for (LPCWSTR pSrc = pszFormat; *pSrc; pSrc++)
 		{
@@ -1296,17 +1286,13 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	// Succeeded
 	lbRc = TRUE;
 wrap:
-	SafeFree(pszCommand);
+	pszBatch.CloseFile();
 
 	if (!lbRc)
 	{
-		SafeFree(pszBatch);
+		pszBatch.Release(true);
 	}
 
-	if (hBatch && hBatch != INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(hBatch);
-	}
 	return pszBatch;
 }
 
@@ -1336,124 +1322,6 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 	}
 
 	return m_UpdateStep;
-}
-
-// asDir is allowed to have environment variables, e.g. "%TEMP%\\ConEmu"
-wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, HANDLE& hFile)
-{
-	wchar_t szFile[MAX_PATH*2+2];
-	wchar_t szName[128];
-
-	if (!asDir || !*asDir)
-		asDir = L"%TEMP%\\ConEmu";
-	if (!asFileNameTempl || !*asFileNameTempl)
-		asFileNameTempl = L"ConEmu.tmp";
-
-	if (wcschr(asDir, L'%'))
-	{
-		DWORD nExp = ExpandEnvironmentStrings(asDir, szFile, MAX_PATH);
-		if (!nExp || (nExp >= MAX_PATH))
-		{
-			ReportError(L"CreateTempFile.ExpandEnvironmentStrings(%s) failed, code=%u", asDir, GetLastError());
-			return nullptr;
-		}
-	}
-	else
-	{
-		lstrcpyn(szFile, asDir, MAX_PATH);
-	}
-
-	// Checking %TEMP% for valid path
-	LPCWSTR pszColon1, pszColon2;
-	if ((pszColon1 = wcschr(szFile, L':')) != nullptr)
-	{
-		if ((pszColon2 = wcschr(pszColon1+1, L':')) != nullptr)
-		{
-			ReportError(L"Invalid download path (%%TEMP%% variable?)\n%s", szFile, 0);
-			return nullptr;
-		}
-	}
-
-	int nLen = lstrlen(szFile);
-	if (nLen <= 0)
-	{
-		ReportError(L"CreateTempFile.asDir(%s) failed, path is null", asDir, 0);
-		return nullptr;
-	}
-	if (szFile[nLen-1] != L'\\')
-	{
-		szFile[nLen++] = L'\\'; szFile[nLen] = 0;
-	}
-	wchar_t* pszFilePart = szFile + nLen;
-
-	wchar_t* pszDirectory = lstrdup(szFile);
-
-
-	LPCWSTR pszName = PointToName(asFileNameTempl);
-	_ASSERTE(pszName == asFileNameTempl);
-	if (!pszName || !*pszName || (*pszName == L'.'))
-	{
-		_ASSERTE(pszName && *pszName && (*pszName != L'.'));
-		pszName = L"ConEmu";
-	}
-
-	LPCWSTR pszExt = PointToExt(pszName);
-	if (pszExt == nullptr)
-	{
-		_ASSERTE(pszExt != nullptr);
-		pszExt = L".tmp";
-	}
-
-	lstrcpyn(szName, pszName, countof(szName)-16);
-	wchar_t* psz = wcsrchr(szName, L'.');
-	if (psz)
-		*psz = 0;
-
-	wchar_t* pszResult = nullptr;
-	DWORD dwErr = 0;
-
-	for (UINT i = 0; i <= 9999; i++)
-	{
-		_wcscpy_c(pszFilePart, MAX_PATH, szName);
-		if (i)
-			swprintf_c(pszFilePart+_tcslen(pszFilePart), 16/*#SECURELEN*/, L"(%u)", i);
-		_wcscat_c(pszFilePart, MAX_PATH, pszExt);
-
-		SECURITY_ATTRIBUTES sec = {sizeof(sec), nullptr, TRUE};
-		hFile = CreateFile(szFile, GENERIC_WRITE, FILE_SHARE_READ, &sec, CREATE_NEW, FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_TEMPORARY, nullptr);
-		//ERROR_PATH_NOT_FOUND?
-		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
-		{
-			dwErr = GetLastError();
-			// на первом обломе - попытаться создать директорию, может ее просто нет?
-			if ((dwErr == ERROR_PATH_NOT_FOUND) && (i == 0))
-			{
-				if (!MyCreateDirectory(pszDirectory))
-				{
-					ReportError(L"CreateTempFile.asDir(%s) failed", asDir, 0);
-					goto wrap;
-				}
-			}
-		}
-
-		if (hFile && hFile != INVALID_HANDLE_VALUE)
-		{
-			psz = lstrdup(szFile);
-			if (!psz)
-			{
-				CloseHandle(hFile); hFile = nullptr;
-				ReportError(L"Can't allocate memory (%i bytes)", lstrlen(szFile));
-			}
-			pszResult = psz;
-			goto wrap;
-		}
-	}
-
-	ReportError(L"Can't create temp file(%s), code=%u", szFile, dwErr);
-	hFile = nullptr;
-wrap:
-	SafeFree(pszDirectory);
-	return pszResult;
 }
 
 // This checks if file is located on local drive
@@ -1552,14 +1420,15 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 	{
 		if (rpSize)
 		{
-			rpSize->LowPart = args[0].uintArg;
-			rpSize->HighPart = 0; // Files sizes larger than 4GB are not supported (doesn't matter for our update package)
+			// Files sizes larger than 4GB are not supported (doesn't matter for our update package)
+			rpSize->LowPart = static_cast<DWORD>(args[0].uintArg);
+			rpSize->HighPart = 0;
 		}
-		crc = args[1].uintArg;
+		crc = static_cast<DWORD>(args[1].uintArg);
 	}
 	else
 	{
-		ReportError(L"File download was failed\n%s\nErrCode=0x%08X", asSource, args[0].uintArg);
+		ReportError(L"File download was failed\n%s\nErrCode=0x%08X", asSource, static_cast<DWORD>(args[0].uintArg));
 	}
 wrap:
 	Inet.SetCallback(dc_ProgressCallback, nullptr, 0);
@@ -1567,13 +1436,13 @@ wrap:
 	return lbRc;
 }
 
-void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
+void CConEmuUpdate::ReportErrorInt(const ErrorInfo& error)
 {
 	MCHKHEAP;
 
 	if (gpConEmu)
 	{
-		CEStr lsLog(L"Update: ", asErrorInfo);
+		const CEStr lsLog(L"Update: ", error.What());
 		wchar_t* ptr = lsLog.ms_Val;
 		while ((ptr = wcspbrk(ptr, L"\r\n")) != nullptr) *ptr = L' ';
 		gpConEmu->LogString(lsLog);
@@ -1585,25 +1454,22 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 		swprintf_c(szTime, L"\r\n%u-%02u-%02u %u:%02u:%02u.%03u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
 		MSectionLockSimple CS;
-		if (CS.Lock(mps_ErrorLock, 5000))
+		if (CS.Lock(&ms_ErrorLock, 5000))
 		{
-			wchar_t* pszNew = lstrmerge(asErrorInfo, szTime, ms_LastErrorInfo ? L"\r\n\r\n" : nullptr, ms_LastErrorInfo);
+			const CEStr pszNew(error.What(), szTime, ms_LastErrorInfo ? L"\r\n\r\n" : nullptr, ms_LastErrorInfo);
 			if (pszNew)
 			{
-				SafeFree(asErrorInfo);
-				SafeFree(ms_LastErrorInfo);
-				ms_LastErrorInfo = pszNew;
+				ms_LastErrorInfo = std::move(pszNew);
 			}
 			else
 			{
-				SafeFree(ms_LastErrorInfo);
-				ms_LastErrorInfo = asErrorInfo;
+				ms_LastErrorInfo.Set(error.What());
 			}
 		}
 		else
 		{
 			_ASSERTE(FALSE && "Can't lock ms_LastErrorInfo");
-			ms_LastErrorInfo = asErrorInfo;
+			ms_LastErrorInfo.Set(error.What());
 		}
 	}
 
@@ -1630,45 +1496,40 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 #endif
 }
 
-void CConEmuUpdate::ReportError(LPCWSTR asFormat, DWORD nErrCode)
+void CConEmuUpdate::ReportError(LPCWSTR asFormat, const DWORD nErrCode)
 {
 	if (!asFormat)
 		return;
 
-	size_t cchMax = _tcslen(asFormat) + 32;
-	wchar_t* pszErrInfo = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-	if (pszErrInfo)
+	
+	const ErrorInfo error(asFormat, nErrCode);
+	if (error.HasError())
 	{
-		swprintf_c(pszErrInfo, cchMax/*#SECURELEN*/, asFormat, nErrCode);
-		ReportErrorInt(pszErrInfo);
+		ReportErrorInt(error);
 	}
 }
 
-void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg, DWORD nErrCode)
+void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg, const DWORD nErrCode)
 {
 	if (!asFormat || !asArg)
 		return;
 
-	size_t cchMax = _tcslen(asFormat) + _tcslen(asArg) + 32;
-	wchar_t* pszErrInfo = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-	if (pszErrInfo)
+	const ErrorInfo error(asFormat, asArg, nErrCode);
+	if (error.HasError())
 	{
-		swprintf_c(pszErrInfo, cchMax/*#SECURELEN*/, asFormat, asArg, nErrCode);
-		ReportErrorInt(pszErrInfo);
+		ReportErrorInt(error);
 	}
 }
 
-void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2, DWORD nErrCode)
+void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2, const DWORD nErrCode)
 {
 	if (!asFormat || !asArg1 || !asArg2)
 		return;
 
-	size_t cchMax = _tcslen(asFormat) + _tcslen(asArg1) + _tcslen(asArg2) + 32;
-	wchar_t* pszErrInfo = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-	if (pszErrInfo)
+	const ErrorInfo error(asFormat, asArg1, asArg2, nErrCode);
+	if (error.HasError())
 	{
-		swprintf_c(pszErrInfo, cchMax/*#SECURELEN*/, asFormat, asArg1, asArg2, nErrCode);
-		ReportErrorInt(pszErrInfo);
+		ReportErrorInt(error);
 	}
 }
 
@@ -1696,13 +1557,13 @@ LRESULT CConEmuUpdate::RequestExitUpdate(LPARAM)
 
 void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIniUrl, LPCWSTR asIniLocal)
 {
-	DWORD nErr = GetLastError();
+	const DWORD nErr = GetLastError();
 
-	CEStr lsInfo(
+	const CEStr lsInfo(
 		L"[", asSection, L"] \"", asName, L"\""
 		);
 
-	CEStr lsIni(
+	const CEStr lsIni(
 		L"URL: ", asIniUrl, L"\n"
 		L"File: ", asIniLocal
 		);
@@ -1712,7 +1573,7 @@ void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR a
 		L"%s\n\n"
 		L"%s\n\n"
 		L"Error code=%u",
-		(LPCWSTR)lsInfo, (LPCWSTR)lsIni, nErr);
+		lsInfo.c_str(), lsIni.c_str(), nErr);
 }
 
 // If we are installed in "C:\Program Files\..." or any other restricted location.
@@ -1786,21 +1647,9 @@ bool CConEmuUpdate::NeedRunElevation()
 
 void CConEmuUpdate::DeleteBadTempFiles()
 {
-	if (!ms_TempUpdateVerLocation.IsEmpty())
-	{
-		DeleteFile(ms_TempUpdateVerLocation);
-		ms_TempUpdateVerLocation.Clear();
-	}
-	if (mpsz_DeletePackageFile)
-	{
-		DeleteFile(mpsz_DeletePackageFile);
-		SafeFree(mpsz_DeletePackageFile);
-	}
-	if (mpsz_DeleteBatchFile)
-	{
-		DeleteFile(mpsz_DeleteBatchFile);
-		SafeFree(mpsz_DeleteBatchFile);
-	}
+	ms_TempUpdateVerLocation.Release(true);
+	msz_DeletePackageFile.Release(true);
+	msz_DeleteBatchFile.Release(true);
 }
 
 bool CConEmuUpdate::Check7zipInstalled()
@@ -1833,8 +1682,7 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 	}
 
 	int lRc = 0;
-	wchar_t* pszMsg = nullptr;
-	size_t cchMax;
+	CEStr pszMsg;
 
 	_ASSERTE(isMainThread());
 
@@ -1845,26 +1693,27 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 			mb_NewVersionAvailable = true;
 			m_UpdateStep = step;
 
-			if (mb_ManualCallMode == 2)
+			if (m_ManualCallMode == UpdateCallMode::TSA)
 			{
 				lRc = TRUE;
 			}
-			else if (mp_Set->isUpdateConfirmDownload || mb_ManualCallMode)
+			else if (mp_Set->isUpdateConfirmDownload || m_ManualCallMode != UpdateCallMode::Automatic)
 			{
 				lRc = QueryConfirmationDownload();
 			}
 			else
 			{
-				cchMax = 200;
-				pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
-
-				swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"New %s version available: %s\nClick here to download",
-					(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
-					: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
-					: CV_DEVEL,
-					ms_NewVersion);
-				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
-
+				const size_t cchMax = 200;
+				if (pszMsg.GetBuffer(cchMax))
+				{
+					swprintf_c(pszMsg.data(), pszMsg.GetMaxCount(),
+						L"New %s version available: %s\nClick here to download",
+						(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
+						: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
+						: CV_DEVEL,
+						ms_NewVersion);
+					Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
+				}
 				lRc = 0;
 			}
 		}
@@ -1875,6 +1724,11 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 		lRc = QueryConfirmationUpdate();
 		break;
 
+	case UpdateStep::NotStarted:
+	case UpdateStep::Check:
+	case UpdateStep::Downloading:
+	case UpdateStep::PostponeUpdate:
+	case UpdateStep::ExitAndUpdate:
 	default:
 		lRc = false;
 		_ASSERTE(mb_NewVersionAvailable == false);
@@ -1886,8 +1740,6 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 
 		QueryConfirmationNoNewVer();
 	}
-
-	SafeFree(pszMsg);
 
 	return lRc;
 }
@@ -1901,37 +1753,37 @@ int CConEmuUpdate::QueryConfirmationDownload()
 	InterlockedIncrement(&mn_InShowMsgBox);
 
 	int iBtn = -1;
-	HRESULT hr;
-	wchar_t szNewVer[120];
-	wchar_t szWWW[MAX_PATH];
-	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
+	HRESULT hr = S_FALSE;
+	wchar_t szNewVer[120] = L"";
+	wchar_t szWWW[MAX_PATH] = L"";
+	TASKDIALOGCONFIG tsk{}; tsk.cbSize = sizeof(tsk);
 	TASKDIALOG_BUTTON btns[3] = {};
 	LPCWSTR pszServerPath = L"";
-	size_t cchMax;
-	wchar_t* pszMsg = nullptr;
-	wchar_t* pszDup = nullptr;
-	wchar_t* pszFile = nullptr;
-	wchar_t* pszBtn1 = nullptr;
-	wchar_t* pszBtn2 = nullptr;
+	size_t cchMax = 0;
+	CEStr pszMsg;
+	CEStr pszDup;
+	CEStr pszBtn1;
+	CEStr pszBtn2;
 
-
-	if (mpsz_ConfirmSource)
+	const wchar_t* pszFile = nullptr;
+	if (msz_ConfirmSource)
 	{
-		pszDup = lstrdup(mpsz_ConfirmSource);
+		pszDup.Set(msz_ConfirmSource);
 		if (pszDup)
 		{
-			pszFile = wcsrchr(pszDup, L'/');
-			if (!pszFile) pszFile = wcsrchr(pszDup, L'\\'); // Local file?
-		}
-		if (pszFile)
-		{
-			pszFile[1] = 0;
-			pszFile = (mpsz_ConfirmSource + (pszFile - pszDup + 1));
-			pszServerPath = pszDup;
-		}
-		else
-		{
-			pszServerPath = mpsz_ConfirmSource;
+			wchar_t* lastSlash = wcsrchr(pszDup.data(), L'/');
+			if (!lastSlash)
+				lastSlash = wcsrchr(pszDup.data(), L'\\'); // Local file?
+			if (lastSlash)
+			{
+				lastSlash[1] = 0;
+				pszFile = (msz_ConfirmSource.c_str() + (lastSlash - pszDup.data() + 1));
+				pszServerPath = pszDup;
+			}
+			else
+			{
+				pszServerPath = msz_ConfirmSource.c_str();
+			}
 		}
 	}
 
@@ -1956,9 +1808,9 @@ int CConEmuUpdate::QueryConfirmationDownload()
 	pszMsg = CreateVersionOnServerInfo(true);
 	tsk.pszContent = pszMsg;
 
-	pszBtn1 = lstrmerge(L"Download\n", pszServerPath, pszFile ? L"\n" : nullptr, pszFile);
+	pszBtn1 = CEStr(L"Download\n", pszServerPath, pszFile ? L"\n" : nullptr, pszFile);
 	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = pszBtn1;
-	pszBtn2 = lstrmerge(L"Visit download page\n", gsDownlPage);
+	pszBtn2 = CEStr(L"Visit download page\n", gsDownlPage);
 	btns[1].nButtonID  = IDNO;     btns[1].pszButtonText = pszBtn2;
 	btns[2].nButtonID  = IDCANCEL; btns[2].pszButtonText = L"Cancel\nSkip this version";
 
@@ -1979,28 +1831,27 @@ int CConEmuUpdate::QueryConfirmationDownload()
 
 MsgOnly:
 
-	SafeFree(pszMsg);
-	cchMax = 300 + (mpsz_ConfirmSource ? _tcslen(mpsz_ConfirmSource) : 0);
-	pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+	cchMax = 300 + msz_ConfirmSource.GetLen();
+	if (pszMsg.GetBuffer(cchMax))
+	{
+		swprintf_c(pszMsg.data(), pszMsg.GetMaxCount(), L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
+			(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
+			: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
+			: CV_DEVEL,
+			ms_NewVersion,
+			ms_VerOnServer,
+			pszServerPath,
+			pszFile ? pszFile : L"");
 
-	swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
-		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
-		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
-		: CV_DEVEL,
-		ms_NewVersion,
-		ms_VerOnServer,
-		pszServerPath,
-		pszFile ? pszFile : L"");
-
-
-	iBtn = MsgBox(pszMsg, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO, ms_DefaultTitle, nullptr, false);
+		iBtn = MsgBox(pszMsg, MB_SETFOREGROUND | MB_SYSTEMMODAL | MB_ICONQUESTION | MB_YESNO, ms_DefaultTitle, nullptr, false);
+	}
+	else
+	{
+		iBtn = IDNO;
+	}
 
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
-	SafeFree(pszMsg);
-	SafeFree(pszDup);
-	SafeFree(pszBtn1);
-	SafeFree(pszBtn2);
 	return (iBtn == IDYES);
 }
 
@@ -2085,7 +1936,7 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
 	TASKDIALOG_BUTTON btns[2] = {};
 	LPCWSTR pszServerPath = L"";
-	wchar_t* pszBtn2 = nullptr;
+	CEStr pszBtn2;
 
 	swprintf_c(szCurVer, L"No newer %s version is available",
 		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
@@ -2106,13 +1957,13 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	tsk.pszFooter = szWWW;
 
 	szInfo = CreateVersionOnServerInfo(true);
-	szMsg = lstrmerge(
+	szMsg = CEStr(
 		L"Your current ConEmu version is ", ms_CurVerInfo, L"\n\n",
-		(LPCWSTR)szInfo);
+		szInfo);
 	tsk.pszContent = szMsg.ms_Val;
 
 	btns[0].nButtonID  = IDOK;    btns[0].pszButtonText = L"OK";
-	pszBtn2 = lstrmerge(L"Visit download page\n", gsDownlPage);
+	pszBtn2 = CEStr(L"Visit download page\n", gsDownlPage);
 	btns[1].nButtonID  = IDNO;    btns[1].pszButtonText = pszBtn2;
 
 	tsk.dwFlags        = (hClassIcon?TDF_USE_HICON_MAIN:0)|TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION|TDF_ENABLE_HYPERLINKS;
@@ -2132,16 +1983,14 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 
 MsgOnly:
 	szInfo = CreateVersionOnServerInfo(false, L"\n\n");
-	szMsg = lstrmerge(
+	szMsg = CEStr(
 		L"Your current ConEmu version is ", ms_CurVerInfo, L"\n\n",
-		(LPCWSTR)szInfo,
-		(LPCWSTR)szCurVer);
+		szInfo, szCurVer);
 
 	iBtn = MsgBox(szMsg, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_OK, ms_DefaultTitle, nullptr, false);
 
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
-	SafeFree(pszBtn2);
 	return 0;
 }
 
@@ -2179,20 +2028,20 @@ short CConEmuUpdate::GetUpdateProgress()
 	return -1;
 }
 
-wchar_t* CConEmuUpdate::GetCurVerInfo()
+CEStr CConEmuUpdate::GetCurVerInfo()
 {
-	wchar_t* pszVerInfo = nullptr;
+	CEStr pszVerInfo;
 
 	if (lstrcmpi(ms_NewVersion, ms_OurVersion) > 0)
 	{
-		pszVerInfo = lstrmerge(L"Obsolete, recommended update to ", ms_NewVersion,
+		pszVerInfo = CEStr(L"Obsolete, recommended update to ", ms_NewVersion,
 			(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? L" " CV_STABLE
 			: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? L" " CV_PREVIEW : L" " CV_DEVEL);
 	}
 	else if (ms_CurVerInfo[0])
-		pszVerInfo = lstrdup(ms_CurVerInfo);
+		pszVerInfo.Set(ms_CurVerInfo);
 	else
-		pszVerInfo = lstrdup(ms_OurVersion);
+		pszVerInfo.Set(ms_OurVersion);
 
 	return pszVerInfo;
 }
@@ -2210,8 +2059,7 @@ void CConEmuUpdate::WaitAllInstances()
 			bStillExists = true;
 			DWORD nPID; GetWindowThreadProcessId(hFind, &nPID);
 			wchar_t szPID[16]; ultow_s(nPID, szPID, 10);
-			lstrmerge(&szMessage.ms_Val,
-				L"\n",
+			szMessage.Append(L"\n",
 				CLngRc::getRsrc(lng_UpdateCloseMsg2/*"ConEmu still running:"*/), L" ",
 				L"PID=", szPID);
 		}
@@ -2221,12 +2069,10 @@ void CConEmuUpdate::WaitAllInstances()
 			TODO("Можно бы проехаться по всем модулям запущенных процессов на предмет блокировки файлов в папках ConEmu");
 		}
 
-		// Если никого запущенного не нашли - выходим из цикла
 		if (!bStillExists)
 			return;
 
-		// Ругнуться
-		int nBtn = MsgBox(szMessage, MB_ICONEXCLAMATION|MB_OKCANCEL, ms_DefaultTitle, nullptr, false);
+		const int nBtn = MsgBox(szMessage, MB_ICONEXCLAMATION|MB_OKCANCEL, ms_DefaultTitle, nullptr, false);
 		if (nBtn == IDCANCEL)
 			return; // "Cancel" - means stop checking
 	}
@@ -2235,7 +2081,7 @@ void CConEmuUpdate::WaitAllInstances()
 bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 {
 	bool bRc = false;
-	wchar_t* pszLib = nullptr;
+	CEStr pszLib;
 	HMODULE lhDll = nullptr;
 	DownloadCommand_t lDownloadCommand = nullptr;
 
@@ -2246,7 +2092,7 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 		// But check if local objects are created...
 		if (!DownloadCommand(dc_Init, 0, nullptr))
 		{
-			DWORD nErr = GetLastError(); // No use?
+			const DWORD nErr = GetLastError();
 			pUpd->ReportError(L"Failed to re-initialize gpInet, code=%u", nErr);
 			return false;
 		}
@@ -2256,7 +2102,7 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 
 	pUpd = apUpd;
 
-	pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, L"\\", ConEmuCD_DLL_3264);
+	pszLib = CEStr(gpConEmu->ms_ConEmuBaseDir, L"\\", ConEmuCD_DLL_3264);
 	lhDll = pszLib ? LoadLibrary(pszLib) : nullptr;
 	if (!lhDll)
 	{
@@ -2295,7 +2141,6 @@ wrap:
 		SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
 		SetCallback(dc_LogCallback, LogCallback, (LPARAM)apUpd);
 	}
-	SafeFree(pszLib);
 	if (lhDll && !bRc)
 	{
 		FreeLibrary(lhDll);
@@ -2311,6 +2156,7 @@ bool CConEmuUpdate::wininet::Deinit(bool bFull)
 		return false;
 	return true;
 }
+
 void CConEmuUpdate::wininet::SetCallback(CEDownloadCommand cbk, FDownloadCallback pfnCallback, LPARAM lParam)
 {
 	CEDownloadErrorArg args[2];
@@ -2322,42 +2168,43 @@ void CConEmuUpdate::wininet::SetCallback(CEDownloadCommand cbk, FDownloadCallbac
 
 void CConEmuUpdate::ProgressCallback(const CEDownloadInfo* pError)
 {
-	_ASSERTE(pError && pError->lParam==(LPARAM)gpUpd);
+	_ASSERTE(pError && pError->lParam == reinterpret_cast<LPARAM>(gpUpd));
 	if (!pError || pError->argCount < 1 || pError->Args[0].argType != at_Uint)
 	{
 		_ASSERTE(pError->argCount >= 1 && pError->Args[0].argType == at_Uint);
 		return;
 	}
-	CConEmuUpdate* pUpd = (CConEmuUpdate*)pError->lParam;
+	CConEmuUpdate* pUpd = reinterpret_cast<CConEmuUpdate*>(pError->lParam);
 	if (!pUpd)
 		return;
-	pUpd->mn_InternetContentReady = pError->Args[0].uintArg; // How many bytes were read
+	pUpd->mn_InternetContentReady = static_cast<DWORD>(pError->Args[0].uintArg); // How many bytes were read
 	if (gpConEmu && ghWnd)
 	{
 		gpConEmu->UpdateProgress();
 	}
 }
+
 void CConEmuUpdate::ErrorCallback(const CEDownloadInfo* pError)
 {
-	_ASSERTE(pError && pError->lParam==(LPARAM)gpUpd);
+	_ASSERTE(pError && pError->lParam == reinterpret_cast<LPARAM>(gpUpd));
 	if (!pError)
 		return;
-	CConEmuUpdate* pUpd = (CConEmuUpdate*)pError->lParam;
+	CConEmuUpdate* pUpd = reinterpret_cast<CConEmuUpdate*>(pError->lParam);
 	if (!pUpd)
 		return;
-	wchar_t* pszText = pError->GetFormatted(false);
-	pUpd->ReportErrorInt(pszText);
+	const CEStr pszText = pError->GetFormatted(false);
+	pUpd->ReportErrorInt(ErrorInfo(pszText.c_str()));
 }
+
 void CConEmuUpdate::LogCallback(const CEDownloadInfo* pError)
 {
-	_ASSERTE(pError && pError->lParam==(LPARAM)gpUpd);
+	_ASSERTE(pError && pError->lParam == reinterpret_cast<LPARAM>(gpUpd));
 	if (!pError)
 		return;
-	wchar_t* pszText = pError->GetFormatted(false);
+	const CEStr pszText = pError->GetFormatted(false);
 	if (pszText)
 	{
-		CEStr lsLog(L"Update: ", pszText);
+		const CEStr lsLog(L"Update: ", pszText);
 		gpConEmu->LogString(lsLog);
-		free(pszText);
 	}
 }

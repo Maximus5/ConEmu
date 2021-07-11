@@ -39,8 +39,13 @@ ErrorInfo::ErrorInfo()
 {
 }
 
+ErrorInfo::ErrorInfo(const wchar_t* error)
+	: what_(error), errorCode_(0), error_(true)
+{
+}
+
 ErrorInfo::ErrorInfo(const wchar_t* format, unsigned errCode)
-	: error_(true), errorCode_(errCode)
+	: errorCode_(errCode), error_(true)
 {
 	if (IsStrNotEmpty(format))
 	{
@@ -53,7 +58,7 @@ ErrorInfo::ErrorInfo(const wchar_t* format, unsigned errCode)
 }
 
 ErrorInfo::ErrorInfo(const wchar_t* format, const wchar_t* arg, const unsigned errCode)
-	: error_(true), errorCode_(errCode)
+	: errorCode_(errCode), error_(true)
 {
 	if (IsStrNotEmpty(format))
 	{
@@ -66,7 +71,7 @@ ErrorInfo::ErrorInfo(const wchar_t* format, const wchar_t* arg, const unsigned e
 }
 
 ErrorInfo::ErrorInfo(const wchar_t* format, const wchar_t* arg1, const wchar_t* arg2, unsigned errCode)
-	: error_(true), errorCode_(errCode)
+	: errorCode_(errCode), error_(true)
 {
 	if (IsStrNotEmpty(format))
 	{
