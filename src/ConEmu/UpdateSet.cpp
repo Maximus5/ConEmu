@@ -441,7 +441,7 @@ void ConEmuUpdateSettings::CheckHourlyUpdate()
 		if (dwDelta >= updateDelaySeconds)
 		{
 			lastUpdateCheck = now;
-			gpConEmu->CheckUpdates(FALSE);
+			gpConEmu->CheckUpdates(UpdateCallMode::Automatic);
 		}
 	}
 }

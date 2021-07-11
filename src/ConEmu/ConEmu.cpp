@@ -6842,7 +6842,7 @@ void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)
 			&& (gpSet->UpdSet.isUpdateCheckOnStartup || opt.AutoUpdateOnStart)
 			)
 		{
-			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
+			CheckUpdates(UpdateCallMode::Automatic); // Don't show "You are using latest available version"
 		}
 
 		if (gpFontMgr->ms_FontError && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
@@ -11210,7 +11210,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 	DEBUGSTRFOREGROUND(szDbg);
 }
 
-bool CConEmuMain::CheckUpdates(UINT abShowMessages)
+bool CConEmuMain::CheckUpdates(UpdateCallMode callMode)
 {
 	if (!isUpdateAllowed())
 		return false;
@@ -11220,7 +11220,7 @@ bool CConEmuMain::CheckUpdates(UINT abShowMessages)
 	if (!gpUpd)
 		gpUpd = new CConEmuUpdate;
 
-	gpUpd->StartCheckProcedure(abShowMessages);
+	gpUpd->StartCheckProcedure(callMode);
 
 	return true;
 }

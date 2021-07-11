@@ -31,6 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <chrono>
 
+enum class UpdateCallMode : int
+{
+	Automatic = 0,
+	Manual = 1,
+	TSA = 2, // click on TSA icon
+};
+
 struct ConEmuUpdateSettings
 {
 public:

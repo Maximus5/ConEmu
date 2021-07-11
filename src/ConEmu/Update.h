@@ -57,20 +57,22 @@ protected:
 
 	struct wininet
 	{
-		CConEmuUpdate* pUpd;
-		HMODULE hDll;
-		DownloadCommand_t DownloadCommand;
+		CConEmuUpdate* pUpd{ nullptr };
+		HMODULE hDll{ nullptr };
+		DownloadCommand_t DownloadCommand{ nullptr };
+
 		bool Init(CConEmuUpdate* apUpd);
 		bool Deinit(bool bFull);
 		void SetCallback(CEDownloadCommand cbk, FDownloadCallback pfnCallback, LPARAM lParam);
-	} Inet;
+	};
+	wininet Inet{};
 
 	static void WINAPI ProgressCallback(const CEDownloadInfo* pError);
 	static void WINAPI ErrorCallback(const CEDownloadInfo* pError);
 	static void WINAPI LogCallback(const CEDownloadInfo* pError);
 
-	UINT mb_ManualCallMode; // FALSE, TRUE, 2 (click on TSA icon)
-	ConEmuUpdateSettings* mp_Set;
+	UpdateCallMode m_ManualCallMode{ UpdateCallMode::Automatic };
+	ConEmuUpdateSettings* mp_Set{ nullptr };
 
 	long mn_InShowMsgBox;
 	long mn_ErrorInfoCount;
@@ -112,13 +114,13 @@ protected:
 	void ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2, DWORD nErrCode);
 	void ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIniUrl, LPCWSTR asIniLocal);
 
-	void ReportErrorInt(wchar_t* asErrorInfo);
+	void ReportErrorInt(const ErrorInfo& error);
 
 public:
 	CConEmuUpdate();
 	~CConEmuUpdate();
 
-	void StartCheckProcedure(UINT abShowMessages);
+	void StartCheckProcedure(UpdateCallMode callMode);
 	void StopChecking();
 
 	static bool LocalUpdate(LPCWSTR asDownloadedPackage);

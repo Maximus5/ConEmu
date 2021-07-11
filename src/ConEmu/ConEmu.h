@@ -52,6 +52,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
+enum class UpdateCallMode : int;
+enum ConEmuWindowMode;
 class CAltNumpad;
 class CAttachDlg;
 class CConEmuBack;
@@ -71,7 +73,6 @@ class CVConGroup;
 class CVConGuard;
 class MFileLogEx;
 class GlobalHotkeys;
-enum ConEmuWindowMode;
 struct CEFindDlg;
 struct HandleMonitor;
 struct MSectionLockSimple;
@@ -601,7 +602,7 @@ class CConEmuMain
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		bool CanUseInjects() const;
-		bool CheckUpdates(UINT abShowMessages);
+		bool CheckUpdates(UpdateCallMode callMode);
 		DWORD isSelectionModifierPressed(bool bAllowEmpty);
 		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);

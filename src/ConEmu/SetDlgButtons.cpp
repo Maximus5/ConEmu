@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
+#include "UpdateSet.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
@@ -4355,7 +4356,7 @@ void CSetDlgButtons::OnBtn_UpdateApplyAndCheck(HWND hDlg, WORD CB, BYTE uCheck)
 		SafeFree(pszVerIniLocation);
 	}
 
-	gpConEmu->CheckUpdates(TRUE);
+	gpConEmu->CheckUpdates(UpdateCallMode::Manual);
 
 } // cbUpdateCheck
 

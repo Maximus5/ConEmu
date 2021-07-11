@@ -87,8 +87,6 @@ CConEmuUpdate::CConEmuUpdate()
 
 	lstrcpyn(ms_DefaultTitle, gpConEmu->GetDefaultTitle(), countof(ms_DefaultTitle));
 
-	ZeroStruct(Inet);
-	mb_ManualCallMode = FALSE;
 	bNeedRunElevation = false;
 }
 
@@ -167,7 +165,7 @@ CConEmuUpdate::~CConEmuUpdate()
 	SafeFree(ms_LastErrorInfo);
 }
 
-void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
+void CConEmuUpdate::StartCheckProcedure(const UpdateCallMode callMode)
 {
 	//DWORD nWait = WAIT_OBJECT_0;
 
@@ -190,7 +188,7 @@ void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 				Icon.ShowTrayIcon(lsMsg, tsa_Source_Updater);
 			}
 		}
-		else if (abShowMessages)
+		else if (callMode != UpdateCallMode::Automatic)
 		{
 			MBoxError(L"Checking for updates already started");
 		}
@@ -212,7 +210,7 @@ void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 		mp_Set = new ConEmuUpdateSettings;
 	mp_Set->LoadFrom(&gpSet->UpdSet);
 
-	mb_ManualCallMode = abShowMessages;
+	m_ManualCallMode = callMode;
 
 	// Don't clear it here, must be cleared by display procedure
 	_ASSERTE(ms_LastErrorInfo == nullptr);
@@ -487,7 +485,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		mp_Set = new ConEmuUpdateSettings;
 	mp_Set->LoadFrom(&gpSet->UpdSet);
 
-	mb_ManualCallMode = TRUE;
+	m_ManualCallMode = UpdateCallMode::Manual;
 
 	mb_RequestTerminate = false;
 
@@ -585,7 +583,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		goto wrap;
 	}
 
-	Assert(mb_ManualCallMode==TRUE);
+	Assert(m_ManualCallMode==UpdateCallMode::Manual);
 	Assert(mpsz_PendingBatchFile==nullptr);
 
 	mpsz_PendingPackageFile = pszLocalPackage;
@@ -702,7 +700,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	// Under Windows7 we may get a debug warning
 	// if conhost.exe was not found yet for all
 	// started consoles...
-	if (!mb_ManualCallMode)
+	if (m_ManualCallMode == UpdateCallMode::Automatic)
 		Sleep(2500);
 	#endif
 
@@ -725,7 +723,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	// Download and parse latest version information
 	while (!LoadVersionInfoFromServer())
 	{
-		LRESULT lRetryRc = (!gpConEmu || !mb_ManualCallMode || mb_RequestTerminate)
+		const LRESULT lRetryRc = (!gpConEmu || m_ManualCallMode == UpdateCallMode::Automatic || mb_RequestTerminate)
 			? IDCANCEL
 			: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, (LPARAM)szRetryVersionIniCheck);
 
@@ -746,13 +744,12 @@ DWORD CConEmuUpdate::CheckProcInt()
 	}
 
 	if ((lstrcmpi(ms_NewVersion, ms_OurVersion) <= 0)
-		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
-		|| (!mb_ManualCallMode && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
+		// If user declined the update in that session - don't suggest that version on hourly update checks
+		|| (m_ManualCallMode == UpdateCallMode::Automatic && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
 	{
-		// Новых версий нет
 		mb_NewVersionAvailable = false;
 
-		if (mb_ManualCallMode)
+		if (m_ManualCallMode != UpdateCallMode::Automatic)
 		{
 			// No newer %s version is available
 			gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::NotStarted));
@@ -1546,7 +1543,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 
 	args[0].argType = at_Str;  args[0].strArg = asSource;
 	args[1].argType = at_Str;  args[1].strArg = asTarget;
-	args[2].argType = at_Uint; args[2].uintArg = (mb_ManualCallMode || abPackage);
+	args[2].argType = at_Uint; args[2].uintArg = (m_ManualCallMode != UpdateCallMode::Automatic || abPackage);
 
 	MCHKHEAP;
 
@@ -2159,7 +2156,7 @@ short CConEmuUpdate::GetUpdateProgress()
 	case UpdateStep::PostponeUpdate:
 		return -1;
 	case UpdateStep::Check:
-		return mb_ManualCallMode ? 1 : -1;
+		return m_ManualCallMode != UpdateCallMode::Automatic ? 1 : -1;
 	case UpdateStep::ConfirmDownload:
 		return UPD_PROGRESS_CONFIRM_DOWNLOAD;
 	case UpdateStep::Downloading:

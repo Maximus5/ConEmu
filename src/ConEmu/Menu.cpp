@@ -2335,7 +2335,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 		}
 
 		case ID_CHECKUPDATE:
-			gpConEmu->CheckUpdates(TRUE);
+			gpConEmu->CheckUpdates(UpdateCallMode::Manual);
 			return 0;
 
 		case ID_STOPUPDATE:
