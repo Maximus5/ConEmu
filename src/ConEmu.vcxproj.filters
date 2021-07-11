@@ -108,6 +108,9 @@
     <ClInclude Include="ConEmu\DynDialog.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\ErrorInfo.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\FindDlg.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -424,6 +427,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\TaskScheduler.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TempFile.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\TermX.h">
@@ -863,6 +869,9 @@
     <ClCompile Include="ConEmu\DynDialog.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\ErrorInfo.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\FindDlg.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
@@ -1152,6 +1161,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\TaskScheduler.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TempFile.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\TermX.cpp">

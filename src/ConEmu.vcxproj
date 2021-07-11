@@ -321,6 +321,7 @@
     <ClInclude Include="ConEmu\DwmApi_Part.h" />
     <ClInclude Include="ConEmu\DwmHelper.h" />
     <ClInclude Include="ConEmu\DynDialog.h" />
+    <ClInclude Include="ConEmu\ErrorInfo.h" />
     <ClInclude Include="ConEmu\FindDlg.h" />
     <ClInclude Include="ConEmu\FindPanel.h" />
     <ClInclude Include="ConEmu\Font.h" />
@@ -427,6 +428,7 @@
     <ClInclude Include="ConEmu\TaskBar.h" />
     <ClInclude Include="ConEmu\TaskBarGhost.h" />
     <ClInclude Include="ConEmu\TaskScheduler.h" />
+    <ClInclude Include="ConEmu\TempFile.h" />
     <ClInclude Include="ConEmu\TermX.h" />
     <ClInclude Include="ConEmu\ToolImg.h" />
     <ClInclude Include="ConEmu\TrayIcon.h" />
@@ -574,6 +576,7 @@
     <ClCompile Include="ConEmu\DragDropData.cpp" />
     <ClCompile Include="ConEmu\DwmHelper.cpp" />
     <ClCompile Include="ConEmu\DynDialog.cpp" />
+    <ClCompile Include="ConEmu\ErrorInfo.cpp" />
     <ClCompile Include="ConEmu\FindDlg.cpp" />
     <ClCompile Include="ConEmu\FindPanel.cpp" />
     <ClCompile Include="ConEmu\Font.cpp" />
@@ -671,6 +674,7 @@
     <ClCompile Include="ConEmu\TaskBar.cpp" />
     <ClCompile Include="ConEmu\TaskBarGhost.cpp" />
     <ClCompile Include="ConEmu\TaskScheduler.cpp" />
+    <ClCompile Include="ConEmu\TempFile.cpp" />
     <ClCompile Include="ConEmu\TermX.cpp" />
     <ClCompile Include="ConEmu\ToolImg.cpp" />
     <ClCompile Include="ConEmu\TrayIcon.cpp" />

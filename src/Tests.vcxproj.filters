@@ -114,6 +114,9 @@
     <ClInclude Include="ConEmu\DynDialog.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\ErrorInfo.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\FindDlg.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
@@ -430,6 +433,9 @@
       <Filter>ConEmu</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\TaskScheduler.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TempFile.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\TermX.h">
@@ -875,6 +881,9 @@
     <ClCompile Include="ConEmu\DynDialog_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\ErrorInfo.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\FindDlg.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
@@ -1178,6 +1187,12 @@
     <ClCompile Include="ConEmu\TaskScheduler.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\TempFile.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TempFile_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\TermX.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
@@ -1239,6 +1254,9 @@
       <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitTests\test_crlf\crlf_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="UnitTests\test_mock_file.cpp">
