@@ -127,158 +127,158 @@ TEST(RConStartArgsEx, ArgTests)
 		case 26:
 			// conemu-old-issues#1710: The un-eaten double quote
 			pszCmp = LR"(powershell -new_console:t:"PoSh":d:"%USERPROFILE%")";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(arg.pszRenameTab && lstrcmp(arg.pszRenameTab, L"PoSh")==0);
 			EXPECT_TRUE(arg.pszStartupDir && CEStr(ExpandEnvStr(L"%USERPROFILE%")).Compare(arg.pszStartupDir)==0);
 			break;
 		case 25:
 			pszCmp = LR"(cmd -new_console:u:"john:pass^"word^"")";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(arg.pszUserName && lstrcmp(arg.pszUserName, L"john")==0);
 			EXPECT_TRUE(arg.szUserPassword && lstrcmp(arg.szUserPassword, L"pass\"word\"")==0);
 			break;
 		case 24:
 			pszCmp = L"/C \"-new_console test.cmd bla\"";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"/C \"test.cmd bla\"") && arg.NewConsole==crb_On);
 			break;
 		case 23:
 			pszCmp = L"-new_console test.cmd";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"test.cmd") && arg.NewConsole==crb_On);
 			break;
 		case 22:
 			pszCmp = L"bash -cur_console:m:\"\"";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"bash") && arg.pszMntRoot && *arg.pszMntRoot==0);
 			break;
 		case 21:
 			pszCmp = L"cmd '-new_console' `-new_console` \\\"-new_console\\\"";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, pszCmp) && arg.NewConsole==crb_Undefined);
 			break;
 		case 20:
-			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console\" \"c:\\file.txt\"");
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console\" \"c:\\file.txt\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" \"c:\\file.txt\""));
 			break;
 		case 19:
-			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" -new_console:n \"c:\\file.txt\"");
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" -new_console:n \"c:\\file.txt\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" \"c:\\file.txt\""));
 			break;
 		case 18:
-			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console:n\" \"c:\\file.txt\"");
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console:n\" \"c:\\file.txt\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" \"c:\\file.txt\""));
 			break;
 		case 17:
-			arg.pszSpecialCmd = lstrdup(L"c:\\cmd.exe \"-new_console:n\" \"c:\\file.txt\"");
+			arg.pszSpecialCmd = lstrdup(L"c:\\cmd.exe \"-new_console:n\" \"c:\\file.txt\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"c:\\cmd.exe \"c:\\file.txt\""));
 			break;
 		case 16:
-			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console:n\" c:\\file.txt");
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console:n\" c:\\file.txt").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" c:\\file.txt"));
 			break;
 		case 15:
-			arg.pszSpecialCmd = lstrdup(L"c:\\file.txt -cur_console");
+			arg.pszSpecialCmd = lstrdup(L"c:\\file.txt -cur_console").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"c:\\file.txt"));
 			break;
 		case 14:
-			arg.pszSpecialCmd = lstrdup(L"\"c:\\file.txt\" -cur_console");
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\file.txt\" -cur_console").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\file.txt\""));
 			break;
 		case 13:
-			arg.pszSpecialCmd = lstrdup(L" -cur_console \"c:\\file.txt\"");
+			arg.pszSpecialCmd = lstrdup(L" -cur_console \"c:\\file.txt\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\file.txt\""));
 			break;
 		case 12:
-			arg.pszSpecialCmd = lstrdup(L"-cur_console \"c:\\file.txt\"");
+			arg.pszSpecialCmd = lstrdup(L"-cur_console \"c:\\file.txt\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\file.txt\""));
 			break;
 		case 11:
-			arg.pszSpecialCmd = lstrdup(L"-cur_console c:\\file.txt");
+			arg.pszSpecialCmd = lstrdup(L"-cur_console c:\\file.txt").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(0==lstrcmp(arg.pszSpecialCmd, L"c:\\file.txt"));
 			break;
 		case 10:
 			pszCmp = L"reg.exe add \"HKCU\\command\" /ve /t REG_EXPAND_SZ /d \"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"\" /f";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0 && arg.NewConsole==crb_Undefined);
 			break;
 		case 9:
 			pszCmp = L"\"C:\\Windows\\system32\\cmd.exe\" /C \"\"C:\\Python27\\python.EXE\"\"";
-			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.pszSpecialCmd = lstrdup(pszCmp).Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0);
 			break;
 		case 8:
-			arg.pszSpecialCmd = lstrdup(L"cmd --new_console -cur_console:a");
+			arg.pszSpecialCmd = lstrdup(L"cmd --new_console -cur_console:a").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd --new_console")==0 && arg.NewConsole==crb_Undefined && arg.RunAsAdministrator==crb_On);
 			break;
 		case 7:
-			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:d:\"C:\\My docs\":t:\"My title\" \"-cur_console:C:C:\\my cmd.ico\" -cur_console:P:\"<PowerShell>\":a /k ver");
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:d:\"C:\\My docs\":t:\"My title\" \"-cur_console:C:C:\\my cmd.ico\" -cur_console:P:\"<PowerShell>\":a /k ver").Detach();
 			arg.ProcessNewConArg();
 			pszCmp = L"cmd /k ver";
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0);
 			EXPECT_TRUE(arg.pszRenameTab && arg.pszPalette && arg.pszIconFile && arg.pszStartupDir && arg.NewConsole==crb_Undefined && lstrcmp(arg.pszRenameTab, L"My title")==0 && lstrcmp(arg.pszPalette, L"<PowerShell>")==0 && lstrcmp(arg.pszStartupDir, L"C:\\My docs")==0 && lstrcmp(arg.pszIconFile, L"C:\\my cmd.ico")==0);
 			break;
 		case 6:
-			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:b:P:\"^<Power\"\"Shell^>\":t:\"My title\" /k ConEmuC.exe -Guimacro print(\"-new_console:a\")");
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:b:P:\"^<Power\"\"Shell^>\":t:\"My title\" /k ConEmuC.exe -Guimacro print(\"-new_console:a\")").Detach();
 			arg.ProcessNewConArg();
 			pszCmp = L"cmd /k ConEmuC.exe -Guimacro print(\"-new_console:a\")";
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0);
 			EXPECT_TRUE(arg.pszRenameTab && arg.pszPalette && arg.BackgroundTab==crb_On && arg.NewConsole==crb_Undefined && arg.RunAsAdministrator==crb_Undefined && lstrcmp(arg.pszRenameTab, L"My title")==0 && lstrcmp(arg.pszPalette, L"<Power\"Shell>")==0);
 			break;
 		case 5:
-			arg.pszSpecialCmd = lstrdup(L"cmd \"-cur_console:t:My title\" /k ver");
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-cur_console:t:My title\" /k ver").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd /k ver")==0);
 			EXPECT_TRUE(arg.pszRenameTab && lstrcmp(arg.pszRenameTab, L"My title")==0 && arg.NewConsole==crb_Undefined);
 			break;
 		case 4:
-			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\"");
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\"").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			nDbg = lstrcmp(arg.pszPalette, L"<Power\"Shell>");
 			EXPECT_TRUE(nDbg==0 && arg.NewConsole==crb_On);
 			break;
 		case 3:
-			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:");
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			nDbg = lstrcmp(arg.pszUserName,L"Max");
 			EXPECT_TRUE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_Off && arg.NewConsole!=crb_On);
 			break;
 		case 2:
-			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max -new_console");
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max -new_console").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			nDbg = lstrcmp(arg.pszUserName,L"Max");
 			EXPECT_TRUE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_On && arg.NewConsole==crb_On);
 			break;
 		case 1:
-			arg.pszSpecialCmd = lstrdup(L"cmd -new_console:u -cur_console:h0");
+			arg.pszSpecialCmd = lstrdup(L"cmd -new_console:u -cur_console:h0").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
 			EXPECT_TRUE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.ForceUserDialog==crb_On && arg.NewConsole==crb_On && arg.BufHeight==crb_On && arg.nBufHeight==0);
 			break;
 		case 0:
-			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" ");
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" ").Detach();
 			arg.ProcessNewConArg();
 			EXPECT_TRUE(lstrcmp(arg.pszSpecialCmd, L"cmd ")==0);
 			nDbg = lstrcmp(arg.pszStartupDir, L"C:\\John Doe\\Home");

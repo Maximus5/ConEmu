@@ -206,13 +206,11 @@ void UnitFileNamesTest()
 		{nullptr}
 	};
 	bool bCheck;
-	wchar_t* pszJoin;
 	for (size_t i = 0; Tests[i].asPath; i++)
 	{
-		pszJoin = JoinPath(Tests[i].asPath, Tests[i].asPart1, Tests[i].asPart2);
+		CEStr pszJoin = JoinPath(Tests[i].asPath, Tests[i].asPart1, Tests[i].asPart2);
 		bCheck = (pszJoin && (lstrcmp(pszJoin, Tests[i].asResult) == 0));
 		_ASSERTE(bCheck);
-		SafeFree(pszJoin);
 	}
 	bCheck = true;
 }
@@ -338,7 +336,7 @@ void DebugStrUnitTest()
 	// Some compilation and operators check
 
 	CEStr str1;
-	LPCWSTR pszTest = Tests[0].szTest;
+	const wchar_t* pszTest = Tests[0].szTest;
 	{
 		str1 = lstrdup(pszTest);
 	}
@@ -346,8 +344,7 @@ void DebugStrUnitTest()
 	_ASSERTE(iCmp == 0);
 
 	{
-		CEStr str2(lstrdup(pszTest));
-		wchar_t* pszDup = lstrdup(pszTest);
+		const CEStr str2(lstrdup(pszTest));
 		iCmp = lstrcmp(str2, pszTest);
 		_ASSERTE(iCmp == 0 && str2.ms_Val && str2.ms_Val != pszTest);
 	}

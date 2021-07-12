@@ -134,7 +134,7 @@ TEST(CmdLine, NextArg_NeedCmd)
 	for (const auto& test : tests)
 	{
 		szExe.Clear();
-		RConStartArgsEx rcs; rcs.pszSpecialCmd = lstrdup(test.pszCmd);
+		RConStartArgsEx rcs; rcs.pszSpecialCmd = lstrdup(test.pszCmd).Detach();
 		rcs.ProcessNewConArg();
 		const bool result = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe);
 		EXPECT_EQ(result, test.expected) << L"cmd: " << test.pszCmd;

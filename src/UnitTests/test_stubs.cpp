@@ -106,9 +106,9 @@ void DebugLogFile(LPCSTR asMessage) {}
 HWND FindProcessWindow(DWORD nPID) { return NULL; }
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR) { return false; }
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin /*= 0*/, int nMax /*= 0*/) { return false; }
-wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID) { return nullptr; }
+CEStr GetDlgItemTextPtr(HWND hDlg, WORD nID) { return nullptr; }
 LPCWSTR GetMouseMsgName(UINT msg) { return L""; }
-wchar_t* getFocusedExplorerWindowPath() { return nullptr; }
+CEStr getFocusedExplorerWindowPath() { return nullptr; }
 HWND getForegroundWindow() { return NULL; }
 bool isCharAltFont(ucs32 inChar) { return false; }
 bool LogString(LPCWSTR asText) { return false; }
@@ -118,8 +118,8 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText) 
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {}
 bool ProcessMessage(MSG& Msg) { return false; }
 void RaiseTestException() {}
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/) { return nullptr; }
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/) { return nullptr; }
+CEStr SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/) { return nullptr; }
+CEStr SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/) { return nullptr; }
 void SkipOneShowWindow() {}
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/) {}
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/) { return false; }
