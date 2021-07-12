@@ -78,19 +78,21 @@ protected:
 		return TRUE;
 	}
 
-	static wchar_t* LoadFonts()
+	static CEStr LoadFonts()
 	{
+		CEStr result;
 		int nLenMax = 2048;
-		wchar_t* pszFonts = (wchar_t*)calloc(nLenMax,sizeof(*pszFonts));
+		wchar_t* pszFonts = result.GetBuffer(nLenMax);
 
 		if (pszFonts)
 		{
+			// ReSharper disable CppTooWideScope
 			wchar_t szName[64], szValue[64];
 			HKEY hk;
-			DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+			const DWORD nRights = KEY_READ | WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0), 0);
 			if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
 			{
-				bool bIsDBCS = IsWinDBCS();
+				const bool bIsDBCS = IsWinDBCS();
 				DWORD idx = 0, cchName = countof(szName), cchValue = sizeof(szValue)-2, dwType;
 				LONG iRc;
 				wchar_t* psz = pszFonts;
@@ -98,9 +100,9 @@ protected:
 				{
 					szName[std::min<size_t>(countof(szName)-1, cchName)] = 0;
 					szValue[std::min<size_t>(countof(szValue)-1,cchValue/2)] = 0;
-					int nNameLen = lstrlen(szName);
-					int nValLen = lstrlen(szValue);
-					int nLen = nNameLen+nValLen+3;
+					const int nNameLen = lstrlen(szName);
+					const int nValLen = lstrlen(szValue);
+					const int nLen = nNameLen+nValLen+3;
 
 					wchar_t* pszEndPtr = NULL;
 					int cp = wcstol(szName, &pszEndPtr, 10);
@@ -132,43 +134,44 @@ protected:
 			}
 		}
 
-		return pszFonts;
+		return result;
 	}
 
-	static void LoadAutorunsKey(HKEY& hk, wchar_t*& pszAutoruns, LPCWSTR pszPrefix)
+	static void LoadAutorunsKey(HKEY& hk, CEStr& szAutoruns, LPCWSTR pszPrefix)
 	{
 		if (!hk) return;
 		DWORD nSize = 0;
 		if ((RegQueryValueEx(hk, L"AutoRun", NULL, NULL, NULL, &nSize) == 0) && nSize)
 		{
-			wchar_t* pszData = (wchar_t*)calloc(nSize+2,1);
-			if (pszData && (RegQueryValueEx(hk, L"AutoRun", NULL, NULL, (LPBYTE)pszData, &nSize) == 0) && *pszData)
+			CEStr data;
+			if (data.GetBuffer(nSize+2)
+				&& (RegQueryValueEx(hk, L"AutoRun", NULL, NULL, (LPBYTE)data.data(), &nSize) == 0)
+				&& !data.IsEmpty())
 			{
-				lstrmerge(&pszAutoruns, pszPrefix, pszData, L"\r\n");
+				szAutoruns.Append(pszPrefix, data.c_str(), L"\r\n");
 			}
-			SafeFree(pszData);
 		}
 		RegCloseKey(hk);
 		hk = NULL;
 	}
 
-	static wchar_t* LoadAutoruns()
+	static CEStr LoadAutoruns()
 	{
-		wchar_t* pszAutoruns = NULL;
+		CEStr result;
 		HKEY hk = NULL;
 		if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hk) == 0)
-			LoadAutorunsKey(hk, pszAutoruns, L"  HKCU: "); // closes hk
+			LoadAutorunsKey(hk, result, L"  HKCU: "); // closes hk
 		bool bWin64 = IsWindows64();
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|(bWin64?KEY_WOW64_32KEY:0), &hk) == 0)
-			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM32: "); // closes hk
+			LoadAutorunsKey(hk, result, L"  HKLM32: "); // closes hk
 		if (bWin64 && RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WOW64_64KEY, &hk) == 0)
-			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM64: "); // closes hk
-		return pszAutoruns;
+			LoadAutorunsKey(hk, result, L"  HKLM64: "); // closes hk
+		return result;
 	}
 
-	static wchar_t* LoadWindowsBuild(const OSVERSIONINFOEXW& osv)
+	static CEStr LoadWindowsBuild(const OSVERSIONINFOEXW& osv)
 	{
-		wchar_t* pszBuild = NULL;
+		CEStr result;
 		if (IsWin10())
 		{
 			HKEY hk = NULL;
@@ -178,18 +181,19 @@ protected:
 				wchar_t ReleaseId[128] = L"", szUBR[32];
 				LONG ubr = RegQueryValueEx(hk, L"UBR", NULL, &ubrType, (LPBYTE)&UBR, &(dwSize = sizeof(UBR)));
 				LONG rid = RegQueryValueEx(hk, L"ReleaseId", NULL, &relType, (LPBYTE)ReleaseId, &(dwSize = sizeof(ReleaseId)));
-				wchar_t* pszSP = osv.szCSDVersion[0] ? lstrmerge(L", SP: ", osv.szCSDVersion) : NULL;
+				CEStr pszSP = osv.szCSDVersion[0] ? CEStr(L", SP: ", osv.szCSDVersion) : CEStr();
 				if (ubr == 0 && ubrType == REG_DWORD && UBR && rid == 0 && relType == REG_SZ && *ReleaseId)
-					pszBuild = lstrmerge(ReleaseId, L", UBR: ", ultow_s(UBR, szUBR, 10), pszSP);
+					result = CEStr(ReleaseId, L", UBR: ", ultow_s(UBR, szUBR, 10), pszSP);
 				else if (rid == 0 && relType == REG_SZ && *ReleaseId)
-					pszBuild = lstrmerge(ReleaseId, pszSP);
+					result = CEStr(ReleaseId, pszSP);
 				else if (ubr == 0 && ubrType == REG_DWORD && UBR)
-					pszBuild = lstrmerge(ReleaseId, L"UBR(", ultow_s(UBR, szUBR, 10), L")", pszSP);
-				SafeFree(pszSP);
+					result = CEStr(ReleaseId, L"UBR(", ultow_s(UBR, szUBR, 10), L")", pszSP);
 				RegCloseKey(hk);
 			}
 		}
-		return pszBuild ? pszBuild : lstrdup(osv.szCSDVersion);
+		if (result.IsEmpty())
+			result.Set(osv.szCSDVersion);
+		return result;
 	}
 
 	/*
@@ -209,10 +213,10 @@ public:
 		CEStartupEnv* pEnv = NULL;
 		LPBYTE ptrEnd = NULL;
 
-		wchar_t* pszFonts = LoadFonts();
+		CEStr pszFonts = LoadFonts();
 		size_t cchFnt = pszFonts ? (lstrlen(pszFonts)+1) : 0;
 
-		wchar_t* pszAutoruns = LoadAutoruns();
+		CEStr pszAutoruns = LoadAutoruns();
 		size_t cchAut = pszAutoruns ? (lstrlen(pszAutoruns)+1) : 0;
 
 		size_t cchTotal = (cchFnt+cchAut)*sizeof(wchar_t);
@@ -265,9 +269,6 @@ public:
 				psz += cchAut;
 			}
 		}
-
-		SafeFree(pszFonts);
-		SafeFree(pszAutoruns);
 
 		return pEnv;
 	}
@@ -345,7 +346,7 @@ public:
 		else
 			swprintf_c(szProdType, L"%u", osv.wProductType);
 
-		wchar_t* pszWinBuild = LoadWindowsBuild(osv);
+		CEStr pszWinBuild = LoadWindowsBuild(osv);
 		swprintf_c(szSI, L"ConEmu %s [%u] Startup Info\r\n"
 			L"  OsVer: %s, Product: %s, SP: %u.%u, Suite: 0x%X\r\n"
 			L"  Build: %s, ReactOS: %u%s%s%s, Rsrv: %u, WINE: %u, PE: %u, R2: %u\r\n"
@@ -360,7 +361,7 @@ public:
 			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szStartTime);
 		DumpEnvStr(szSI, lParam, true, false);
-		SafeFree(pszWinBuild);
+		pszWinBuild.Release();
 
 		bool is_themed = false, is_dwm = false;
 		if (IsWinXP())

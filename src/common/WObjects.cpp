@@ -386,26 +386,24 @@ bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 	return true;
 }
 
-wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
+CEStr GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 {
 	if (!asLong)
-		return nullptr;
+		return {};
 
-	int nSrcLen = lstrlenW(asLong); //-V303
-	wchar_t* pszLong = lstrdup(asLong);
+	const int nSrcLen = lstrlenW(asLong); //-V303
+	const int nMaxLen = nSrcLen + MAX_PATH; // "short" name could be longer than MAX_PATH
 
-	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
-	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t)); //-V106
-
-	wchar_t* pszResult = nullptr;
-	wchar_t* pszSrc = pszLong;
-	//wchar_t* pszDst = pszShort;
+	CEStr pszResult;
+	const CEStr pszLong(asLong);
+	CEStr pszShort;
+	CEStr szName;
+	wchar_t* pszSrc = pszLong.data();
 	wchar_t* pszSlash;
-	wchar_t* szName = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t));
 	bool     lbNetwork = false;
 	int      nLen, nCurLen = 0;
 
-	if (!pszLong || !pszShort || !szName)
+	if (!pszLong || !pszSrc || !pszShort.GetBuffer(nMaxLen) || !szName.GetBuffer(MAX_PATH))
 		goto wrap;
 
 	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
@@ -446,8 +444,10 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		pszSlash = wcschr(pszSlash+1, L'\\');
 		if (!pszSlash)
 			goto wrap;
-		pszShort[0] = L'\\'; pszShort[1] = L'\\'; pszShort[2] = 0;
-		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc! //-V303 //-V104
+		pszShort.SetAt(0, L'\\');
+		pszShort.SetAt(1, L'\\');
+		pszShort.SetAt(2, 0);
+		_wcscatn_c(pszShort.data(), pszShort.GetMaxCount(), pszSrc, (pszSlash - pszSrc + 1)); //-V303 //-V104
 	}
 	else
 	{
@@ -457,7 +457,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (pszSrc[2] != L'\\' && pszSrc[2] != 0)
 			goto wrap;
 		pszSlash = pszSrc + 2;
-		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
+		_wcscatn_c(pszShort.data(), pszShort.GetMaxCount(), pszSrc, (pszSlash - pszSrc + 1));
 	}
 
 	nCurLen = lstrlenW(pszShort);
@@ -483,15 +483,15 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 			if (nTrim > 0)
 			{
 				nCurLen = nTrim+1;
-				pszShort[nCurLen] = 0;
-				szName[0] = 0;
+				pszShort.SetAt(nCurLen, 0);
+				szName.SetAt(0, 0);
 			}
 			else
 			{
-				wcscpy_s(szName, MAX_PATH+1, L"..");
+				szName.Set(L"..");
 			}
 		}
-		else if (!GetShortFileName(pszLong, MAX_PATH+1, szName, abFavorLength))
+		else if (!GetShortFileName(pszLong, szName.GetMaxCount(), szName.data(), abFavorLength))
 		{
 			goto wrap;
 		}
@@ -502,7 +502,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 			if ((nLen + nCurLen) >= nMaxLen)
 				goto wrap;
 
-			_wcscpyn_c(pszShort+nCurLen, nMaxLen-nCurLen, szName, nLen);
+			_wcscpyn_c(pszShort.data() + nCurLen, pszShort.GetMaxCount() - nCurLen, szName.c_str(), nLen);
 			nCurLen += nLen;
 		}
 
@@ -510,29 +510,23 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		{
 			*pszSlash = L'\\';
 			if (nLen > 0)
-				pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
+				pszShort.SetAt(nCurLen++, L'\\');
 		}
 	}
 
 	nLen = lstrlenW(pszShort);
 
 	if ((nLen > 0) && (pszShort[nLen-1] == L'\\'))
-		pszShort[--nLen] = 0;
+		pszShort.SetAt(--nLen, 0);
 
 	if (nLen <= MAX_PATH)
 	{
-		pszResult = pszShort;
+		pszResult = std::move(pszShort);
 		pszShort = nullptr;
 		goto wrap;
 	}
 
 wrap:
-	if (szName)
-		free(szName);
-	if (pszShort)
-		free(pszShort);
-	if (pszLong)
-		free(pszLong);
 	return pszResult;
 }
 
@@ -989,9 +983,9 @@ bool IsHwFullScreenAvailable()
 }
 
 /// Substitute in the pszFormat macros '%1' ... '%9' with pszValues[0] .. pszValues[8]
-wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)
+CEStr ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)
 {
-	wchar_t* pszCommand = nullptr;
+	CEStr szCommand;
 	size_t cchCmdMax = 0;
 
 	// Замена %1 и т.п.
@@ -1005,13 +999,15 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 				//ReportError(L"Invalid %s update command (%s)", (mp_Set->UpdateDownloadSetup()==1) ? L"exe" : L"arc", pszFormat, 0);
 				goto wrap;
 			}
-			pszCommand = (wchar_t*)malloc((cchCmdMax+1)*sizeof(wchar_t));
+			if (!szCommand.GetBuffer(cchCmdMax))
+				return {};
 		}
 
-		wchar_t* pDst = pszCommand;
+		wchar_t* pDst = szCommand.data();
 
 		for (LPCWSTR pSrc = pszFormat; *pSrc; pSrc++)
 		{
+			// ReSharper disable once CppTooWideScope
 			LPCWSTR pszMacro = nullptr;
 
 			switch (*pSrc)
@@ -1025,7 +1021,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 				}
 				else if ((*pSrc >= L'1') && (*pSrc <= L'9'))
 				{
-					size_t n = (size_t)(int)(*pSrc - L'1');
+					const size_t n = static_cast<size_t>(static_cast<int>(*pSrc - L'1'));
 					if (nValCount > n)
 					{
 						pszMacro = pszValues[n];
@@ -1044,7 +1040,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 
 				if (pszMacro)
 				{
-					size_t cchLen = lstrlenW(pszMacro);
+					const size_t cchLen = lstrlenW(pszMacro);
 					if (s)
 					{
 						_wcscpy_c(pDst, cchLen+1, pszMacro);
@@ -1069,7 +1065,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 	}
 
 wrap:
-	return pszCommand;
+	return szCommand;
 }
 
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits/* = csb_SameOS*/)
@@ -1140,37 +1136,37 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	return pszComspec;
 }
 
-// Найти "ComSpec" и вернуть lstrdup на него
-wchar_t* GetComspec(const ConEmuComspec* pOpt)
+// FInd "ComSpec" and return it's path
+CEStr GetComspec(const ConEmuComspec* pOpt)
 {
-	wchar_t* pszComSpec = nullptr;
+	CEStr szComSpec;
 
 	if (pOpt)
 	{
 		if ((pOpt->csType == cst_Explicit) && *pOpt->ComspecExplicit)
 		{
-			pszComSpec = lstrdup(pOpt->ComspecExplicit);
+			szComSpec.Set(pOpt->ComspecExplicit);
 		}
 
-		if (!pszComSpec && (pOpt->csBits == csb_SameOS))
+		if (!szComSpec && (pOpt->csBits == csb_SameOS))
 		{
-			BOOL bWin64 = IsWindows64();
+			const bool bWin64 = IsWindows64();
 			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
-				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
+				szComSpec.Set(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
 		}
 
-		if (!pszComSpec && (pOpt->csBits == csb_SameApp))
+		if (!szComSpec && (pOpt->csBits == csb_SameApp))
 		{
-			BOOL bWin64 = WIN3264TEST(FALSE,TRUE);
+			const bool bWin64 = WIN3264TEST(FALSE,TRUE);
 			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
-				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
+				szComSpec.Set(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
 		}
 
-		if (!pszComSpec)
+		if (!szComSpec)
 		{
-			BOOL bWin64 = (pOpt->csBits != csb_x32);
+			const bool bWin64 = (pOpt->csBits != csb_x32);
 			if (bWin64 ? *pOpt->Comspec64 : *pOpt->Comspec32)
-				pszComSpec = lstrdup(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
+				szComSpec.Set(bWin64 ? pOpt->Comspec64 : pOpt->Comspec32);
 		}
 	}
 	else
@@ -1178,15 +1174,14 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt)
 		_ASSERTE(pOpt && L"pOpt should be passed");
 	}
 
-	if (!pszComSpec)
+	if (!szComSpec)
 	{
-		wchar_t szComSpec[MAX_PATH];
-		pszComSpec = lstrdup(GetComspecFromEnvVar(szComSpec, countof(szComSpec)));
+		wchar_t temp[MAX_PATH];
+		szComSpec.Set(GetComspecFromEnvVar(temp, countof(temp)));
 	}
 
-	// Уже должно быть хоть что-то
-	_ASSERTE(pszComSpec && *pszComSpec);
-	return pszComSpec;
+	_ASSERTE(!szComSpec.IsEmpty());
+	return szComSpec;
 }
 
 

@@ -58,6 +58,21 @@ TEST(Strings, Empty)
 	EXPECT_EQ(nullptr, str.ms_Val);
 }
 
+TEST(Strings, Constructors)
+{
+	wchar_t someString[] = L"Some string";
+	const CEStr str(someString);
+	EXPECT_NE(str.data(), someString);
+
+	CEStr str1(L"Sample text");
+	EXPECT_FALSE(str1.IsEmpty());
+	CEStr str2(std::move(str1));
+	EXPECT_TRUE(str1.IsEmpty());
+	EXPECT_FALSE(str2.IsEmpty());
+	str2.Release();
+	EXPECT_TRUE(str2.IsEmpty());
+}
+
 TEST(Strings, SetValue)
 {
 	CEStr str;

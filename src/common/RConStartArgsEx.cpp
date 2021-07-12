@@ -66,7 +66,7 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 		SafeFree(this->pszSpecialCmd);
 
 		//_ASSERTE(args.bDetached == FALSE); -- Allowed. While duplicating root.
-		this->pszSpecialCmd = lstrdup(args.pszSpecialCmd);
+		this->pszSpecialCmd = lstrdup(args.pszSpecialCmd).Detach();
 
 		if (!this->pszSpecialCmd)
 			return false;
@@ -95,7 +95,7 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 		SafeFree(*p.ppDst);
 		if (p.pSrc)
 		{
-			*p.ppDst = lstrdup(p.pSrc);
+			*p.ppDst = lstrdup(p.pSrc).Detach();
 			if (!*p.ppDst)
 				return false;
 		}
@@ -159,7 +159,7 @@ bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= 
 	// Task name
 	SafeFree(this->pszTaskName);
 	if (args.pszTaskName && *args.pszTaskName)
-		this->pszTaskName = lstrdup(args.pszTaskName);
+		this->pszTaskName = lstrdup(args.pszTaskName).Detach();
 
 	return true;
 }
@@ -184,9 +184,9 @@ bool RConStartArgsEx::AssignPermissionsArgs(const RConStartArgsEx& args, bool ab
 
 	if (args.pszUserName)
 	{
-		this->pszUserName = lstrdup(args.pszUserName);
+		this->pszUserName = lstrdup(args.pszUserName).Detach();
 		if (args.pszDomain)
-			this->pszDomain = lstrdup(args.pszDomain);
+			this->pszDomain = lstrdup(args.pszDomain).Detach();
 		lstrcpy(this->szUserPassword, args.szUserPassword);
 		this->UseEmptyPassword = args.UseEmptyPassword;
 
@@ -207,9 +207,9 @@ bool RConStartArgsEx::HasPermissionsArgs() const
 }
 
 
-wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks) const
+CEStr RConStartArgsEx::CreateCommandLine(bool abForTasks) const
 {
-	wchar_t* pszFull = nullptr;
+	CEStr result;
 	size_t cchMaxLen =
 				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // the command
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
@@ -243,11 +243,11 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks) const
 	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
 	if (eSplit) cchMaxLen += 64; // -new_console:s[<SplitTab>T][<Percents>](H|V)
 
-	pszFull = static_cast<wchar_t*>(malloc(cchMaxLen * sizeof(*pszFull)));
+	auto* pszFull = result.GetBuffer(cchMaxLen);
 	if (!pszFull)
 	{
 		_ASSERTE(pszFull!=nullptr);
-		return nullptr;
+		return {};
 	}
 
 	if (pszSpecialCmd && (RunAsAdministrator == crb_On) && abForTasks)
@@ -444,7 +444,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks) const
 	while ((pS > pszFull) && wcschr(L" \t\r\n", *(pS - 1)))
 		*(--pS) = 0;
 
-	return pszFull;
+	return result;
 }
 
 
@@ -476,7 +476,7 @@ bool RConStartArgsEx::CheckUserToken(HWND hPwd)
 	{
 		pszDomain = pszUserName;
 		*pszSlash = 0;
-		pszUserName = lstrdup(pszSlash+1);
+		pszUserName = lstrdup(pszSlash + 1).Detach();
 	}
 
 	HANDLE hLogonToken = CheckUserToken();

@@ -36,7 +36,7 @@ class MHandle final
 {
 private:
 	HANDLE handle_ = nullptr;
-	std::function<void(HANDLE) noexcept> closeFunc_ = nullptr;
+	std::function<void(HANDLE)> closeFunc_ = nullptr;
 
 public:
 	// ReSharper disable once CppNonExplicitConvertingConstructor
@@ -46,8 +46,8 @@ public:
 	{
 	}
 
-	MHandle(HANDLE handle, std::function<void(HANDLE) noexcept> closeFunc) noexcept
-		: handle_(handle), closeFunc_(std::move(closeFunc))
+	MHandle(HANDLE handle, const std::function<void(HANDLE)>& closeFunc) noexcept
+		: handle_(handle), closeFunc_(closeFunc)
 	{
 	}
 
@@ -82,7 +82,7 @@ public:
 
 	MHandle Duplicate(const DWORD desiredAccess, const bool inheritHandle = false) const
 	{
-		MHandle result{ nullptr, CloseHandle };
+		MHandle result{ nullptr, MHandle::CloseHandle };
 		if (HasHandle())
 		{
 			auto* currentProcess = GetCurrentProcess();
@@ -92,6 +92,15 @@ public:
 			}
 		}
 		return result;
+	}
+
+	// ReSharper disable once CppParameterMayBeConst
+	static void CloseHandle(HANDLE handle) noexcept
+	{
+		if (handle && handle != INVALID_HANDLE_VALUE)
+		{
+			::CloseHandle(handle);
+		}
 	}
 
 public:
@@ -119,12 +128,12 @@ public:
 		return HasHandle();
 	}
 
-	bool SetHandle(HANDLE handle, std::function<void(HANDLE)> closeFunc) noexcept
+	bool SetHandle(HANDLE handle, const std::function<void(HANDLE)>& closeFunc) noexcept
 	{
 		if (handle_ != handle)
 			Close();
 		handle_ = handle;
-		closeFunc_ = std::move(closeFunc);
+		closeFunc_ = closeFunc;
 		return HasHandle();
 	}
 

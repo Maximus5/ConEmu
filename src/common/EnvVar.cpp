@@ -104,6 +104,7 @@ String GetEnvVar(const CharType* varName,
 		return String{};
 	}
 
+	// ReSharper disable once CppTooWideScope
 	DWORD nErr = 0;
 	const DWORD zzTail = 2; // to ensure +2 trailing '\0'
 	String result{};

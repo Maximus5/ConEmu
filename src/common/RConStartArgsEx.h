@@ -45,7 +45,7 @@ public:
 
 	bool CheckUserToken(HWND hPwd);
 	HANDLE CheckUserToken();
-	wchar_t* CreateCommandLine(bool abForTasks) const;
+	CEStr CreateCommandLine(bool abForTasks) const;
 	bool AssignFrom(const RConStartArgsEx& args, bool abConcat = false);
 	bool AssignPermissionsArgs(const RConStartArgsEx& args, bool abConcat = false);
 	bool HasPermissionsArgs() const;

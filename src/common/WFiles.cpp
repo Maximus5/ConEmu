@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "EnvVar.h"
 #include "MStrDup.h"
 #include "WFiles.h"
+
+#include "MHandle.h"
 #include "WObjects.h"
 #include "WRegistry.h"
 
@@ -153,9 +155,12 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, const bool abSetPath, CE
 }
 
 // GetFullPathName & ExpandEnvStr
-wchar_t* GetFullPathNameEx(LPCWSTR asPath)
+CEStr GetFullPathNameEx(LPCWSTR asPath)
 {
-	wchar_t* pszResult = nullptr;
+	if (IsStrEmpty(asPath))
+		return CEStr();
+
+	CEStr result;
 	CEStr szTemp;
 
 	if (wcschr(asPath, L'%'))
@@ -167,28 +172,29 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 		}
 	}
 
-	CEStr lsFull;
-	if (!apiGetFullPathName(asPath, lsFull))
+	if (!apiGetFullPathName(asPath, result))
 	{
 		_ASSERTEX(FALSE && "GetFullPathName failed");
+		result.Clear();
 	}
-	else
+
+
+	if (result.IsEmpty())
 	{
-		pszResult = lsFull.Detach();
+		_ASSERTEX(!result.IsEmpty());
+		result.Set(asPath);
 	}
 
-
-	if (!pszResult)
-	{
-		_ASSERTEX(pszResult!=nullptr);
-		pszResult = lstrdup(asPath);
-	}
-
-	return pszResult;
+	return result;
 }
 
 bool FindFileName(LPCWSTR asPath, CEStr& rsName)
 {
+	if (IsStrEmpty(asPath))
+	{
+		rsName.Clear();
+		return false;
+	}
 	LPCWSTR pszName = wcsrchr(asPath, L'\\');
 	if (!pszName || pszName[1] == 0)
 	{
@@ -315,17 +321,18 @@ bool MakePathProperCase(CEStr& rsPath)
 	return bFound;
 }
 
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, char*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode)
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStrA& rsBuffer, DWORD& rnChars, DWORD& rnErrCode)
 {
-	wchar_t* ptrData = nullptr;
-	int iRc = ReadTextFile(asPath, cchMax, ptrData, rnChars, rnErrCode, (DWORD)-1);
-	rsBuffer = (char*)ptrData;
+	CEStr buffer;
+	const int iRc = ReadTextFile(asPath, cchMax, buffer, rnChars, rnErrCode, static_cast<DWORD>(-1));
+	rsBuffer.Attach(reinterpret_cast<char*>(buffer.Detach()));
 	return iRc;
 }
 
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP /*= 0*/)
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP /*= 0*/)
 {
-	HANDLE hFile = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+	const MHandle hFile(CreateFileW(asPath, GENERIC_READ, FILE_SHARE_READ, nullptr,
+		OPEN_EXISTING, 0, nullptr), MHandle::CloseHandle);
 
 	if (!hFile || hFile == INVALID_HANDLE_VALUE)
 	{
@@ -333,7 +340,7 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 		return -1;
 	}
 
-	DWORD nSize = GetFileSize(hFile, nullptr);
+	const DWORD nSize = GetFileSize(hFile, nullptr);
 
 	if (!nSize || nSize >= cchMax)
 	{
@@ -342,7 +349,8 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 		return -2;
 	}
 
-	char* pszDataA = (char*)malloc(nSize+5);
+	CEStrA ansiBuffer;
+	char* pszDataA = ansiBuffer.GetBuffer(nSize+5);
 	if (!pszDataA)
 	{
 		_ASSERTE(pszDataA);
@@ -352,20 +360,20 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 	pszDataA[nSize] = 0; pszDataA[nSize+1] = 0; pszDataA[nSize+2] = 0; pszDataA[nSize+3] = 0; pszDataA[nSize+4] = 0;
 
 	DWORD nRead = 0;
-	BOOL  bRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
+	const BOOL  bRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
 	rnErrCode = GetLastError();
 	CloseHandle(hFile);
 
 	if (!bRead || (nRead != nSize))
 	{
-		free(pszDataA);
 		return -4;
 	}
 
 	// If caller requested RAW data
-	if (DefaultCP == (DWORD)-1)
+	if (DefaultCP == static_cast<DWORD>(-1))
 	{
-		rsBuffer = (wchar_t*)pszDataA;
+		rsBuffer.Attach(reinterpret_cast<wchar_t*>(ansiBuffer.Detach()));
+		pszDataA = nullptr;
 		rnChars = nRead;
 		return 0;
 	}
@@ -373,45 +381,42 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 	// Detect codepage
 	if ((DefaultCP == CP_UTF8) || (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF'))
 	{
-		bool BOM = (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF');
-		LPCSTR pszNoBom = pszDataA + (BOM ? 3 : 0);
-		DWORD  nLenNoBom = nSize - (BOM ? 3 : 0);
+		const bool BOM = (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF');
+		const auto* pszNoBom = pszDataA + (BOM ? 3 : 0);
+		const DWORD nLenNoBom = nSize - (BOM ? 3 : 0);
 		// UTF-8 BOM
-		rsBuffer = (wchar_t*)calloc(nSize+2,2);
-		if (!rsBuffer)
+		if (!rsBuffer.GetBuffer(nSize + 2))
 		{
 			_ASSERTE(rsBuffer);
-			free(pszDataA);
 			return -5;
 		}
-		int nLen = MultiByteToWideChar(CP_UTF8, 0, pszNoBom, nLenNoBom, rsBuffer, nSize);
-		if ((nLen < 0) || (nLen > (int)nSize))
+		const int nLen = MultiByteToWideChar(CP_UTF8, 0, pszNoBom, nLenNoBom,
+			rsBuffer.data(), nSize);
+		if ((nLen < 0) || (nLen > static_cast<int>(nSize)))
 		{
-			SafeFree(pszDataA);
-			SafeFree(rsBuffer);
+			rsBuffer.Clear();
 			return -6;
 		}
 		rnChars = nLen;
 	}
 	else if ((DefaultCP == 1200) || (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE'))
 	{
-		bool BOM = (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE');
+		const bool BOM = (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE');
 		if (!BOM)
 		{
-			rsBuffer = (wchar_t*)pszDataA;
+			rsBuffer.Attach(reinterpret_cast<wchar_t*>(ansiBuffer.Detach()));
 			pszDataA = nullptr;
 			rnChars = (nSize >> 1);
 		}
 		else
 		{
-			LPCSTR pszNoBom = pszDataA + 2;
-			DWORD  nLenNoBom = nSize - 2;
+			const auto* pszNoBom = pszDataA + 2;
+			const DWORD nLenNoBom = nSize - 2;
 			// CP-1200 BOM
-			rsBuffer = lstrdup((wchar_t*)pszNoBom);
+			rsBuffer.Set(reinterpret_cast<const wchar_t*>(pszNoBom));
 			if (!rsBuffer)
 			{
 				_ASSERTE(rsBuffer);
-				SafeFree(pszDataA);
 				return -7;
 			}
 			rnChars = (nLenNoBom >> 1);
@@ -420,19 +425,21 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 	else
 	{
 		// Plain ANSI
-		rsBuffer = (wchar_t*)calloc(nSize+2,2);
-		_ASSERTE(rsBuffer);
-		int nLen = MultiByteToWideChar(DefaultCP ? DefaultCP : CP_ACP, 0, pszDataA, nSize, rsBuffer, nSize+1);
-		if ((nLen < 0) || (nLen > (int)nSize))
+		if (!rsBuffer.GetBuffer(static_cast<int>(nSize + 2)))
 		{
-			SafeFree(pszDataA);
-			SafeFree(rsBuffer);
+			rsBuffer.Clear();
+			return -8;
+		}
+		const int nLen = MultiByteToWideChar(DefaultCP ? DefaultCP : CP_ACP, 0, pszDataA, nSize,
+			rsBuffer.data(), static_cast<int>(rsBuffer.GetMaxCount()));
+		if ((nLen < 0) || (nLen > static_cast<int>(nSize)))
+		{
+			rsBuffer.Clear();
 			return -8;
 		}
 		rnChars = nLen;
 	}
 
-	SafeFree(pszDataA);
 	return 0;
 }
 
@@ -531,20 +538,20 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/
 		return false;
 
 	bool bFound = false;
-	wchar_t* pszBuf = nullptr;
+	CEStr pszBuf;
 	LPCWSTR pszCur = asFileList;
-	int nDirLen = lstrlen(asDirectory);
+	const int nDirLen = lstrlen(asDirectory);
 
 	while (*pszCur)
 	{
-		int nNameLen = lstrlen(pszCur);
+		const int nNameLen = lstrlen(pszCur);
 		if (asDirectory[nDirLen-1] != L'\\' && *pszCur != L'\\')
-			pszBuf = lstrmerge(asDirectory, L"\\", pszCur);
+			pszBuf = CEStr(asDirectory, L"\\", pszCur);
 		else
-			pszBuf = lstrmerge(asDirectory, pszCur);
+			pszBuf = CEStr(asDirectory, pszCur);
 
-		bool bFile = FileExists(pszBuf);
-		SafeFree(pszBuf);
+		const bool bFile = FileExists(pszBuf);
+		pszBuf.Release();
 
 		if (bFile)
 		{
@@ -656,7 +663,7 @@ bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsF
 {
 	if (FilesExists(asDirectory, asFile, true, 1))
 	{
-		rsFound.Attach(JoinPath(asDirectory, asFile));
+		rsFound = JoinPath(asDirectory, asFile);
 		return true;
 	}
 	else if (iDepth <= 0)
@@ -683,7 +690,7 @@ bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsF
 			// We do not need them
 			if (!IsDotsName(fnd.cFileName))
 			{
-				lsFind.Attach(JoinPath(asDirectory, fnd.cFileName));
+				lsFind = JoinPath(asDirectory, fnd.cFileName);
 				int iChildDepth = (iDepth-1);
 				if (lstrcmpi(fnd.cFileName, L".git") == 0 || lstrcmpi(fnd.cFileName, L".svn") == 0)
 					iChildDepth = 0; // do not scan children of ".git", ".svn"
@@ -817,6 +824,22 @@ bool MyCreateDirectory(wchar_t* asPath)
 	}
 
 	return (bOk != FALSE);
+}
+
+CEStr GetCurDir()
+{
+	const DWORD cchMax = MAX_PATH * 2;
+	wchar_t szCurDir[cchMax] = L"";
+	const auto len = GetCurrentDirectory(cchMax, szCurDir);
+	if (!len)
+		return {};
+	if (len < cchMax)
+		return CEStr(szCurDir);
+	CEStr buffer;
+	const auto lenExtra = GetCurrentDirectory(len, buffer.GetBuffer(len));
+	if (lenExtra > len || buffer.IsEmpty())
+		return {};
+	return buffer;
 }
 
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)

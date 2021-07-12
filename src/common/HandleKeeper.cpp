@@ -182,7 +182,7 @@ static bool HandleKeeper::CheckConName(const HandleSource source, const DWORD ac
 
 			#ifdef _DEBUG
 			// debugging and informational purposes only, released via file_name_ptr
-			info.file_name_w = lstrdup(static_cast<LPCWSTR>(as_name));
+			info.file_name_w = CEStr(static_cast<LPCWSTR>(as_name)).Detach();
 			#endif
 
 			return (info.is_con || info.is_input || info.is_output);
@@ -199,7 +199,7 @@ static bool HandleKeeper::CheckConName(const HandleSource source, const DWORD ac
 
 			#ifdef _DEBUG
 			// debugging and informational purposes only, released via file_name_ptr
-			info.file_name_a = lstrdup(static_cast<LPCSTR>(as_name));
+			info.file_name_a = CEStrA(static_cast<LPCSTR>(as_name)).Detach();
 			#endif
 
 			return (info.is_con || info.is_input || info.is_output);

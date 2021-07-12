@@ -38,18 +38,19 @@ bool EnumFiles(
 	void* context, int depth = 1);
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
+CEStr GetCurDir();
 
 bool IsDotsName(LPCWSTR asName);
 
 class CEnvRestorer;
 bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore = nullptr);
 
-wchar_t* GetFullPathNameEx(LPCWSTR asPath);
+CEStr GetFullPathNameEx(LPCWSTR asPath);
 bool FindFileName(LPCWSTR asPath, CEStr& rsName);
 bool MakePathProperCase(CEStr& rsPath);
 
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, char*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode);
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStrA& rsBuffer, DWORD& rnChars, DWORD& rnErrCode);
 int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = nullptr);
 
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);

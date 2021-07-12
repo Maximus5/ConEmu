@@ -44,6 +44,20 @@ private:
 	const wchar_t* AttachInt(wchar_t*& asPtr);
 
 public:
+	CEStr();
+	CEStr(CEStr&& asStr) noexcept;
+	CEStr(const CEStr& asStr);
+	CEStr(const wchar_t* asStr1, const wchar_t* asStr2 = nullptr, const wchar_t* asStr3 = nullptr,
+		const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr,
+		const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr, const wchar_t* asStr9 = nullptr);
+	CEStr(const wchar_t* asStr, ssize_t anChars);
+
+	CEStr& operator=(CEStr&& asStr) noexcept;
+	CEStr& operator=(const CEStr& asStr);
+	CEStr& operator=(const wchar_t* asPtr);
+
+	~CEStr();
+
 	bool IsEmpty() const;
 	bool IsNull() const;
 
@@ -58,11 +72,6 @@ public:
 
 	int Compare(const wchar_t* asText, bool abCaseSensitive = false) const;
 	bool operator==(const wchar_t* asStr) const;
-
-	CEStr& operator=(CEStr&& asStr) noexcept;
-	CEStr& operator=(const CEStr& asStr);
-	CEStr& operator=(wchar_t*&& asPtr) noexcept;
-	CEStr& operator=(const wchar_t* asPtr);
 
 	void swap(CEStr& asStr) noexcept;
 
@@ -83,18 +92,13 @@ public:
 	CEStr& Replace(const wchar_t* what, const wchar_t* newText);
 	/// @brief If string allocated, make it zero-length.
 	void Clear();
+	/// @brief Release allocated memory, so the object contains nullptr afterwards.
 	void Release();
+	/// @brief Assigns asNewValue, possibly limited to anChars
 	const wchar_t* Set(const wchar_t* asNewValue, ssize_t anChars = -1);
+	/// @brief Sets the character wc at position nIdx
+	/// @returns Previous character at position nIdx
 	wchar_t SetAt(const ssize_t nIdx, const wchar_t wc);
-
-	CEStr();
-	CEStr(CEStr&& asStr) noexcept;
-	CEStr(const CEStr& asStr);
-	CEStr(wchar_t*&& asPtr) noexcept;
-	CEStr(const wchar_t* asStr1, const wchar_t* asStr2 = nullptr, const wchar_t* asStr3 = nullptr,
-		const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr,
-		const wchar_t* asStr7 = nullptr, const wchar_t* asStr8 = nullptr, const wchar_t* asStr9 = nullptr);
-	~CEStr();
 };
 
 
@@ -107,7 +111,6 @@ public:
 	CEStrA();
 	~CEStrA();
 	CEStrA(const char* asPtr);
-	CEStrA(char*&& asPtr) noexcept;
 	CEStrA(const char* asStr1, const char* asStr2, const char* asStr3 = nullptr,
 		const char* asStr4 = nullptr, const char* asStr5 = nullptr, const char* asStr6 = nullptr,
 		const char* asStr7 = nullptr, const char* asStr8 = nullptr, const char* asStr9 = nullptr);
@@ -116,7 +119,6 @@ public:
 	CEStrA(CEStrA&& src) noexcept;
 
 	CEStrA& operator=(const char* asPtr);
-	CEStrA& operator=(char*&& asPtr) noexcept;
 
 	CEStrA& operator=(const CEStrA& src);
 	CEStrA& operator=(CEStrA&& src) noexcept;
@@ -138,6 +140,7 @@ public:
 	// Reset the buffer to new empty data of required size
 	char* GetBuffer(ssize_t cchMaxLen);
 	char* Detach();
+	char* Attach(char*&& asPtr);
 
 public:
 	char* ms_Val = nullptr;
@@ -156,6 +159,11 @@ private:
 	MArray<std::pair<ssize_t, CEStr>> strings_;
 	ssize_t total_ = 0;
 public:
+	void Reserve(ssize_t strCount);
 	void Append(const wchar_t* str);
+	void Append(CEStr&& str);
 	CEStr GetData() const;
+	bool IsEmpty() const;
+	ssize_t GetCount() const;
+	CEStr& GetString(ssize_t idx);
 };

@@ -789,7 +789,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 	LPBYTE ptrData;
 	#ifdef _DEBUG
 	bool bIsAltSrvCmd;
-	wchar_t szDbgPrefix[64], szDbgResult[64], *pszDbgMsg = nullptr;
+	wchar_t szDbgPrefix[64], szDbgResult[64];
+	CEStr pszDbgMsg;
 	#endif
 
 	if (!pIn || !szGuiPipeName)
@@ -801,8 +802,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 
 	#ifdef _DEBUG
 	swprintf_c(szDbgPrefix, L">> ExecCmd: PID=%5u  TID=%5u  Cmd=%3u  ", GetCurrentProcessId(), GetCurrentThreadId(), pIn->hdr.nCmd);
-	pszDbgMsg = lstrmerge(szDbgPrefix, szGuiPipeName, L"\n");
-	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); free(pszDbgMsg); }
+	pszDbgMsg = CEStr(szDbgPrefix, szGuiPipeName, L"\n");
+	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); pszDbgMsg.Release(); }
 	#endif
 
 	pIn->hdr.bAsync = bAsyncNoResult;
@@ -979,8 +980,8 @@ wrap:
 		swprintf_c(szDbgResult, L"- Data=%5u  Err=%u\n", pOut->DataSize(), dwErr);
 	else
 		lstrcpyn(szDbgResult, L"[NULL]\n", countof(szDbgResult));
-	pszDbgMsg = lstrmerge(szDbgPrefix, szDbgResult);
-	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); free(pszDbgMsg); }
+	pszDbgMsg = CEStr(szDbgPrefix, szDbgResult);
+	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); pszDbgMsg.Release(); }
 	#endif
 
 	return pOut;

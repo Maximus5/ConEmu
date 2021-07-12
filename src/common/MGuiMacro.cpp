@@ -41,11 +41,11 @@ const wchar_t* CreateRootInfoXml(LPCWSTR asRootExeName, CESERVER_ROOT_INFO* pInf
 
 	// Was process started?
 	if (pInfo && pInfo->nPID)
-		lstrmerge(&rsInfo.ms_Val, L"\tState=\"", pInfo->bRunning ? L"Running" : L"Exited", L"\"\n");
+		rsInfo.Append(L"\tState=\"", pInfo->bRunning ? L"Running" : L"Exited", L"\"\n");
 	else if (asRootExeName)
-		lstrmerge(&rsInfo.ms_Val, L"\tState=\"", L"NotStarted", L"\"\n");
+		rsInfo.Append(L"\tState=\"", L"NotStarted", L"\"\n");
 	else
-		lstrmerge(&rsInfo.ms_Val, L"\tState=\"", L"Empty", L"\"\n");
+		rsInfo.Append(L"\tState=\"", L"Empty", L"\"\n");
 
 	// Name="cmd.exe"
 	// asRootExeName is NULL if there are no VCon at all
@@ -64,18 +64,18 @@ const wchar_t* CreateRootInfoXml(LPCWSTR asRootExeName, CESERVER_ROOT_INFO* pInf
 			}
 			*pszReady = 0;
 		}
-		lstrmerge(&rsInfo.ms_Val, L"\tName=\"", szTemp[0] ? szTemp : L"<Unknown>", L"\"\n");
+		rsInfo.Append(L"\tName=\"", szTemp[0] ? szTemp : L"<Unknown>", L"\"\n");
 	}
 
 	// Was process started?
 	if (pInfo && pInfo->nPID)
 	{
-		lstrmerge(&rsInfo.ms_Val, L"\tPID=\"", ultow_s(pInfo->nPID, szTemp, 10), L"\"\n");
-		lstrmerge(&rsInfo.ms_Val, L"\tExitCode=\"", ultow_s(pInfo->nExitCode, szTemp, 10), L"\"\n");
-		lstrmerge(&rsInfo.ms_Val, L"\tUpTime=\"", ultow_s(pInfo->nUpTime, szTemp, 10), L"\"\n");
+		rsInfo.Append(L"\tPID=\"", ultow_s(pInfo->nPID, szTemp, 10), L"\"\n");
+		rsInfo.Append(L"\tExitCode=\"", ultow_s(pInfo->nExitCode, szTemp, 10), L"\"\n");
+		rsInfo.Append(L"\tUpTime=\"", ultow_s(pInfo->nUpTime, szTemp, 10), L"\"\n");
 	}
 
-	lstrmerge(&rsInfo.ms_Val, L"/>\n");
+	rsInfo.Append(L"/>\n");
 
 	return rsInfo.ms_Val;
 }

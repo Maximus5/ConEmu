@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "CEStr.h"
 #include "defines.h"
 #include "MSectionSimple.h"
 
@@ -36,39 +37,24 @@ struct CEStartupEnv;
 struct MSectionSimple;
 class MFileLog;
 
-class MFileLogHandle
-{
-	MFileLog* pLog;
-	HANDLE hLogFile;
-	MSectionLockSimple lock;
-	friend class MFileLog;
-public:
-	MFileLogHandle();
-	~MFileLogHandle();
-	operator HANDLE() const;
-};
-
 class MFileLog
 {
 protected:
-	wchar_t* ms_FilePathName;
-	wchar_t* ms_FileName;
-	wchar_t* ms_DefPath;
-	HANDLE   mh_LogFile;
-	SYSTEMTIME mst_LastWrite;
-	HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
-protected:
-	MSectionSimple* mpcs_Lock;
-	MFileLogHandle* mp_Acquired;
-	friend class MFileLogHandle;
+	CEStr filePathName_;
+	CEStr fileName_;
+	CEStr defaultPath_;
+	HANDLE logHandle_{ nullptr };
+	SYSTEMTIME lastWrite_{};
+	MSectionSimple lock_{ true };
+
+	HRESULT  InitFileName(LPCWSTR asName = nullptr, DWORD anPID = 0);
 public:
-	MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
+	MFileLog(LPCWSTR asName, LPCWSTR asDir = nullptr, DWORD anPID = 0);
 	virtual ~MFileLog();
-	bool IsLogOpened();
+	bool IsLogOpened() const;
 	void CloseLogFile();
-	HRESULT CreateLogFile(LPCWSTR asName = NULL, DWORD anPID = 0, DWORD anLevel = 0); // Returns 0 if succeeded, otherwise - GetLastError() code
+	HRESULT CreateLogFile(LPCWSTR asName = nullptr, DWORD anPID = 0, DWORD anLevel = 0); // Returns 0 if succeeded, otherwise - GetLastError() code
 	LPCWSTR GetLogFileName();
-	void LogString(LPCSTR asText, bool abWriteTime = true, LPCSTR asThreadName = NULL, bool abNewLine = true, UINT anCP = CP_ACP);
-	void LogString(LPCWSTR asText, bool abWriteTime = true, LPCWSTR asThreadName = NULL, bool abNewLine = true);
-	bool AcquireHandle(LPCWSTR asText, MFileLogHandle& Acquired);
+	void LogString(LPCSTR asText, bool abWriteTime = true, LPCSTR asThreadName = nullptr, bool abNewLine = true, UINT anCP = CP_ACP);
+	void LogString(LPCWSTR asText, bool abWriteTime = true, LPCWSTR asThreadName = nullptr, bool abNewLine = true);
 };

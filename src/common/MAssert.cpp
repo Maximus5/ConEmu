@@ -375,11 +375,10 @@ void _DEBUGSTR(LPCWSTR s)
 	}
 	else
 	{
-		wchar_t* whole = lstrmerge(szDEBUGSTRTime, psz, (nSLen && psz[nSLen-1]!=L'\n') ? L"\n" : nullptr);
+		const CEStr whole(szDEBUGSTRTime, psz, (nSLen && psz[nSLen-1]!=L'\n') ? L"\n" : nullptr);
 		if (!whole)
 			return;
-		OutputDebugString(whole);
-		free(whole);
+		OutputDebugString(whole.c_str());
 	}
 }
 #endif

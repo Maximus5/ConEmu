@@ -723,12 +723,12 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 										if (pszSlash)
 										{
 											*pszSlash = 0;
-											pszDomain = lstrdup(lpszTemp);
-											pszUserName = lstrdup(pszSlash+1);
+											pszDomain = lstrdup(lpszTemp).Detach();
+											pszUserName = lstrdup(pszSlash + 1).Detach();
 										}
 										else
 										{
-											pszUserName = lstrdup(lpszTemp);
+											pszUserName = lstrdup(lpszTemp).Detach();
 										}
 									}
 									break;

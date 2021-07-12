@@ -121,9 +121,9 @@ bool IsNonPrintable(wchar_t chr);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 
 int AddEndSlash(wchar_t* rsPath, int cchMax);
-wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
-wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = nullptr);
-wchar_t* GetParentPath(LPCWSTR asPath);
+CEStr MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
+CEStr JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = nullptr);
+CEStr GetParentPath(LPCWSTR asPath);
 
 /// <summary>
 /// Simple check if the asFilePath could be valid path.

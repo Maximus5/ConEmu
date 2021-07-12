@@ -1148,14 +1148,14 @@ bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
 	CEStr lsName1, lsName2;
 	if (!pszExt1)
 	{
-		lsName1.Attach(lstrmerge(pszName1, L".exe"));
+		lsName1 = CEStr(pszName1, L".exe");
 		pszName1 = lsName1;
 		if (!pszName1)
 			return false;
 	}
 	if (!pszExt2)
 	{
-		lsName2.Attach(lstrmerge(pszName2, L".exe"));
+		lsName2 = CEStr(pszName2, L".exe");
 		pszName2 = lsName2;
 		if (!pszName2)
 			return false;
@@ -1176,7 +1176,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 	CEStr lsName1;
 	if (!pszExt1)
 	{
-		lsName1.Attach(lstrmerge(pszName1, L".exe"));
+		lsName1 = CEStr(pszName1, L".exe");
 		pszName1 = lsName1;
 		if (!pszName1)
 			return false;
@@ -1192,7 +1192,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 		LPCWSTR pszExt2 = wcsrchr(pszName2, L'.');
 		if (!pszExt2)
 		{
-			lsName2 = lstrmerge(pszName2, L".exe");
+			lsName2 = CEStr(pszName2, L".exe");
 			pszName2 = lsName2;
 			if (!pszName2)
 				return false;
@@ -1304,22 +1304,19 @@ bool IsQuotationNeeded(LPCWSTR pszPath)
 	return bNeeded;
 }
 
-wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
+CEStr MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 {
 	const bool bNeedQuot = IsQuotationNeeded(asExe);
 	if (asParams && !*asParams)
 		asParams = nullptr;
 
-	wchar_t* pszRet;
-	if (bNeedQuot)
-		pszRet = lstrmerge(L"\"", asExe, asParams ? L"\" " : L"\"", asParams);
-	else
-		pszRet = lstrmerge(asExe, asParams ? L" " : nullptr, asParams);
-
-	return pszRet;
+	CEStr result = bNeedQuot
+		? CEStr(L"\"", asExe, asParams ? L"\" " : L"\"", asParams)
+		: CEStr(asExe, asParams ? L" " : nullptr, asParams);
+	return result;
 }
 
-wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= nullptr*/)
+CEStr JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= nullptr*/)
 {
 	LPCWSTR psz1 = asPath, psz2 = nullptr, psz3 = asPart1, psz4 = nullptr, psz5 = asPart2;
 
@@ -1328,8 +1325,8 @@ wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= nullptr*/
 
 	if (asPart1)
 	{
-		bool bDirSlash1  = (psz1 && *psz1) ? (psz1[lstrlen(psz1)-1] == L'\\') : false;
-		bool bFileSlash1 = (asPart1[0] == L'\\');
+		const bool bDirSlash1  = (psz1 && *psz1) ? (psz1[lstrlen(psz1)-1] == L'\\') : false;
+		const bool bFileSlash1 = (asPart1[0] == L'\\');
 
 		if (bDirSlash1 && bFileSlash1)
 			psz3++;
@@ -1348,27 +1345,28 @@ wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= nullptr*/
 		}
 	}
 
-	return lstrmerge(psz1, psz2, psz3, psz4, psz5);
+	return CEStr(psz1, psz2, psz3, psz4, psz5);
 }
 
-wchar_t* GetParentPath(LPCWSTR asPath)
+CEStr GetParentPath(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
-		return nullptr;
+		return {};
 	LPCWSTR pszName = PointToName(asPath);
 	if (!pszName)
-		return nullptr;
+		return {};
 	while ((pszName > asPath) && (*(pszName-1) == L'\\' || *(pszName-1) == L'/'))
 		--pszName;
 	if (pszName <= asPath)
-		return nullptr;
+		return {};
 
-	size_t cch = pszName - asPath;
-	wchar_t* parent = (wchar_t*)malloc((cch + 1) * sizeof(*parent));
-	if (!parent)
-		return nullptr;
-	wcsncpy_s(parent, cch+1, asPath, cch);
-	parent[cch] = 0;
+	const size_t cch = pszName - asPath;
+	CEStr parent;
+	if (parent.GetBuffer(cch + 1))
+	{
+		wcsncpy_s(parent.data(), parent.GetMaxCount(), asPath, cch);
+		parent.SetAt(cch, 0);
+	}
 	return parent;
 }
 

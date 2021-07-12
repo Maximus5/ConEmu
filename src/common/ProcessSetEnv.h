@@ -127,7 +127,7 @@ public:
 public:
 	// Allocate MSZZ block
 	// "set\0name=value\0chcp\0utf-8\0\0"
-	wchar_t* Allocate(size_t* pchSize);
+	CEStr Allocate(size_t* pchSize);
 
 protected:
 	/// \brief Copy string and advance destination pointer by copied length

@@ -93,7 +93,7 @@ void CStartEnvTitle::Title(LPCWSTR asTitle)
 	if (ppszTitle_)
 	{
 		SafeFree(*ppszTitle_);
-		*ppszTitle_ = lstrdup(asTitle);
+		*ppszTitle_ = lstrdup(asTitle).Detach();
 	}
 	else if (psTitle_)
 	{
@@ -230,7 +230,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= nullptr
 					if (mp_CmdChCp)
 					{
 						SafeFree(mp_CmdChCp->pszName);
-						mp_CmdChCp->pszName = lstrdup(lsSet);
+						mp_CmdChCp->pszName = lstrdup(lsSet).Detach();
 					}
 					else
 					{
@@ -250,7 +250,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= nullptr
 				if (mp_CmdTitle)
 				{
 					SafeFree(mp_CmdTitle->pszName);
-					mp_CmdTitle->pszName = lstrdup(lsSet);
+					mp_CmdTitle->pszName = lstrdup(lsSet).Detach();
 				}
 				else
 				{
@@ -270,14 +270,14 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= nullptr
 			{
 				if (!((lsCmdLine = NextArg(lsCmdLine, lsSet))))
 					break;
-				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? nullptr : L" ", lsSet.ms_Val);
+				lsSwitches.Append(lsSwitches.IsEmpty() ? nullptr : L" ", lsSet.ms_Val);
 			}
 			// Rest arguments are expected to be processed text or file
 			CmdArg lsAdd;
 			while ((lsCmdLine = NextArg(lsCmdLine, lsSet)))
 			{
 				bTokenOk = true;
-				lstrmerge(&lsAdd.ms_Val,
+				lsAdd.Append(
 					lsAdd.IsEmpty() ? nullptr : L" ",
 					lsSet.m_bQuoted ? L"\"" : nullptr,
 					lsSet.ms_Val,
@@ -435,8 +435,8 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 		return nullptr;
 
 	wcscpy_c(p->szCmd, asCmd);
-	p->pszName = lstrdup(asName);
-	p->pszValue = (asValue && *asValue) ? lstrdup(asValue) : nullptr;
+	p->pszName = lstrdup(asName).Detach();
+	p->pszValue = (asValue && *asValue) ? lstrdup(asValue).Detach() : nullptr;
 
 	size_t cchAdd = 0;
 
@@ -529,14 +529,14 @@ bool CProcessEnvCmd::Apply(CStartEnvBase* pSetEnv)
 }
 
 // Helper to fill CESERVER_REQ_SRVSTARTSTOPRET::pszCommands
-wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
+CEStr CProcessEnvCmd::Allocate(size_t* pchSize)
 {
-	wchar_t* pszData = nullptr;
+	CEStr result;
 	size_t cchData = 0;
 
 	if (mch_Total)
 	{
-		pszData = static_cast<wchar_t*>(malloc((mch_Total + 2) * sizeof(*pszData)));
+		auto* pszData = result.GetBuffer(mch_Total + 2);
 		if (pszData)
 		{
 			wchar_t* pszDst = pszData;
@@ -607,7 +607,7 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 
 	if (pchSize)
 		*pchSize = cchData;
-	return pszData;
+	return result;
 }
 
 // ReSharper disable once CppInconsistentNaming, IdentifierTypo

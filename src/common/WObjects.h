@@ -76,7 +76,7 @@ extern SearchAppPaths_t gfnSearchAppPaths /*= NULL*/;
 bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath = true);
 
 bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE);
-wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
+CEStr GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
 DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName);
 DWORD GetCurrentModulePathName(CEStr& lsPathName);
@@ -103,9 +103,9 @@ bool IsWindows64();
 bool IsWine();
 bool IsWinPE();
 
-wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
+CEStr ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 
-wchar_t* GetComspec(const ConEmuComspec* pOpt);
+CEStr GetComspec(const ConEmuComspec* pOpt);
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 
 bool IsExportEnvVarAllowed(LPCWSTR szName);
