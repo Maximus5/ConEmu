@@ -358,7 +358,7 @@ bool CPluginBase::DllCheckUnique(bool bFromMenu)
 				|| !lstrcmpi(pszName, L"ConEmu.x64.dll"))
 			{
 				iCount++;
-				lstrmerge(&lsFiles.ms_Val, module.szExePath[0] ? module.szExePath : module.szModule, L"\n");
+				lsFiles.Append(module.szExePath[0] ? module.szExePath : module.szModule, L"\n");
 			}
 		}
 
@@ -377,7 +377,7 @@ bool CPluginBase::DllCheckUnique(bool bFromMenu)
 	wchar_t szExePath[MAX_PATH] = L"";
 	GetModuleFileName(nullptr, szExePath, countof(szExePath));
 
-	CEStr lsMsg = lstrmerge(
+	const CEStr lsMsg(
 		L"Several instances of ConEmu plugin were loaded!\n"
 		L"Please, either remove old versions,\n"
 		L"or change Far.exe arguments (/p switch)!\n\n",
@@ -698,7 +698,7 @@ bool CPluginBase::StorePanelDirs(LPCWSTR asActive, LPCWSTR asPassive)
 		if (pszSet && (lstrcmp(pszSet, pDst) != 0))
 		{
 			#ifdef _DEBUG
-			CEStr lsDbg = lstrmerge(i ? L"PPanelDir changed -> " : L"APanelDir changed -> ", pszSet);
+			const CEStr lsDbg(i ? L"PPanelDir changed -> " : L"APanelDir changed -> ", pszSet);
 			DEBUGSTRCURDIR(lsDbg);
 			#endif
 
@@ -2306,7 +2306,7 @@ void CPluginBase::ShowProtocolWarning()
 
 	LPCWSTR pszConEmuExe = ((gpConMapInfo->cbSize >= (size_t)((LPBYTE)&gpConMapInfo->hConEmuRoot - (LPBYTE)gpConMapInfo))
 		&& IsFilePath(gpConMapInfo->sConEmuExe)) ? gpConMapInfo->sConEmuExe : nullptr;
-	CEStr lsMsg = lstrmerge(
+	const CEStr lsMsg(
 		szProtocolWarning,
 		pszConEmuExe,
 		szExePath,
@@ -2542,9 +2542,9 @@ void CPluginBase::InitRootRegKey()
 
 	SafeFree(ms_RootRegKey);
 	if (szFarUser[0])
-		ms_RootRegKey = lstrmerge(L"Software\\", pszFarName, L"\\Users\\", szFarUser);
+		ms_RootRegKey = CEStr(L"Software\\", pszFarName, L"\\Users\\", szFarUser).Detach();
 	else
-		ms_RootRegKey = lstrmerge(L"Software\\", pszFarName);
+		ms_RootRegKey = CEStr(L"Software\\", pszFarName).Detach();
 }
 
 void CPluginBase::SetRootRegKey(wchar_t* asKeyPtr)
@@ -2572,7 +2572,7 @@ void CPluginBase::LoadPanelTabsFromRegistry()
 	if (!ms_RootRegKey || !*ms_RootRegKey)
 		return;
 
-	wchar_t* pszTabsKey = lstrmerge(ms_RootRegKey, L"\\Plugins\\PanelTabs");
+	CEStr pszTabsKey(ms_RootRegKey, L"\\Plugins\\PanelTabs");
 	if (!pszTabsKey)
 		return;
 
@@ -2589,8 +2589,6 @@ void CPluginBase::LoadPanelTabsFromRegistry()
 
 		RegCloseKey(hk);
 	}
-
-	free(pszTabsKey);
 }
 
 void CPluginBase::InitHWND()
@@ -5508,15 +5506,9 @@ LPWSTR CPluginBase::ToUnicode(LPCSTR asOemStr)
 	if (!asOemStr)
 		return nullptr;
 	if (!*asOemStr)
-		return lstrdup(L"");
+		return lstrdup(L"").Detach();
 
-	int nLen = lstrlenA(asOemStr);
-	wchar_t* pszUnicode = (wchar_t*)calloc((nLen+1),sizeof(*pszUnicode));
-	if (!pszUnicode)
-		return nullptr;
-
-	MultiByteToWideChar(CP_OEMCP, 0, asOemStr, nLen, pszUnicode, nLen);
-	return pszUnicode;
+	return lstrdupW(asOemStr, CP_OEMCP).Detach();
 }
 
 void CPluginBase::ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax)

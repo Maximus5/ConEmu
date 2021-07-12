@@ -568,7 +568,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 
 	if (CacheInfo[i].lpwszFileName == NULL)
 	{
-		CacheInfo[i].lpwszFileName = lstrdup(pszName);
+		CacheInfo[i].lpwszFileName = lstrdup(pszName).Detach();
 		lbReady = FALSE;
 	}
 

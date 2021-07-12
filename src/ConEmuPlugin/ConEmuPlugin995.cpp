@@ -273,7 +273,7 @@ bool CPluginW995::GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, I
 			pszName = PointToName(pItem->FindData.lpwszFileName);
 		lstrcpyn(Info.cFileName, pszName, countof(Info.cFileName));
 		if (ppszFullPathName)
-			*ppszFullPathName = lstrdup(pItem->FindData.lpwszFileName);
+			*ppszFullPathName = lstrdup(pItem->FindData.lpwszFileName).Detach();
 	}
 	else if (ppszFullPathName)
 	{
@@ -349,7 +349,7 @@ void CPluginW995::SetStartupInfoPtr(void *aInfo)
 		}
 	}
 
-	SetRootRegKey(lstrdup(InfoW995->RootKey));
+	SetRootRegKey(lstrdup(InfoW995->RootKey).Detach());
 }
 
 DWORD CPluginW995::GetEditorModifiedState()
@@ -746,7 +746,7 @@ bool CPluginW995::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName,
 	wchar_t strTemp[MAX_PATH+1];
 	if (!InfoW995->InputBox(Title, SubTitle, HistoryName, SrcText, strTemp, countof(strTemp), NULL, FIB_BUTTONS))
 		return false;
-	DestText = lstrdup(strTemp);
+	DestText = lstrdup(strTemp).Detach();
 	return true;
 }
 

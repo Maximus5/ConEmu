@@ -169,7 +169,7 @@ wchar_t* CPluginW1900::GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer /*
 			}
 			else
 			{
-				pszDir = lstrdup(pDir->Name);
+				pszDir = lstrdup(pDir->Name).Detach();
 			}
 			free(pDir);
 		}
@@ -310,7 +310,7 @@ bool CPluginW1900::GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, 
 			pszName = PointToName(pItem->FileName);
 		lstrcpyn(Info.cFileName, pszName, countof(Info.cFileName));
 		if (ppszFullPathName)
-			*ppszFullPathName = lstrdup(pItem->FileName);
+			*ppszFullPathName = lstrdup(pItem->FileName).Detach();
 	}
 	else if (ppszFullPathName)
 	{
@@ -670,7 +670,7 @@ void CPluginW1900::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, boo
 
 	//Far3 build 2576: удален $Text
 	//т.к. макросы у нас фаро-независимые - нужны танцы с бубном
-	pszMacroCopy = lstrdup(asMacro);
+	pszMacroCopy = lstrdup(asMacro).Detach();
 	CharUpperBuff(pszMacroCopy, lstrlen(pszMacroCopy));
 	if (wcsstr(pszMacroCopy, L"$TEXT") && !InfoW1900->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
 	{
@@ -1010,7 +1010,7 @@ bool CPluginW1900::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName
 	wchar_t strTemp[MAX_PATH+1];
 	if (!InfoW1900->InputBox(&guid_ConEmu, &guid_ConEmuInput, Title, SubTitle, HistoryName, SrcText, strTemp, countof(strTemp), NULL, FIB_BUTTONS))
 		return false;
-	DestText = lstrdup(strTemp);
+	DestText = lstrdup(strTemp).Detach();
 	return true;
 }
 
