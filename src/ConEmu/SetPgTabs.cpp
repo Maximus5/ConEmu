@@ -188,7 +188,7 @@ LRESULT CSetPgTabs::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	case tTabSkipWords:
 	{
 		SafeFree(gpSet->pszTabSkipWords);
-		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hDlg, nCtrlId);
+		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hDlg, nCtrlId).Detach();
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;
 	}

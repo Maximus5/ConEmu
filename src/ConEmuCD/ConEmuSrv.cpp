@@ -1836,7 +1836,7 @@ int WorkerServer::ProcessCommandLineArgs()
 		//gState.conemuPid_ = ...;
 
 		SafeFree(gpszRunCmd);
-		gpszRunCmd = lstrdup(L"");
+		gpszRunCmd = lstrdup(L"").Detach();
 
 		CreateColorerHeader();
 	}
@@ -3058,14 +3058,14 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 			_ASSERTE(NextArg(pszCfgSwitches,lsFirst) && !lsFirst.OneOfSwitches(L"-cmd",L"-cmdlist",L"-run",L"-runlist"));
 			#endif
 
-			lstrmerge(&lsGuiCmd.ms_Val, L" ", cfgSwitches);
+			lsGuiCmd.Append(L" ", cfgSwitches);
 			lstrcpyn(gpSrv->guiSettings.sConEmuArgs, cfgSwitches, countof(gpSrv->guiSettings.sConEmuArgs));
 		}
 
 		// The server called from am_Async (RunMode::RM_AUTOATTACH) mode
-		lstrmerge(&lsGuiCmd.ms_Val, L" -Detached");
+		lsGuiCmd.Append(L" -Detached");
 		#ifdef _DEBUG
-		lstrmerge(&lsGuiCmd.ms_Val, L" -NoKeyHooks");
+		lsGuiCmd.Append(L" -NoKeyHooks");
 		#endif
 
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));

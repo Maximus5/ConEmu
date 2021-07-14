@@ -1239,7 +1239,7 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 
 					if (bHasUpdatePackage)
 					{
-						mpsz_UpdatePackage = lstrdup(pszFileNames);
+						mpsz_UpdatePackage = lstrdup(pszFileNames).Detach();
 					}
 				}
 

@@ -376,7 +376,7 @@ int ConfirmDialog(LPCWSTR asMessage,
 
 	if (!asUrl || !*asUrl)
 		asUrl = gsHomePage;
-	szWebLink = lstrmerge(L"<a href=\"", asUrl, L"\">", asUrl, L"</a>");
+	szWebLink = CEStr(L"<a href=\"", asUrl, L"\">", asUrl, L"</a>");
 
 	switch (uType & 0xF)
 	{
@@ -454,17 +454,17 @@ int ConfirmDialog(LPCWSTR asMessage,
 
 		if (config.cButtons >= 1)
 		{
-			lsBtn1 = lstrmerge(asBtn1Name ? asBtn1Name : pszName1, asBtn1Hint ? L"\n" : nullptr, asBtn1Hint);
+			lsBtn1 = CEStr(asBtn1Name ? asBtn1Name : pszName1, asBtn1Hint ? L"\n" : nullptr, asBtn1Hint);
 			buttons[0].pszButtonText = lsBtn1.ms_Val;
 		}
 		if (config.cButtons >= 2)
 		{
-			lsBtn2 = lstrmerge(asBtn2Name ? asBtn2Name : pszName2, asBtn2Hint ? L"\n" : nullptr, asBtn2Hint);
+			lsBtn2 = CEStr(asBtn2Name ? asBtn2Name : pszName2, asBtn2Hint ? L"\n" : nullptr, asBtn2Hint);
 			buttons[1].pszButtonText = lsBtn2.ms_Val;
 		}
 		if (config.cButtons >= 3)
 		{
-			lsBtn3 = lstrmerge(asBtn3Name ? asBtn3Name : pszName3, asBtn3Hint ? L"\n" : nullptr, asBtn3Hint);
+			lsBtn3 = CEStr(asBtn3Name ? asBtn3Name : pszName3, asBtn3Hint ? L"\n" : nullptr, asBtn3Hint);
 			buttons[2].pszButtonText = lsBtn3.ms_Val;
 		}
 
@@ -512,26 +512,26 @@ int ConfirmDialog(LPCWSTR asMessage,
 	// Use standard message box otherwise
 	// **********************************
 
-	szText = lstrmerge(
+	szText = CEStr(
 		asMainLabel, asMainLabel ? L"\r\n" : nullptr,
 		asMessage);
 
 	// URL hint?
 	if (asUrl)
 	{
-		lstrmerge(&szText.ms_Val, L"\r\n\r\n", asUrl);
+		szText.Append(L"\r\n\r\n", asUrl);
 	}
 
 	// Button hints?
 	if (asBtn1Hint || asBtn2Hint || asBtn3Hint)
 	{
-		lstrmerge(&szText.ms_Val, L"\r\n\r\n");
+		szText.Append(L"\r\n\r\n");
 		if (asBtn1Hint)
-			lstrmerge(&szText.ms_Val, L"\r\n<", pszName1, L"> - ", asBtn1Hint);
+			szText.Append(L"\r\n<", pszName1, L"> - ", asBtn1Hint);
 		if (asBtn2Hint)
-			lstrmerge(&szText.ms_Val, L"\r\n<", pszName2, L"> - ", asBtn2Hint);
+			szText.Append(L"\r\n<", pszName2, L"> - ", asBtn2Hint);
 		if (asBtn3Hint)
-			lstrmerge(&szText.ms_Val, L"\r\n<", pszName3, L"> - ", asBtn3Hint);
+			szText.Append(L"\r\n<", pszName3, L"> - ", asBtn3Hint);
 	}
 
 	// Show dialog

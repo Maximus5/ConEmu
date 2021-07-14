@@ -60,12 +60,11 @@ LRESULT CSetPgDefTerm::OnInitDialog(HWND hDlg, bool abInitial)
 	CheckDlgButton(hDlg, cbDefaultTerminalDebugLog, gpSet->isDefaultTerminalDebugLog);
 	CheckRadioButton(hDlg, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever,
 		rbDefaultTerminalConfAuto + static_cast<int>(gpSet->nDefaultTerminalConfirmClose));
-	wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
+	CEStr pszApps = gpSet->GetDefaultTerminalApps();
 	_ASSERTE(pszApps!=nullptr);
 	SetDlgItemText(hDlg, tDefaultTerminal, pszApps);
 	if (wcschr(pszApps, L',') != nullptr && wcschr(pszApps, L'|') == nullptr)
 		Icon.ShowTrayIcon(L"List of hooked executables must be delimited with \"|\" but not commas", tsa_Default_Term);
-	SafeFree(pszApps);
 
 	return 0;
 }
@@ -76,15 +75,13 @@ LRESULT CSetPgDefTerm::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	{
 	case tDefaultTerminal:
 	{
-		wchar_t* pszApps = GetDlgItemTextPtr(hDlg, tDefaultTerminal);
-		if (!pszApps || !*pszApps)
+		CEStr pszApps = GetDlgItemTextPtr(hDlg, tDefaultTerminal);
+		if (!pszApps)
 		{
-			SafeFree(pszApps);
-			pszApps = lstrdup(DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/);
+			pszApps.Set(DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/);
 			SetDlgItemText(hDlg, tDefaultTerminal, pszApps);
 		}
 		gpSet->SetDefaultTerminalApps(pszApps);
-		SafeFree(pszApps);
 	}
 	break;
 

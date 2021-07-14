@@ -287,7 +287,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				RConStartArgsEx rTest;
 				if (pszCommand[0])
 				{
-					rTest.pszSpecialCmd = lstrdup(pszCommand);
+					rTest.pszSpecialCmd = lstrdup(pszCommand).Detach();
 					rTest.ProcessNewConArg();
 				}
 
@@ -317,14 +317,14 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 					_ASSERTE(pIn->NewCmd.ShowHide != sih_StartDetached); // cannot be as pszCommand was filled
 					args.Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
-					args.pszSpecialCmd = lstrdup(pszCommand);
+					args.pszSpecialCmd = lstrdup(pszCommand).Detach();
 					if (pIn->NewCmd.szCurDir[0] == 0)
 					{
 						_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
 					}
 					else
 					{
-						args.pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
+						args.pszStartupDir = lstrdup(pIn->NewCmd.szCurDir).Detach();
 					}
 
 					LPCWSTR pszStrings = pIn->NewCmd.GetEnvStrings();
@@ -712,14 +712,14 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				pRCon = VCon->RCon();
 
 			DWORD nFarPluginPID = pRCon ? pRCon->GetFarPID(true) : 0;
-			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, pRCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
+			CEStr pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, pRCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
 
 			const auto nLen = pszResult ? _tcslen(pszResult) : 0;
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_GUIMACRO) + nLen * sizeof(wchar_t);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 			{
-				SafeFree(pszResult);
+				pszResult.Release();
 				goto wrap;
 			}
 
@@ -727,7 +727,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			{
 				lstrcpy(ppReply->GuiMacro.sMacro, pszResult);
 				ppReply->GuiMacro.nSucceeded = 1;
-				free(pszResult);
+				pszResult.Release();
 			}
 			else
 			{

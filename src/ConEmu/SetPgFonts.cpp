@@ -120,7 +120,7 @@ LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 			L"CJK: 2E80-9FC3;AC00-D7A3;F900-FAFF;FE30-FE4F;FF01-FF60;FFE0-FFE6;",
 			nullptr
 		};
-		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_CharAltFontRanges));
+		const CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_CharAltFontRanges));
 		LPCWSTR pszCurrentRange = szCharRanges.ms_Val;
 		bool bExist = false;
 

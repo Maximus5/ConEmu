@@ -349,14 +349,14 @@ void CFindPanel::OnSearch()
 	if (!CVConGroup::isVConExists(0))
 		return;
 
-	MyGetDlgItemText(mh_Edit, 0, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
-	if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
+	MyGetDlgItemText(mh_Edit, 0, gpSet->FindOptions.text);
+	if (!gpSet->FindOptions.text.IsEmpty())
 	{
 		int nDirection = 0;
-		if (ms_PrevSearch->ms_Val && (lstrcmp(ms_PrevSearch->ms_Val, gpSet->FindOptions.pszText) == 0))
+		if (ms_PrevSearch->ms_Val && (lstrcmp(ms_PrevSearch->ms_Val, gpSet->FindOptions.text) == 0))
 			nDirection = isPressed(VK_SHIFT) ? -1 : 1;
 		gpConEmu->DoFindText(nDirection);
-		ms_PrevSearch->Set(gpSet->FindOptions.pszText);
+		ms_PrevSearch->Set(gpSet->FindOptions.text);
 	}
 }
 

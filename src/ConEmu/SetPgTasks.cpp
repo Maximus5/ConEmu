@@ -186,11 +186,10 @@ INT_PTR CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 			if (pCmd)
 			{
 				_ASSERTE(pCmd->pszName);
-				wchar_t* pszNoBrk = lstrdup(!pCmd->pszName ? L"" : (pCmd->pszName[0] != TaskBracketLeft) ? pCmd->pszName : (pCmd->pszName+1));
-				if (*pszNoBrk && (pszNoBrk[_tcslen(pszNoBrk)-1] == TaskBracketRight))
-					pszNoBrk[_tcslen(pszNoBrk)-1] = 0;
+				CEStr pszNoBrk(!pCmd->pszName ? L"" : (pCmd->pszName[0] != TaskBracketLeft) ? pCmd->pszName : (pCmd->pszName+1));
+				if (!pszNoBrk.IsEmpty() && (pszNoBrk[pszNoBrk.GetLen() - 1] == TaskBracketRight))
+					pszNoBrk.SetAt(pszNoBrk.GetLen() - 1, 0);
 				SetDlgItemText(hWnd2, tCmdGroupName, pszNoBrk);
-				SafeFree(pszNoBrk);
 
 				wchar_t szKey[128] = L"";
 				SetDlgItemText(hWnd2, tCmdGroupKey, pCmd->HotKey.GetHotkeyName(szKey));

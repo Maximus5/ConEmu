@@ -1110,17 +1110,15 @@ bool CConEmuCtrl::key_GuiMacro(const ConEmuChord& VkState, bool TestOnly, const 
 	if (hk->GuiMacro && *hk->GuiMacro)
 	{
 		// Т.к. ExecuteMacro издевается над строкой
-		wchar_t* pszCopy = lstrdup(hk->GuiMacro);
+		CEStr pszCopy(hk->GuiMacro);
 		if (!pszCopy)
 		{
 			_ASSERTE(pszCopy);  // -V571
 		}
 		else
 		{
-			wchar_t* pszResult = ConEmuMacro::ExecuteMacro(pszCopy, pRCon);
+			CEStr pszResult = ConEmuMacro::ExecuteMacro(std::move(pszCopy), pRCon);
 			TODO("Когда появится StatusLine - хорошо бы в ней результат показать");
-			SafeFree(pszResult);
-			free(pszCopy);
 		}
 	}
 	return true;
@@ -1133,13 +1131,13 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 	if (!Align)
 		Align = TPM_LEFTALIGN|TPM_TOPALIGN;
 
-	int nTab = gpConEmu->mp_Menu->trackPopupMenu(tmp_TabsList, hPopup, Align|TPM_RETURNCMD,
+	const int nTab = gpConEmu->mp_Menu->trackPopupMenu(tmp_TabsList, hPopup, Align|TPM_RETURNCMD,
 		pt.x, pt.y, ghWnd);
 
 	if (nTab >= IDM_VCON_FIRST && nTab <= IDM_VCON_LAST)
 	{
-		int nNewV = ((int)HIWORD(nTab))-1;
-		int nNewR = ((int)LOWORD(nTab))-1;
+		const int nNewV = ((int)HIWORD(nTab)) - 1;
+		const int nNewR = ((int)LOWORD(nTab)) - 1;
 
 		CVConGuard VCon;
 		if (CVConGroup::GetVCon(nNewV, &VCon))
@@ -1295,9 +1293,9 @@ bool CConEmuCtrl::key_ResetTerminal(const ConEmuChord& /*VkState*/, bool TestOnl
 			return false;
 	}
 
-	const CEStr szMacro(L"Write(\"\\ec\")");
-	const CEStr szResult = ConEmuMacro::ExecuteMacro(szMacro.ms_Val, pRCon);
-	LogString(CEStr(L"Reset terminal macro result: ", szResult));
+	CEStr szMacro(L"Write(\"\\ec\")");
+	const CEStr szResult = ConEmuMacro::ExecuteMacro(std::move(szMacro), pRCon);
+	LogString(CEStr(L"Reset terminal macro result: ", szResult.c_str()));
 
 	return true;
 }
@@ -1554,9 +1552,9 @@ size_t CConEmuCtrl::GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurren
 		{
 			if (psz[i] && psz[i][0])
 			{
-				int iLen = lstrlen(psz[i]);
-				cchAllLen += (iLen+1);
-				Dirs.push_back(lstrdup(psz[i]));
+				const int iLen = lstrlen(psz[i]);
+				cchAllLen += (iLen + 1);
+				Dirs.push_back(lstrdup(psz[i]).Detach());
 				iCount++;
 			}
 		}
@@ -1603,8 +1601,7 @@ bool CConEmuCtrl::key_RunTask(const ConEmuChord& VkState, bool TestOnly, const C
 	{
 		wchar_t szMacro[64];
 		swprintf_c(szMacro, L"Task(%i)", hk->GetTaskIndex()+1); //1-based
-		wchar_t* pszResult = ConEmuMacro::ExecuteMacro(szMacro, pRCon);
-		SafeFree(pszResult);
+		CEStr pszResult = ConEmuMacro::ExecuteMacro(szMacro, pRCon);
 	}
 	return true;
 }

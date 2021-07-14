@@ -110,16 +110,16 @@ private:
 	UINT mn_CP; // = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
 	// Для конвертации параметров Ansi функций (работаем через Unicode для унификации)
-	LPWSTR mpwsz_TempAction = nullptr; // = str2wcs(asAction, nCP);
-	LPWSTR mpwsz_TempFile = nullptr; // = str2wcs(asFile, nCP);
-	LPWSTR mpwsz_TempParam = nullptr; // = str2wcs(asParam, nCP);
+	CEStr mpwsz_TempAction = nullptr; // = str2wcs(asAction, nCP);
+	CEStr mpwsz_TempFile = nullptr; // = str2wcs(asFile, nCP);
+	CEStr mpwsz_TempParam = nullptr; // = str2wcs(asParam, nCP);
 
-	LPSTR  mpsz_TempRetFile = nullptr;
-	LPSTR  mpsz_TempRetParam = nullptr;
-	LPSTR  mpsz_TempRetDir = nullptr;
-	LPWSTR mpwsz_TempRetFile = nullptr;
-	LPWSTR mpwsz_TempRetParam = nullptr;
-	LPWSTR mpwsz_TempRetDir = nullptr;
+	CEStrA mpsz_TempRetFile = nullptr;
+	CEStrA mpsz_TempRetParam = nullptr;
+	CEStrA mpsz_TempRetDir = nullptr;
+	CEStr mpwsz_TempRetFile = nullptr;
+	CEStr mpwsz_TempRetParam = nullptr;
+	CEStr mpwsz_TempRetDir = nullptr;
 
 	template<typename T>
 	struct StructDeleter { // deleter
@@ -219,8 +219,8 @@ private:
 	};
 
 private:
-	static wchar_t* str2wcs(const char* psz, UINT anCP);
-	static char* wcs2str(const wchar_t* pwsz, UINT anCP);
+	static CEStr str2wcs(const char* psz, UINT anCP);
+	static CEStrA wcs2str(const wchar_t* pwsz, UINT anCP);
 	bool IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam);
 	static bool PrepareNewConsoleInFile(
 				CmdOnCreateType aCmd, LPCWSTR& asFile, LPCWSTR& asParam,
@@ -233,11 +233,11 @@ private:
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
-				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
+				CEStr& psFile, CEStr& psParam, CEStr& psStartDir);
 	BOOL ChangeExecuteParams(enum CmdOnCreateType aCmd,
 				LPCWSTR asFile, LPCWSTR asParam,
 				ChangeExecFlags Flags, const RConStartArgs& args,
-				LPWSTR* psFile, LPWSTR* psParam);
+		        CEStr& psFile, CEStr& psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd) const;
 	HWND FindCheckConEmuWindow();
 	void LogExitLine(int rc, int line) const;

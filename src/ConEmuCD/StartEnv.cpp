@@ -113,7 +113,7 @@ void CStartEnv::ChCp(LPCWSTR asCP)
 
 void CStartEnv::Echo(LPCWSTR asSwitches, LPCWSTR asText)
 {
-	CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : nullptr, L"\"", asText, L"\"");
+	const CEStr lsFull(asSwitches, (asSwitches && *asSwitches) ? L" " : nullptr, L"\"", asText, L"\"");
 	DoOutput(ConEmuExecAction::OutEcho, lsFull);
 }
 
@@ -186,12 +186,12 @@ void CStartEnv::Title(LPCWSTR asTitle)
 	if (asTitle && *asTitle)
 	{
 		SafeFree(gpszForcedTitle);
-		gpszForcedTitle = lstrdup(asTitle);
+		gpszForcedTitle = lstrdup(asTitle).Detach();
 	}
 }
 
 void CStartEnv::Type(LPCWSTR asSwitches, LPCWSTR asFile)
 {
-	const CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : nullptr, L"\"", asFile, L"\"");
+	const CEStr lsFull(asSwitches, (asSwitches && *asSwitches) ? L" " : nullptr, L"\"", asFile, L"\"");
 	DoOutput(ConEmuExecAction::OutType, lsFull);
 }

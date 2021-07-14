@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SearchCtrl.h"
 #include "Update.h"
 #include "VirtualConsole.h"
-#include "VConChild.h"
 #include "version.h"
 #include "../common/MSetter.h"
 #include "../common/WObjects.h"
@@ -88,7 +87,7 @@ namespace ConEmuAbout
 
 	void TabSelected(HWND hDlg, int idx);
 
-	wchar_t* gsSysInfo = nullptr;
+	CEStr* gsSysInfo = nullptr;
 	void ReloadSysInfo();
 	void LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine);
 
@@ -167,36 +166,34 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
 
-			wchar_t* pszLabel = GetDlgItemTextPtr(hDlg, stConEmuVersion);
+			CEStr pszLabel = GetDlgItemTextPtr(hDlg, stConEmuVersion);
 			if (pszLabel)
 			{
-				wchar_t* pszSet = nullptr;
+				CEStr pszSet;
 
 				if (gpUpd)
 				{
-					wchar_t* pszVerInfo = gpUpd->GetCurVerInfo();
+					const CEStr pszVerInfo = gpUpd->GetCurVerInfo();
 					if (pszVerInfo)
 					{
-						pszSet = lstrmerge(pszLabel, L" ", pszVerInfo);
-						free(pszVerInfo);
+						pszSet = CEStr(pszLabel, L" ", pszVerInfo);
 					}
 				}
 
 				if (!pszSet)
 				{
-					pszSet = lstrmerge(pszLabel, L" ", CLngRc::getRsrc(lng_PleaseCheckManually/*"Please check for updates manually"*/));
+					pszSet = CEStr(pszLabel, L" ", CLngRc::getRsrc(lng_PleaseCheckManually/*"Please check for updates manually"*/));
 				}
 
 				if (pszSet)
 				{
 					SetDlgItemText(hDlg, stConEmuVersion, pszSet);
-					free(pszSet);
 				}
 
-				free(pszLabel);
+				pszLabel.Release();
 			}
 
-			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
+			const HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
 			INT_PTR nPage = -1;
 
 			for (size_t i = 0; i < countof(Pages); i++)
@@ -340,8 +337,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 {
 	HWND hEdit = GetDlgItem(hDlg, tAboutText);
-	wchar_t* pszPart = GetDlgItemTextPtr(hSearch, 0);
-	wchar_t* pszText = GetDlgItemTextPtr(hEdit, 0);
+	CEStr pszPart = GetDlgItemTextPtr(hSearch, 0);
+	CEStr pszText = GetDlgItemTextPtr(hEdit, 0);
 	bool bRetry = false;
 
 	if (pszPart && *pszPart && pszText && *pszText)
@@ -402,9 +399,6 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 			}
 		}
 	}
-
-	SafeFree(pszPart);
-	SafeFree(pszText);
 
 	if (bRetry)
 	{
@@ -473,11 +467,12 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 
 	wcscpy_c(sLastOpenTab, Pages[idx].Title);
 	LPCWSTR pszNewText = Pages[idx].Text;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
 	CEStr lsTemp;
 	if (gpConEmu->mp_PushInfo && gpConEmu->mp_PushInfo->mp_Active && gpConEmu->mp_PushInfo->mp_Active->pszFullMessage)
 	{
 		// EDIT control requires \r\n as line endings
-		lsTemp = lstrmerge(gpConEmu->mp_PushInfo->mp_Active->pszFullMessage, L"\r\n\r\n\r\n", pszNewText);
+		lsTemp = CEStr(gpConEmu->mp_PushInfo->mp_Active->pszFullMessage, L"\r\n\r\n\r\n", pszNewText);
 		pszNewText = lsTemp.ms_Val;
 	}
 	SetDlgItemText(hDlg, tAboutText, pszNewText);
@@ -485,11 +480,14 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 
 void ConEmuAbout::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
 {
-	lstrmerge(&gsSysInfo, asText, bNewLine ? L"\r\n" : nullptr);
+	_ASSERTE(isMainThread());
+	if (!gsSysInfo)
+		gsSysInfo = new CEStr;
+	gsSysInfo->Append(asText, bNewLine ? L"\r\n" : nullptr);
 
 	if (bFirst && gpConEmu)
 	{
-		lstrmerge(&gsSysInfo, L"  AppID: ", gpConEmu->ms_AppID, L"\r\n");
+		gsSysInfo->Append(L"  AppID: ", gpConEmu->ms_AppID, L"\r\n");
 	}
 }
 
@@ -498,12 +496,13 @@ void ConEmuAbout::ReloadSysInfo()
 	if (!gpStartEnv)
 		return;
 
+	_ASSERTE(isMainThread());
 	_ASSERTE(lstrcmp(Pages[countof(Pages)-1].Title, L"SysInfo") == 0);
-	SafeFree(gsSysInfo);
+	gsSysInfo->Clear();
 
 	LoadStartupEnvEx::ToString(gpStartEnv, LogStartEnvInt, 0);
 
-	Pages[countof(Pages)-1].Text = gsSysInfo;
+	Pages[countof(Pages)-1].Text = gsSysInfo->c_str();
 }
 
 void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= nullptr*/)

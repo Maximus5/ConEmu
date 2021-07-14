@@ -285,7 +285,7 @@ void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst)
 				_ASSERTE(FALSE && "Unsupported GuiMacro option");
 				if (gpLogSize)
 				{
-					CEStr strErr(lstrmerge(L"Unsupported GuiMacro option: ", szArg.ms_Val));
+					const CEStr strErr(L"Unsupported GuiMacro option: ", szArg.ms_Val);
 					gpLogSize->LogString(strErr);
 				}
 				break;
@@ -443,7 +443,7 @@ int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= N
 	{
 		_ASSERTE((lstrcmpni(asInstance, L"/GuiMacro", 9) != 0) && (lstrcmpni(asInstance, L"-GuiMacro", 9) != 0));
 
-		CEStr lsArg = lstrmerge(L"/GuiMacro:", asInstance);
+		const CEStr lsArg(L"/GuiMacro:", asInstance);
 		ArgGuiMacro(lsArg, inst);
 	}
 

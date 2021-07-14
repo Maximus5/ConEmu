@@ -221,17 +221,17 @@ void SwitchStr::SetStr(const wchar_t* const newVal)
 	{
 		if (value)
 			free(value);
-		value = (newVal && *newVal) ? lstrdup(newVal) : nullptr;
+		value = (newVal && *newVal) ? lstrdup(newVal).Detach() : nullptr;
 	}
 	exists = true;
 	switchType = SwitchType::Str;
 }
 
-void SwitchStr::SetStr(wchar_t*&& newVal)
+void SwitchStr::SetStr(CEStr&& newVal)
 {
-	if (value != newVal && value != nullptr)
+	if (value != newVal.data() && value != nullptr)
 		free(value);
-	value = newVal;
+	value = newVal.Detach();
 	exists = true;
 	switchType = SwitchType::Str;
 }
@@ -327,14 +327,14 @@ void ConsoleArgs::ShowInjectsMsgBox(const ConEmuExecAction mode, const wchar_t* 
 
 void ConsoleArgs::AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue)
 {
-	lstrmerge(&conemuAddArgs_.ms_Val, asSwitch);
+	conemuAddArgs_.Append(asSwitch);
 	if (asValue && *asValue)
 	{
 		const bool needQuot = IsQuotationNeeded(asValue);
-		lstrmerge(&conemuAddArgs_.ms_Val,
+		conemuAddArgs_.Append(
 			needQuot ? L" \"" : L" ",
 			asValue,
-			needQuot ? L"\"" : NULL);
+			needQuot ? L"\"" : nullptr);
 	}
 	SetEnvironmentVariable(ENV_CONEMU_EXEARGS_W, conemuAddArgs_);
 }
@@ -721,7 +721,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		else if (szArg.IsSwitch(L"/ROOTEXE"))
 		{
 			if ((cmdLineRest = NextArg(cmdLineRest, szArg, &pszArgStart)))
-				rootExe_.SetStr(lstrmerge(L"\"", szArg, L"\""));
+				rootExe_.SetStr(CEStr(L"\"", szArg, L"\""));
 		}
 		else if (szArg.OneOfSwitches(L"/PID=", L"/TRMPID=", L"/FARPID=", L"/CONPID="))
 		{

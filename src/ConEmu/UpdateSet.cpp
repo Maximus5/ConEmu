@@ -99,7 +99,7 @@ void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
 	if (asNewIniLocation && *asNewIniLocation
 		&& !IsVerLocationDeprecated(asNewIniLocation))
 	{
-		szUpdateVerLocation = lstrdup(asNewIniLocation);
+		szUpdateVerLocation = lstrdup(asNewIniLocation).Detach();
 	}
 
 	if (gpSetCls && ghOpWnd)
@@ -136,7 +136,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	isSetupDetected = 0; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
 	isSetup64 = WIN3264TEST(false,true); // определяется вместе с isSetupDetected
 
-	szUpdateExeCmdLineDef = lstrdup(L"\"%1\" /p:%3 /qr");
+	szUpdateExeCmdLineDef = lstrdup(L"\"%1\" /p:%3 /qr").Detach();
 	SafeFree(szUpdateExeCmdLine);
 
 	bool bWinRar = false;
@@ -195,7 +195,8 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	}
 	if (!pszArcPath || !*pszArcPath)
 	{
-		szUpdateArcCmdLineDef = lstrdup(L"\"%ProgramFiles%\\7-Zip\\7zg.exe\" x -y \"%1\""); // "%1"-archive file, "%2"-ConEmu base dir
+		// "%1"-archive file, "%2"-ConEmu base dir
+		szUpdateArcCmdLineDef = lstrdup(L"\"%ProgramFiles%\\7-Zip\\7zg.exe\" x -y \"%1\"").Detach();
 	}
 	else
 	{
@@ -223,9 +224,10 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	SafeFree(pszArcPath);
 	SafeFree(szUpdateArcCmdLine);
 
-	szUpdateDownloadPath = lstrdup(L"%TEMP%\\ConEmu");
+	szUpdateDownloadPath = lstrdup(L"%TEMP%\\ConEmu").Detach();
 	isUpdateLeavePackages = false;
-	szUpdatePostUpdateCmd = lstrdup(L"echo Last successful update>ConEmuUpdate.info && date /t>>ConEmuUpdate.info && time /t>>ConEmuUpdate.info"); // Юзер может чего-то свое делать с распакованными файлами
+	// The example how to apply something over updated installation
+	szUpdatePostUpdateCmd = lstrdup(L"echo Last successful update>ConEmuUpdate.info && date /t>>ConEmuUpdate.info && time /t>>ConEmuUpdate.info").Detach();
 }
 
 ConEmuUpdateSettings::~ConEmuUpdateSettings()
@@ -256,28 +258,29 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 {
 	FreePointers();
 
-	szUpdateVerLocation = (apFrom->szUpdateVerLocation && *apFrom->szUpdateVerLocation) ? lstrdup(apFrom->szUpdateVerLocation) : nullptr; // ConEmu latest version location info
+	szUpdateVerLocation = (apFrom->szUpdateVerLocation && *apFrom->szUpdateVerLocation)
+		? lstrdup(apFrom->szUpdateVerLocation).Detach() : nullptr; // ConEmu latest version location info
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
 	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
 	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= Builds::Stable && apFrom->isUpdateUseBuilds <= Builds::Preview)
 		? apFrom->isUpdateUseBuilds : GetDefaultUpdateChannel();
 	isUpdateInetTool = apFrom->isUpdateInetTool;
-	szUpdateInetTool = lstrdup(apFrom->szUpdateInetTool);
+	szUpdateInetTool = lstrdup(apFrom->szUpdateInetTool).Detach();
 	isUpdateUseProxy = apFrom->isUpdateUseProxy;
-	szUpdateProxy = lstrdup(apFrom->szUpdateProxy); // "Server:port"
-	szUpdateProxyUser = lstrdup(apFrom->szUpdateProxyUser);
-	szUpdateProxyPassword = lstrdup(apFrom->szUpdateProxyPassword);
+	szUpdateProxy = lstrdup(apFrom->szUpdateProxy).Detach(); // "Server:port"
+	szUpdateProxyUser = lstrdup(apFrom->szUpdateProxyUser).Detach();
+	szUpdateProxyPassword = lstrdup(apFrom->szUpdateProxyPassword).Detach();
 	isUpdateDownloadSetup = apFrom->isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 	isSetupDetected = apFrom->isSetupDetected;
 	// "%1"-archive or setup file, "%2"-ConEmu base dir, "%3"-x86/x64, "%4"-ConEmu PID
-	szUpdateExeCmdLine = lstrdup(apFrom->szUpdateExeCmdLine);
-	szUpdateExeCmdLineDef = lstrdup(apFrom->szUpdateExeCmdLineDef);
-	szUpdateArcCmdLine = lstrdup(apFrom->szUpdateArcCmdLine);
-	szUpdateArcCmdLineDef = lstrdup(apFrom->szUpdateArcCmdLineDef);
-	szUpdateDownloadPath = lstrdup(apFrom->szUpdateDownloadPath); // "%TEMP%"
+	szUpdateExeCmdLine = lstrdup(apFrom->szUpdateExeCmdLine).Detach();
+	szUpdateExeCmdLineDef = lstrdup(apFrom->szUpdateExeCmdLineDef).Detach();
+	szUpdateArcCmdLine = lstrdup(apFrom->szUpdateArcCmdLine).Detach();
+	szUpdateArcCmdLineDef = lstrdup(apFrom->szUpdateArcCmdLineDef).Detach();
+	szUpdateDownloadPath = lstrdup(apFrom->szUpdateDownloadPath).Detach(); // "%TEMP%"
 	isUpdateLeavePackages = apFrom->isUpdateLeavePackages;
-	szUpdatePostUpdateCmd = lstrdup(apFrom->szUpdatePostUpdateCmd); // Юзер может чего-то свое делать с распакованными файлами
+	szUpdatePostUpdateCmd = lstrdup(apFrom->szUpdatePostUpdateCmd).Detach(); // User may apply something over updated installation
 }
 
 bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])

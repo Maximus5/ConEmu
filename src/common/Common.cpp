@@ -36,7 +36,7 @@ void STRPTR2::Set(wchar_t*&& ptrSrc, int cch /*= -1*/)
 {
 	_ASSERTE(!cchCount && !bMangled && !psz);
 	if (cch < 0)
-		cch = (lstrlen(ptrSrc)+1);
+		cch = (lstrlen(ptrSrc) + 1);
 	cchCount = cch;
 	psz = ptrSrc;
 }

@@ -685,7 +685,7 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 	#ifdef _DEBUG
 	if ((Level == 1) || gpSet->isLogging(Level))
 	{
-		CEStr lsMsg = lstrmerge(asInfo, szStyles);
+		const CEStr lsMsg(asInfo, szStyles);
 		DEBUGSTRFOCUS(lsMsg);
 	}
 	#endif
@@ -866,14 +866,14 @@ void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= nu
 	if (!asSwitch || !*asSwitch)
 		return;
 
-	lstrmerge(&mps_ConEmuExtraArgs, asSwitch, L" ");
+	mps_ConEmuExtraArgs.Append(asSwitch, L" ");
 
 	if (asSwitchValue && *asSwitchValue)
 	{
 		if (IsQuotationNeeded(asSwitchValue))
-			lstrmerge(&mps_ConEmuExtraArgs, L"\"", asSwitchValue, L"\" ");
+			mps_ConEmuExtraArgs.Append(L"\"", asSwitchValue, L"\" ");
 		else
-			lstrmerge(&mps_ConEmuExtraArgs, asSwitchValue, L" ");
+			mps_ConEmuExtraArgs.Append(asSwitchValue, L" ");
 	}
 }
 
@@ -889,7 +889,7 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*
 	if (pszConfig && !*pszConfig)
 		pszConfig = nullptr;
 
-	LPCWSTR pszAddArgs = gpConEmu->mps_ConEmuExtraArgs;
+	const wchar_t* pszAddArgs = gpConEmu->mps_ConEmuExtraArgs.c_str();
 
 	const size_t cchMax = 1 // _wcscat_c requires size including terminating zero
 		+ (pszConfig ? (_tcslen(pszConfig) + 16) : 0)
@@ -3322,7 +3322,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 					if (pArgs)
 					{
 						SafeFree(pArgs->pszStartupDir);
-						pArgs->pszStartupDir = lstrdup(szArg);
+						pArgs->pszStartupDir = lstrdup(szArg).Detach();
 					}
 					apszLine = pcszCmd; // OK
 					continue;
@@ -3335,7 +3335,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 					if (pArgs)
 					{
 						SafeFree(pArgs->pszIconFile);
-						pArgs->pszIconFile = lstrdup(szArg);
+						pArgs->pszIconFile = lstrdup(szArg).Detach();
 					}
 					apszLine = pcszCmd; // OK
 					continue;
@@ -3348,16 +3348,15 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 					if (pArgs)
 					{
 						SafeFree(pArgs->pszRenameTab);
-						pArgs->pszRenameTab = lstrdup(szArg);
+						pArgs->pszRenameTab = lstrdup(szArg).Detach();
 					}
 					apszLine = pcszCmd; // OK
 					continue;
 				}
 			}
 
-			wchar_t* pszErr = lstrmerge(L"Unsupported switch in task command:", L"\r\n", apszLine);
-			int iBtn = MsgBox(pszErr, MB_ICONSTOP | MB_OKCANCEL, GetDefaultTitle());
-			SafeFree(pszErr);
+			const CEStr pszErr(L"Unsupported switch in task command:", L"\r\n", apszLine);
+			const int iBtn = MsgBox(pszErr, MB_ICONSTOP | MB_OKCANCEL, GetDefaultTitle());
 			if (iBtn == IDCANCEL)
 				return nullptr;
 			return L"";
@@ -3372,9 +3371,8 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStartArgsEx *apDefArgs /*= nullptr*/)
 {
 	CVirtualConsole* pVConResult = nullptr;
-	// Поехали
-	wchar_t *pszDataW = lstrdup(apszScript);
-	const wchar_t *pszCursor = pszDataW;
+	const CEStr pszDataW(apszScript);
+	const wchar_t *pszCursor = pszDataW.c_str();
 	CEStr szLine;
 	//wchar_t *pszNewLine = wcschr(pszLine, L'\n');
 	CVirtualConsole *pSetActive = nullptr, *pVCon = nullptr, *pLastVCon = nullptr;
@@ -3403,7 +3401,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStart
 		}
 
 		if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
-			args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
+			args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir).Detach();
 		else
 			SafeFree(args.pszStartupDir);
 
@@ -3433,7 +3431,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStart
 		if (*pszLine)
 		{
 			SafeFree(args.pszSpecialCmd);
-			args.pszSpecialCmd = lstrdup(pszLine);
+			args.pszSpecialCmd = lstrdup(pszLine).Detach();
 
 			// If any previous tab was marked as "active"/"foreground" for starting group,
 			// we need to run others tabs in "background"
@@ -3491,7 +3489,6 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStart
 
 	pVConResult = (pSetActive ? pSetActive : pLastVCon);
 wrap:
-	SafeFree(pszDataW);
 	CVConGroup::OnCreateGroupEnd();
 	return pVConResult;
 }
@@ -3626,7 +3623,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 		impl(HWND ahWnd, LPCWSTR asTitle, CConEmuMain* apConEmu)
 		{
 			hWnd = ahWnd;
-			psTitle = lstrdup(asTitle);
+			psTitle = lstrdup(asTitle).Detach();
 			pConEmu = apConEmu;
 		};
 		static LRESULT setTitle(LPARAM lParam)
@@ -3665,12 +3662,12 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 
 void CConEmuMain::SetPostGuiMacro(LPCWSTR asGuiMacro)
 {
-	ConEmuMacro::ConcatMacro(ms_PostGuiMacro.ms_Val, asGuiMacro);
+	ConEmuMacro::ConcatMacro(ms_PostGuiMacro, asGuiMacro);
 }
 
 void CConEmuMain::AddPostGuiRConMacro(LPCWSTR asGuiMacro)
 {
-	ConEmuMacro::ConcatMacro(ms_PostRConMacro.ms_Val, asGuiMacro);
+	ConEmuMacro::ConcatMacro(ms_PostRConMacro, asGuiMacro);
 }
 
 void CConEmuMain::ExecPostGuiMacro()
@@ -3683,18 +3680,14 @@ void CConEmuMain::ExecPostGuiMacro()
 
 	if (!ms_PostGuiMacro.IsEmpty())
 	{
-		wchar_t* pszMacro = ms_PostGuiMacro.Detach();
-		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, VCon.VCon() ? VCon->RCon() : nullptr);
-		SafeFree(pszRc);
-		SafeFree(pszMacro);
+		CEStr pszMacro = std::move(ms_PostGuiMacro);
+		CEStr pszRc = ConEmuMacro::ExecuteMacro(std::move(pszMacro), VCon.VCon() ? VCon->RCon() : nullptr);
 	}
 
 	if (!ms_PostRConMacro.IsEmpty() && VCon.VCon())
 	{
-		wchar_t* pszMacro = ms_PostRConMacro.Detach();
-		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, VCon.VCon() ? VCon->RCon() : nullptr);
-		SafeFree(pszRc);
-		SafeFree(pszMacro);
+		CEStr pszMacro = std::move(ms_PostRConMacro);
+		CEStr pszRc = ConEmuMacro::ExecuteMacro(std::move(pszMacro), VCon.VCon() ? VCon->RCon() : nullptr);
 	}
 }
 
@@ -3807,7 +3800,7 @@ void CConEmuMain::LoadIcons()
 		}
 		else
 		{
-			lsLog.Attach(lstrmerge(L"Loading icon `", szIconPath, L"`"));
+			lsLog = CEStr(L"Loading icon `", szIconPath, L"`");
 		}
 	}
 
@@ -3833,7 +3826,7 @@ void CConEmuMain::LoadIcons()
 
 	if (hClassIcon)
 	{
-		lsLog.Attach(lstrmerge(L"External icons were loaded, small=", hClassIconSm?L"OK":L"nullptr", L", large=", hClassIcon?L"OK":L"nullptr"));
+		lsLog = CEStr(L"External icons were loaded, small=", hClassIconSm?L"OK":L"nullptr", L", large=", hClassIcon?L"OK":L"nullptr");
 		LogString(lsLog);
 	}
 	else
@@ -3963,7 +3956,7 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 {
 	if (!abPosted)
 	{
-		wchar_t* pszDup = lstrdup(pszFontName);
+		wchar_t* pszDup = lstrdup(pszFontName).Detach();
 		WPARAM wParam = (((DWORD)anHeight) << 16) | (anWidth);
 		PostMessage(ghWnd, mn_MsgMacroFontSetName, wParam, (LPARAM)pszDup);
 	}
@@ -4123,7 +4116,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			{
 				_ASSERTE((args.pszSpecialCmd && *args.pszSpecialCmd) || !abConfirm);
 				SafeFree(args.pszSpecialCmd);
-				args.pszSpecialCmd = lstrdup(GetCmd());
+				args.pszSpecialCmd = lstrdup(GetCmd()).Detach();
 			}
 
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
@@ -4312,8 +4305,7 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= nullptr*/, LPCWSTR apszCm
 				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg && !mb_ConEmuHere)
 				{
 					RConStartArgsEx args;
-					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args);
-					SafeFree(pszDataW);
+					const CEStr pszDataW = LoadConsoleBatch(lpszCmd, &args);
 					if (args.pszStartupDir && *args.pszStartupDir)
 					{
 						lstrcpyn(pIn->NewCmd.szCurDir, args.pszStartupDir, countof(pIn->NewCmd.szCurDir));
@@ -6198,18 +6190,18 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 	return Supported;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs /*= nullptr*/)
+CEStr CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs /*= nullptr*/)
 {
 	if (pArgs && pArgs->pszTaskName)
 	{
 		SafeFree(pArgs->pszTaskName);
 	}
 
-	wchar_t cType = IsConsoleBatchOrTask(asSource);
+	const wchar_t cType = IsConsoleBatchOrTask(asSource);
 	if (!cType)
 	{
 		_ASSERTE(asSource && (*asSource==CmdFilePrefix || *asSource==TaskBracketLeft));
-		return nullptr;
+		return {};
 	}
 
 	// If task name is quoted
@@ -6230,25 +6222,25 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs 
 		}
 	}
 
-	wchar_t* pszDataW = nullptr;
+	CEStr result;
 
 	switch (cType)
 	{
 	case CmdFilePrefix:
-		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
-		pszDataW = LoadConsoleBatch_File(asSource);
+		// it's a "batch" file for simultaneous run of several consoles
+		result = LoadConsoleBatch_File(asSource);
 		break;
 
 	case TaskBracketLeft:
 	case AutoStartTaskLeft: // AutoStartTaskName
-		// Имя задачи
-		pszDataW = LoadConsoleBatch_Task(asSource, pArgs);
+		// The Task name
+		result = LoadConsoleBatch_Task(asSource, pArgs);
 		break;
 
 	case DropLnkPrefix:
-		// Сюда мы попадаем, если на ConEmu (или его ярлык)
-		// набрасывают (в проводнике?) один или несколько других файлов/программ
-		pszDataW = LoadConsoleBatch_Drops(asSource);
+		// We get here when on ConEmu (or it's desktop shortcut) user
+		// drops (D&D) one or several other items.
+		result = LoadConsoleBatch_Drops(asSource);
 		break;
 
 	#ifdef _DEBUG
@@ -6257,49 +6249,38 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs 
 	#endif
 	}
 
-	return pszDataW;
+	return result;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
+CEStr CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 {
-	wchar_t* pszDataW = nullptr;
+	CEStr pszDataW;
 
 	if (asSource && (*asSource == CmdFilePrefix))
 	{
 		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
 		DWORD nSize = 0, nErrCode = 0;
-		int iRead = ReadTextFile(asSource+1, (1<<20), pszDataW, nSize, nErrCode);
+		const int iRead = ReadTextFile(asSource + 1, (1 << 20), pszDataW, nSize, nErrCode);
 
 		if (iRead == -1)
 		{
-			wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
-			size_t cchMax = _tcslen(asSource)+100+_tcslen(szCurDir);
-			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
-			_wcscpy_c(pszErrMsg, cchMax, L"Can't open console batch file:\n" L"\x2018"/*‘*/);
-			_wcscat_c(pszErrMsg, cchMax, asSource+1);
-			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*’*/ L"\nCurrent directory:\n" L"\x2018"/*‘*/);
-			_wcscat_c(pszErrMsg, cchMax, szCurDir);
-			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*’*/);
-			DisplayLastError(pszErrMsg, nErrCode);
-			free(pszErrMsg);
-			//Destroy(); -- must caller
+			const CEStr szCurDir = GetCurDir();
+			const CEStr szErrMsg(L"Can't open console batch file:\n" L"\x2018"/*‘*/, asSource + 1, L"\x2019"/*’*/ L"\nCurrent directory:\n" L"\x2018"/*‘*/, szCurDir, L"\x2019"/*’*/);
+			DisplayLastError(szErrMsg, nErrCode);
+			//Destroy(); -- must do caller
 			return nullptr;
 		}
 		else if (iRead == -2)
 		{
-			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n" L"\x2018"/*‘*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*’*/);
-			DisplayLastError(pszErrMsg, nErrCode);
-			free(pszErrMsg);
+			const CEStr szErrMsg(L"Console batch file is too large or empty:\n" L"\x2018"/*‘*/, asSource + 1, L"\x2019"/*’*/);
+			DisplayLastError(szErrMsg, nErrCode);
 			//Destroy(); -- must caller
 			return nullptr;
 		}
 		else if (iRead < 0)
 		{
-			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
-			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n" L"\x2018"/*‘*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*’*/);
-			DisplayLastError(pszErrMsg, nErrCode);
-			free(pszErrMsg);
+			const CEStr szErrMsg(L"Reading console batch file failed:\n" L"\x2018"/*‘*/, asSource + 1, L"\x2019"/*’*/);
+			DisplayLastError(szErrMsg, nErrCode);
 			//Destroy(); -- must caller
 			return nullptr;
 		}
@@ -6313,9 +6294,9 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
+CEStr CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 {
-	wchar_t* pszDataW = nullptr;
+	CEStr pszDataW;
 
 	if (asSource && (*asSource == DropLnkPrefix))
 	{
@@ -6362,9 +6343,11 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 		}
 
 		// Поехали
-		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
+		CEStrConcat pszConsoles;
+		pszConsoles.Reserve(MAX_CONSOLE_COUNT * 2);
+		const wchar_t lineDelim[] = L"\r\n";
 		size_t cchLen, cchAllLen = 0, iCount = 0;
-		while ((iCount < MAX_CONSOLE_COUNT) && (asSource = NextArg(asSource, szPart)))
+		while ((iCount < MAX_CONSOLE_COUNT) && ((asSource = NextArg(asSource, szPart))))
 		{
 			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
 			{
@@ -6385,16 +6368,21 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 						cchLen = _tcslen(szExe)+3
 							+ _tcslen(pszArguments)+1
 							+ (*szDir ? (_tcslen(szDir)+32) : 0); // + "-new_console:d<Dir>
-						pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-						swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"%s%s",
-							Unquote(szExe), *pszArguments ? L" " : L"", pszArguments);
-						if (*szDir)
+						CEStr console;
+						if (console.GetBuffer(cchLen))
 						{
-							_wcscat_c(pszConsoles[iCount], cchLen, L" \"-new_console:d");
-							_wcscat_c(pszConsoles[iCount], cchLen, Unquote(szDir));
-							_wcscat_c(pszConsoles[iCount], cchLen, L"\"");
+							swprintf_c(console.data(), console.GetMaxCount(), L"\"%s\"%s%s",
+								Unquote(szExe), *pszArguments ? L" " : L"", pszArguments);
+							if (*szDir)
+							{
+								console.Append(L" \"-new_console:d");
+								console.Append(Unquote(szDir));
+								console.Append(L"\"");
+							}
+							pszConsoles.Append(std::move(console));
+							pszConsoles.Append(lineDelim);
+							iCount++;
 						}
-						iCount++;
 
 						cchAllLen += cchLen+3;
 					}
@@ -6403,9 +6391,14 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 			else
 			{
 				cchLen = _tcslen(szPart) + 3;
-				pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-				swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"", (LPCWSTR)szPart);
-				iCount++;
+				CEStr console;
+				if (console.GetBuffer(cchLen))
+				{
+					swprintf_c(console.data(), console.GetMaxCount(), L"\"%s\"", szPart.c_str());
+					pszConsoles.Append(std::move(console));
+					pszConsoles.Append(lineDelim);
+					iCount++;
+				}
 
 				cchAllLen += cchLen+3;
 			}
@@ -6422,17 +6415,9 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 			return nullptr;
 
 		if (iCount == 1)
-			return pszConsoles[0];
-
-		// Теперь - собрать pszDataW
-		pszDataW = (wchar_t*)malloc(cchAllLen*sizeof(*pszDataW));
-		*pszDataW = 0;
-		for (size_t i = 0; i < iCount; i++)
-		{
-			_wcscat_c(pszDataW, cchAllLen, pszConsoles[i]);
-			_wcscat_c(pszDataW, cchAllLen, L"\r\n");
-			free(pszConsoles[i]);
-		}
+			pszDataW = std::move(pszConsoles.GetString(0));
+		else
+			pszDataW = pszConsoles.GetData();
 	}
 	else
 	{
@@ -6442,9 +6427,9 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs /*= nullptr*/)
+CEStr CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs /*= nullptr*/)
 {
-	wchar_t* pszDataW = nullptr;
+	CEStr pszDataW;
 
 	if (asSource && ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0)))
 	{
@@ -6464,14 +6449,14 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* p
 		if (pGrp)
 		{
 			if (pArgs)
-				pArgs->pszTaskName = lstrdup(szName);
+				pArgs->pszTaskName = lstrdup(szName).Detach();
 
 			// TODO: Supposed to be appended to EACH command (task line),
 			// TODO: but now lsTail may be appended to single-command tasks only
 			if (pGrp->pszCommands && !wcschr(pGrp->pszCommands, L'\n'))
-				pszDataW = lstrmerge(pGrp->pszCommands, lsTail.IsEmpty() ? nullptr : L" ", lsTail.ms_Val);
+				pszDataW = CEStr(pGrp->pszCommands, lsTail.IsEmpty() ? nullptr : L" ", lsTail.ms_Val);
 			else
-				pszDataW = lstrdup(pGrp->pszCommands);
+				pszDataW.Set(pGrp->pszCommands);
 
 			if (pArgs && pGrp->pszGuiArgs)
 			{
@@ -6493,16 +6478,18 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* p
 
 		if (!pszDataW || !*pszDataW)
 		{
-			size_t cchMax = _tcslen(szName)+100;
-			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,sizeof(*pszErrMsg));
-			swprintf_c(pszErrMsg, cchMax/*#SECURELEN*/, L"Command group %s %s!\n"
-				L"Choose your shell?",
-				(LPCWSTR)szName, pszDataW ? L"is empty" : L"not found");
+			ssize_t cchMax = _tcslen(szName) + 100;
+			CEStr pszErrMsg;
+			if (pszErrMsg.GetBuffer(cchMax))
+			{
+				swprintf_c(pszErrMsg.data(), pszErrMsg.GetMaxCount(), L"Command group %s %s!\n"
+					L"Choose your shell?",
+					szName.c_str(L""), pszDataW ? L"is empty" : L"not found");
+			}
+			const int nBtn = MsgBox(pszErrMsg.c_str(L"Choose your shell?"), MB_YESNO | MB_ICONEXCLAMATION);
 
-			int nBtn = MsgBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
-
-			SafeFree(pszErrMsg);
-			SafeFree(pszDataW);
+			pszErrMsg.Release();
+			pszDataW.Release();
 
 			if (nBtn == IDYES)
 			{
@@ -6513,19 +6500,19 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* p
 				if (pszDefCmd && *pszDefCmd)
 				{
 					SafeFree(args.pszSpecialCmd);
-					args.pszSpecialCmd = lstrdup(pszDefCmd);
+					args.pszSpecialCmd = lstrdup(pszDefCmd).Detach();
 				}
 
 				int nCreateRc = RecreateDlg(&args);
 
 				if ((nCreateRc == IDC_START) && args.pszSpecialCmd && *args.pszSpecialCmd)
 				{
-					wchar_t* pszNewCmd = nullptr;
+					CEStr pszNewCmd;
 					if ((*args.pszSpecialCmd == CmdFilePrefix) || (*args.pszSpecialCmd == TaskBracketLeft))
 					{
-						wchar_t* pszTaskName = args.pszSpecialCmd; args.pszSpecialCmd = nullptr;
+						CEStr pszTaskName; pszTaskName.Attach(std::move(args.pszSpecialCmd));
+						args.pszSpecialCmd = nullptr; // reset command as we pass args (as extra options) into LoadConsoleBatch
 						pszNewCmd = LoadConsoleBatch(pszTaskName, &args);
-						free(pszTaskName);
 					}
 					else
 					{
@@ -6561,7 +6548,7 @@ bool CConEmuMain::CreateStartupConsoles()
 
 	if (isScript)
 	{
-		CEStr szDataW((LPCWSTR)pszCmd);
+		CEStr szDataW(pszCmd);
 
 		// "Script" is a Task represented as one string with "|||" as command delimiter
 		// Replace "|||" to "\r\n" as standard Task expects
@@ -6592,7 +6579,7 @@ bool CConEmuMain::CreateStartupConsoles()
 		RConStartArgsEx args;
 		// Was "/dir" specified in the app switches?
 		if (mb_ConEmuWorkDirArg)
-			args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
+			args.pszStartupDir = lstrdup(ms_ConEmuWorkDir).Detach();
 		CEStr lsLog(L"Creating console group using task ", pszCmd);
 		LogString(lsLog);
 		// Here are either text file with Task contents, or just a Task name
@@ -6619,7 +6606,7 @@ bool CConEmuMain::CreateStartupConsoles()
 		args.Detached = crb_Off;
 
 		SafeFree(args.pszSpecialCmd);
-		args.pszSpecialCmd = lstrdup(GetCmd());
+		args.pszSpecialCmd = lstrdup(GetCmd()).Detach();
 
 		CEStr lsLog(L"Creating console using command ", args.pszSpecialCmd);
 		LogString(lsLog);

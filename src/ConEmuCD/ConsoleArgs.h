@@ -136,7 +136,7 @@ struct SwitchStr : public Switch
 	bool IsEmpty() const;
 	LPCWSTR GetStr() const;
 	void SetStr(const wchar_t* newVal);
-	void SetStr(wchar_t*&& newVal);
+	void SetStr(CEStr&& newVal);
 	SwitchStr& operator=(const wchar_t* newVal);
 };
 

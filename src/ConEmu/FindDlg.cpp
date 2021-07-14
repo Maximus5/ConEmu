@@ -153,7 +153,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			SetTimer(hWnd2, 101, 1000, nullptr);
 
 			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
-			SetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.pszText ? gpSet->FindOptions.pszText : L"");
+			SetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.text.c_str(L""));
 			CDlgItemHelper::checkDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
 			CDlgItemHelper::checkDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
 			CDlgItemHelper::checkDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
@@ -162,8 +162,8 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			#endif
 			CDlgItemHelper::checkDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
 
-			if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
-				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, lstrlen(gpSet->FindOptions.pszText));
+			if (!gpSet->FindOptions.text.IsEmpty())
+				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, gpSet->FindOptions.text.GetLen());
 
 			// Зовем всегда, чтобы инициализировать буфер для поиска как минимум
 			gpConEmu->DoFindText(0);
@@ -225,13 +225,13 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 					return 0;
 				}
 
-				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
+				if (!gpSet->FindOptions.text.IsEmpty())
 					gpConEmu->DoFindText(nDirection);
 			}
 			else if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
 			{
-				MyGetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
-				if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
+				MyGetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.text);
+				if (!gpSet->FindOptions.text.IsEmpty())
 					gpConEmu->DoFindText(0);
 			}
 			break;

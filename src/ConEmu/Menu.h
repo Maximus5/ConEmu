@@ -138,10 +138,10 @@ private:
 		enum CmdTaskPopupItemType { eNone, eTaskPopup, eTaskAll, eTaskCmd, eMore, eCmd, eNewDlg, eSetupTasks, eClearHistory } ItemType = {};
 		int nCmd = 0;
 		const void/*CommandTasks*/* pGrp = nullptr;
-		LPCWSTR pszCmd = nullptr;
+		LPCWSTR pszCmd = nullptr; // pointer to the parent.pszTaskBuf
 		wchar_t szShort[64] = L"";
 		HMENU hPopup = nullptr;
-		wchar_t* pszTaskBuf = nullptr;
+		CEStr pszTaskBuf = nullptr;
 		bool bPopupInitialized = false;
 
 		void Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName = nullptr);

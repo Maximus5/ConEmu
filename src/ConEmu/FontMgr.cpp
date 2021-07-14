@@ -1887,7 +1887,7 @@ bool CFontMgr::CreateFontGroup(CLogFont inFont)
 	{
 		if (m_Font[0]->ms_FontError && (m_Font2.Ptr() && m_Font2->ms_FontError))
 		{
-			ms_FontError = lstrmerge(m_Font[0]->ms_FontError, L"\n", m_Font2->ms_FontError);
+			ms_FontError = CEStr(m_Font[0]->ms_FontError, L"\n", m_Font2->ms_FontError);
 		}
 		else if (m_Font2.Ptr() && m_Font2->ms_FontError)
 		{

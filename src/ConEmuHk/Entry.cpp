@@ -2472,7 +2472,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
 
 	RConStartArgs args; // Strip and process "-new_console" switches
-	args.pszSpecialCmd = lstrdup(pszCmdLine);
+	args.pszSpecialCmd = lstrdup(pszCmdLine).Detach();
 	args.ProcessNewConArg();
 	if (args.pszSpecialCmd && *args.pszSpecialCmd)
 		pszCmdLine = args.pszSpecialCmd;

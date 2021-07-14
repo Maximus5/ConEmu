@@ -520,7 +520,7 @@ bool CMatch::GetNextLine(CRConDataGuard& data, int nLine)
 	wmemmove(ptr, line.pChar, line.nLen);
 	ptr[line.nLen] = 0;
 	// Append new data
-	if (!lstrmerge(&m_SrcLine.ms_Val, ptr))
+	if (!m_SrcLine.Append(ptr))
 		return false;
 	mn_SrcLength += line.nLen;
 	return true;

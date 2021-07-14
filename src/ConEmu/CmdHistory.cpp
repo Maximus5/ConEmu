@@ -195,7 +195,7 @@ void CommandHistory::Add(LPCWSTR asCommand, bool bFront /*= true*/)
 		}
 	}
 
-	p = lstrdup(asCommand);
+	p = lstrdup(asCommand).Detach();
 	if (!p)
 		return;
 

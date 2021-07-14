@@ -283,7 +283,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		}
 
 		SafeFree(gpszRunCmd);
-		gpszRunCmd = lstrdup(L"");
+		gpszRunCmd = lstrdup(L"").Detach();
 
 		if (!gpszRunCmd)
 		{
@@ -1484,9 +1484,8 @@ void WorkerBase::CdToProfileDir() const
 	// Write action to log file
 	if (gpLogSize)
 	{
-		wchar_t* pszMsg = lstrmerge(bRc ? L"Work dir changed to %USERPROFILE%: " : L"CD failed to %USERPROFILE%: ", szPath);
+		const CEStr pszMsg(bRc ? L"Work dir changed to %USERPROFILE%: " : L"CD failed to %USERPROFILE%: ", szPath);
 		LogFunction(pszMsg);
-		SafeFree(pszMsg);
 	}
 }
 
@@ -1694,7 +1693,7 @@ int WorkerBase::CheckAttachProcess()
 			gsVersion, WIN3264TEST(32,64), nSelfPID, liArgsFailed,
 			self.th32ParentProcessID, parent.szExeFile[0] ? parent.szExeFile : L"<terminated>");
 
-		const CEStr lsMsg = lstrmerge(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
+		const CEStr lsMsg(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
 
 		// Avoid automatic termination of ExitWaitForKey
 		gbInShutdown = FALSE;
@@ -1851,13 +1850,13 @@ CEStr WorkerBase::ExpandTaskCmd(LPCWSTR asCmdLine) const
 	wmemmove(pIn->GetTask.data, asCmdLine, cchCount);
 	_ASSERTE(pIn->GetTask.data[cchCount] == 0);
 
-	wchar_t* pszResult = nullptr;
+	CEStr pszResult;
 	// #SERVER Use conemuPid_ instead of conemuWnd_
 	CESERVER_REQ* pOut = ExecuteGuiCmd(gState.conemuWnd_, pIn, gState.realConWnd_);
 	if (pOut && (pOut->DataSize() > sizeof(pOut->GetTask)) && pOut->GetTask.data[0])
 	{
 		const LPCWSTR pszTail = SkipNonPrintable(pszNameEnd);
-		pszResult = lstrmerge(pOut->GetTask.data, (pszTail && *pszTail) ? L" " : nullptr, pszTail);
+		pszResult = CEStr(pOut->GetTask.data, (pszTail && *pszTail) ? L" " : nullptr, pszTail);
 	}
 	ExecuteFreeResult(pIn);
 	ExecuteFreeResult(pOut);

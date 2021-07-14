@@ -836,17 +836,16 @@ CESERVER_REQ* CRealServer::cmdGuiMacro(LPVOID pInst, CESERVER_REQ* pIn, UINT nDa
 	CESERVER_REQ* pOut = nullptr;
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_GUIMACRO\n");
-	DWORD nFarPluginPID = mp_RCon->GetFarPID(true);
-	LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, mp_RCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
+	const DWORD nFarPluginPID = mp_RCon->GetFarPID(true);
+	const CEStr pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, mp_RCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
 
-	size_t nLen = pszResult ? _tcslen(pszResult) : 0;
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+	const size_t nLen = pszResult.GetLen();
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_GUIMACRO) + nLen * sizeof(wchar_t));
 
 	if (pszResult)
 	{
 		lstrcpy(pOut->GuiMacro.sMacro, pszResult);
 		pOut->GuiMacro.nSucceeded = 1;
-		free(pszResult);
 	}
 	else
 	{
@@ -1508,8 +1507,8 @@ CESERVER_REQ* CRealServer::cmdIsAnsiExecAllowed(LPVOID pInst, CESERVER_REQ* pIn,
 	}
 	else if (nDataSize > sizeof(wchar_t))
 	{
-		LPCWSTR pszExec = (LPCWSTR)pIn->wData;
-		CEStr lsAllowed((LPCWSTR)gpSet->psAnsiAllowed);
+		const auto* pszExec = reinterpret_cast<LPCWSTR>(pIn->wData);
+		const CEStr lsAllowed(*gpSet->psAnsiAllowed);
 		LPCWSTR pszFrom = lsAllowed.ms_Val;
 		CEStr lsCmd;
 		while (!bAllowed && (pszFrom = NextLine(pszFrom, lsCmd)))

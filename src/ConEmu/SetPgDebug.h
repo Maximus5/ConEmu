@@ -147,5 +147,5 @@ protected:
 	DWORD mn_ActivityCmdStartTick;
 
 	// Helpers
-	static void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
+	static void debugLogShellText(CEStr& pszParamEx, LPCWSTR asFile);
 };

@@ -182,10 +182,9 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	case tWndY:
 		if (isChecked(hDlg, rNormal) == BST_CHECKED)
 		{
-			wchar_t *pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
-			bool bValid = (pVal && (isDigit(pVal[0]) || (pVal[0]==L'-' && isDigit(pVal[1]))));
+			const CEStr pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
+			const bool bValid = (pVal && (isDigit(pVal[0]) || (pVal[0]==L'-' && isDigit(pVal[1]))));
 			enableDlgItem(hDlg, cbApplyPos, bValid);
-			SafeFree(pVal);
 		}
 		break; // case tWndX: case tWndY:
 	case tWndWidth:
@@ -193,10 +192,9 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		if (isChecked(hDlg, rNormal) == BST_CHECKED)
 		{
 			CESize sz = {0};
-			wchar_t *pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
-			bool bValid = (pVal && sz.SetFromString(false, pVal));
+			const CEStr pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
+			const bool bValid = (pVal && sz.SetFromString(false, pVal));
 			enableDlgItem(hDlg, cbApplyPos, bValid);
-			SafeFree(pVal);
 		}
 		break; // case tWndWidth: case tWndHeight:
 

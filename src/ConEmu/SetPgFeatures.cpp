@@ -112,7 +112,7 @@ LRESULT CSetPgFeatures::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	{
 	case tAnsiLogPath:
 		SafeFree(gpSet->pszAnsiLog);
-		gpSet->pszAnsiLog = GetDlgItemTextPtr(hDlg, tAnsiLogPath);
+		gpSet->pszAnsiLog = GetDlgItemTextPtr(hDlg, tAnsiLogPath).Detach();
 		break;
 
 	case tDebugLogDir:

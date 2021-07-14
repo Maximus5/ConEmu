@@ -72,7 +72,7 @@ void CImgButtons::Add(LPCWSTR asText, ToolImgCreate_t fnCreate, UINT nCtrlId, LP
 	lstrcpyn(btn.ResId, asText ? asText : L"", countof(btn.ResId));
 
 	btn.nCtrlId = nCtrlId;
-	btn.pszHint = lstrdup(asHint);
+	btn.pszHint = lstrdup(asHint).Detach();
 	btn.OnClick = fnClick;
 
 	btn.pImg = fnCreate();

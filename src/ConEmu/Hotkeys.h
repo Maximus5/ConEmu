@@ -68,7 +68,6 @@ public:
 	wchar_t* GuiMacro{nullptr};
 
 	// Internal
-	size_t cchGuiMacroMax{};
 	bool   NotChanged{};
 
 public:

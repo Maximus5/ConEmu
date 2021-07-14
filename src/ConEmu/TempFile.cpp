@@ -99,6 +99,7 @@ bool TempFile::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, ErrorInfo&
 		{
 			szDir.Set(asDir);
 		}
+		szDir.Append(L"\\");
 
 		// Checking %TEMP% for valid path
 		ValidatePath(szDir, asDir);
@@ -146,7 +147,7 @@ bool TempFile::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, ErrorInfo&
 			fileHandle_.SetHandle(
 				CreateFileW(path_, GENERIC_WRITE, FILE_SHARE_READ, &sec, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_TEMPORARY, nullptr),
 				MHandle::CloseHandle);
-			if (!fileHandle_)
+			if (!fileHandle_.HasHandle())
 			{
 				dwErr = GetLastError();
 				if ((dwErr == ERROR_PATH_NOT_FOUND) && (i == 0))

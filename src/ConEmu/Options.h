@@ -218,14 +218,14 @@ struct Settings
 		//reg->Load(L"AutoReloadEnvironment", AutoReloadEnvironment);
 		bool AutoReloadEnvironment;
 		//reg->LoadMSZ(L"EnvironmentSet", psEnvironmentSet);
-		wchar_t* psEnvironmentSet; // commands: multiline, "\r\n" separated
+		CEStr* psEnvironmentSet; // commands: multiline, "\r\n" separated
 
 		// Service functions
-		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase = true); // "|"-delimited string -> MSZ
-		wchar_t* MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim = L"|", bool bFinalToo = false); // MSZ -> "<asDelim>"-delimited string
-		wchar_t* MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in bytes*/); // "\r\n"-delimited string -> MSZ
+		CEStr LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase = true) const;                    // "|"-delimited string -> MSZ
+		CEStr MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim = L"|", bool bFinalToo = false); // MSZ -> "<asDelim>"-delimited string
+		CEStr MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in bytes*/) const;                   // "\r\n"-delimited string -> MSZ
 
-		bool LoadMSZ(SettingsBase* reg, LPCWSTR asName, wchar_t*& rsLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/);
+		bool LoadMSZ(SettingsBase* reg, LPCWSTR asName, CEStr& rsLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/);
 		void SaveMSZ(SettingsBase* reg, LPCWSTR asName, LPCWSTR rsLines, LPCWSTR asDelim /*= L"|"*/, bool bLowerCase /*= true*/);
 
 		// Replace default terminal
@@ -237,7 +237,7 @@ struct Settings
 		bool isDefaultTerminalNewWindow;
 		bool isDefaultTerminalDebugLog;
 		TerminalConfirmClose nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
-		wchar_t* GetDefaultTerminalApps(); // "|" delimited
+		CEStr GetDefaultTerminalApps(); // "|" delimited
 		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited
 		void SetDefaultTerminalApps(const wchar_t* apszApps); // "|" delimited
 	private:
@@ -497,7 +497,7 @@ struct Settings
 		// Default: "2013-25C4"; Example: "0410-044F;2013-25C4;"
 		BYTE mpc_CharAltFontRanges[0x10000];
 		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE);
-		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
+		CEStr CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
 		bool CheckCharAltFont(ucs32 inChar);
 
 
@@ -566,7 +566,7 @@ struct Settings
 		wchar_t* pszCTSIntelligentExceptions; // Don't use IntelliSel in these app-processes
 		public:
 		// Service functions
-		wchar_t* GetIntelligentExceptions(); // "|" delimited
+		CEStr GetIntelligentExceptions(); // "|" delimited
 		const wchar_t* GetIntelligentExceptionsMSZ(); // "\0" delimited
 		void SetIntelligentExceptions(const wchar_t* apszApps); // "|" delimited
 		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
@@ -1085,7 +1085,7 @@ struct Settings
 		// "AnsiExecution"
 		BYTE isAnsiExec; // enum AnsiExecutionPerm
 		// "AnsiAllowedCommands"
-		wchar_t* psAnsiAllowed; // commands: multiline, "\r\n" separated
+		CEStr* psAnsiAllowed; // commands: multiline, "\r\n" separated
 
 		//reg->Load(L"AnsiLog", isAnsiLog);
 		bool isAnsiLog; // Limited logging of console contents (same output as processed by ConEmu::ConsoleFlags::ProcessAnsi)
@@ -1168,7 +1168,7 @@ struct Settings
 		void ResetSavedOnExit();
 
 		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
-		wchar_t* GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix);
+		CEStr GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix);
 
 		SettingsStorage GetSettingsType();
 };

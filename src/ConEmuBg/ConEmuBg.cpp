@@ -273,13 +273,11 @@ void ReportFail(LPCWSTR asInfo)
 	wchar_t szTitle[128];
 	swprintf_c(szTitle, L"ConEmuBg, PID=%u", GetCurrentProcessId());
 
-	wchar_t* pszErr = lstrmerge(asInfo,
+	const CEStr pszErr(asInfo,
 		L"\n" L"Config value: ", gsXmlConfigFile[0] ? gsXmlConfigFile : szDefaultXmlName,
 		L"\n" L"Expanded: ", gpszXmlFile ? gpszXmlFile : L"<NULL>");
 
-	MessageBox(NULL, pszErr, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-
-	free(pszErr);
+	MessageBox(nullptr, pszErr, szTitle, MB_ICONSTOP | MB_SYSTEMMODAL);
 }
 
 bool WasXmlLoaded()
@@ -354,7 +352,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		}
 		if (gpszXmlFolder)
 			free(gpszXmlFolder);
-		gpszXmlFolder = lstrdup(gpszXmlFile);
+		gpszXmlFolder = lstrdup(gpszXmlFile).Detach();
 		if (gpszXmlFolder)
 		{
 			wchar_t* pszSlash = wcsrchr(gpszXmlFolder, L'\\');
@@ -1207,7 +1205,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, BkPanelInfo *pPanel, DrawInfo *pDra
 	ChunkInfo Panel = {ChunkInfo::ci_WindowPanels, ChunkInfo::ci_PanelNone};
 	MSectionLockSimple CS;
 
-	LPWSTR pszFormat = lstrdup(pPanel->szFormat ? pPanel->szFormat : L"");
+	CEStr pszFormat(pPanel->szFormat ? pPanel->szFormat : L"");
 	size_t nMaxLen = lstrlen(pPanel->szCurDir ? pPanel->szCurDir : L"");
 	LPWSTR pszPath = (wchar_t*)malloc((nMaxLen+2)*sizeof(*pszPath));
 	_wcscpy_c(pszPath, nMaxLen+1, pPanel->szCurDir ? pPanel->szCurDir : L"");
@@ -1441,7 +1439,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, BkPanelInfo *pPanel, DrawInfo *pDra
 										}
 										else if (lstrcmpi(pszAttrName, L"format") == 0)
 										{
-											if (!CompareNames(pszAttrValue, pszFormat))
+											if (!CompareNames(pszAttrValue, pszFormat.data()))
 												Test.CondFailed = TRUE;
 										}
 									}
@@ -1653,8 +1651,6 @@ int FillPanelParams(PaintBackgroundArg* pBk, BkPanelInfo *pPanel, DrawInfo *pDra
 wrap:
 	if (pszPath)
 		free(pszPath);
-	if (pszFormat)
-		free(pszFormat);
     return iFound;
 }
 

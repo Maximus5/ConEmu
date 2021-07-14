@@ -331,7 +331,7 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStrA& rsBuffer, DWORD& rnChars,
 
 int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP /*= 0*/)
 {
-	const MHandle hFile(CreateFileW(asPath, GENERIC_READ, FILE_SHARE_READ, nullptr,
+	MHandle hFile(CreateFileW(asPath, GENERIC_READ, FILE_SHARE_READ, nullptr,
 		OPEN_EXISTING, 0, nullptr), MHandle::CloseHandle);
 
 	if (!hFile || hFile == INVALID_HANDLE_VALUE)
@@ -345,7 +345,6 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	if (!nSize || nSize >= cchMax)
 	{
 		rnErrCode = GetLastError();
-		CloseHandle(hFile);
 		return -2;
 	}
 
@@ -354,7 +353,6 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	if (!pszDataA)
 	{
 		_ASSERTE(pszDataA);
-		CloseHandle(hFile);
 		return -3;
 	}
 	pszDataA[nSize] = 0; pszDataA[nSize+1] = 0; pszDataA[nSize+2] = 0; pszDataA[nSize+3] = 0; pszDataA[nSize+4] = 0;
@@ -362,7 +360,7 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	DWORD nRead = 0;
 	const BOOL  bRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
 	rnErrCode = GetLastError();
-	CloseHandle(hFile);
+	hFile.Close();
 
 	if (!bRead || (nRead != nSize))
 	{
@@ -758,7 +756,7 @@ bool DirectoryExists(LPCWSTR asPath)
 
 // MyCreateDirectory creates full chain of absent folders
 //
-// asPath must eigher have trailing slash:
+// asPath must either have trailing slash:
 //   "C:\User\Documents\FolderName\"
 // or even be a full path to file:
 //   "C:\User\Documents\FolderName\file.txt"

@@ -121,7 +121,7 @@ protected:
 
 	void UpdateProgress();
 
-	void ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownloadArgType nextArgType = at_None, ...);
+	void ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat /*, CEDownloadArgType nextArgType = at_None, Value, ...*/...);
 
 	static VOID CALLBACK InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength);
 	#if 0
@@ -298,11 +298,11 @@ void CDownloader::SetProxy(LPCWSTR asProxy, LPCWSTR asProxyUser, LPCWSTR asProxy
 	SafeFree(m_Proxy.szProxyPassword);
 
 	if (asProxy)
-		m_Proxy.szProxy = lstrdup(asProxy);
+		m_Proxy.szProxy = lstrdup(asProxy).Detach();
 	if (asProxyUser)
-		m_Proxy.szProxyUser = lstrdup(asProxyUser);
+		m_Proxy.szProxyUser = lstrdup(asProxyUser).Detach();
 	if (asProxyPassword)
-		m_Proxy.szProxyPassword = lstrdup(asProxyPassword);
+		m_Proxy.szProxyPassword = lstrdup(asProxyPassword).Detach();
 }
 
 void CDownloader::SetLogin(LPCWSTR asUser, LPCWSTR asPassword)
@@ -313,9 +313,9 @@ void CDownloader::SetLogin(LPCWSTR asUser, LPCWSTR asPassword)
 	SafeFree(m_Server.szPassword);
 
 	if (asUser)
-		m_Server.szUser = lstrdup(asUser);
+		m_Server.szUser = lstrdup(asUser).Detach();
 	if (asPassword)
-		m_Server.szPassword = lstrdup(asPassword);
+		m_Server.szPassword = lstrdup(asPassword).Detach();
 }
 
 bool CDownloader::SetProxyForHandle(HANDLE hInternet)
@@ -387,7 +387,7 @@ bool CDownloader::InitInterface()
 
 	if (!wi)
 	{
-		ReportMessage(dc_LogCallback, L"InitInterface()");
+		ReportMessage(dc_LogCallback, L"InitInterface()", at_None);
 		wi = new CWinInet;
 		if (!wi)
 		{
@@ -437,7 +437,7 @@ bool CDownloader::WaitAsyncResult()
 	if (!mb_AsyncMode)
 		return true;
 	//TODO!!! Для отладки, пока просто смотрим, какие функции вызывают какие калбэки
-	ReportMessage(dc_LogCallback, L"... waiting 5 sec");
+	ReportMessage(dc_LogCallback, L"... waiting 5 sec", at_None);
 	Sleep(5000);
 	return true;
 }
@@ -775,7 +775,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 	DWORD ProxyType = INTERNET_OPEN_TYPE_DIRECT;
 	LPCWSTR ProxyName = nullptr;
 	wchar_t szServer[MAX_PATH];
-	wchar_t* pszSrvPath = nullptr;
+	CEStr pszSrvPath;
 	wchar_t *pszColon;
 	INTERNET_PORT nServerPort = INTERNET_DEFAULT_HTTP_PORT;
 	bool bSecureHTTPS = false;
@@ -789,9 +789,9 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 	const auto* pszAgent = msz_AgentName ? msz_AgentName : szConEmuAgent;
 	LPCWSTR szAcceptTypes[] = {L"*/*", nullptr};
 	LPCWSTR* ppszAcceptTypes = szAcceptTypes;
-	DWORD nFlags, nService;
-	BOOL bFRc;
-	DWORD dwErr;
+	DWORD nFlags = 0, nService = 0;
+	BOOL bFRc = 0;
+	DWORD dwErr = -1;
 	MSectionLockSimple CS;
 
 	if (!wi)
@@ -1043,15 +1043,17 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 		if (bFtp)
 		{
 			mb_FtpMode = true;
-			wchar_t* pszSlash = wcsrchr(pszSrvPath, L'/');
+			_ASSERTE(!pszSrvPath.IsNull());
+			wchar_t* pszSlash = wcsrchr(pszSrvPath.data(), L'/');
 			// Break path to dir+file
 			if (pszSlash == pszSrvPath)
 				pszSlash = nullptr; // Root
 			else if (pszSlash)
 				*pszSlash = 0; // It is our memory buffer, we can do anything with it
 			// Set ftp directory
-			const auto* pszSetDir = pszSlash ? pszSrvPath : L"/";
-			const auto* pszFile = pszSlash ? (pszSlash + 1) : (*pszSrvPath == L'/') ? (pszSrvPath + 1) : pszSrvPath;
+			const auto* pszSetDir = pszSlash ? pszSrvPath.c_str() : L"/";
+			const auto* pszFile = pszSlash ? (pszSlash + 1)
+				: (pszSrvPath[0] == L'/') ? (pszSrvPath.c_str() + 1) : pszSrvPath.c_str();
 
 			CS.Lock(&mcs_Handle); // Leaved in ExecRequest
 			if (!ExecRequest(wi->_FtpSetCurrentDirectoryW(mh_Connect, pszSetDir), dwErr, CS))
@@ -1117,7 +1119,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 			ReportMessage(dc_LogCallback, L"Http file opened x%08X", at_Uint, reinterpret_cast<DWORD_PTR>(mh_SrcFile), at_None);
 			//WaitAsyncResult();
 
-			ReportMessage(dc_LogCallback, L"Sending request");
+			ReportMessage(dc_LogCallback, L"Sending request", at_None);
 			ResetEvent(mh_ReadyEvent);
 			CS.Lock(&mcs_Handle); // Leaved in ExecRequest
 			// ReSharper disable once CppJoinDeclarationAndAssignment
@@ -1165,7 +1167,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 	}
 	else
 	{
-		ReportMessage(dc_LogCallback, L"Opening source from file system");
+		ReportMessage(dc_LogCallback, L"Opening source from file system", at_None);
 		mh_SrcFile = CreateFile(asSource, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (!mh_SrcFile || (mh_SrcFile == INVALID_HANDLE_VALUE))
 		{
@@ -1249,7 +1251,7 @@ wrap:
 	if (lbRc)
 		ReportMessage(dc_LogCallback, L"Download finished, %u bytes retrieved", at_Uint, size, at_None);
 	else
-		ReportMessage(dc_LogCallback, L"Download failed");
+		ReportMessage(dc_LogCallback, L"Download failed", at_None);
 
 	if (mb_InetMode)
 	{
@@ -1269,7 +1271,6 @@ wrap:
 	}
 
 	SafeFree(ptrData);
-	SafeFree(pszSrvPath);
 	return lbRc;
 }
 
@@ -1311,14 +1312,14 @@ void CDownloader::CloseInternet(bool bFull)
 
 void CDownloader::RequestTerminate()
 {
-	ReportMessage(dc_LogCallback, L"!!! Download termination was requested !!!");
+	ReportMessage(dc_LogCallback, L"!!! Download termination was requested !!!", at_None);
 	mb_RequestTerminate = true;
 	CloseInternet(false);
 }
 
 void CDownloader::SetAsync(bool bAsync)
 {
-	ReportMessage(dc_LogCallback, L"Change mode to %s was requested", at_Str, bAsync?L"Async":L"Sync", at_None);
+	ReportMessage(dc_LogCallback, L"Change mode to %s was requested", at_Str, bAsync ? L"Async" : L"Sync", at_None);
 	mb_AsyncMode = bAsync;
 }
 
@@ -1349,7 +1350,7 @@ void CDownloader::SetTimeout(UINT nWhat, DWORD nTimeout)
 void CDownloader::SetAgent(LPCWSTR aszAgentName)
 {
 	SafeFree(msz_AgentName);
-	msz_AgentName = (aszAgentName && *aszAgentName) ? lstrdup(aszAgentName) : nullptr;
+	msz_AgentName = (aszAgentName && *aszAgentName) ? lstrdup(aszAgentName).Detach() : nullptr;
 }
 
 BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE* pData, DWORD cbData, DWORD* pcbRead)
@@ -1359,7 +1360,7 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 
 	if (bInet)
 	{
-		ReportMessage(dc_LogCallback, L"Reading source");
+		ReportMessage(dc_LogCallback, L"Reading source", at_None);
 		*pcbRead = 0;
 		MSectionLockSimple CS;
 		CS.Lock(&mcs_Handle); // Leaved in ExecRequest
@@ -1382,7 +1383,7 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 	}
 	else
 	{
-		ReportMessage(dc_LogCallback, L"Reading file");
+		ReportMessage(dc_LogCallback, L"Reading file", at_None);
 		lbRc = ReadFile(hSource, pData, cbData, pcbRead, nullptr);
 		if (!lbRc)
 			ReportMessage(dc_ErrCallback,
@@ -1428,40 +1429,39 @@ void CDownloader::SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCall
 	m_CallbackLParam[cb] = lParam;
 }
 
-void CDownloader::ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownloadArgType nextArgType /*= at_None*/, ...)
+void CDownloader::ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat /*, CEDownloadArgType nextArgType = at_None, Value, ...*/...)
 {
 	_ASSERTE(asFormat && *asFormat && asFormat[lstrlen(asFormat)-1]!=L'\n');
 	if (!mfn_Callback[rm])
 		return;
 
-	CEDownloadArgType argType = nextArgType;
-
-	va_list argptr;
-	va_start(argptr, nextArgType);
-
 	CEDownloadInfo args = {sizeof(args), m_CallbackLParam[rm], asFormat, 1, {}};
 
 	size_t i = 0;
-	while (argType != at_None)
+	if (IsStrNotEmpty(asFormat) && wcschr(asFormat, L'%') != nullptr)
 	{
-		if (argType == at_Uint)
-			args.Args[i].uintArg = va_arg( argptr, DWORD_PTR );
-		else if (argType == at_Str)
-			args.Args[i].strArg = va_arg( argptr, wchar_t* );
-		else
+		va_list argptr;
+		va_start(argptr, asFormat);
+		while (i < countof(args.Args))
 		{
-			_ASSERTE(argType==at_Uint || argType==at_Str);
-			break;
+			const auto argType = static_cast<CEDownloadArgType>(va_arg(argptr, int));
+			if (argType == at_None)
+				break;
+
+			if (argType == at_Uint)
+				args.Args[i].uintArg = va_arg(argptr, DWORD_PTR);
+			else if (argType == at_Str)
+				args.Args[i].strArg = va_arg(argptr, wchar_t*);
+			else
+			{
+				_ASSERTE(argType == at_Uint || argType == at_Str);
+				break;
+			}
+
+			args.Args[i++].argType = argType;
 		}
-
-		args.Args[i++].argType = argType;
-		if (i >= countof(args.Args))
-			break;
-
-		argType = static_cast<CEDownloadArgType>(va_arg(argptr, int));
+		va_end(argptr);
 	}
-
-	va_end(argptr);
 
 	args.argCount = i;
 
@@ -1621,7 +1621,7 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 	swprintf_c(szTime, L"%i:%02i:%02i.%03i{%u} ",
 	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, GetCurrentThreadId());
 
-	const CEStr lsAll(lstrmerge(szTime, pszLabel, (pszInfo && *pszInfo) ? pszInfo : L"<nullptr>\n"));
+	const CEStr lsAll(szTime, pszLabel, (pszInfo && *pszInfo) ? pszInfo : L"<nullptr>\n");
 
 	DWORD nWritten;
 	const int iLen = lstrlen(lsAll.ms_Val);
@@ -1848,7 +1848,7 @@ int DoDownload(LPCWSTR asCmdLine)
 			}
 			if (!bKnown)
 			{
-				const CEStr lsInfo(lstrmerge(L"Unknown argument '", psz, L"'"));
+				const CEStr lsInfo(L"Unknown argument '", psz, L"'");
 				DownloadLog(dc_ErrCallback, lsInfo);
 				iRc = CERR_CARGUMENT;
 				goto wrap;

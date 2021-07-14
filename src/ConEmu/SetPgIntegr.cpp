@@ -302,7 +302,7 @@ struct SwitchParser
 			_ASSERTE(ps && !ps->switch_.IsEmpty());
 			const bool bOpt = !ps->opt_.IsEmpty();
 			const bool bQuot = (bOpt && IsQuotationNeeded(ps->opt_));
-			lstrmerge(&rsReady.ms_Val,
+			rsReady.Append(
 				ps->switch_,
 				bOpt ? L" " : nullptr,
 				bQuot ? L"\"" : nullptr,
@@ -313,7 +313,7 @@ struct SwitchParser
 		if (!rsReady.IsEmpty() || cmdList_)
 		{
 			// Add "-run" without command to depict we run ConEmu "as default"
-			lstrmerge(&rsReady.ms_Val,
+			rsReady.Append(
 				cmdList_ ? L"-RunList " : L"-run ", cmd_);
 		}
 		else
@@ -343,9 +343,9 @@ LRESULT CSetPgIntegr::OnInitDialog(HWND hDlg, bool abInitial)
 	ReloadHereList(&iHere, &iInside);
 
 	// Возвращает nullptr, если строка пустая
-	wchar_t* pszCurInside = GetDlgItemTextPtr(hDlg, cbInsideName);
+	CEStr pszCurInside = GetDlgItemTextPtr(hDlg, cbInsideName);
 	_ASSERTE((pszCurInside==nullptr) || (*pszCurInside!=0));
-	wchar_t* pszCurHere   = GetDlgItemTextPtr(hDlg, cbHereName);
+	CEStr pszCurHere   = GetDlgItemTextPtr(hDlg, cbHereName);
 	_ASSERTE((pszCurHere==nullptr) || (*pszCurHere!=0));
 
 	wchar_t szIcon[MAX_PATH+32];
@@ -377,9 +377,6 @@ LRESULT CSetPgIntegr::OnInitDialog(HWND hDlg, bool abInitial)
 		SetDlgItemText(hDlg, tHereShell, CONEMU_HERE_CMD);
 		SetDlgItemText(hDlg, tHereIcon, szIcon);
 	}
-
-	SafeFree(pszCurInside);
-	SafeFree(pszCurHere);
 
 	return 0;
 }
@@ -698,7 +695,7 @@ void CSetPgIntegr::UnregisterShellInvalids()
 					//LPCWSTR pszInside = StrStrI(szCmd, L"-inside");
 					const LPCWSTR pszConEmu = StrStrI(szCmd, L"conemu");
 					if (pszConEmu)
-						lsNames.push_back(lstrdup(szName));
+						lsNames.push_back(lstrdup(szName).Detach());
 					else
 						iOthers++;
 				}
@@ -798,10 +795,10 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= nullptr*/, int* pnInside /*= n
 	int iTotalCount = 0;
 
 	// Возвращает nullptr, если строка пустая
-	wchar_t* pszCurInside = GetDlgItemTextPtr(mh_Dlg, cbInsideName);
-	_ASSERTE((pszCurInside==nullptr) || (*pszCurInside!=0));
-	wchar_t* pszCurHere   = GetDlgItemTextPtr(mh_Dlg, cbHereName);
-	_ASSERTE((pszCurHere==nullptr) || (*pszCurHere!=0));
+	CEStr pszCurInside = GetDlgItemTextPtr(mh_Dlg, cbInsideName);
+	_ASSERTE(pszCurInside.IsNull() || !pszCurInside.IsEmpty());
+	CEStr pszCurHere = GetDlgItemTextPtr(mh_Dlg, cbHereName);
+	_ASSERTE(pszCurHere.IsNull() || !pszCurHere.IsEmpty());
 
 	MSetter lSkip(&mb_SkipSelChange);
 
@@ -858,12 +855,12 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= nullptr*/, int* pnInside /*= n
 						const UINT nListID = bHasInside ? cbInsideName : cbHereName;
 						SendDlgItemMessage(mh_Dlg, nListID, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName));
 
-						if ((bHasInside ? pszCurInside : pszCurHere) == nullptr)
+						if ((bHasInside ? pszCurInside.IsEmpty() : pszCurHere.IsEmpty()))
 						{
 							if (bHasInside)
-								pszCurInside = lstrdup(szName);
+								pszCurInside.Set(szName);
 							else
-								pszCurHere = lstrdup(szName);
+								pszCurHere.Set(szName);
 						}
 					}
 				}
@@ -880,9 +877,6 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= nullptr*/, int* pnInside /*= n
 	SetDlgItemText(mh_Dlg, cbHereName, pszCurHere ? pszCurHere : L"");
 	if (pszCurHere && *pszCurHere)
 		CSetDlgLists::SelectStringExact(mh_Dlg, cbHereName, pszCurHere);
-
-	SafeFree(pszCurInside);
-	SafeFree(pszCurHere);
 
 	free(pszCmd);
 

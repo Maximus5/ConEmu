@@ -158,7 +158,7 @@ class CConEmuMain
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = nullptr);
 		bool ChangeWorkDir(LPCWSTR asTempCurDir);
 		private:
-		LPWSTR  mps_ConEmuExtraArgs = nullptr;            // Used with TaskBar jump list creation (/FontDir, /FontFile, etc.)
+		CEStr mps_ConEmuExtraArgs;                    // Used with TaskBar jump list creation (/FontDir, /FontFile, etc.)
 		public:
 		void AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue = nullptr);
 		LPCWSTR MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig = nullptr) const;
@@ -501,12 +501,12 @@ class CConEmuMain
 		HWND mh_RightClickingWnd = nullptr;
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
 	public:
-		wchar_t* LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs = nullptr);
+		CEStr LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs = nullptr);
 		static wchar_t IsConsoleBatchOrTask(LPCWSTR asSource);
 	private:
-		wchar_t* LoadConsoleBatch_File(LPCWSTR asSource);
-		wchar_t* LoadConsoleBatch_Drops(LPCWSTR asSource);
-		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs = nullptr);
+		CEStr LoadConsoleBatch_File(LPCWSTR asSource);
+		CEStr LoadConsoleBatch_Drops(LPCWSTR asSource);
+		CEStr LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs = nullptr);
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void CtrlWinAltSpace();

@@ -194,7 +194,7 @@ void PrintBuffer(LPCSTR asBuffer);
 void Printf(LPCSTR asFormat, ...);
 void PrintError(const CEStr& message, DWORD dwErr);
 
-wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
+CEStr ParseConEmuSubst(LPCWSTR asCmd);
 void UpdateConsoleTitle();
 BOOL SetTitle(LPCWSTR lsTitle);
 void Help();

@@ -267,10 +267,10 @@ LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
 	return pszRc;
 }
 
-wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath)
+CEStr MakeStraightSlashPath(LPCWSTR asWinPath)
 {
-	wchar_t* pszSlashed = lstrdup(asWinPath);
-	wchar_t* p = wcschr(pszSlashed, L'\\');
+	CEStr pszSlashed(asWinPath);
+	wchar_t* p = wcschr(pszSlashed.data(), L'\\');
 	while (p)
 	{
 		*p = L'/';

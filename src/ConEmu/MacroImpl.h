@@ -69,10 +69,10 @@ struct GuiMacro
 	size_t  argc;
 	GuiMacroArg* argv; // No need to release mem, buffer allocated for the full GuiMacro data
 
-	wchar_t* AsString();
+	CEStr AsString() const;
 	bool GetIntArg(size_t idx, int& val);
-	bool GetStrArg(size_t idx, LPWSTR& val);
-	bool GetRestStrArgs(size_t idx, LPWSTR& val);
+	bool GetStrArg(size_t idx, CEStr& val);
+	bool GetRestStrArgs(size_t idx, CEStr& val);
 	bool IsIntArg(size_t idx);
 	bool IsStrArg(size_t idx);
 };
@@ -82,9 +82,9 @@ namespace ConEmuMacro
 	/* ****************************** */
 	/* ****** Helper functions ****** */
 	/* ****************************** */
-	LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bool& bEndBracket);
-	LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue);
+	wchar_t* GetNextString(wchar_t*& rsArguments, wchar_t*& rsString, bool bColonDelim, bool& bEndBracket);
+	wchar_t* GetNextInt(wchar_t*& rsArguments, GuiMacroArg& rnValue);
 	void SkipWhiteSpaces(LPWSTR& rsString);
-	LPWSTR Int2Str(UINT nValue, bool bSigned);
-	GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
+	CEStr Int2Str(UINT nValue, bool bSigned);
+	GuiMacro* GetNextMacro(wchar_t*& asString, bool abConvert, CEStr* rsErrMsg);
 }

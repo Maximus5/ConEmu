@@ -63,8 +63,7 @@ template<>
 void DumpMember<WORD>(const WORD& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32];
-	CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
+	CEStr lsLine(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
 	PrintBuffer(lsLine);
 }
 
@@ -72,8 +71,7 @@ template<>
 void DumpMember<DWORD>(const DWORD& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32];
-	CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
+	CEStr lsLine(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
 	PrintBuffer(lsLine);
 }
 
@@ -153,19 +151,18 @@ struct FlagList
 
 static void DumpFlags(const DWORD Flags, FlagList* flags, size_t flagsCount, LPCWSTR szName, LPCWSTR szIndent)
 {
-	CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ");
+	CEStr lsLine(szIndent, szName, L": ");
 
 	LPCWSTR pszDelim = NULL;
 	for (size_t i = 0; i < flagsCount; i++)
 	{
 		if (Flags & flags[i].flag)
 		{
-			lstrmerge(&lsLine.ms_Val, pszDelim, flags[i].name);
+			lsLine.Append(pszDelim, flags[i].name);
 			if (!pszDelim) pszDelim = L"|";
 		}
 	}
-	lstrmerge(&lsLine.ms_Val, L"\r\n");
+	lsLine.Append(L"\r\n");
 	PrintBuffer(lsLine);
 }
 
@@ -328,17 +325,17 @@ int ProcessMapping(MFileMapping<T>& fileMap, MapDumpEnum type, LPCWSTR pszMapNam
 
 	if (!fileMap.Open(FALSE, strSize))
 	{
-		lsMsg = lstrmerge(L"Failed to open mapping: `", pszMapName, L"`\r\n", fileMap.GetErrorText(), L"\r\n");
+		lsMsg = CEStr(L"Failed to open mapping: `", pszMapName, L"`\r\n", fileMap.GetErrorText(), L"\r\n");
 		PrintBuffer(lsMsg);
 		return CERR_UNKNOWN_MAP_NAME;
 	}
 
-	lsMsg = lstrmerge(L"Mapping: `", pszMapName, L"`\r\n");
+	lsMsg = CEStr(L"Mapping: `", pszMapName, L"`\r\n");
 	PrintBuffer(lsMsg);
 	if (fileMap.Ptr()->cbSize != strSize)
 	{
 		wchar_t szReq[32] = L"", szGet[32] = L"";
-		lsMsg = lstrmerge(L"### WARNING ###",
+		lsMsg = CEStr(L"### WARNING ###",
 			L" ReqSize=", ultow_s(strSize, szReq, 10),
 			L" MapSize=", ultow_s(fileMap.Ptr()->cbSize, szGet, 10),
 			L"\r\n");
@@ -356,7 +353,7 @@ int DumpStructData(LPCWSTR asMappingName)
 
 	if (!asMappingName || !*asMappingName || wcschr(asMappingName, L'%'))
 	{
-		lsMsg = lstrmerge(L"Invalid mapping name: `", asMappingName, L"`\r\n");
+		lsMsg = CEStr(L"Invalid mapping name: `", asMappingName, L"`\r\n");
 		PrintBuffer(lsMsg);
 		return CERR_UNKNOWN_MAP_NAME;
 	}
@@ -366,7 +363,7 @@ int DumpStructData(LPCWSTR asMappingName)
 	if ((type == mde_Unknown) || !strSize)
 	{
 		_ASSERTE(type == mde_Unknown);
-		lsMsg = lstrmerge(L"Unknown mapping name: `", asMappingName, L"`\r\n");
+		lsMsg = CEStr(L"Unknown mapping name: `", asMappingName, L"`\r\n");
 		PrintBuffer(lsMsg);
 		return CERR_UNKNOWN_MAP_NAME;
 	}

@@ -156,7 +156,7 @@ public:
 	static bool isEditor();
 	static bool isViewer();
 	static bool isFar(bool abPluginRequired=false);
-	static int isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=nullptr, CVConGuard* rpVCon=nullptr);
+	static int isFarExist(CEFarWindowType anWindowType = fwt_Any, const wchar_t* asName = nullptr, CVConGuard* rpVCon = nullptr);
 	static bool isVConHWND(HWND hChild, CVConGuard* rpVCon = nullptr);
 	static bool isConsolePID(DWORD nPID);
 	static DWORD GetFarPID(bool abPluginRequired = false);
@@ -265,7 +265,7 @@ public:
 
 	static RECT AllTextRect(SIZE* rpSplits = nullptr, bool abMinimal = false);
 
-	static wchar_t* GetTasks();
+	static CEStr GetTasks();
 
 //public:
 //	bool ResizeConsoles(const RECT &rFrom, enum ConEmuRect tFrom);

@@ -35,4 +35,4 @@ bool MyOpenClipboard(LPCWSTR asAction);
 void MyCloseClipboard();
 HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem);
 bool CopyToClipboard(LPCWSTR asText);
-wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax);
+CEStr GetClipboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax);

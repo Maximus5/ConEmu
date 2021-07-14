@@ -226,7 +226,7 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	if (iCreatedIcon == -1)
 	{
 		// To avoid numerous CreateTabIconInt calls - just remember "No icon" for that asIconDescr
-		TabIconCache DummyIcon = {lstrdup(asIconDescr), -1, bAdmin, (mh_TabIcons==nullptr)};
+		TabIconCache DummyIcon = {lstrdup(asIconDescr).Detach(), -1, bAdmin, (mh_TabIcons==nullptr)};
 		m_Icons.push_back(DummyIcon);
 	}
 wrap:
@@ -312,7 +312,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		int iIconIdxAdm = -1;
 		iIconIdx = ImageList_ReplaceIcon(mh_TabIcons, -1, hFileIcon);
 
-		const TabIconCache newIcon = {lstrdup(asIconDescr), iIconIdx, false, false};
+		const TabIconCache newIcon = {lstrdup(asIconDescr).Detach(), iIconIdx, false, false};
 		m_Icons.push_back(newIcon);
 
 		if (mn_AdminOverlayIndex >= 0)
@@ -327,7 +327,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 				iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
 				DestroyIcon(hNewIcon);
 
-				const TabIconCache admIcon = {lstrdup(asIconDescr), iIconIdxAdm, true, false};
+				const TabIconCache admIcon = {lstrdup(asIconDescr).Detach(), iIconIdxAdm, true, false};
 				m_Icons.push_back(admIcon);
 
 				if (bAdmin && (iIconIdxAdm > 0))

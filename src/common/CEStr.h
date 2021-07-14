@@ -85,6 +85,7 @@ public:
 	/// <returns>Allocated buffer or nullptr</returns>
 	wchar_t* GetBuffer(ssize_t cchMaxLen);
 	wchar_t* Detach();
+	void Swap(wchar_t*& asPtr);
 	const wchar_t*  Attach(wchar_t*&& asPtr);
 	const wchar_t*  Append(const wchar_t* asStr1, const wchar_t* asStr2 = nullptr, const wchar_t* asStr3 = nullptr,
 		const wchar_t* asStr4 = nullptr, const wchar_t* asStr5 = nullptr, const wchar_t* asStr6 = nullptr,

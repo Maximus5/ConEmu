@@ -464,7 +464,7 @@ void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessIn
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	const CEStr fnDescr(lstrmerge(L"createProcess App={", lpApplicationName, L"} Cmd={", lpCommandLine, L"}"));
+	const CEStr fnDescr(L"createProcess App={", lpApplicationName, L"} Cmd={", lpCommandLine, L"}");
 	LogFunction(fnDescr);
 
 	MWow64Disable wow;
@@ -716,7 +716,7 @@ bool CheckAndWarnHookSetters()
 			}
 
 			swprintf_c(szAddress, WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hModule));
-			szMessage = lstrmerge(
+			szMessage = CEStr(
 				L"WARNING! The ", pszTitle, L"'s hooks are detected at ", szAddress, L"\r\n"
 				L"         ");
 			LPCWSTR pszTail = L"\r\n"
@@ -1148,11 +1148,11 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		nExitPlaceStep = 350;
 
 		// Process environment variables
-		wchar_t* pszExpandedCmd = ParseConEmuSubst(gpszRunCmd);
+		CEStr pszExpandedCmd = ParseConEmuSubst(gpszRunCmd);
 		if (pszExpandedCmd)
 		{
 			SafeFree(gpszRunCmd);
-			gpszRunCmd = pszExpandedCmd;
+			gpszRunCmd = pszExpandedCmd.Detach();
 		}
 
 		#ifdef _DEBUG
@@ -2252,7 +2252,7 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=nullp
 
 // 1. Substitute vars like: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
 // 2. Expand environment variables (e.g. PowerShell doesn't accept %vars% as arguments)
-wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
+CEStr ParseConEmuSubst(LPCWSTR asCmd)
 {
 	if (!asCmd || !*asCmd)
 	{
@@ -2288,7 +2288,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 
 	//_ASSERTE(FALSE && "Continue to ParseConEmuSubst");
 
-	wchar_t* pszCmdCopy = nullptr;
+	CEStr pszCmdCopy;
 
 	if (bExclSubst)
 	{
@@ -2317,9 +2317,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 	}
 
 	CEStr pszExpand = ExpandEnvStr(pszCmdCopy ? pszCmdCopy : asCmd);
-
-	SafeFree(pszCmdCopy);
-	return pszExpand.Detach();
+	return pszExpand;
 }
 
 BOOL SetTitle(LPCWSTR lsTitle)
@@ -2336,9 +2334,8 @@ BOOL SetTitle(LPCWSTR lsTitle)
 
 	if (gpLogSize)
 	{
-		wchar_t* pszLog = lstrmerge(bRc ? L"Done: " : L"Fail: ", pszSetTitle);
+		CEStr pszLog(bRc ? L"Done: " : L"Fail: ", pszSetTitle);
 		LogFunction(pszLog);
-		SafeFree(pszLog);
 	}
 
 	return bRc;
@@ -2349,8 +2346,7 @@ void UpdateConsoleTitle()
 	LogFunction(L"UpdateConsoleTitle");
 
 	CmdArg  szTemp;
-	wchar_t *pszBuffer = nullptr;
-	LPCWSTR  pszSetTitle = nullptr, pszCopy;
+	LPCWSTR  pszSetTitle = nullptr;
 	LPCWSTR  pszReq = gpszForcedTitle ? gpszForcedTitle : gpszRunCmd;
 
 	if (!pszReq || !*pszReq)
@@ -2365,15 +2361,15 @@ void UpdateConsoleTitle()
 		return;
 	}
 
-	pszBuffer = ParseConEmuSubst(pszReq);
+	CEStr pszBuffer = ParseConEmuSubst(pszReq);
 	if (pszBuffer)
 		pszReq = pszBuffer;
-	pszCopy = pszReq;
+	LPCWSTR pszCopy = pszReq;
 
-	if (!gpszForcedTitle && (pszCopy = NextArg(pszCopy, szTemp)))
+	if (!gpszForcedTitle && ((pszCopy = NextArg(pszCopy, szTemp))))
 	{
-		wchar_t* pszName = (wchar_t*)PointToName(szTemp.ms_Val);
-		wchar_t* pszExt = (wchar_t*)PointToExt(pszName);
+		wchar_t* pszName = const_cast<wchar_t*>(PointToName(szTemp.ms_Val));
+		wchar_t* pszExt = const_cast<wchar_t*>(PointToExt(pszName));
 		if (pszExt)
 			*pszExt = 0;
 		pszSetTitle = pszName;
@@ -2395,8 +2391,6 @@ void UpdateConsoleTitle()
 
 		SetTitle(pszSetTitle);
 	}
-
-	SafeFree(pszBuffer);
 }
 
 // Проверить, что nPID это "ConEmuC.exe" или "ConEmuC64.exe"

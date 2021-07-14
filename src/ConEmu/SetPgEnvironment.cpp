@@ -48,7 +48,7 @@ LRESULT CSetPgEnvironment::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbAutoReloadEnvironment, (gpSet->AutoReloadEnvironment) ? BST_CHECKED : BST_UNCHECKED);
 
-	SetDlgItemText(hDlg, tSetCommands, gpSet->psEnvironmentSet ? gpSet->psEnvironmentSet : L"");
+	SetDlgItemText(hDlg, tSetCommands, gpSet->psEnvironmentSet ? gpSet->psEnvironmentSet->c_str(L"") : L"");
 
 	return 0;
 }
@@ -59,8 +59,9 @@ LRESULT CSetPgEnvironment::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	{
 	case tSetCommands:
 	{
-		size_t cchMax = gpSet->psEnvironmentSet ? (_tcslen(gpSet->psEnvironmentSet)+1) : 0;
-		MyGetDlgItemText(hDlg, tSetCommands, cchMax, gpSet->psEnvironmentSet);
+		if (!gpSet->psEnvironmentSet)
+			gpSet->psEnvironmentSet = new CEStr();
+		MyGetDlgItemText(hDlg, tSetCommands, *gpSet->psEnvironmentSet);
 	}
 	break;
 

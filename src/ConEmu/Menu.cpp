@@ -325,7 +325,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 					Folders.push_back(flNew);
 				}
 
-				szTempName = lstrmerge(L"{", pszFolder + 2);
+				szTempName = CEStr(L"{", pszFolder + 2);
 				pszTaskName = szTempName;
 			}
 
@@ -495,7 +495,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 			if ((itm.ItemType == CmdTaskPopupItem::eTaskAll) || (itm.ItemType == CmdTaskPopupItem::eTaskPopup))
 			{
 				const CommandTasks* pGrp = (const CommandTasks*)itm.pGrp;
-				con.pszSpecialCmd = lstrdup(pGrp->pszName);
+				con.pszSpecialCmd = lstrdup(pGrp->pszName).Detach();
 				pGrp->ParseGuiArgs(&con);
 				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==TaskBracketLeft && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==TaskBracketRight);
 			}
@@ -507,7 +507,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 				pGrp->ParseGuiArgs(&con);
 
 				// Task pre-options, for example ">*cmd"
-				con.pszSpecialCmd = lstrdup(gpConEmu->ParseScriptLineOptions(itm.pszCmd, nullptr, &con));
+				con.pszSpecialCmd = lstrdup(gpConEmu->ParseScriptLineOptions(itm.pszCmd, nullptr, &con)).Detach();
 
 				con.ProcessNewConArg();
 
@@ -517,7 +517,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 			{
 				_ASSERTE(itm.pszCmd && (*itm.pszCmd != L'>'));
 
-				con.pszSpecialCmd = lstrdup(itm.pszCmd);
+				con.pszSpecialCmd = lstrdup(itm.pszCmd).Detach();
 
 				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd);
 			}
@@ -551,11 +551,11 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 	}
 
 	// Release handles
-	for (INT_PTR i = 0; i < m_CmdTaskPopup.size(); i++)
+	for (auto& taskMenuItem : m_CmdTaskPopup)
 	{
-		if (m_CmdTaskPopup[i].hPopup)
-			DestroyMenu(m_CmdTaskPopup[i].hPopup);
-		SafeFree(m_CmdTaskPopup[i].pszTaskBuf);
+		if (taskMenuItem.hPopup)
+			DestroyMenu(taskMenuItem.hPopup);
+		taskMenuItem.pszTaskBuf.Release();
 	}
 	DestroyMenu(hPopup);
 }
@@ -667,7 +667,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			LPCWSTR pszCmd = gpConEmu->ParseScriptLineOptions(itm.pszCmd, nullptr, &con);
 
 			// Well, start selected line from Task
-			con.pszSpecialCmd = lstrdup(pszCmd);
+			con.pszSpecialCmd = lstrdup(pszCmd).Detach();
 			if (!con.pszSpecialCmd)
 			{
 				_ASSERTE(con.pszSpecialCmd!=nullptr);
@@ -929,10 +929,8 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 		case IDM_SPLIT2RIGHT:
 		case IDM_SPLIT2BOTTOM:
 		{
-			LPWSTR pszMacro = lstrdup((nCmd == IDM_SPLIT2RIGHT) ? L"Split(0,50,0)" : L"Split(0,0,50)");
-			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, apVCon->RCon());
-			SafeFree(pszMacro);
-			SafeFree(pszRc);
+			CEStr pszMacro = lstrdup((nCmd == IDM_SPLIT2RIGHT) ? L"Split(0,50,0)" : L"Split(0,0,50)");
+			CEStr pszRc = ConEmuMacro::ExecuteMacro(std::move(pszMacro), apVCon->RCon());
 			break;
 		}
 		case IDM_CHILDSYSMENU:
@@ -1177,7 +1175,7 @@ POINT CConEmuMenu::CalcTabMenuPos(CVirtualConsole* apVCon)
 
 int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 {
-	const CommandTasks* pGrp = (const CommandTasks*)pParent->pGrp;
+	const CommandTasks* pGrp = static_cast<const CommandTasks*>(pParent->pGrp);
 
 	CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
 
@@ -1185,30 +1183,25 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 	//itm.pGrp = pGrp;
 
 	int nCount = 0;
-	const size_t nMenuHotkeyMax = _tcslen(sMenuHotkey);
+	const ssize_t nMenuHotkeyMax = _tcslen(sMenuHotkey);
 
 	if (pGrp && pGrp->pszCommands && *pGrp->pszCommands)
 	{
-		SafeFree(pParent->pszTaskBuf);
 		pParent->pszTaskBuf = lstrdup(pGrp->pszCommands);
 
-		wchar_t *pszDataW = pParent->pszTaskBuf;
+		wchar_t *pszDataW = pParent->pszTaskBuf.data();
 		wchar_t *pszLine = pszDataW;
-		wchar_t *pszNewLine = wcschr(pszLine, L'\n');
-		//const UINT nStartID = 1000;
-		//UINT nLastID = 0;
-		//LPCWSTR pszLines[MAX_CONSOLE_COUNT];
-
+		
 		while (*pszLine && (nCount < MAX_CONSOLE_COUNT))
 		{
+			pszLine = const_cast<wchar_t*>(SkipNonPrintable(pszLine));
+			wchar_t* pszNewLine = wcschr(pszLine, L'\n');
 			if (pszNewLine)
 			{
 				*pszNewLine = 0;
 				if ((pszNewLine > pszDataW) && (*(pszNewLine-1) == L'\r'))
 					*(pszNewLine-1) = 0;
 			}
-
-			while (*pszLine == L' ') pszLine++;
 
 			if (*pszLine)
 			{
@@ -1220,29 +1213,22 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 				else
 					itm.szShort[0] = 0;
 
-				// Обработать возможные "&" в строке запуска, чтобы они в меню видны были
-				//itm.pszTaskBuf = lstrmerge(itm.szShort, pszLine);
+				// Escape possible "&" in the command line, let them visible in the menu
 				const size_t cchItemMax = _tcslen(itm.szShort) + (2 * _tcslen(pszLine)) + 1;
-				itm.pszTaskBuf = (wchar_t*)malloc(cchItemMax*sizeof(*itm.pszTaskBuf));
-				_wcscpy_c(itm.pszTaskBuf, cchItemMax, itm.szShort);
-				CmdTaskPopupItem::SetMenuName(itm.pszTaskBuf, cchItemMax, pszLine, true);
+				if (itm.pszTaskBuf.GetBuffer(cchItemMax))
+				{
+					itm.pszTaskBuf.Set(itm.szShort);
+					CmdTaskPopupItem::SetMenuName(itm.pszTaskBuf.data(), cchItemMax, pszLine, true);
 
-				InsertMenu(hMenu, -1, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.pszTaskBuf);
-				m_CmdTaskPopup.push_back(itm);
+					InsertMenu(hMenu, -1, MF_BYPOSITION | MF_ENABLED | MF_STRING, itm.nCmd, itm.pszTaskBuf.c_str());
+					m_CmdTaskPopup.push_back(itm);
 
-				nCount++;
+					nCount++;
+				}
 			}
 
 			if (!pszNewLine) break;
-
-			pszLine = pszNewLine+1;
-
-			if (!*pszLine) break;
-
-			while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-				pszLine++; // пропустить все переводы строк
-
-			pszNewLine = wcschr(pszLine, L'\n');
+			pszLine = pszNewLine + 1;
 		}
 	}
 
@@ -1355,73 +1341,11 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 		if (mb_CmdShowTaskItems && p && (p->ItemType == CmdTaskPopupItem::eTaskPopup) && !p->bPopupInitialized)
 		{
 			p->bPopupInitialized = TRUE;
-			const CommandTasks* pGrp = (const CommandTasks*)p->pGrp;
-
-			//CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
-
-			//itm.Reset(CmdTaskPopupItem::eTask, ++mn_CmdLastID, L"Run all commands");
-			//itm.pGrp = pGrp;
-
-			//int nCount = 0;
-			//int nMenuHotkeyMax = _tcslen(sMenuHotkey);
+			const CommandTasks* pGrp = static_cast<const CommandTasks*>(p->pGrp);
 
 			if (pGrp && pGrp->pszCommands && *pGrp->pszCommands)
 			{
 				int nCount = FillTaskPopup(hMenu, p);
-
-				//p->pszTaskBuf = lstrdup(pGrp->pszCommands);
-				//wchar_t *pszDataW = p->pszTaskBuf;
-				//wchar_t *pszLine = pszDataW;
-				//wchar_t *pszNewLine = wcschr(pszLine, L'\n');
-				////const UINT nStartID = 1000;
-				////UINT nLastID = 0;
-				////LPCWSTR pszLines[MAX_CONSOLE_COUNT];
-
-				//while (*pszLine && (nCount < MAX_CONSOLE_COUNT))
-				//{
-				//	if (pszNewLine)
-				//	{
-				//		*pszNewLine = 0;
-				//		if ((pszNewLine > pszDataW) && (*(pszNewLine-1) == L'\r'))
-				//			*(pszNewLine-1) = 0;
-				//	}
-
-				//	while (*pszLine == L' ') pszLine++;
-
-				//	if (*pszLine)
-				//	{
-				//		itm.Reset(CmdTaskPopupItem::eTaskCmd, ++mn_CmdLastID);
-				//		itm.pGrp = pGrp;
-				//		itm.pszCmd = pszLine;
-				//		if (nCount <= nMenuHotkeyMax)
-				//			swprintf_c(itm.szShort, L"&%c: ", sMenuHotkey[nCount]);
-				//		else
-				//			itm.szShort[0] = 0;
-
-				//		// Обработать возможные "&" в строке запуска, чтобы они в меню видны были
-				//		//itm.pszTaskBuf = lstrmerge(itm.szShort, pszLine);
-				//		INT_PTR cchItemMax = _tcslen(itm.szShort) + 2*_tcslen(pszLine) + 1;
-				//		itm.pszTaskBuf = (wchar_t*)malloc(cchItemMax*sizeof(*itm.pszTaskBuf));
-				//		_wcscpy_c(itm.pszTaskBuf, cchItemMax, itm.szShort);
-				//		CmdTaskPopupItem::SetMenuName(itm.pszTaskBuf, cchItemMax, pszLine, true);
-
-				//		InsertMenu(hMenu, -1, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.pszTaskBuf);
-				//		m_CmdTaskPopup.push_back(itm);
-
-				//		nCount++;
-				//	}
-
-				//	if (!pszNewLine) break;
-
-				//	pszLine = pszNewLine+1;
-
-				//	if (!*pszLine) break;
-
-				//	while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-				//		pszLine++; // пропустить все переводы строк
-
-				//	pszNewLine = wcschr(pszLine, L'\n');
-				//}
 
 				if (nCount > 1)
 				{

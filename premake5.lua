@@ -914,6 +914,7 @@ project "Tests"
   removefiles (conemu_remove)
   removefiles {
     "src/ConEmu/ConEmuApp.*",
+    "src/UnitTests/test_*/*.cpp",
   }
 
   vpaths {

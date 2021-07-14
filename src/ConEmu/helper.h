@@ -40,7 +40,7 @@ void initMainThread();
 
 const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path);
 LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
-wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
+CEStr MakeStraightSlashPath(LPCWSTR asWinPath);
 bool FixDirEndSlash(wchar_t* rsPath);
 
 bool isKey(DWORD wp,DWORD vk);

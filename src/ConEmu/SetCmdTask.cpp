@@ -181,7 +181,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 				}
 
 				SafeFree(pArgs->pszStartupDir);
-				pArgs->pszStartupDir = expanded ? expanded.Detach() : lstrdup(szArg);
+				pArgs->pszStartupDir = expanded ? expanded.Detach() : lstrdup(szArg).Detach();
 			}
 		}
 		else if (szArg.IsSwitch(L"-icon"))
@@ -199,7 +199,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 				}
 
 				SafeFree(pArgs->pszIconFile);
-				pArgs->pszIconFile = expanded ? expanded.Detach() : lstrdup(szArg);
+				pArgs->pszIconFile = expanded ? expanded.Detach() : lstrdup(szArg).Detach();
 			}
 		}
 		else if (szArg.OneOfSwitches(L"-single", L"-reuse"))
@@ -216,12 +216,12 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 			// Turn on quake mode in starting console?
 			// Disallowed if current window is already in Quake mode.
 			if (!gpSet->isQuakeStyle)
-				lstrmerge(&pArgs->pszAddGuiArg, L"-quake ");
+				CEStr(pArgs->pszAddGuiArg, L"-quake ").Swap(pArgs->pszAddGuiArg);
 		}
 		else if (szArg.IsSwitch(L"-NoQuake"))
 		{
 			// Disable quake in starting console
-			lstrmerge(&pArgs->pszAddGuiArg, L"-NoQuake ");
+			CEStr(pArgs->pszAddGuiArg, L"-NoQuake ").Swap(pArgs->pszAddGuiArg);
 		}
 		else
 		{
@@ -233,9 +233,8 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 	// Errors notification
 	if (pszOk && *pszOk)
 	{
-		wchar_t* pszErr = lstrmerge(L"Unsupported task parameters\r\nTask name: ", pszName, L"\r\nParameters: ", pszOk);
+		const CEStr pszErr(L"Unsupported task parameters\r\nTask name: ", pszName, L"\r\nParameters: ", pszOk);
 		MsgBox(pszErr, MB_ICONSTOP);
-		SafeFree(pszErr);
 	}
 }
 
@@ -407,7 +406,7 @@ bool CommandTasks::SaveCmdTask(SettingsBase* reg, bool isStartup) const
 				nActive = iCmdCount; // 1-based
 			}
 
-			save_items.push_back(lstrdup(pszCmd));
+			save_items.push_back(lstrdup(pszCmd).Detach());
 
 			if (pszEnd)
 				*pszEnd = chSave;
@@ -450,7 +449,7 @@ CEStr CommandTasks::GetFirstCommandForPrompt() const
 		const auto* const pszRaw = gpConEmu->ParseScriptLineOptions(lsData.ms_Val, nullptr, nullptr);
 		if (pszRaw)
 		{
-			args.pszSpecialCmd = lstrdup(pszRaw);
+			args.pszSpecialCmd = lstrdup(pszRaw).Detach();
 			// Parse all -new_console's
 			args.ProcessNewConArg();
 			// Prohibit external requests for credentials

@@ -66,7 +66,7 @@ class CDragDrop :
 		//ITEMIDLIST m_DesktopID;
 		DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
 		HANDLE FileStart(LPCWSTR pszFullName);
-		wchar_t* FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFolder, LPCWSTR asFileName);
+		CEStr FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFolder, LPCWSTR asFileName) const;
 		HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
 		//void EnumDragFormats(IDataObject * pDataObject);
 		void ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError);

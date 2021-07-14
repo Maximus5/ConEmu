@@ -791,7 +791,7 @@ struct STRPTR2
 		uint64_t offset;
 	};
 
-	void   Set(wchar_t* RVAL_REF ptrSrc, int cch = -1);
+	void   Set(wchar_t*&& ptrSrc, int cch = -1);
 	LPBYTE Mangle(LPBYTE ptrDst);
 	LPWSTR Demangle();
 	operator LPCWSTR();

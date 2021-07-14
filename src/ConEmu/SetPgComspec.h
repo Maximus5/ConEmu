@@ -55,7 +55,7 @@ public:
 public:
 	void ReloadAutorun();
 	void RegisterCmdAutorun(bool bEnabled, bool bForced = false);
-	wchar_t* LoadAutorunValue(HKEY hkCmd, bool bClear);
+	CEStr LoadAutorunValue(HKEY hkCmd, bool bClear);
 
 protected:
 	// Members

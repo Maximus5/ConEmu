@@ -94,7 +94,7 @@ BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
 		gpLastSetConTitle = new CEStr(lstrdup(lpConsoleTitle));
 	else
 		gpLastSetConTitle->Set(lpConsoleTitle);
-	CEStr lsDbg(lstrmerge(L"SetConsoleTitleW('", lpConsoleTitle, L"')\n"));
+	CEStr lsDbg(L"SetConsoleTitleW('", lpConsoleTitle, L"')\n");
 	OutputDebugString(lsDbg);
 #endif
 

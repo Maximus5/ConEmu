@@ -105,23 +105,17 @@ bool CEHelpPopup::OpenSettingsWiki(HWND hDlg, WORD nCtrlId)
 	wchar_t szId[20];
 	msprintf(szId, countof(szId), L"#id%i", nCtrlId);
 
-	//if (nCtrlId == tCmdGroupCommands)
-	//{
-	//	// Some controls are processed personally
-	//	lsUrl.Attach(lstrmerge(CEWIKIBASE, L"NewConsole.html", szId));
-	//}
-	//else
 	if (hDlg == ghOpWnd)
 	{
-		lsUrl.Attach(lstrmerge(CEWIKIBASE, L"Settings.html", szId));
+		lsUrl = CEStr(CEWIKIBASE, L"Settings.html", szId);
 	}
 	else if (hDlg == FastConfig::ghFastCfg)
 	{
-		lsUrl.Attach(lstrmerge(CEWIKIBASE, L"SettingsFast.html", szId));
+		lsUrl = CEStr(CEWIKIBASE, L"SettingsFast.html", szId);
 	}
 	else if (gpSetCls->GetActivePageWiki(lsUrl))
 	{
-		lstrmerge(&lsUrl.ms_Val, szId);
+		lsUrl.Append(szId);
 	}
 
 	if (lsUrl.IsEmpty())

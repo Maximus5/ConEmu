@@ -35,15 +35,15 @@ struct CESERVER_REQ_GUIMACRO;
 namespace ConEmuMacro
 {
 	// Общая функция, для обработки любого известного макроса
-	LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false, CESERVER_REQ_GUIMACRO* Opt = nullptr);
+	CEStr ExecuteMacro(CEStr&& macro, CRealConsole* apRCon, bool abFromPlugin = false, CESERVER_REQ_GUIMACRO* Opt = nullptr);
 	// Конвертация из "старого" в "новый" формат
 	// Старые макросы хранились как "Verbatim" но без префикса
-	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
+	CEStr ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
 	// Some functions must be executed in main thread
 	// but they may be called from console
 	LRESULT ExecuteMacroSync(WPARAM wParam, LPARAM lParam);
 	// Helper to concatenate macros.
 	// They must be ‘concatenatable’, example: Print("abc"); Print("Qqq")
 	// But following WILL NOT work: Print: Abd qqq
-	LPCWSTR ConcatMacro(LPWSTR& rsMacroList, LPCWSTR asAddMacro);
+	LPCWSTR ConcatMacro(CEStr& rsMacroList, LPCWSTR asAddMacro);
 };

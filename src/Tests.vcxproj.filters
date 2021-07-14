@@ -1256,9 +1256,6 @@
     <ClCompile Include="UnitTests\main_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
-    <ClCompile Include="UnitTests\test_crlf\crlf_test.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
     <ClCompile Include="UnitTests\test_mock_file.cpp">
       <Filter>mocks</Filter>
     </ClCompile>

@@ -33,8 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct FindTextOptions
 {
-	size_t   cchTextMax;
-	wchar_t* pszText;
+	CEStr    text;
 	bool     bMatchCase;
 	bool     bMatchWholeWords;
 	bool     bFreezeConsole;

@@ -300,15 +300,13 @@ void CDefTermHk::DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= nullptr
 		return;
 	}
 
-	LPCWSTR pszReady = asMessage;
-	// ReSharper disable once CppJoinDeclarationAndAssignment
+	
 	CEStr lsBuf;
 	if (asLabel && *asLabel)
 	{
-		lsBuf = lstrmerge(asLabel, asMessage);
-		if (lsBuf.ms_Val)
-			pszReady = lsBuf.ms_Val;
+		lsBuf = CEStr(asLabel, asMessage);
 	}
+	const wchar_t* pszReady = lsBuf.IsEmpty() ? asMessage : lsBuf.c_str();
 
 	gpDefTerm->LogHookingStatus(GetCurrentProcessId(), pszReady);
 }
@@ -707,7 +705,7 @@ int CDefTermHk::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwM
 	{
 		wchar_t szInfo[64];
 		msprintf(szInfo, countof(szInfo), L", ErrCode=x%X(%i)", dwError, static_cast<int>(dwError));
-		const CEStr lsMsg = lstrmerge(asLabel, szInfo);
+		const CEStr lsMsg(asLabel, szInfo);
 		LogHookingStatus(GetCurrentProcessId(), lsMsg);
 	}
 	else

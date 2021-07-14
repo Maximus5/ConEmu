@@ -497,7 +497,7 @@ void CAltNumpad::DumpStatus()
 			wchar_t wszChars[3] = L"", szStatus[80];
 			ucs32 wc32 = GetChars(wszChars);
 			swprintf_c(szStatus, L"Alt+Num: `%s` (%Xh/%u)", wszChars, wc32, wc32);
-			lsStatus = lstrmerge(szStatus,
+			lsStatus = CEStr(szStatus,
 				CLngRc::getRsrc(
 					mb_External ? lng_AltNumberExt/*" - <Enter> to paste, <Esc> to cancel"*/
 					: (mn_NumberBase == 16) ? lng_AltNumberStdUCS/*" - release <Alt> to paste UNICODE code point"*/

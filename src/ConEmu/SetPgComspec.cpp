@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "OptionsClass.h"
 #include "SetPgComspec.h"
-#include "SetPgIntegr.h"
 #include "VConGroup.h"
 
 CSetPgComspec::CSetPgComspec()
@@ -82,7 +81,7 @@ INT_PTR CSetPgComspec::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 void CSetPgComspec::ReloadAutorun()
 {
-	wchar_t *pszCmd = nullptr;
+	CEStr pszCmd;
 
 	BOOL bForceNewWnd = isChecked(mh_Dlg, cbCmdAutorunNewWnd);
 
@@ -99,16 +98,15 @@ void CSetPgComspec::ReloadAutorun()
 
 	SetDlgItemText(mh_Dlg, tCmdAutoAttach, pszCmd ? pszCmd : L"");
 	checkDlgButton(mh_Dlg, cbCmdAutorunNewWnd, bForceNewWnd);
-
-	SafeFree(pszCmd);
 }
 
 // Load current value of "HKCU\Software\Microsoft\Command Processor" : "AutoRun"
 // (bClear==true) - remove from it our "... Cmd_Autorun.cmd ..." part
-wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
+CEStr CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 {
-	size_t cchCmdMax = 65535;
-	wchar_t *pszCmd = (wchar_t*)malloc(cchCmdMax*sizeof(*pszCmd));
+	const size_t cchCmdMax = 65535;
+	CEStr result;
+	wchar_t *pszCmd = result.GetBuffer(cchCmdMax);
 	if (!pszCmd)
 	{
 		_ASSERTE(pszCmd!=nullptr);
@@ -119,7 +117,7 @@ wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 	//HKEY hkCmd = nullptr;
 	//if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkCmd))
 
-	DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
+	DWORD cbMax = (cchCmdMax - 2) * sizeof(*pszCmd);
 	if (0 == RegQueryValueEx(hkCmd, L"AutoRun", nullptr, nullptr, (LPBYTE)pszCmd, &cbMax))
 	{
 		pszCmd[cbMax>>1] = 0;
@@ -167,7 +165,7 @@ wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 						{
 							pszEnd = SkipNonPrintable(pszEnd);
 						}
-						size_t cchLeft = _tcslen(pszEnd)+1;
+						const size_t cchLeft = _tcslen(pszEnd)+1;
 						// move command (from right) to the 'Cmd_Autorun.cmd' place
 						memmove(pszStart, pszEnd, cchLeft*sizeof(wchar_t));
 					}
@@ -181,7 +179,7 @@ wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 		}
 
 		// Skip spaces?
-		LPCWSTR pszChar = SkipNonPrintable(pszCmd);
+		const auto* pszChar = SkipNonPrintable(pszCmd);
 		if (!pszChar || !*pszChar)
 		{
 			*pszCmd = 0;
@@ -195,9 +193,9 @@ wchar_t* CSetPgComspec::LoadAutorunValue(HKEY hkCmd, bool bClear)
 	// Done
 	if (pszCmd && (*pszCmd == 0))
 	{
-		SafeFree(pszCmd);
+		result.Release();
 	}
-	return pszCmd;
+	return result;
 }
 
 void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
@@ -210,10 +208,10 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 		nullptr, 0, KEY_READ | KEY_WRITE, nullptr, &hkCmd, nullptr);
 	if (rc == 0)
 	{
-		wchar_t* pszCur = nullptr;
-		wchar_t* pszBuf = nullptr;
+		CEStr pszCur = nullptr;
+		CEStr pszBuf = nullptr;
 		LPCWSTR  pszSet = L"";
-		wchar_t szCmd[MAX_PATH+128];
+		wchar_t szCmd[MAX_PATH + 128] = L"";
 
 		if (bEnabled)
 		{
@@ -221,7 +219,7 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 			pszSet = pszCur;
 
 			swprintf_c(szCmd, L"\"%s\\Cmd_Autorun.cmd", gpConEmu->ms_ConEmuBaseDir);
-			if (FileExists(szCmd+1))
+			if (FileExists(szCmd + 1))
 			{
 				wcscat_c(szCmd, bForceNewWnd ? L"\" \"/GHWND=NEW\"" : L"\"");
 
@@ -232,14 +230,10 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 				else
 				{
 					// Current "AutoRun" is not empty, need concatenate
-					const size_t cchAll = _tcslen(szCmd) + _tcslen(pszCur) + 5;
-					pszBuf = static_cast<wchar_t*>(malloc(cchAll*sizeof(*pszBuf)));
-					_ASSERTE(pszBuf);
+					pszBuf = CEStr(szCmd, L" & ", pszCur); // conveyer next command indifferent to %errorlevel%
+					_ASSERTE(!pszBuf.IsEmpty());
 					if (pszBuf)
 					{
-						_wcscpy_c(pszBuf, cchAll, szCmd);
-						_wcscat_c(pszBuf, cchAll, L" & "); // conveyer next command indifferent to %errorlevel%
-						_wcscat_c(pszBuf, cchAll, pszCur);
 						// Ok, Set
 						pszSet = pszBuf;
 					}
@@ -258,14 +252,10 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 			pszSet = pszCur ? pszCur : L"";
 		}
 
-		const DWORD cchLen = _tcslen(pszSet)+1;
+		const DWORD cchLen = _tcslen(pszSet) + 1;
 		RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, LPBYTE(pszSet), cchLen*sizeof(wchar_t));
 
 		RegCloseKey(hkCmd);
-
-		if (pszBuf && (pszBuf != pszCur) && (pszBuf != szCmd))
-			free(pszBuf);
-		SafeFree(pszCur);
 	}
 }
 

@@ -61,7 +61,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	HRESULT hr = E_UNEXPECTED;
 	BOOL bShell = FALSE;
 
-	const CEStr lsLog = lstrmerge(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
+	const CEStr lsLog(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
 	CDefTermHk::DefTermLogString(lsLog);
 
 	// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
@@ -104,7 +104,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	}
 	else
 	{
-		wchar_t* pwCommand = lstrdup(pwszCommand);
+		wchar_t* pwCommand = lstrdup(pwszCommand).Detach();
 		const DWORD nCreateFlags = CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE;
 		STARTUPINFO si = {};
 		si.cb = sizeof(si);

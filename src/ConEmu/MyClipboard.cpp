@@ -53,13 +53,12 @@ bool MyOpenClipboard(LPCWSTR asAction)
 	// Open Windows' clipboard
 	while (!(lbRc = OpenClipboard((ghWnd && IsWindow(ghWnd)) ? ghWnd : nullptr)) && (iMaxTries-- > 0))
 	{
-		DWORD dwErr = GetLastError();
+		const DWORD dwErr = GetLastError();
 
 		wchar_t szCode[32]; swprintf_c(szCode, L", Code=%u", dwErr);
-		wchar_t* pszMsg = lstrmerge(L"OpenClipboard failed (", asAction, L")", szCode);
+		CEStr pszMsg(L"OpenClipboard failed (", asAction, L")", szCode);
 		LogString(pszMsg);
-		int iBtn = DisplayLastError(pszMsg, dwErr, MB_RETRYCANCEL|MB_ICONSTOP);
-		SafeFree(pszMsg);
+		const int iBtn = DisplayLastError(pszMsg, dwErr, MB_RETRYCANCEL|MB_ICONSTOP);
 
 		if (iBtn != IDRETRY)
 			return false;
@@ -196,7 +195,7 @@ bool CopyToClipboard(LPCWSTR asText)
 	return bCopied;
 }
 
-wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax)
+CEStr GetClipboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax)
 {
 	if (!rsErrText || cchErrMax < 255)
 	{
@@ -206,7 +205,7 @@ wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax
 
 	HGLOBAL hglb;
 	LPCWSTR lptstr;
-	wchar_t* pszBuf = nullptr;
+	CEStr result;
 
 	if ((hglb = GetClipboardData(CF_UNICODETEXT)) == nullptr)
 	{
@@ -242,10 +241,10 @@ wchar_t* GetCliboardText(DWORD& rnErrCode, wchar_t* rsErrText, INT_PTR cchErrMax
 	}
 	else
 	{
-		pszBuf = lstrdup(lptstr, 1); // Reserve memory for space-termination
-		Assert(pszBuf!=nullptr);
+		result = lstrdup(lptstr, 1); // Reserve memory for space-termination
+		Assert(result.c_str() != nullptr);
 		GlobalUnlock(hglb);
 	}
 
-	return pszBuf;
+	return result;
 }

@@ -66,7 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
-#include "UpdateSet.h"
+#include "Update.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
@@ -1002,7 +1002,7 @@ void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, App
 } // rCursorH ... cbInactiveCursorIgnoreSize
 
 // Service function for GuiMacro::SetOption
-wchar_t* CSetDlgButtons::CheckButtonMacro(WORD CB, BYTE uCheck)
+CEStr CSetDlgButtons::CheckButtonMacro(WORD CB, BYTE uCheck)
 {
 	if (uCheck > BST_INDETERMINATE)
 	{
@@ -1463,46 +1463,39 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (nDlgRc == IDC_START)
 	{
-		wchar_t* pszCmd = args.CreateCommandLine(true);
-		if (!pszCmd || !*pszCmd)
+		CEStr pszCmd = args.CreateCommandLine(true);
+		if (pszCmd.IsEmpty())
 		{
 			DisplayLastError(L"Can't compile command line for new tab\nAll fields are empty?", -1);
 		}
 		else
 		{
 			//SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
-			wchar_t* pszFull = GetDlgItemTextPtr(hDlg, tCmdGroupCommands);
-			if (!pszFull || !*pszFull)
+			CEStr pszFull = GetDlgItemTextPtr(hDlg, tCmdGroupCommands);
+			if (pszFull.IsEmpty())
 			{
-				SafeFree(pszFull);
+				pszFull.Release();
 				pszFull = pszCmd;
 			}
 			else
 			{
-				size_t cchLen = _tcslen(pszFull);
-				size_t cchMax = cchLen + 7 + _tcslen(pszCmd);
-				pszFull = (wchar_t*)realloc(pszFull, cchMax*sizeof(*pszFull));
+				const ssize_t cchLen = pszFull.GetLen();
+				pszFull.GetBuffer(pszFull.GetLen() + 7 + pszCmd.GetLen());
 
 				int nRN = 0;
-				if (cchLen >= 2)
+				if (cchLen >= 2 && pszFull[cchLen - 2] == L'\r' && pszFull[cchLen - 1] == L'\n')
 				{
-					if (pszFull[cchLen-2] == L'\r' && pszFull[cchLen-1] == L'\n')
+					++nRN;
+					if (cchLen >= 4 && pszFull[cchLen - 4] == L'\r' && pszFull[cchLen - 3] == L'\n')
 					{
-						nRN++;
-						if (cchLen >= 4)
-						{
-							if (pszFull[cchLen-4] == L'\r' && pszFull[cchLen-3] == L'\n')
-							{
-								nRN++;
-							}
-						}
+						++nRN;
 					}
 				}
 
 				if (nRN < 2)
-					_wcscat_c(pszFull, cchMax, nRN ? L"\r\n" : L"\r\n\r\n");
+					pszFull.Append(nRN ? L"\r\n" : L"\r\n\r\n");
 
-				_wcscat_c(pszFull, cchMax, pszCmd);
+				pszFull.Append(pszCmd);
 			}
 
 			if (pszFull)
@@ -1518,9 +1511,7 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 			}
 			if (pszCmd == pszFull)
 				pszCmd = nullptr;
-			SafeFree(pszFull);
 		}
-		SafeFree(pszCmd);
 	}
 } // cbCmdGroupApp
 
@@ -1599,11 +1590,10 @@ void CSetDlgButtons::OnBtn_CmdTasksActive(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksActive);
 
-	wchar_t* pszTasks = CVConGroup::GetTasks(); // вернуть все открытые таски
+	const CEStr pszTasks = CVConGroup::GetTasks(); // вернуть все открытые таски
 	if (pszTasks)
 	{
-		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszTasks);
-		SafeFree(pszTasks);
+		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(pszTasks.c_str()));
 	}
 } // cbCmdTasksActive
 
@@ -1879,7 +1869,7 @@ void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUnicodeRangesApply);
 
-	wchar_t* pszNameAndRange = GetDlgItemTextPtr(hDlg, tUnicodeRanges);
+	CEStr pszNameAndRange = GetDlgItemTextPtr(hDlg, tUnicodeRanges);
 	LPCWSTR pszRanges = pszNameAndRange ? pszNameAndRange : L"";
 	// Strip possible descriptions from predefined subsets
 	LPCWSTR pszColon = wcschr(pszRanges, L':');
@@ -1889,7 +1879,6 @@ void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
 		++pszRanges;
 	// Now parse text ranges
 	gpSet->ParseCharRanges(pszRanges, gpSet->mpc_CharAltFontRanges);
-	SafeFree(pszNameAndRange);
 
 	if (gpSet->isFixFarBorders)
 	{
@@ -2066,10 +2055,9 @@ void CSetDlgButtons::OnBtn_ComspecExplicit(HWND hDlg, WORD CB, BYTE uCheck)
 //cbComspecTest
 void CSetDlgButtons::OnBtn_ComspecTest(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	wchar_t* psz = GetComspec(&gpSet->ComSpec);
+	CEStr psz = GetComspec(&gpSet->ComSpec);
 
 	MsgBox(psz ? psz : L"<nullptr>", MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd);
-	SafeFree(psz);
 
 } // cbComspecTest
 
@@ -4243,13 +4231,13 @@ void CSetDlgButtons::OnBtn_UpdateInetToolCmd(HWND hDlg, WORD CB, BYTE uCheck)
 	if (GetOpenFileName(&ofn))
 	{
 		CEStr lsCmd;
-		LPCWSTR pszName = PointToName(szInetExe);
+		const wchar_t* pszName = PointToName(szInetExe);
 		if (lstrcmpi(pszName, L"wget.exe") == 0)
-			lsCmd = lstrmerge(L"\"", szInetExe, L"\" %1 -O %2");
+			lsCmd = CEStr(L"\"", szInetExe, L"\" %1 -O %2");
 		else if (lstrcmpi(pszName, L"curl.exe") == 0)
-			lsCmd = lstrmerge(L"\"", szInetExe, L"\" -L %1 -o %2");
+			lsCmd = CEStr(L"\"", szInetExe, L"\" -L %1 -o %2");
 		else
-			lsCmd = lstrmerge(L"\"", szInetExe, L"\" %1 %2");
+			lsCmd = CEStr(L"\"", szInetExe, L"\" %1 %2");
 		SetDlgItemText(hDlg, tUpdateInetTool, lsCmd.ms_Val);
 	}
 } // cbUpdateInetToolPath
@@ -4493,13 +4481,13 @@ void CSetDlgButtons::OnBtn_GotoEditorCmd(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (GetSaveFileName(&ofn))
 	{
-		wchar_t *pszBuf = MergeCmdLine(szPath, pszTemp);
+		CEStr pszBuf = MergeCmdLine(szPath, pszTemp);
 		if (pszBuf)
 		{
 			SetDlgItemText(hDlg, lbGotoEditorCmd, pszBuf);
 
 			SafeFree(gpSet->sFarGotoEditor);
-			gpSet->sFarGotoEditor = pszBuf;
+			gpSet->sFarGotoEditor = pszBuf.Detach();
 		}
 	}
 } // bGotoEditorCmd

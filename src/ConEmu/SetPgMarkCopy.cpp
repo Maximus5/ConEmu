@@ -51,9 +51,9 @@ CSetPgMarkCopy::~CSetPgMarkCopy()
 LRESULT CSetPgMarkCopy::OnInitDialog(HWND hDlg, bool abInitial)
 {
 	checkDlgButton(hDlg, cbCTSIntelligent, gpSet->isCTSIntelligent);
-	wchar_t* pszExcept = gpSet->GetIntelligentExceptions();
+	CEStr pszExcept = gpSet->GetIntelligentExceptions();
 	SetDlgItemText(hDlg, tCTSIntelligentExceptions, pszExcept ? pszExcept : L"");
-	SafeFree(pszExcept);
+	pszExcept.Release();
 
 	checkDlgButton(hDlg, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
 	checkDlgButton(hDlg, cbCTSResetOnRelease, (gpSet->isCTSResetOnRelease && gpSet->isCTSAutoCopy));
@@ -232,9 +232,8 @@ LRESULT CSetPgMarkCopy::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	case tCTSIntelligentExceptions:
 		// *** Console text selections - intelligent exclusions ***
 		{
-			wchar_t* pszApps = GetDlgItemTextPtr(hDlg, tCTSIntelligentExceptions);
+			const CEStr pszApps = GetDlgItemTextPtr(hDlg, tCTSIntelligentExceptions);
 			gpSet->SetIntelligentExceptions(pszApps);
-			SafeFree(pszApps);
 		}
 		break;
 

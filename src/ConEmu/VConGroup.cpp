@@ -1560,7 +1560,7 @@ bool CVConGroup::isFar(bool abPluginRequired/*=false*/)
 
 // Если ли фар где-то?
 // Return "1-based"(!) value. 1 - Far Panels (or console), 2,3,... - Far Editor/Viewer windows
-int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asName/*=nullptr*/, CVConGuard* rpVCon/*=nullptr*/)
+int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, const wchar_t* asName/*=nullptr*/, CVConGuard* rpVCon/*=nullptr*/)
 {
 	int iFound = 0;
 	bool lbLocked = false;
@@ -1661,7 +1661,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 						if (asName && *asName)
 						{
 							// Note. Для панелей - тут пустая строка
-							LPCWSTR tabName = tab->Name.Ptr();
+							const wchar_t* tabName = tab->Name.Ptr();
 							if (lstrcmpi(tabName, asName) == 0)
 							{
 								iFound = (j+1);
@@ -3585,7 +3585,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		impl.pArgs->BackgroundTab = pStartStop->bRunInBackgroundTab ? crb_On : crb_Undefined;
 		impl.pArgs->RunAsAdministrator = pStartStop->bUserIsAdmin ? crb_On : crb_Undefined;
 		_ASSERTE(pStartStop->sCmdLine[0]!=0);
-		impl.pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
+		impl.pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine).Detach();
 
 		if (gpConEmu->isIconic())
 		{
@@ -4268,12 +4268,12 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx& args, bool abAllowScript
 		}
 
 		_ASSERTE(args.pszSpecialCmd == nullptr);
-		args.pszSpecialCmd = lstrdup(pszSysCmd);
+		args.pszSpecialCmd = lstrdup(pszSysCmd).Detach();
 
 		if (pszSysDir)
 		{
 			_ASSERTE(args.pszStartupDir==nullptr);
-			args.pszStartupDir = lstrdup(pszSysDir);
+			args.pszStartupDir = lstrdup(pszSysDir).Detach();
 		}
 
 		_ASSERTE(args.pszSpecialCmd && *args.pszSpecialCmd);
@@ -5944,8 +5944,9 @@ void CVConGroup::PopulateSplitPanes(MArray<CVConGuard*>& VCons) const
 	}
 }
 
-wchar_t* CVConGroup::GetTasks()
+CEStr CVConGroup::GetTasks()
 {
+	CEStr result;
 	wchar_t* pszAll = nullptr;
 	wchar_t* pszTask[MAX_CONSOLE_COUNT] = {};
 	size_t nTaskLen[MAX_CONSOLE_COUNT] = {};
@@ -5996,20 +5997,15 @@ wchar_t* CVConGroup::GetTasks()
 		if (VCon->VCon() == gp_VActive)
 			activeTask = t;
 
-		wchar_t* pszCmd = VCon->VCon()->RCon()->CreateCommandLine(true);
+		CEStr pszCmd = VCon->VCon()->RCon()->CreateCommandLine(true);
 		delete VCon;
 		addVCon[i] = nullptr;
 
-		if (!pszCmd)
+		if (pszCmd.IsEmpty())
 			continue;
-		if (!*pszCmd)
-		{
-			SafeFree(pszCmd);
-			continue;
-		}
 
-		size_t nLen = nTaskLen[t] = _tcslen(pszCmd);
-		pszTask[t++] = pszCmd;
+		const size_t nLen = nTaskLen[t] = _tcslen(pszCmd);
+		pszTask[t++] = pszCmd.Detach();
 		nAllLen += nLen + 6; // + "\r\n\r\n>*"
 	}
 
@@ -6020,7 +6016,7 @@ wchar_t* CVConGroup::GetTasks()
 
 	// Allocate memory for result Task
 	nAllLen += 3;
-	pszAll = (wchar_t*)malloc(nAllLen*sizeof(*pszAll));
+	pszAll = result.GetBuffer(nAllLen);
 	if (!pszAll)
 		return nullptr;
 	wchar_t* psz = pszAll;
@@ -6054,5 +6050,5 @@ wchar_t* CVConGroup::GetTasks()
 
 	_ASSERTE((psz > pszAll) && ((size_t)(psz - pszAll) < nAllLen));
 	*psz = 0; // ASCIIZ
-	return pszAll;
+	return result;
 }

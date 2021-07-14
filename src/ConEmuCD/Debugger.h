@@ -70,7 +70,7 @@ public:
 	HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = nullptr) const;
 	void AttachConHost(DWORD nConHostPID) const;
 	bool IsDumpMulti() const;
-	wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull) const;
+	void FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull) const;
 	bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpFile, DWORD cchMaxDmpFile) const;
 	void ProcessDebugEvent();
 	void GenerateMiniDumpFromCtrlBreak();

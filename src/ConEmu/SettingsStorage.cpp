@@ -401,7 +401,7 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 
 	CloseHandle(hFile);
 
-	wchar_t* pszDup = lstrdup(regPath);
+	wchar_t* pszDup = CEStr(regPath).Detach();
 	if (!pszDup)
 	{
 		mpsz_IniFile = nullptr;
@@ -637,13 +637,12 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc, CEStrA& str)
 {
 	str.Release();
 	int ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, nullptr, 0, nullptr, nullptr);
-	str = static_cast<char*>(malloc(ucLen));
-	if (!str.ms_Val)
+	if (!str.GetBuffer(ucLen))
 	{
 		_ASSERTE(str.ms_Val!=nullptr);
 		return nullptr;
 	}
-	ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, str.ms_Val, ucLen, nullptr, nullptr);
+	ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, str.data(), ucLen, nullptr, nullptr);
 	if (ucLen <= 0)
 	{
 		_ASSERTE(ucLen > 0);
@@ -679,7 +678,7 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc) const
 	return allocated;
 }
 
-bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
+bool SettingsXML::OpenStorage(unsigned access, CEStr& pszErr)
 {
 	bool bRc = false;
 	bool bNeedReopen = (mp_File == nullptr);
@@ -781,7 +780,7 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 
 	{
 		_ASSERTE(mp_File == nullptr);
-		_ASSERTE(mp_Utf8Data == nullptr);
+		_ASSERTE(mp_Utf8Data.data() == nullptr);
 
 		DWORD cchChars = 0, nErrCode = 0;
 		if (ReadTextFile(pszXmlFile, static_cast<DWORD>(-1), mp_Utf8Data, cchChars, nErrCode) < 0)
@@ -792,7 +791,7 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 		try
 		{
 			mp_File = new document;
-			mp_File->parse<parse_declaration_node|parse_comment_nodes>(mp_Utf8Data);
+			mp_File->parse<parse_declaration_node|parse_comment_nodes>(mp_Utf8Data.data());
 			// <?xml version="1.0" encoding="utf-8"?>
 			node* decl = mp_File->first_node();
 			if (!decl || (decl->type() != node_declaration))
@@ -808,7 +807,7 @@ bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 		catch (rapidxml::parse_error& e)
 		{
 			CEStr lsWhat, lsWhere;
-			pszErr = lstrmerge(
+			pszErr = CEStr(
 				L"Exception in SettingsXML::OpenStorage\r\n",
 				((access & KEY_WRITE) != KEY_WRITE)
 					? L"Failed to load configuration file!\r\n"
@@ -831,7 +830,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));
 
 	bool lbRc = false;
-	wchar_t* pszErr = nullptr;
+	CEStr pszErr = nullptr;
 	wchar_t szName[MAX_PATH];
 	const wchar_t* psz = nullptr;
 	SettingsXML::node* pKey = nullptr;
@@ -858,7 +857,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 		if (!pKey)
 		{
 			const wchar_t szRootError[] = L"XML: Root node not found!";
-			pszErr = lstrmerge(szRootError, m_Storage.File, L"\r\n", regPath);
+			pszErr = CEStr(szRootError, m_Storage.File, L"\r\n", regPath);
 			goto wrap;
 		}
 
@@ -867,7 +866,8 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 			// Получить следующий токен
 			psz = wcschr(regPath, L'\\');
 
-			if (!psz) psz = regPath + _tcslen(regPath);
+			if (!psz)
+				psz = regPath + _tcslen(regPath);
 
 			lstrcpyn(szName, regPath, psz-regPath+1);
 			// Найти в структуре XML
@@ -877,13 +877,13 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 			{
 				if (bAllowCreate)
 				{
-					pszErr = lstrmerge(L"XML: Can't create key <", szName, L">!");
+					pszErr = CEStr(L"XML: Can't create key <", szName, L">!");
 				}
 				else
 				{
 					//swprintf_c(szErr, L"XML: key <%s> not found!", szName);
 					// Don't show error - use default settings
-					SafeFree(pszErr);
+					pszErr.Release();
 				}
 
 				goto wrap;
@@ -908,20 +908,19 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent
 	catch (rapidxml::parse_error& e)
 	{
 		CEStr lsWhat, lsWhere;
-		pszErr = lstrmerge(L"Exception in SettingsXML::OpenKey\r\n", m_Storage.File,
+		pszErr = CEStr(L"Exception in SettingsXML::OpenKey\r\n", m_Storage.File,
 			L"\r\n", regPath, L"\r\n",
 			utf2wcs(e.what(), lsWhat), L"\r\n", utf2wcs(e.where<char>(), lsWhere));
 		lbRc = false;
 	}
 
 wrap:
-	if (!lbRc && (pszErr && *pszErr) && !abSilent)
+	if (!lbRc && !pszErr.IsEmpty() && !abSilent)
 	{
 		// Don't show error message box as a child of ghWnd
 		// otherwise it may be closed unexpectedly on exit
 		MsgBox(pszErr, MB_ICONSTOP, nullptr, nullptr);
 	}
-	SafeFree(pszErr);
 
 	return lbRc;
 }
@@ -1031,7 +1030,7 @@ void SettingsXML::CloseStorage() noexcept
 		}
 	}
 
-	SafeFree(mp_Utf8Data);
+	mp_Utf8Data.Release();
 
 	SafeDelete(mp_File);
 

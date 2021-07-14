@@ -298,27 +298,14 @@ bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin /*= 0*/, 
 	return true;
 }
 
-wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID)
+CEStr GetDlgItemTextPtr(HWND hDlg, WORD nID)
 {
-	wchar_t* pszText = nullptr;
-	size_t cchMax = 0;
-	MyGetDlgItemText(hDlg, nID, cchMax, pszText);
-	return pszText;
+	CEStr result;
+	MyGetDlgItemText(hDlg, nID, result);
+	return result;
 }
 
-template <size_t size>
-int MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size])
-{
-	CEStr szText;
-	size_t cchMax = 0;
-	int nLen = MyGetDlgItemText(hDlg, nID, cchMax, szText.ms_Val);
-	if (lstrcmp(rszText, szText.ms_Val) == 0)
-		return false;
-	lstrcpyn(rszText, szText.ms_Val, size);
-	return true;
-}
-
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, CEStr& rsText)
 {
 	HWND hEdit;
 
@@ -328,35 +315,30 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
 		hEdit = hDlg;
 
 	if (!hEdit)
+	{
+		rsText.Clear();
 		return 0;
+	}
 
-	//
-	int nLen = GetWindowTextLength(hEdit);
+	int nLen = GetWindowTextLengthW(hEdit);
 
 	if (nLen > 0)
 	{
-		if (!pszText || (((UINT)nLen) >= cchMax))
+		if (!rsText.GetBuffer(nLen))
 		{
-			SafeFree(pszText);
-			cchMax = nLen+32;
-			pszText = (wchar_t*)calloc(cchMax,sizeof(*pszText));
-			_ASSERTE(pszText);
+			_ASSERTE(rsText.data() != nullptr)
 		}
-
-
-		if (pszText)
+		else
 		{
-			pszText[0] = 0;
-			GetWindowText(hEdit, pszText, nLen+1);
+			rsText.SetAt(0, 0);
+			GetWindowTextW(hEdit, rsText.data(), rsText.GetMaxCount());
 		}
 	}
 	else
 	{
 		_ASSERTE(nLen == 0);
 		nLen = 0;
-
-		if (pszText)
-			*pszText = 0;
+		rsText.Clear();
 	}
 
 	return nLen;
@@ -445,9 +427,9 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 }
 
 
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= nullptr*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= nullptr*/)
+CEStr SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= nullptr*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= nullptr*/)
 {
-	wchar_t* pszResult = nullptr;
+	CEStr pszResult = nullptr;
 
 	BROWSEINFO bi = {hParent};
 	wchar_t szFolder[MAX_PATH+1] = {0};
@@ -469,23 +451,15 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= nullptr*/, HWND h
 			{
 				CEStr path;
 				if (DupCygwinPath(szFolder, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : nullptr, path))
-					pszResult = path.Detach();
+					pszResult = std::move(path);
 			}
 			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != nullptr))
 			{
-				size_t cchLen = _tcslen(szFolder);
-				pszResult = (wchar_t*)malloc((cchLen+3)*sizeof(*pszResult));
-				if (pszResult)
-				{
-					pszResult[0] = L'"';
-					_wcscpy_c(pszResult+1, cchLen+1, szFolder);
-					pszResult[cchLen+1] = L'"';
-					pszResult[cchLen+2] = 0;
-				}
+				pszResult = CEStr(L"\"", szFolder, L"\"");
 			}
 			else
 			{
-				pszResult = lstrdup(szFolder);
+				pszResult.Set(szFolder);
 			}
 		}
 
@@ -495,21 +469,22 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= nullptr*/, HWND h
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= nullptr*/, LPCWSTR asDefPath /*= nullptr*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= nullptr*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= nullptr*/)
+CEStr SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= nullptr*/, LPCWSTR asDefPath /*= nullptr*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= nullptr*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= nullptr*/)
 {
-	wchar_t* pszResult = nullptr;
+	CEStr pszResult;
 
-	wchar_t temp[MAX_PATH+10] = {};
+	wchar_t temp[MAX_PATH] = {};
 	if (asDefFile)
-		_wcscpy_c(temp+1, countof(temp)-2, asDefFile);
+		_wcscpy_c(temp, countof(temp), asDefFile);
 
-	OPENFILENAME ofn = {sizeof(ofn)};
+	OPENFILENAME ofn{};
+	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hParent;
 	ofn.lpstrFilter = asFilter ? asFilter : L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
 	//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
-	ofn.lpstrFile = temp+1;
+	ofn.lpstrFile = temp;
 	ofn.lpstrInitialDir = asDefPath;
-	ofn.nMaxFile = countof(temp)-10;
+	ofn.nMaxFile = countof(temp);
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|((nFlags & sff_SaveNewFile) ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
@@ -517,34 +492,28 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= nullptr*/, LPCWSTR as
 	if (asDefFile && (asDefFile[0] == L'*' && asDefFile[1] == L'.' && asDefFile[2]))
 		ofn.lpstrDefExt = (asDefFile+2);
 
-	BOOL bRc = (nFlags & sff_SaveNewFile)
+	const BOOL bRc = (nFlags & sff_SaveNewFile)
 		? GetSaveFileName(&ofn)
 		: GetOpenFileName(&ofn);
 
 	if (bRc)
 	{
-		LPCWSTR pszName = temp+1;
-
 		if (nFlags & sff_Cygwin)
 		{
 			CEStr path;
-			if (DupCygwinPath(pszName, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : nullptr, path))
-				pszResult = path.Detach();
+			if (DupCygwinPath(temp, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : nullptr, path))
+				pszResult = std::move(path);
 		}
 		else
 		{
-			if ((nFlags & sff_AutoQuote) && (wcschr(pszName, L' ') != nullptr))
+			if ((nFlags & sff_AutoQuote) && (wcschr(temp, L' ') != nullptr))
 			{
-				temp[0] = L'"';
-				wcscat_c(temp, L"\"");
-				pszName = temp;
+				pszResult = CEStr(L"\"", temp, L"\"");
 			}
 			else
 			{
-				temp[0] = L' ';
+				pszResult.Set(temp);
 			}
-
-			pszResult = lstrdup(pszName);
 		}
 	}
 
@@ -1155,7 +1124,7 @@ HWND FindTopExplorerWindow()
 	return hwndFind;
 }
 
-wchar_t* getFocusedExplorerWindowPath()
+CEStr getFocusedExplorerWindowPath()
 {
 #define FE_CHECK_OUTER_FAIL(statement) \
 	if (!SUCCEEDED(statement)) goto outer_fail;
@@ -1166,7 +1135,7 @@ wchar_t* getFocusedExplorerWindowPath()
 #define FE_RELEASE(hnd) \
 	if (hnd) { hnd->Release(); hnd = nullptr; }
 
-	wchar_t* ret = nullptr;
+	CEStr ret;
 	wchar_t szPath[MAX_PATH] = L"";
 
 	IShellBrowser *psb = nullptr;
@@ -1208,7 +1177,7 @@ wchar_t* getFocusedExplorerWindowPath()
 		if (!SHGetPathFromIDList(pidlFolder, szPath) || !*szPath)
 			goto fail;
 
-		ret = lstrdup(szPath);
+		ret.Set(szPath);
 
 		CoTaskMemFree(pidlFolder);
 
@@ -1348,7 +1317,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 							if (!args.pszIconFile)
 							{
 								_ASSERTE(args.pszSpecialCmd == nullptr);
-								args.pszSpecialCmd = lstrdup(pszTemp);
+								args.pszSpecialCmd = lstrdup(pszTemp).Detach();
 								args.ProcessNewConArg();
 							}
 							if (args.pszIconFile)
@@ -1792,26 +1761,26 @@ HRESULT UpdateAppUserModelID()
 	// Config type/file + [.[No]Quake]
 	if (gpSetCls->isResetBasicSettings)
 	{
-		lstrmerge(&lsTempBuf.ms_Val, L"::Basic", szSuffix);
+		lsTempBuf.Append(L"::Basic", szSuffix);
 	}
 	else if (gpConEmu->opt.ForceUseRegistryPrm)
 	{
-		lstrmerge(&lsTempBuf.ms_Val, L"::Registry", szSuffix);
+		lsTempBuf.Append(L"::Registry", szSuffix);
 	}
 	else if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
 	{
-		lstrmerge(&lsTempBuf.ms_Val, L"::", pszConfigFile, szSuffix);
+		lsTempBuf.Append(L"::", pszConfigFile, szSuffix);
 	}
 	else
 	{
-		lstrmerge(&lsTempBuf.ms_Val, L"::Xml", szSuffix);
+		lsTempBuf.Append(L"::Xml", szSuffix);
 	}
 
 	// Named configuration?
 	if (!gpSetCls->isResetBasicSettings
 		&& (pszConfigName && *pszConfigName))
 	{
-		lstrmerge(&lsTempBuf.ms_Val, L"::", pszConfigName);
+		lsTempBuf.Append(L"::", pszConfigName);
 	}
 
 	// Create hash - AppID (will go to mapping)
@@ -2007,7 +1976,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POI
 		}
 
 		swprintf_c(szCodes, L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
-		lstrmerge(&szFull.ms_Val, szCodes);
+		szFull.Append(szCodes);
 	}
 
 	if (nRet == IDRETRY)
@@ -2087,7 +2056,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 			if (HasZoneIdentifier(lsFile, nZone)
 				&& (nZone != 0 /*LocalComputer*/))
 			{
-				lstrmerge(&szZonedFiles.ms_Val, szZonedFiles.ms_Val ? L"\r\n" : nullptr, lsFile.ms_Val);
+				szZonedFiles.Append(szZonedFiles.ms_Val ? L"\r\n" : nullptr, lsFile.ms_Val);
 			}
 		}
 	}
@@ -2168,7 +2137,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 				}
 			}
 
-			lsMsg = lstrmerge(L"Failed to drop ZoneId in file:\r\n", lsFile, L"\r\n\r\n" L"Ignore error and continue?" L"\r\n");
+			lsMsg = CEStr(L"Failed to drop ZoneId in file:\r\n", lsFile, L"\r\n\r\n" L"Ignore error and continue?" L"\r\n");
 			if (DisplayLastError(lsMsg, nErrCode, MB_ICONSTOP|MB_YESNO) != IDYES)
 			{
 				return -1; // Fails to change
@@ -2678,7 +2647,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->isAnsiLog = true;
 		gpSet->isAnsiLogCodes = true;
 		SafeFree(gpSet->pszAnsiLog);
-		gpSet->pszAnsiLog = lstrdup(gpConEmu->opt.AnsiLogPath.GetStr());
+		gpSet->pszAnsiLog = lstrdup(gpConEmu->opt.AnsiLogPath.GetStr()).Detach();
 	}
 
 	DEBUGSTRSTARTUPLOG(L"SettingsLoaded");

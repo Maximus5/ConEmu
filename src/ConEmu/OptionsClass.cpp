@@ -122,6 +122,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FAILED_SELMOD_TIMEOUT 5000
 #define CONTROL_FOUND_TIMEOUT 3000
 
+#define HOTKEY_ID_TAB_NEXT 0x101
+#define HOTKEY_ID_TAB_PREV 0x102
+
 //const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //const BYTE HostkeyVkIds[]   = {VK_LWIN,   VK_APPS,    VK_LCONTROL, VK_RCONTROL, VK_LMENU,   VK_RMENU,   VK_LSHIFT,    VK_RSHIFT};
 //int upToFontHeight=0;
@@ -578,10 +581,10 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 	if (!lstrcmpi(asName, L"FarGotoEditorPath"))
 	{
-		wchar_t* pszNewVal = lstrdup(asValue);
+		wchar_t* pszNewVal = lstrdup(asValue).Detach();
 		if (pszNewVal && *pszNewVal)
 		{
-			wchar_t* pszOld = (wchar_t*)InterlockedExchangePointer((PVOID*)&gpSet->sFarGotoEditor, pszNewVal);
+			wchar_t* pszOld = static_cast<wchar_t*>(InterlockedExchangePointer(reinterpret_cast<PVOID*>(&gpSet->sFarGotoEditor), pszNewVal));
 			SafeFree(pszOld);
 			HWND hHilightPg = GetPage(thi_Hilight);
 			if (hHilightPg)
@@ -699,9 +702,9 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		CEStr szTitle;
 		LPCWSTR pszFastCfgTitle = CLngRc::getRsrc(lng_DlgFastCfg/*"fast configuration"*/);
 		if (pszConfig && *pszConfig)
-			szTitle = lstrmerge(pszDef, L" ", pszFastCfgTitle, L" (", pszConfig, L")");
+			szTitle = CEStr(pszDef, L" ", pszFastCfgTitle, L" (", pszConfig, L")");
 		else
-			szTitle = lstrmerge(pszDef, L" ", pszFastCfgTitle);
+			szTitle = CEStr(pszDef, L" ", pszFastCfgTitle);
 
 		// Run "Fast configuration dialog" and apply some final defaults (if was Reset of new settings)
 		FastConfig::CheckOptionsFast(szTitle, slfFlags);
@@ -910,10 +913,9 @@ LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags, DpiValue* apDpi /*= nu
 void CSettings::SearchForControls()
 {
 	HWND hSearchEdit = GetDlgItem(ghOpWnd, tOptionSearch);
-	wchar_t* pszPart = GetDlgItemTextPtr(hSearchEdit, 0);
-	if (!pszPart || !*pszPart)
+	CEStr pszPart = GetDlgItemTextPtr(hSearchEdit, 0);
+	if (pszPart.IsEmpty())
 	{
-		SafeFree(pszPart);
 		return;
 	}
 
@@ -1222,8 +1224,6 @@ wrap:
 	hLastTab = hCurTab;
 	hLastCtrl = hCtrl;
 
-	SafeFree(pszPart);
-
 	SetCursor(LoadCursor(nullptr,IDC_ARROW));
 }
 
@@ -1317,11 +1317,11 @@ LRESULT CSettings::OnInitDialog()
 
 	CEStr lsCfgAdd;
 	if (ConfigName[0])
-		lsCfgAdd = lstrmerge(L" (", ConfigName, L")");
-	LPCWSTR psStage = (ConEmuVersionStage == CEVS_STABLE) ? L"{Stable}"
+		lsCfgAdd = CEStr(L" (", ConfigName, L")");
+	const wchar_t* psStage = (ConEmuVersionStage == CEVS_STABLE) ? L"{Stable}"
 					: (ConEmuVersionStage == CEVS_PREVIEW) ? L"{Preview}"
 					: L"{Alpha}";
-	CEStr lsDlgTitle(
+	const CEStr lsDlgTitle(
 		CLngRc::getRsrc(lng_DlgSettings/*"Settings"*/),
 		lsCfgAdd,
 		L" ",
@@ -1631,6 +1631,42 @@ void CSettings::SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost /*= false
 		PostMessage(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hItem);
 }
 
+LRESULT CSettings::OnNextPage()
+{
+	HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+	NMTREEVIEW nm = { {hTree, tvSetupCategories, TVN_SELCHANGED} };
+	nm.itemOld.hItem = TreeView_GetSelection(hTree);
+	if (!nm.itemOld.hItem)
+		nm.itemOld.hItem = TreeView_GetRoot(hTree);
+	nm.itemNew.hItem = TreeView_GetNextSibling(hTree, nm.itemOld.hItem);
+	if (!nm.itemNew.hItem)
+		nm.itemNew.hItem = TreeView_GetRoot(hTree);
+	//return OnPage((LPNMHDR)&nm);
+	if (nm.itemNew.hItem)
+	{
+		SelectTreeItem(hTree, nm.itemNew.hItem);
+	}
+	return 0;
+}
+
+LRESULT CSettings::OnPrevPage()
+{
+	HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
+	NMTREEVIEW nm = { {hTree, tvSetupCategories, TVN_SELCHANGED} };
+	nm.itemOld.hItem = TreeView_GetSelection(hTree);
+	if (!nm.itemOld.hItem)
+		nm.itemOld.hItem = TreeView_GetLastVisible(hTree);
+	nm.itemNew.hItem = TreeView_GetPrevSibling(hTree, nm.itemOld.hItem);
+	if (!nm.itemNew.hItem)
+		nm.itemNew.hItem = TreeView_GetRoot(hTree);
+	//return OnPage((LPNMHDR)&nm);
+	if (nm.itemNew.hItem)
+	{
+		SelectTreeItem(hTree, nm.itemNew.hItem);
+	}
+	return 0;
+}
+
 LRESULT CSettings::OnPage(LPNMHDR phdr)
 {
 	if (ms_BalloonErrTip)
@@ -1640,40 +1676,14 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
 	}
 
-	if ((LONG_PTR)phdr == 0x101)
+	if (reinterpret_cast<LONG_PTR>(phdr) == HOTKEY_ID_TAB_NEXT)
 	{
-		// Переключиться на следующий таб
-		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
-		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
-		nm.itemOld.hItem = TreeView_GetSelection(hTree);
-		if (!nm.itemOld.hItem)
-			nm.itemOld.hItem = TreeView_GetRoot(hTree);
-		nm.itemNew.hItem = TreeView_GetNextSibling(hTree, nm.itemOld.hItem);
-		if (!nm.itemNew.hItem)
-			nm.itemNew.hItem = TreeView_GetRoot(hTree);
-		//return OnPage((LPNMHDR)&nm);
-		if (nm.itemNew.hItem)
-		{
-			SelectTreeItem(hTree, nm.itemNew.hItem);
-		}
-		return 0;
+		_ASSERTE(FALSE && "Should not get here");
+		return OnNextPage();
 	}
-	else if ((LONG_PTR)phdr == 0x102)
+	else if (reinterpret_cast<LONG_PTR>(phdr) == HOTKEY_ID_TAB_PREV)
 	{
-		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
-		NMTREEVIEW nm = {{hTree, tvSetupCategories, TVN_SELCHANGED}};
-		nm.itemOld.hItem = TreeView_GetSelection(hTree);
-		if (!nm.itemOld.hItem)
-			nm.itemOld.hItem = TreeView_GetLastVisible(hTree);
-		nm.itemNew.hItem = TreeView_GetPrevSibling(hTree, nm.itemOld.hItem);
-		if (!nm.itemNew.hItem)
-			nm.itemNew.hItem = TreeView_GetRoot(hTree);
-		//return OnPage((LPNMHDR)&nm);
-		if (nm.itemNew.hItem)
-		{
-			SelectTreeItem(hTree, nm.itemNew.hItem);
-		}
-		return 0;
+		_ASSERTE(FALSE && "Should not get here");
 	}
 
 
@@ -1919,11 +1929,12 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 
 void CSettings::ExportSettings()
 {
-	wchar_t *pszDefPath = lstrdup(gpConEmu->ConEmuXml());
-	wchar_t *pszSlash = pszDefPath ? wcsrchr(pszDefPath, L'\\') : nullptr;
-	if (pszSlash) *(pszSlash+1) = 0;
+	const CEStr pszDefPath(gpConEmu->ConEmuXml());
+	wchar_t *pszSlash = pszDefPath ? wcsrchr(pszDefPath.data(), L'\\') : nullptr;
+	if (pszSlash)
+		*(pszSlash+1) = 0;
 
-	wchar_t *pszFile = SelectFile(L"Export settings", L"*.xml", pszDefPath, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_SaveNewFile);
+	const CEStr pszFile = SelectFile(L"Export settings", L"*.xml", pszDefPath, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_SaveNewFile);
 	if (pszFile)
 	{
 		SetCursor(LoadCursor(nullptr,IDC_WAIT));
@@ -1931,18 +1942,17 @@ void CSettings::ExportSettings()
 
 		// Export using ".Vanilla" configuration!
 		wchar_t* pszSaveName = nullptr;
-		if (ConfigName && *ConfigName)
+		if (ConfigName[0])
 		{
-			pszSaveName = lstrdup(ConfigName);
+			pszSaveName = lstrdup(ConfigName).Detach();
 			SetConfigName(L"");
 		}
 
 		SettingsStorage XmlStorage = {StorageType::XML};
 		XmlStorage.File = pszFile;
-		bool bOld = isResetBasicSettings; isResetBasicSettings = false;
+		const bool bOld = isResetBasicSettings; isResetBasicSettings = false;
 		gpSet->SaveSettings(FALSE, &XmlStorage);
 		isResetBasicSettings = bOld;
-		SafeFree(pszFile);
 
 		// Restore configuration name if any
 		if (pszSaveName)
@@ -1954,19 +1964,17 @@ void CSettings::ExportSettings()
 		SetCursor(LoadCursor(nullptr,IDC_ARROW));
 		gpConEmu->Taskbar_SetProgressState(TBPF_NOPROGRESS);
 	}
-
-	SafeFree(pszDefPath);
 }
 
 void CSettings::ImportSettings()
 {
 	// #SETTINGS Support INI files?
-	wchar_t *pszFile = SelectFile(L"Import settings", L"*.xml", nullptr, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_Default);
+	const CEStr pszFile = SelectFile(L"Import settings", L"*.xml", nullptr, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_Default);
 	if (pszFile)
 	{
 		// Import using ".Vanilla" configuration!
-		wchar_t* pszSaveName = nullptr;
-		if (ConfigName && *ConfigName)
+		CEStr pszSaveName;
+		if (ConfigName[0])
 		{
 			pszSaveName = lstrdup(ConfigName);
 			SetConfigName(L"");
@@ -1982,16 +1990,13 @@ void CSettings::ImportSettings()
 		if (pszSaveName)
 		{
 			SetConfigName(pszSaveName);
-			SafeFree(pszSaveName);
 		}
-
-		SafeFree(pszFile);
 	}
 }
 
 INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	LPNMTTDISPINFO lpnmtdi = (LPNMTTDISPINFO)lParam;
+	LPNMTTDISPINFO lpnmtdi = reinterpret_cast<LPNMTTDISPINFOW>(lParam);
 
 	if (!lpnmtdi)
 	{
@@ -2008,7 +2013,7 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 	{
 		if (gpSet->isShowHelpTooltips)
 		{
-			CEHelpPopup::GetItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, szHint, countof(szHint));
+			CEHelpPopup::GetItemHelp(0, reinterpret_cast<HWND>(lpnmtdi->hdr.idFrom), szHint, countof(szHint));
 
 			lpnmtdi->lpszText = szHint;
 		}
@@ -2043,8 +2048,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		case WM_INITDIALOG:
 			gpConEmu->OnOurDialogOpened();
 			ghOpWnd = hWnd2;
-			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			SendMessage(hWnd2, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 
 			#ifdef _DEBUG
 			//if (IsDebuggerPresent())
@@ -2052,7 +2057,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 			#endif
 
-			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
+			SetClassLongPtr(hWnd2, GCLP_HICON, reinterpret_cast<LONG_PTR>(hClassIcon));
 			gpSetCls->OnInitDialog();
 			break;
 
@@ -2060,7 +2065,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			if (LOWORD(wParam) == ID_ALWAYSONTOP)
 			{
-				BOOL lbOnTopNow = GetWindowLong(ghOpWnd, GWL_EXSTYLE) & WS_EX_TOPMOST;
+				const bool lbOnTopNow = GetWindowLong(ghOpWnd, GWL_EXSTYLE) & WS_EX_TOPMOST;
 				SetWindowPos(ghOpWnd, lbOnTopNow ? HWND_NOTOPMOST : HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
 				CheckMenuItem(GetSystemMenu(ghOpWnd, FALSE), ID_ALWAYSONTOP, MF_BYCOMMAND |
 				              (lbOnTopNow ? MF_UNCHECKED : MF_CHECKED));
@@ -2071,10 +2076,10 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			break;
 
 		case WM_CTLCOLORSTATIC:
-			return gpSetCls->OnCtlColorStatic(hWnd2, (HDC)wParam, (HWND)lParam, GetDlgCtrlID((HWND)lParam));
+			return gpSetCls->OnCtlColorStatic(hWnd2, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(lParam), LOWORD(GetDlgCtrlID(reinterpret_cast<HWND>(lParam))));
 
 		case WM_SETCURSOR:
-			if (CDlgItemHelper::isHyperlinkCtrl(GetDlgCtrlID((HWND)wParam)))
+			if (CDlgItemHelper::isHyperlinkCtrl(LOWORD(GetDlgCtrlID(reinterpret_cast<HWND>(wParam)))))
 			{
 				SetCursor(LoadCursor(nullptr, IDC_HAND));
 				SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, TRUE);
@@ -2131,9 +2136,10 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 								return 0;
 							}
 
-							bool isShiftPressed = isPressed(VK_SHIFT);
+							const bool isShiftPressed = isPressed(VK_SHIFT);
 
 							// были изменения в полях размера/положения?
+							// ReSharper disable once CppLocalVariableMayBeConst
 							HWND hSizePosPg = gpSetCls->GetPage(thi_SizePos);
 							if (hSizePosPg
 								&& IsWindowEnabled(GetDlgItem(hSizePosPg, cbApplyPos)))
@@ -2207,7 +2213,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 		case WM_NOTIFY:
 		{
-			LPNMHDR phdr = (LPNMHDR)lParam;
+			// ReSharper disable once CppLocalVariableMayBeConst
+			LPNMHDR phdr = reinterpret_cast<LPNMHDR>(lParam);
 
 			if (phdr->code == TTN_GETDISPINFO)
 			{
@@ -2231,15 +2238,13 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		} break;
 		case WM_HOTKEY:
 
-			if (wParam == 0x101)
+			if (wParam == HOTKEY_ID_TAB_NEXT)
 			{
-				// Переключиться на следующий таб
-				gpSetCls->OnPage((LPNMHDR)wParam);
+				gpSetCls->OnNextPage();
 			}
-			else if (wParam == 0x102)
+			else if (wParam == HOTKEY_ID_TAB_PREV)
 			{
-				// Переключиться на предыдущий таб
-				gpSetCls->OnPage((LPNMHDR)wParam);
+				gpSetCls->OnPrevPage();
 			}
 
 			break;
@@ -2259,10 +2264,10 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			if ((wParam == 0) && (lParam != 0))
 			{
 				// Open wiki page
-				HELPINFO* hi = (HELPINFO*)lParam;
+				HELPINFO* hi = reinterpret_cast<HELPINFO*>(lParam);
 				if (hi->cbSize >= sizeof(HELPINFO))
 				{
-					CEHelpPopup::OpenSettingsWiki(hWnd2, hi->iCtrlId);
+					CEHelpPopup::OpenSettingsWiki(hWnd2, LOWORD(hi->iCtrlId));
 				}
 			}
 			return TRUE;
@@ -2292,14 +2297,14 @@ INT_PTR CSettings::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId
 	{
 		_ASSERTE(hCtrl!=nullptr);
 		// Check appropriate flags
-		DWORD nStyle = GetWindowLong(hCtrl, GWL_STYLE);
+		const DWORD nStyle = GetWindowLong(hCtrl, GWL_STYLE);
 		if (!(nStyle & SS_NOTIFY))
 			SetWindowLong(hCtrl, GWL_STYLE, nStyle|SS_NOTIFY);
 		// And the colors
 		SetTextColor(hdc, GetSysColor(COLOR_HOTLIGHT));
 		SetBkMode(hdc, TRANSPARENT);
 		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		return (INT_PTR)hBrush;
+		return reinterpret_cast<INT_PTR>(hBrush);
 	}
 
 	return FALSE;
@@ -2307,13 +2312,13 @@ INT_PTR CSettings::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId
 
 INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	DWORD wID = wParam;
+	const WORD wID = LOWORD(wParam);
 
 	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName
 		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
-		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
-		int nDpi = GetDialogDpi();
+		MEASUREITEMSTRUCT *pItem = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
+		const int nDpi = GetDialogDpi();
 		if (nDpi >= 96 && _dpi_all.Ydpi >= 96)
 		{
 			pItem->itemHeight = 15 * nDpi / 96;
@@ -2330,15 +2335,15 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 
 INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	DWORD wID = wParam;
+	const WORD wID = LOWORD(wParam);
 
 	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName
 		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
-		DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
+		DRAWITEMSTRUCT *pItem = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
 		wchar_t szText[128]; szText[0] = 0;
-		SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, (LPARAM)szText);
-		DWORD bAlmostMonospace = (DWORD)SendDlgItemMessage(hWnd2, wID, CB_GETITEMDATA, pItem->itemID, 0);
+		SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, reinterpret_cast<LPARAM>(szText));
+		const DWORD bAlmostMonospace = static_cast<DWORD>(SendDlgItemMessage(hWnd2, wID, CB_GETITEMDATA, pItem->itemID, 0));
 		COLORREF crText, crBack;
 
 		if (!(pItem->itemState & ODS_SELECTED))
@@ -2359,11 +2364,11 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 		FillRect(pItem->hDC, &rc, hBr);
 		DeleteObject(hBr);
 		rc.left++;
-		int nDpi = GetDialogDpi();
+		const int nDpi = GetDialogDpi();
 		HFONT hFont = CreateFont(-8*nDpi/72, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
 		                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
 		                         L"MS Shell Dlg");
-		HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
+		HFONT hOldF = static_cast<HFONT>(SelectObject(pItem->hDC, hFont));
 		DrawText(pItem->hDC, szText, _tcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
 		SelectObject(pItem->hDC, hOldF);
 		DeleteObject(hFont);
@@ -2408,13 +2413,13 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 		&& (gpConEmu->GetTileMode(false) == cwc_Current))
 	{
 		RECT rc; GetWindowRect(ghWnd, &rc);
-		POINT newPos = gpConEmu->VisualPosFromReal(rc.left, rc.top);
+		const POINT newPos = gpConEmu->VisualPosFromReal(rc.left, rc.top);
 		//_ASSERTE(x==newPos.x && y==newPos.y); // May occur during Reset/Reload from Settings dialog
 		x = newPos.x; y = newPos.y;
 	}
 	else
 	{
-		POINT newPos = gpConEmu->VisualPosFromReal(ax, ay);
+		const POINT newPos = gpConEmu->VisualPosFromReal(ax, ay);
 		x = newPos.x; y = newPos.y;
 	}
 
@@ -2450,7 +2455,7 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 void CSettings::UpdateSize(const CESize w, const CESize h)
 {
 	//Issue ???: Сохранять размер Quake?
-	bool bIgnoreWidth = (gpSet->isQuakeStyle != 0) && (gpSet->_WindowMode != wmNormal);
+	const bool bIgnoreWidth = (gpSet->isQuakeStyle != 0) && (gpSet->_WindowMode != wmNormal);
 
 	if (w.IsValid(true) && h.IsValid(false))
 	{
@@ -2530,7 +2535,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 
 				for (UINT i = 0; i < nCount; i++)
 				{
-					int64_t vi = pFPS[i]; //-V108
+					const int64_t vi = pFPS[i]; //-V108
 					if (!vi) continue;
 
 					if (vi < tmin) { tmin = vi; imin = i; }
@@ -2550,10 +2555,10 @@ void CSettings::PostUpdateCounters(bool bPosted)
 			{
 				v = v2 = mn_KbdDelays[0]; v3 = 0;
 
-				size_t nCount = std::max<int>(0, std::min<int>(mn_KBD_CUR_FRAME, (int)countof(mn_KbdDelays)));
+				const size_t nCount = std::max<int>(0, std::min<int>(mn_KBD_CUR_FRAME, static_cast<int>(countof(mn_KbdDelays))));
 				for (size_t i = 0; i < nCount; i++)
 				{
-					int64_t vi = mn_KbdDelays[i];
+					const int64_t vi = mn_KbdDelays[i];
 					// Skip too large values, they may be false detected
 					if (vi <= 0 || vi >= 5000) continue;
 
@@ -2569,15 +2574,15 @@ void CSettings::PostUpdateCounters(bool bPosted)
 			}
 			else
 			{
-				v = (10000*(__int64)mn_CounterMax[nID])/mn_Freq;
+				v = (10000 * static_cast<long long>(mn_CounterMax[nID])) / mn_Freq;
 			}
 
 			// WinApi's wsprintf can't do float/double, so we use integer arithmetics for FPS and others
 
 			if (nID == tPerfKeyboard)
-				swprintf_c(sTemp, L"%u/%u/%u", (int)v, (int)v3, (int)v2);
+				swprintf_c(sTemp, L"%u/%u/%u", static_cast<int>(v), static_cast<int>(v3), static_cast<int>(v2));
 			else
-				swprintf_c(sTemp, L"%u.%u", (int)(v/10), (int)(v%10));
+				swprintf_c(sTemp, L"%u.%u", static_cast<int>(v / 10), static_cast<int>(v % 10));
 
 			switch (nID)
 			{
@@ -2620,8 +2625,9 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			// Performance
 			wchar_t sTemp[32];
 			// These are not MHz. E.g. on "AMD Athlon 64 X2 1999 MHz" we get "0.004 GHz"
-			swprintf_c(sTemp, L" (%I64i)", ((int64_t)(mn_Freq/1000)));
-			CEStr lsTemp, lsInfo(gpLng->getControl(gbPerformance, lsTemp, L"Performance counters"), sTemp);
+			swprintf_c(sTemp, L" (%I64i)", static_cast<int64_t>(mn_Freq / 1000));
+			CEStr lsTemp;
+			const CEStr lsInfo(gpLng->getControl(gbPerformance, lsTemp, L"Performance counters"), sTemp);
 			SetDlgItemText(GetPage(thi_Info), nID, lsInfo);
 			// Update immediately
 			PostUpdateCounters(true);
@@ -2637,11 +2643,11 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (nID == tPerfFPS)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tick2));
 		mn_FPS[mn_FPS_CUR_FRAME] = tick2;
 		mn_FPS_CUR_FRAME++;
 
-		if (mn_FPS_CUR_FRAME >= (int)countof(mn_FPS)) mn_FPS_CUR_FRAME = 0;
+		if (mn_FPS_CUR_FRAME >= static_cast<int>(countof(mn_FPS))) mn_FPS_CUR_FRAME = 0;
 
 		if (ghOpWnd)
 			PostUpdateCounters(false);
@@ -2651,11 +2657,11 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (nID == tPerfInterval)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tick2));
 		mn_RFPS[mn_RFPS_CUR_FRAME] = tick2;
 		mn_RFPS_CUR_FRAME++;
 
-		if (mn_RFPS_CUR_FRAME >= (int)countof(mn_RFPS))
+		if (mn_RFPS_CUR_FRAME >= static_cast<int>(countof(mn_RFPS)))
 			mn_RFPS_CUR_FRAME = 0;
 
 		if (ghOpWnd)
@@ -2666,7 +2672,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (nID == tPerfKeyboard)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tick2));
 
 		if (bEnd == (BOOL)-1)
 		{
@@ -2681,10 +2687,10 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		}
 		else if (mn_KbdDelayCounter && mn_Freq)
 		{
-			int64_t iPrev = mn_KbdDelayCounter; mn_KbdDelayCounter = 0;
+			const int64_t iPrev = mn_KbdDelayCounter; mn_KbdDelayCounter = 0;
 			// let eval ms the delay of console output is refreshed
 			t = (tick2 - iPrev) * 1000 / mn_Freq;
-			int idx = (InterlockedIncrement(&mn_KBD_CUR_FRAME) & (countof(mn_KbdDelays)-1));
+			const int idx = static_cast<int>(InterlockedIncrement(&mn_KBD_CUR_FRAME) & (countof(mn_KbdDelays) - 1));
 			mn_KbdDelays[idx] = t;
 			if (mn_KBD_CUR_FRAME < 0) mn_KBD_CUR_FRAME = countof(mn_KbdDelays)-1;
 		}
@@ -2694,7 +2700,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (!bEnd)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID]));
+		QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&(mn_Counter[nID])));
 		return;
 	}
 	else if (!mn_Counter[nID] || !mn_Freq)
@@ -2702,7 +2708,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		return;
 	}
 
-	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&tick2));
 	t = (tick2-mn_Counter[nID]);
 
 	if ((t >= 0)
@@ -2730,7 +2736,7 @@ DWORD CSettings::BalloonStyle()
 	{
 		DWORD nEnabled = 1;
 		DWORD nSize = sizeof(nEnabled);
-		if ((0 == RegQueryValueEx(hk, L"EnableBalloonTips", nullptr, nullptr, (LPBYTE)&nEnabled, &nSize)) && (nEnabled == 0))
+		if ((0 == RegQueryValueEx(hk, L"EnableBalloonTips", nullptr, nullptr, reinterpret_cast<LPBYTE>(&nEnabled), &nSize)) && (nEnabled == 0))
 		{
 			nBalloonStyle = 0;
 		}
@@ -2763,12 +2769,12 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			tiConFontBalloon.hinst = g_hInstance;
 			static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
 			tiConFontBalloon.lpszText = szAsterisk;
-			tiConFontBalloon.uId = (UINT_PTR)hChildDlg;
+			tiConFontBalloon.uId = reinterpret_cast<UINT_PTR>(hChildDlg);
 			GetClientRect(ghOpWnd, &tiConFontBalloon.rect);
 			// Associate the ToolTip with the tool window.
-			SendMessage(hwndConFontBalloon, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tiConFontBalloon);
+			SendMessage(hwndConFontBalloon, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(static_cast<LPTTTOOLINFOW>(&tiConFontBalloon)));
 			// Allow multiline
-			SendMessage(hwndConFontBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+			SendMessage(hwndConFontBalloon, TTM_SETMAXTIPWIDTH, 0, static_cast<LPARAM>(300));
 		}
 
 		CDynDialog::LocalizeDialog(hChildDlg);
@@ -2794,12 +2800,12 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			tiBalloon.hinst = g_hInstance;
 			static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
 			tiBalloon.lpszText = szAsterisk;
-			tiBalloon.uId = (UINT_PTR)tiBalloon.hwnd;
+			tiBalloon.uId = reinterpret_cast<UINT_PTR>(tiBalloon.hwnd);
 			GetClientRect(ghOpWnd, &tiBalloon.rect);
 			// Associate the ToolTip with the tool window.
-			SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tiBalloon);
+			SendMessage(hwndBalloon, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(static_cast<LPTTTOOLINFOW>(&tiBalloon)));
 			// Allow multiline
-			SendMessage(hwndBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+			SendMessage(hwndBalloon, TTM_SETMAXTIPWIDTH, 0, static_cast<LPARAM>(300));
 		}
 
 		// Create the ToolTip.
@@ -2817,24 +2823,24 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 		// Register tips, if succeeded
 		if (hwndTip)
-			EnumChildWindows(hChildDlg, RegisterTipsForChild, (LPARAM)hChildDlg);
+			EnumChildWindows(hChildDlg, RegisterTipsForChild, reinterpret_cast<LPARAM>(hChildDlg));
 		else
 			CDynDialog::LocalizeDialog(hChildDlg);
 
 		// Final tooltip polishing
 		if (hwndTip)
-			SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)EvalSize(300, esf_CanUseDpi|esf_Horizontal));
+			SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, static_cast<LPARAM>(EvalSize(300, esf_CanUseDpi | esf_Horizontal)));
 	}
 }
 
 BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
 {
-	HWND hChildDlg = (HWND)lParam;
+	HWND hChildDlg = reinterpret_cast<HWND>(lParam);
 
 	#if defined(_DEBUG)
-	LONG wID = GetWindowLong(hChild, GWL_ID);
+	const LONG wID = GetWindowLong(hChild, GWL_ID);
 	if (wID == stCmdGroupCommands)
-		wID = wID;
+		std::ignore = wID;
 	#endif
 
 	// Localize Control text
@@ -2847,30 +2853,30 @@ BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
 		HWND hEdit = nullptr;
 
 		// Associate the ToolTip with the tool.
-		TOOLINFO toolInfo = { 0 };
+		TOOLINFO toolInfo{};
 		toolInfo.cbSize = 44; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
 		GetWindowRect(hChild, &toolInfo.rect);
-		MapWindowPoints(nullptr, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+		MapWindowPoints(nullptr, hChildDlg, reinterpret_cast<LPPOINT>(&toolInfo.rect), 2);
 		toolInfo.hwnd = hChildDlg;
 		toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-		toolInfo.uId = (UINT_PTR)hChild;
+		toolInfo.uId = reinterpret_cast<UINT_PTR>(hChild);
 
 		// Use CSettings::ProcessTipHelp dynamically
 		toolInfo.lpszText = LPSTR_TEXTCALLBACK;
 
-		lbRc = SendMessage(gpSetCls->hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+		lbRc = SendMessage(gpSetCls->hwndTip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
 		hEdit = FindWindowEx(hChild, nullptr, L"Edit", nullptr);
 
 		if (hEdit)
 		{
 			toolInfo.lpszText = LPSTR_TEXTCALLBACK;
-			toolInfo.uId = (UINT_PTR)hEdit;
+			toolInfo.uId = reinterpret_cast<UINT_PTR>(hEdit);
 
 			GetWindowRect(hEdit, &toolInfo.rect);
-			MapWindowPoints(nullptr, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+			MapWindowPoints(nullptr, hChildDlg, reinterpret_cast<LPPOINT>(&toolInfo.rect), 2);
 			toolInfo.hwnd = hChildDlg;
 
-			lbRc = SendMessage(gpSetCls->hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+			lbRc = SendMessage(gpSetCls->hwndTip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
 		}
 
 		UNREFERENCED_PARAMETER(lbRc);
@@ -2881,9 +2887,9 @@ BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
 
 
 // Вызывается из диалога настроек
-void CSettings::RecreateFont(WORD wFromID)
+void CSettings::RecreateFont(WORD wFromID) const
 {
-	_ASSERTE(wFromID != (WORD)-1);
+	_ASSERTE(wFromID != static_cast<WORD>(-1));
 	gpFontMgr->RecreateFont(false, (wFromID == cbFontAsDeviceUnits || wFromID == cbFontMonitorDpi));
 
 	if (ghOpWnd && (wFromID == tFontFace))
@@ -2914,10 +2920,9 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 	}
 	else
 	{
-		wchar_t* pszComspec = GetComspec(&gpSet->ComSpec);
-		_ASSERTE(pszComspec!=nullptr);
+		const CEStr pszComspec = GetComspec(&gpSet->ComSpec);
+		_ASSERTE(!pszComspec.IsEmpty());
 		gpConEmu->SetDefaultCmd(pszComspec ? pszComspec : L"cmd");
-		SafeFree(pszComspec);
 	}
 }
 
@@ -2940,7 +2945,7 @@ bool CSettings::IsMulti()
 	return true;
 }
 
-bool CSettings::IsSingleInstanceArg()
+bool CSettings::IsSingleInstanceArg() const
 {
 	if (SingleInstanceArg == sgl_Enabled)
 		return true;
@@ -3001,10 +3006,10 @@ void CSettings::RegisterTabs()
 {
 	if (!mb_TabHotKeyRegistered)
 	{
-		if (RegisterHotKey(ghOpWnd, 0x101, MOD_CONTROL, VK_TAB))
+		if (RegisterHotKey(ghOpWnd, HOTKEY_ID_TAB_NEXT, MOD_CONTROL, VK_TAB))
 			mb_TabHotKeyRegistered = TRUE;
 
-		RegisterHotKey(ghOpWnd, 0x102, MOD_CONTROL|MOD_SHIFT, VK_TAB);
+		RegisterHotKey(ghOpWnd, HOTKEY_ID_TAB_PREV, MOD_CONTROL|MOD_SHIFT, VK_TAB);
 	}
 }
 
@@ -3012,8 +3017,8 @@ void CSettings::UnregisterTabs()
 {
 	if (mb_TabHotKeyRegistered)
 	{
-		UnregisterHotKey(ghOpWnd, 0x101);
-		UnregisterHotKey(ghOpWnd, 0x102);
+		UnregisterHotKey(ghOpWnd, HOTKEY_ID_TAB_NEXT);
+		UnregisterHotKey(ghOpWnd, HOTKEY_ID_TAB_PREV);
 	}
 
 	mb_TabHotKeyRegistered = FALSE;
@@ -3091,7 +3096,7 @@ void CSettings::OnPanelViewAppeared(BOOL abAppear)
 	}
 }
 
-bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
+bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon) const
 {
 	// Если плагин фара установил свой фон
 	if (gpSet->isBgPluginAllowed && apVCon && apVCon->HasBackgroundImage(nullptr,nullptr))
@@ -3108,7 +3113,7 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 		return false;
 	#else
 	CBackgroundInfo* pBgObject = apVCon ? apVCon->GetBackgroundObject() : mp_BgInfo;
-	bool bBgExist = (pBgObject && pBgObject->GetBgImgData() != nullptr);
+	const bool bBgExist = (pBgObject && pBgObject->GetBgImgData() != nullptr);
 	SafeRelease(pBgObject);
 	if (!bBgExist)
 		return false;
@@ -3133,10 +3138,10 @@ void CSettings::SetBgImageDarker(uint8_t newValue, bool bUpdate)
 		HWND hBgPg = GetPage(thi_Backgr);
 		if (hBgPg)
 		{
-			SendDlgItemMessage(hBgPg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+			SendDlgItemMessage(hBgPg, slDarker, TBM_SETPOS, static_cast<WPARAM>(true), static_cast<LPARAM>(gpSet->bgImageDarker));
 
 			TCHAR tmp[10];
-			swprintf_c(tmp, L"%u", (UINT)gpSet->bgImageDarker);
+			swprintf_c(tmp, L"%u", static_cast<UINT>(gpSet->bgImageDarker));
 			SetDlgItemText(hBgPg, tDarker, tmp);
 		}
 
@@ -3153,7 +3158,7 @@ void CSettings::SetBgImageDarker(uint8_t newValue, bool bUpdate)
 	}
 }
 
-CBackgroundInfo* CSettings::GetBackgroundObject()
+CBackgroundInfo* CSettings::GetBackgroundObject() const
 {
 	if (mp_BgInfo)
 		mp_BgInfo->AddRef();
@@ -3236,7 +3241,7 @@ void CSettings::NeedBackgroundUpdate()
 	mb_NeedBgUpdate = TRUE;
 	#else
 	CVConGuard VCon;
-	for (INT_PTR i = 0; CVConGroup::GetVCon(i, &VCon); i++)
+	for (int i = 0; CVConGroup::GetVCon(i, &VCon); i++)
 	{
 		VCon->NeedBackgroundUpdate();
 	}
@@ -3277,19 +3282,19 @@ void CSettings::ShowErrorTip(wchar_t* asInfo, HWND hDlg, int nCtrlID, HWND hBall
 	{
 		if (hTip) SendMessage(hTip, TTM_ACTIVATE, FALSE, 0);
 
-		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
+		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, reinterpret_cast<LPARAM>(pti));
 		RECT rcControl = {};
 		HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : nullptr;
 		GetWindowRect(hCtrl ? hCtrl : hDlg, &rcControl);
-		int ptx = bLeftAligh ? (rcControl.left + 10) : (rcControl.right - 10);
-		int pty = bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
+		const int ptx = bLeftAligh ? (rcControl.left + 10) : (rcControl.right - 10);
+		const int pty = bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
-		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
-		SetTimer(hDlg, BALLOON_MSG_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);
+		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, reinterpret_cast<LPARAM>(pti));
+		SetTimer(hDlg, BALLOON_MSG_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, nullptr);
 	}
 	else
 	{
-		SendMessage(hBall, TTM_TRACKACTIVATE, FALSE, (LPARAM)pti);
+		SendMessage(hBall, TTM_TRACKACTIVATE, FALSE, reinterpret_cast<LPARAM>(pti));
 
 		if (hTip) SendMessage(hTip, TTM_ACTIVATE, TRUE, 0);
 	}
@@ -3304,7 +3309,7 @@ void CSettings::ShowErrorTip(wchar_t* asInfo, HWND hDlg, int nCtrlID, HWND hBall
 bool CSettings::EditConsoleFont(HWND hParent)
 {
 	hConFontDlg = nullptr; nConFontError = 0;
-	INT_PTR nRc = CDynDialog::ExecuteDialog(IDD_MORE_CONFONT, hParent, EditConsoleFontProc, 0);
+	const INT_PTR nRc = CDynDialog::ExecuteDialog(IDD_MORE_CONFONT, hParent, EditConsoleFontProc, 0);
 	hConFontDlg = nullptr;
 	return (nRc == IDOK);
 }
@@ -3313,12 +3318,13 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 {
 	bool lbFound = false;
 	HKEY hk;
-	DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+	const DWORD nRights = KEY_READ | WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0), 0);
 
 	if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
 	                  0, nRights, &hk))
 	{
-		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType; LONG iRc;
+		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
+		LONG iRc;
 
 		if (gbIsDBCS)
 		{
@@ -3345,7 +3351,7 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 			{
 				szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
 
-				if (RegQueryValueExW(hk, szId, nullptr, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
+				if (RegQueryValueExW(hk, szId, nullptr, &dwType, reinterpret_cast<LPBYTE>(szFont), &(dwLen = 255*2)))
 					break;
 
 				if (lstrcmpi(szFont, asFaceName) == 0)
@@ -3397,7 +3403,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= nullptr*/)
 		}
 		else
 		{
-			LPCWSTR pszFamilyName = (LPCWSTR)lpOutl->otmpFamilyName;
+			const wchar_t* pszFamilyName = reinterpret_cast<LPCWSTR>(lpOutl->otmpFamilyName);
 
 			// Интересуют только TrueType (вроде только для TTF доступен lpOutl - проверить
 			if (pszFamilyName[0] != L'@'
@@ -3410,12 +3416,10 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= nullptr*/)
 
 				// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
 				//for (std::vector<RegFont>::iterator iter = gpSetCls->m_RegFonts.begin(); !lbNonSystem && iter != gpSetCls->m_RegFonts.end(); ++iter)
-				for (INT_PTR j = 0; j < gpFontMgr->m_RegFonts.size(); ++j)
+				for (auto& font : gpFontMgr->m_RegFonts)
 				{
-					const RegFont* iter = &(gpFontMgr->m_RegFonts[j]);
-
-					if (!iter->bAlreadyInSystem &&
-					        lstrcmpi(iter->szFontName, LF.lfFaceName) == 0)
+					if (!font.bAlreadyInSystem &&
+					        lstrcmpi(font.szFontName, LF.lfFaceName) == 0)
 						lbNonSystem = TRUE;
 				}
 
@@ -3442,7 +3446,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= nullptr*/)
 	// WinPE may not have "Lucida Console" preinstalled
 	if (gpSetCls->nConFontError && !asCheckName && gpStartEnv && (gpStartEnv->bIsWinPE == 1) && (lstrcmpi(LF.lfFaceName, gsAltConFont) != 0))
 	{
-		DWORD errSave = gpSetCls->nConFontError;
+		const DWORD errSave = gpSetCls->nConFontError;
 		if (CheckConsoleFontFast(gsAltConFont))
 		{
 			// But has "Courier New"
@@ -3483,7 +3487,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= nullptr*/)
 			{
 				GetExitCodeProcess(pi.hProcess, &nCheckResult);
 
-				if ((int)nCheckResult == CERR_UNICODE_CHK_OKAY)
+				if (static_cast<int>(nCheckResult) == CERR_UNICODE_CHK_OKAY)
 				{
 					gpSetCls->nConFontError = 0;
 				}
@@ -3523,7 +3527,7 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 
 		// Заполнить список шрифтами из реестра
 		HKEY hk;
-		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+		const DWORD nRights = KEY_READ | WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0), 0);
 
 		if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
 						  0, nRights, &hk))
@@ -3532,16 +3536,16 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 
 			DWORD idx = 0, cchName = countof(szId), dwLen = sizeof(szFont)-2;
 			INT_PTR nIdx = -1;
-			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, nullptr, &dwType, (LPBYTE)szFont, &dwLen)) == 0)
+			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, nullptr, &dwType, reinterpret_cast<LPBYTE>(szFont), &dwLen)) == 0)
 			{
 				szId[std::min<size_t>(countof(szId)-1,cchName)] = 0;
 				szFont[std::min<size_t>(countof(szFont)-1,dwLen/2)] = 0;
 				if (*szFont)
 				{
 					LPCWSTR pszFaceName = (szFont[0] == L'*') ? (szFont+1) : szFont;
-					if (SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) pszFaceName)==-1)
+					if (SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(pszFaceName))==-1)
 					{
-						nIdx = SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) pszFaceName); //-V103
+						nIdx = SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pszFaceName)); //-V103
 					}
 				}
 				cchName = countof(szId); dwLen = sizeof(szFont)-2;
@@ -3559,13 +3563,13 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 		{
 			// Chinese
 			HKEY hk = nullptr;
-			DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+			const DWORD nRights = KEY_READ | WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0), 0);
 			if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
 			{
 				DWORD dwIndex = 0;
 				wchar_t szName[255], szValue[255] = {};
 				DWORD cchName = countof(szName), cbData = sizeof(szValue)-2, dwType;
-				while (!RegEnumValue(hk, dwIndex++, szName, &cchName, nullptr, &dwType, (LPBYTE)szValue, &cbData))
+				while (!RegEnumValue(hk, dwIndex++, szName, &cchName, nullptr, &dwType, reinterpret_cast<LPBYTE>(szValue), &cbData))
 				{
 					if ((dwType == REG_DWORD) && *szName && *szValue)
 					{
@@ -3585,13 +3589,13 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 		{
 			// Сначала загрузить имена шрифтов, установленных в систему
 			HDC hdc = GetDC(nullptr);
-			EnumFontFamilies(hdc, (LPCTSTR) nullptr, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
+			EnumFontFamilies(hdc, static_cast<LPCTSTR>(nullptr), reinterpret_cast<FONTENUMPROC>(EnumConFamCallBack), reinterpret_cast<LPARAM>(ahDlg));
 			DeleteDC(hdc);
 		}
 
 		// Проверить реестр
 		if (CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
-			gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
+			gpSetCls->nConFontError &= ~static_cast<DWORD>(ConFontErr_NonRegistry);
 	}
 
 	// Показать текущий шрифт
@@ -3610,7 +3614,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 	{
 		case WM_NOTIFY:
 			{
-				LPNMHDR phdr = (LPNMHDR)lParam;
+				LPNMHDR phdr = reinterpret_cast<LPNMHDR>(lParam);
 
 				if (phdr->code == TTN_GETDISPINFO)
 				{
@@ -3621,21 +3625,21 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			}
 		case WM_INITDIALOG:
 		{
-			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			SendMessage(hWnd2, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 
 			gpSetCls->hConFontDlg = nullptr; // пока не выставим - на смену в контролах не реагировать
 			wchar_t temp[10];
 			const DWORD* pnSizesSmall = nullptr;
-			unsigned nCount = CSetDlgLists::GetListItems(CSetDlgLists::eFSizesSmall, pnSizesSmall);
+			const unsigned nCount = CSetDlgLists::GetListItems(CSetDlgLists::eFSizesSmall, pnSizesSmall);
 			for (unsigned i = 0; i < nCount; i++)
 			{
 				swprintf_c(temp, L"%i", pnSizesSmall[i]);
-				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
-				swprintf_c(temp, L"%i", (int)(pnSizesSmall[i]*3/2));
-				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(temp));
+				swprintf_c(temp, L"%i", static_cast<int>(pnSizesSmall[i] * 3 / 2));
+				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(temp));
 
-				if ((LONG)pnSizesSmall[i] >= gpFontMgr->LogFont.lfHeight)
+				if (static_cast<LONG>(pnSizesSmall[i]) >= gpFontMgr->LogFont.lfHeight)
 					break; // не допускаются шрифты больше, чем выбрано для основного шрифта!
 			}
 
@@ -3683,7 +3687,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			if (wParam == BALLOON_MSG_TIMERID)
 			{
 				KillTimer(hWnd2, BALLOON_MSG_TIMERID);
-				SendMessage(gpSetCls->hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpSetCls->tiConFontBalloon);
+				SendMessage(gpSetCls->hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, reinterpret_cast<LPARAM>(&gpSetCls->tiConFontBalloon));
 			}
 
 			break;
@@ -3705,7 +3709,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
-				WORD TB = LOWORD(wParam);
+				const WORD TB = LOWORD(wParam);
 
 				if (TB == IDOK)
 					return 0;
@@ -3719,7 +3723,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					// Проверка валидности
 					if (gpSetCls->nConFontError == ConFontErr_NonRegistry && gpSetCls->CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName))
 					{
-						gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
+						gpSetCls->nConFontError &= ~static_cast<DWORD>(ConFontErr_NonRegistry);
 					}
 
 					if (gpSetCls->nConFontError)
@@ -3754,7 +3758,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					bool lbFound = false;
 					GetDlgItemText(hWnd2, tConsoleFontFace, szFaceName, countof(szFaceName));
 					HKEY hk;
-					DWORD nRights = KEY_ALL_ACCESS|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
+					const DWORD nRights = KEY_ALL_ACCESS | WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0), 0);
 
 					if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
 					                  0, nRights, &hk))
@@ -3765,9 +3769,9 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						{
 							szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
 
-							if (RegQueryValueExW(hk, szId, nullptr, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
+							if (RegQueryValueExW(hk, szId, nullptr, &dwType, reinterpret_cast<LPBYTE>(szFont), &(dwLen = 255*2)))
 							{
-								if (!RegSetValueExW(hk, szId, 0, REG_SZ, (LPBYTE)szFaceName, (_tcslen(szFaceName)+1)*2))
+								if (!RegSetValueExW(hk, szId, 0, REG_SZ, reinterpret_cast<LPBYTE>(szFaceName), (_tcslen(szFaceName)+1)*2))
 								{
 									lbFontJustRegistered = lbFound = true; // OK, добавили
 								}
@@ -3788,7 +3792,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					if (!lbFound && gOSVer.dwMajorVersion >= 6)
 					{
 						wchar_t szCommandLine[MAX_PATH];
-						SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
+						SHELLEXECUTEINFO sei{};
+						sei.cbSize = sizeof(sei);
 						sei.hwnd = hWnd2;
 						sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 						sei.lpVerb = L"runas";
@@ -3799,7 +3804,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						wcscpy_c(szWorkDir, gpConEmu->WorkDir());
 						sei.lpDirectory = szWorkDir;
 						sei.nShow = SW_SHOWMINIMIZED;
-						BOOL lbRunAsRc = ::ShellExecuteEx(&sei);
+						const BOOL lbRunAsRc = ::ShellExecuteEx(&sei);
 
 						if (!lbRunAsRc)
 						{
@@ -3828,7 +3833,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					{
 						SetFocus(GetDlgItem(hWnd2, tConsoleFontFace));
 						EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
-						gpSetCls->nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
+						gpSetCls->nConFontError &= ~static_cast<DWORD>(ConFontErr_NonRegistry);
 
 						if (lbFontJustRegistered)
 						{
@@ -3865,8 +3870,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
 			{
 				wchar_t szCreatedFaceName[32] = {0};
-				WORD TB = LOWORD(wParam);
-				LOGFONT LF = {0};
+				const WORD TB = LOWORD(wParam);
+				LOGFONT LF{};
 				LF.lfOutPrecision = OUT_TT_PRECIS;
 				LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
 				LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
@@ -3877,8 +3882,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					LF.lfWidth = GetNumber(hWnd2, tConsoleFontSizeX);
 
 				LF.lfWeight = FW_NORMAL;
-				gpSetCls->nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
-				int nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM)LF.lfFaceName); //-V103
+				gpSetCls->nConFontError = 0;                                                                                 //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
+				const int nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM)LF.lfFaceName); //-V103
 
 				if (nIdx < 0)
 				{
@@ -3904,7 +3909,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						}
 						else
 						{
-							wcscpy_c(szCreatedFaceName, (wchar_t*)lpOutl->otmpFamilyName);
+							wcscpy_c(szCreatedFaceName, reinterpret_cast<wchar_t*>(lpOutl->otmpFamilyName));
 							wchar_t temp[10];
 
 							if (TB != tConsoleFontSizeX)
@@ -3918,7 +3923,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 								swprintf_c(temp, L"%i", lpOutl->otmTextMetrics.tmHeight);
 								if (TB == tConsoleFontSizeY)
 								{
-									CEStr lsMsg(L"The created font height differs: ", temp);
+									const CEStr lsMsg(L"The created font height differs: ", temp);
 									gpSetCls->ShowModifierErrorTip(lsMsg, hWnd2, TB);
 								}
 								else
@@ -3948,7 +3953,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					wcscpy_c(gpSet->ConsoleFont.lfFaceName, LF.lfFaceName);
 					gpSet->ConsoleFont.lfHeight = LF.lfHeight;
 					gpSet->ConsoleFont.lfWidth = LF.lfWidth;
-					bool lbRegChecked = CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName);
+					const bool lbRegChecked = CheckConsoleFontRegistry(gpSet->ConsoleFont.lfFaceName);
 
 					if (!lbRegChecked) gpSetCls->nConFontError |= ConFontErr_NonRegistry;
 
@@ -4242,7 +4247,7 @@ LPCWSTR CSettings::GetActivePageWiki(CEStr& lsWiki)
 	const ConEmuSetupPages* p = (m_LastActivePageId != thi_Last) ? GetPageData(m_LastActivePageId) : nullptr;
 	if (!p)
 		return nullptr;
-	lsWiki.Attach(lstrmerge(CEWIKIBASE, p->wikiPage));
+	lsWiki = CEStr(CEWIKIBASE, p->wikiPage);
 	return lsWiki;
 }
 

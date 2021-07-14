@@ -36,7 +36,7 @@ public:
 	static BYTE isOptChecked(WORD nCtrlId, WORD CB, BYTE uCheck);
 
 public:
-	static wchar_t* CheckButtonMacro(WORD CB, BYTE uCheck);
+	static CEStr CheckButtonMacro(WORD CB, BYTE uCheck);
 
 protected:
 	static bool ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck);

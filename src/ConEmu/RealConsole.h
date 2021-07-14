@@ -357,7 +357,7 @@ class CRealConsole
 		bool SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, bool bRedraw);
 		void PostDragCopy(bool abMove);
 		void PostMacro(LPCWSTR asMacro, bool abAsync = false);
-		wchar_t* PostponeMacro(wchar_t*&& asMacro);
+		CEStr PostponeMacro(CEStr&& asMacro);
 		bool GetFarVersion(FarVersion* pfv);
 		bool IsFarLua();
 		bool StartDebugger(StartDebugType sdt);
@@ -374,7 +374,7 @@ class CRealConsole
 				BYTE    Data[1];
 			};
 		};
-		wchar_t* mpsz_PostCreateMacro;
+		CEStr mpsz_PostCreateMacro;
 		void ProcessPostponedMacro();
 		static DWORD WINAPI PostMacroThread(LPVOID lpParameter);
 		HANDLE mh_PostMacroThread; DWORD mn_PostMacroThreadID;
@@ -576,7 +576,7 @@ class CRealConsole
 		void SetPaletteName(LPCWSTR asPaletteName);
 		LPCWSTR GetCmd(bool bThisOnly = false);
 		LPCWSTR GetStartupDir();
-		wchar_t* CreateCommandLine(bool abForTasks = false);
+		CEStr CreateCommandLine(bool abForTasks = false);
 		bool GetUserPwd(const wchar_t*& rpszUser, const wchar_t*& rpszDomain, bool& rbRestricted) const;
 		short GetProgress(AnsiProgressStatus* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle = nullptr);
 		/// <summary>

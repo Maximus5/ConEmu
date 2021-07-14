@@ -203,7 +203,7 @@ struct SettingsXML : public SettingsBase
 		using document = rapidxml::xml_document<char>;
 		using node = rapidxml::xml_node<char>;
 		using attribute = rapidxml::xml_attribute<char>;
-		char* mp_Utf8Data = nullptr;
+		CEStrA mp_Utf8Data = nullptr;
 		document* mp_File = nullptr;
 		node* mp_Key = nullptr;
 		bool mb_Modified = false; // Save was called at least once (data may be or may be not changed)
@@ -228,7 +228,7 @@ struct SettingsXML : public SettingsBase
 	protected:
 		void SetDataChanged();
 
-		bool OpenStorage(unsigned access, wchar_t*& pszErr);
+		bool OpenStorage(unsigned access, CEStr& pszErr);
 		void CloseStorage() noexcept;
 		void TouchKey(node* apKey) noexcept;
 

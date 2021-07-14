@@ -71,7 +71,6 @@ LRESULT CSetPgKeys::OnInitDialog(HWND hDlg, bool abInitial)
 	for (INT_PTR i = gpHotKeys->size() - 1; i >= 0; i--)
 	{
 		ConEmuHotKey* p = &((*gpHotKeys)[i]);
-		p->cchGuiMacroMax = p->GuiMacro ? (wcslen(p->GuiMacro)+1) : 0;
 	}
 
 	HWND hList = GetDlgItem(hDlg, lbConEmuHotKeys);
@@ -650,7 +649,9 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	case tGuiMacro:
 		if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType == chk_Macro))
 		{
-			MyGetDlgItemText(hDlg, tGuiMacro, mp_ActiveHotKey->cchGuiMacroMax, mp_ActiveHotKey->GuiMacro);
+			CEStr macro;
+			MyGetDlgItemText(hDlg, tGuiMacro, macro);
+			macro.Swap(mp_ActiveHotKey->GuiMacro);
 			FillHotKeysList(hDlg, false);
 		}
 		break;

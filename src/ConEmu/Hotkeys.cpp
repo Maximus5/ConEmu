@@ -201,7 +201,7 @@ ConEmuHotKey& ConEmuHotKey::SetMacro(const wchar_t* guiMacro)
 {
 	if (GuiMacro && GuiMacro != guiMacro)
 		free(GuiMacro);
-	GuiMacro = guiMacro ? lstrdup(guiMacro) : nullptr;
+	GuiMacro = guiMacro ? lstrdup(guiMacro).Detach() : nullptr;
 	_ASSERTE(fkey == nullptr || fkey == CConEmuCtrl::key_GuiMacro);
 	fkey = CConEmuCtrl::key_GuiMacro;
 	return *this;
@@ -228,15 +228,15 @@ LPCWSTR ConEmuHotKey::CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1,
 	wchar_t* ptrPoint = lsFmt.ms_Val ? (wchar_t*)wcsstr(lsFmt.ms_Val, L"%s") : nullptr;
 	if (!ptrPoint)
 	{
-		rsWarning.Attach(lstrmerge(L"Hotkey <", asHotkey, L"> is not unique",
-			L"\n", asDescr1, L"\n", asDescr2));
+		rsWarning = CEStr(L"Hotkey <", asHotkey, L"> is not unique",
+			L"\n", asDescr1, L"\n", asDescr2);
 	}
 	else
 	{
 		_ASSERTE(ptrPoint[0] == L'%' && ptrPoint[1] == L's' && ptrPoint[2]);
 		*ptrPoint = 0;
-		rsWarning.Attach(lstrmerge(lsFmt.ms_Val, asHotkey, ptrPoint+2,
-			L"\n", asDescr1, L"\n", asDescr2));
+		rsWarning = CEStr(lsFmt.ms_Val, asHotkey, ptrPoint+2,
+			L"\n", asDescr1, L"\n", asDescr2);
 	}
 	return rsWarning.ms_Val;
 }

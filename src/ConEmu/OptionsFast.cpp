@@ -117,7 +117,7 @@ void FindStartupTask(SettingsLoadedFlags slfFlags)
 			// Don't set default task, use exact command specified by user
 			if ((gpSet->nStartType == 0) && !gpSet->psStartSingleApp)
 			{
-				gpSet->psStartSingleApp = lstrdup(pszCmdLine);
+				gpSet->psStartSingleApp = lstrdup(pszCmdLine).Detach();
 			}
 			return;
 		}
@@ -145,7 +145,7 @@ void FindStartupTask(SettingsLoadedFlags slfFlags)
 	{
 		gpSet->nStartType = 2;
 		SafeFree(gpSet->psStartTasksName);
-		gpSet->psStartTasksName = lstrdup(pTask->pszName);
+		gpSet->psStartTasksName = lstrdup(pTask->pszName).Detach();
 	}
 }
 
@@ -163,7 +163,7 @@ LPCWSTR GetStartupCommand(CEStr& command)
 		if (gpSet->psStartTasksFile)
 		{
 			wchar_t prefix[2] = {CmdFilePrefix};
-			command = lstrmerge(prefix, gpSet->psStartTasksFile);
+			command = CEStr(prefix, gpSet->psStartTasksFile);
 		}
 		break;
 	case 2:
@@ -587,18 +587,16 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 
 			SettingsStorage CurStorage = gpSet->GetSettingsType();
 
-			LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
+			const LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
 			if (lSelStorage > 0)
 			{
-				// Значит юзер выбрал "создать настройки" в другом месте
-				wchar_t* pszNewPlace = GetDlgItemTextPtr(hDlg, lbStorageLocation);
+				// User choses to "create settings" in the other place
+				const CEStr pszNewPlace = GetDlgItemTextPtr(hDlg, lbStorageLocation);
 				if (!gpConEmu->SetConfigFile(pszNewPlace, true/*abWriteReq*/, false/*abSpecialPath*/))
 				{
-					// Ошибка уже показана
-					SafeFree(pszNewPlace);
+					// error already shown
 					return 1;
 				}
-				SafeFree(pszNewPlace);
 			}
 
 			/* Startup task */
@@ -1005,7 +1003,7 @@ public:
 				|| (f.rsOptionalFull && asOptionalFull && (lstrcmpi(f.rsOptionalFull, asOptionalFull) == 0)))
 				return;
 		}
-		const FoundFile ff = {lstrdup(asFound), (asOptionalFull && *asOptionalFull) ? lstrdup(asOptionalFull) : nullptr};
+		const FoundFile ff = {lstrdup(asFound).Detach(), (asOptionalFull && *asOptionalFull) ? lstrdup(asOptionalFull).Detach() : nullptr};
 		this->push_back(ff);
 	}
 };
@@ -1068,7 +1066,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 								return true;
 							if (RegGetStringValue(hk, nullptr, i->pszValName, lsPath) > 0)
 							{
-								i->regFiles->push_back(JoinPath(lsPath, i->pszFile));
+								i->regFiles->push_back(JoinPath(lsPath, i->pszFile).Detach());
 							}
 							std::ignore = pszSubkeyName;
 							return true;
@@ -1101,7 +1099,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 						{
 							if (RegGetStringValue(root, lsBuf, lsValName, lsVal, bits[b]) > 0)
 							{
-								regFiles.push_back(JoinPath(lsVal, pszFile));
+								regFiles.push_back(JoinPath(lsVal, pszFile).Detach());
 							}
 						}
 					}
@@ -1166,7 +1164,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 	if (asFirstDrive && *asFirstDrive)
 	{
 		INT_PTR nDrvLen = _tcslen(asFirstDrive);
-		rsFound.Attach(JoinPath(asFirstDrive, asSearchPath));
+		rsFound = JoinPath(asFirstDrive, asSearchPath);
 		if (FileExists(rsFound))
 		{
 			foundFiles.Add(rsFound, nullptr);
@@ -1183,7 +1181,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 		const UINT nType = GetDriveType(szDrive);
 		if (nType != DRIVE_FIXED)
 			continue;
-		rsFound.Attach(JoinPath(szDrive, asSearchPath));
+		rsFound = JoinPath(szDrive, asSearchPath);
 		if (FileExists(rsFound))
 		{
 			foundFiles.Add(rsFound, nullptr);
@@ -1242,7 +1240,7 @@ public:
 				pszSlash = wcsrchr(expanded.data(), L'\\');
 			}
 
-			Store(lstrdup(szName), lstrdup(expanded));
+			Store(lstrdup(szName).Detach(), lstrdup(expanded).Detach());
 
 			// If we want to try something like "%windir%\.."
 			if ((--nBackSteps) < 0)
@@ -1316,7 +1314,8 @@ static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR 
 
 		if (iCmp == 0)
 		{
-			if (!szTemp.Attach(lstrmerge(v.pszName, asSource+iCmpLen)))
+			szTemp = CEStr(v.pszName, asSource + iCmpLen);
+			if (!szTemp)
 				return false;
 			iLen = lstrlen(szTemp);
 			if (iLen > cchMax)
@@ -1334,24 +1333,16 @@ class AppFoundList
 public:
 	struct AppInfo
 	{
-		LPWSTR szFullPath, szExpanded;
-		wchar_t szTaskName[64], szTaskBaseName[40];
-		LPWSTR szArgs, szPrefix, szGuiArg;
-		VS_FIXEDFILEINFO Ver; // bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
-		DWORD dwSubsystem, dwBits;
-		FarVersion FarVer; // ConvertVersionToFarVersion
-		int  iStep;
-		bool bForceQuot;
+		CEStr szFullPath, szExpanded;
+		wchar_t szTaskName[64] = L"", szTaskBaseName[40] = L"";
+		CEStr szArgs, szPrefix, szGuiArg;
+		VS_FIXEDFILEINFO Ver{}; // bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
+		DWORD dwSubsystem{ 0 }, dwBits{ 0 };
+		FarVersion FarVer{}; // ConvertVersionToFarVersion
+		int  iStep{ 0 };
+		bool bForceQuot{ false };
 		bool isNeedQuot() const { return bForceQuot || IsQuotationNeeded(szFullPath); };
-		bool bPrimary; // Do not rename this task while unifying
-		void Free()
-		{
-			SafeFree(szFullPath);
-			SafeFree(szExpanded);
-			SafeFree(szArgs);
-			SafeFree(szPrefix);
-			SafeFree(szGuiArg);
-		};
+		bool bPrimary{ false }; // Do not rename this task while unifying
 	};
 	MArray<AppInfo> Installed;
 
@@ -1389,8 +1380,7 @@ protected:
 				else if (pszOptFull && (lstrcmpi(ai.szFullPath, pszOptFull) == 0))
 				{
 					// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
-					SafeFree(ai.szFullPath);
-					ai.szFullPath = lstrdup(szPath);
+					ai.szFullPath.Set(szPath);
 					path_match = true;
 				}
 				else if (pszOptFull && ai.szExpanded && (lstrcmpi(ai.szExpanded, pszOptFull) == 0))
@@ -1427,12 +1417,6 @@ protected:
 
 	void Clean()
 	{
-		for (INT_PTR i = 0; i < Installed.size(); i++)
-		{
-			AppInfo& FI = Installed[i];
-			FI.Free();
-		}
-
 		Installed.clear();
 	}
 
@@ -1711,7 +1695,7 @@ public:
 						}
 
 						CEStr szTemp(JoinPath(szPath, pszTail));
-						szArgs.Attach(lstrmerge(szArgs.ms_Val, szTemp));
+						szArgs.Append(szTemp);
 					}
 				}
 				// Succeeded?
@@ -1723,9 +1707,9 @@ public:
 
 			// Spaces in path? (use expanded path)
 			if (ai.isNeedQuot())
-				szFull = lstrmerge(ai.szPrefix, L"\"", ai.szFullPath, L"\"", pszArgs);
+				szFull = CEStr(ai.szPrefix, L"\"", ai.szFullPath, L"\"", pszArgs);
 			else
-				szFull = lstrmerge(ai.szPrefix, ai.szFullPath, pszArgs);
+				szFull = CEStr(ai.szPrefix, ai.szFullPath, pszArgs);
 
 			// Create task
 			if (!szFull.IsEmpty())
@@ -1983,7 +1967,7 @@ static void CreateFarTasks()
 	{
 		FarVerList::AppInfo& FI = Vers.Installed[i];
 		bool bNeedQuot = (wcschr(FI.szFullPath, L' ') != nullptr);
-		LPWSTR pszFullPath = FI.szFullPath;
+		const wchar_t* pszFullPath = FI.szFullPath.c_str();
 		wchar_t szUnexpanded[MAX_PATH];
 		if (wcschr(pszFullPath, L'\\') && UnExpandEnvStrings(pszFullPath, szUnexpanded, countof(szUnexpanded)))
 			pszFullPath = szUnexpanded;
@@ -1993,12 +1977,12 @@ static void CreateFarTasks()
 		// it will get already expanded command line which may have erroneous path.
 		// That's very bad when running x64 Far, but %FARHOME% points to x86 Far.
 		// And don't preset FARHOME variable, it makes harder to find Tab icon.
-		wchar_t* pszCommand = lstrmerge(L"set \"FARHOME=\" & \"", pszFullPath, L"\"");
+		CEStr pszCommand(L"set \"FARHOME=\" & \"", pszFullPath, L"\"");
 
 		if (pszCommand)
 		{
 			if (FI.FarVer.dwVerMajor >= 2)
-				lstrmerge(&pszCommand, L" /w");
+				pszCommand.Append(L" /w");
 
 			// Don't duplicate plugin folders (ConEmu) to avoid doubled lines in F11 (Far 1.x and Far 2.x problem)
 			bool bDontDuplicate = false;
@@ -2022,7 +2006,7 @@ static void CreateFarTasks()
 
 			// Force Far to use proper plugins folders
 			if (!bDontDuplicate)
-				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins;%FARPROFILE%\\Plugins\"");
+				pszCommand.Append(L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins;%FARPROFILE%\\Plugins\"");
 
 
 			// Suggest this task as ConEmu startup default
@@ -2031,10 +2015,6 @@ static void CreateFarTasks()
 
 			CreateDefaultTask(FI.szTaskName, nullptr, pszCommand);
 		}
-
-		// Release memory
-		SafeFree(FI.szFullPath);
-		SafeFree(pszCommand);
 	}
 	Vers.Installed.clear();
 }
@@ -2140,17 +2120,17 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 		case 0:
 			if (!pszPlatform)
 				continue;
-			pszVcVarsBat.Attach(JoinPath(pszDir, L"vcvarsall.bat"));
+			pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
 			break;
 		case 1:
 			if (!pszPlatform)
 				continue;
-			pszVcVarsBat.Attach(JoinPath(pszDir, L"VC\\Auxiliary\\Build\\vcvarsall.bat"));
+			pszVcVarsBat = JoinPath(pszDir, L"VC\\Auxiliary\\Build\\vcvarsall.bat");
 			break;
 		case 2:
 			if (pszPlatform)
 				continue;
-			pszVcVarsBat.Attach(JoinPath(pszDir, L"Common7\\Tools\\VsDevCmd.bat"));
+			pszVcVarsBat = JoinPath(pszDir, L"Common7\\Tools\\VsDevCmd.bat");
 			break;
 		default:
 			return;
@@ -2193,7 +2173,7 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 		case 9:  pszIconSfx = L",10\""; break;
 		default: pszIconSfx = L"\"";
 		}
-		lstrmerge(&pszSuffix.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
+		pszSuffix.Append(L" -new_console:C:\"", pszIconSource, pszIconSfx);
 	}
 
 	const CEStr pszName(L"SDK::VS ", pszVer, pszPlatform ? L" " : nullptr, pszPlatform, L" tools prompt");
@@ -2449,7 +2429,7 @@ static void CreateBashTask()
 				CEStr lsPath(ExpandEnvStr(iconFile));
 				if (FileExists(lsPath))
 				{
-					wslIcon.Attach(lstrmerge(L"-icon \"", iconFile, L"\""));
+					wslIcon = CEStr(L"-icon \"", iconFile, L"\"");
 					break;
 				}
 			}
@@ -2542,7 +2522,7 @@ static void CreateBashTask()
 		else
 			continue;
 
-		SafeFree(ai.szGuiArg);
+		ai.szGuiArg.Release();
 
 		if (szConnectorName)
 		{
@@ -2559,7 +2539,7 @@ static void CreateBashTask()
 
 				if (!msysGit2)
 				{
-					lstrmerge(&ai.szPrefix,
+					ai.szPrefix.Append(
 						// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
 						L"set \"PATH=", szBinPath, L";%PATH%\" & ",
 						// Change main executable
@@ -2574,12 +2554,12 @@ static void CreateBashTask()
 				{
 					_ASSERTE(ai.szArgs && wcsstr(ai.szArgs, L"--command=/usr/bin/bash.exe"));
 					const wchar_t* cmdPtr = L"--command=";
-					wchar_t* pszCmd = wcsstr(ai.szArgs, cmdPtr);
+					wchar_t* pszCmd = wcsstr(ai.szArgs.data(), cmdPtr);
 					if (pszCmd)
 					{
 						pszCmd += wcslen(cmdPtr);
 						_ASSERTE(ai.szPrefix == nullptr || !*ai.szPrefix);
-						lstrmerge(&ai.szPrefix,
+						ai.szPrefix.Append(
 							// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
 							L"set \"PATH=", szBinPath, L"\\usr\\bin;%PATH%\" & ");
 						// Insert connector between "--command=" and "/usr/bin/bash.exe"
@@ -2593,11 +2573,10 @@ static void CreateBashTask()
 							L"%ConEmuBaseDirShort%\\", szConnectorName,
 							/*bNeedQuot ? L"\" " :*/ L" ",
 							// And the tail of the command: "/usr/bin/bash.exe -l -i"
-							L"/", pszCmd+1,
+							L"/", pszCmd + 1,
 							// Force xterm mode
 							L" -new_console:p");
-						SafeFree(ai.szArgs);
-						ai.szArgs = lsArgs.Detach();
+						ai.szArgs = std::move(lsArgs);
 					}
 				}
 			}

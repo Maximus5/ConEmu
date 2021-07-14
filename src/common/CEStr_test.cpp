@@ -60,17 +60,41 @@ TEST(Strings, Empty)
 
 TEST(Strings, Constructors)
 {
-	wchar_t someString[] = L"Some string";
-	const CEStr str(someString);
-	EXPECT_NE(str.data(), someString);
+	{
+		wchar_t someString[] = L"Some string";
+		const CEStr str(someString);
+		EXPECT_NE(str.data(), someString);
+	}
 
-	CEStr str1(L"Sample text");
-	EXPECT_FALSE(str1.IsEmpty());
-	CEStr str2(std::move(str1));
-	EXPECT_TRUE(str1.IsEmpty());
-	EXPECT_FALSE(str2.IsEmpty());
-	str2.Release();
-	EXPECT_TRUE(str2.IsEmpty());
+	{
+		CEStr str1(L"Sample text");
+		EXPECT_FALSE(str1.IsEmpty());
+		CEStr str2(std::move(str1));
+		EXPECT_TRUE(str1.IsEmpty());  // NOLINT(bugprone-use-after-move)
+		EXPECT_FALSE(str2.IsEmpty());
+		str2.Release();
+		EXPECT_TRUE(str2.IsEmpty());
+	}
+
+	{
+		wchar_t* ptrNull = nullptr;
+		const CEStr nullStr(ptrNull);
+		EXPECT_TRUE(nullStr.IsNull());
+		EXPECT_TRUE(nullStr.IsEmpty());
+		EXPECT_EQ(nullptr, nullStr.data());
+		EXPECT_EQ(nullptr, nullStr.c_str());
+		EXPECT_NE(nullptr, nullStr.c_str(L""));
+	}
+
+	{
+		wchar_t emptyPtr[] = L"";
+		const CEStr emptyStr(emptyPtr);
+		EXPECT_FALSE(emptyStr.IsNull());
+		EXPECT_TRUE(emptyStr.IsEmpty());
+		EXPECT_NE(nullptr, emptyStr.data());
+		EXPECT_NE(nullptr, emptyStr.c_str());
+		EXPECT_STREQ(L"", emptyStr.c_str());
+	}
 }
 
 TEST(Strings, SetValue)
@@ -99,6 +123,16 @@ TEST(Strings, SetValue)
 	EXPECT_TRUE(str.IsEmpty());
 	EXPECT_NE(nullptr, ptr);
 	free(ptr);
+
+	str.Set(nullptr);
+	EXPECT_TRUE(str.IsNull());
+	EXPECT_TRUE(str.IsEmpty());
+	str.Set(L"");
+	EXPECT_FALSE(str.IsNull());
+	EXPECT_TRUE(str.IsEmpty());
+	str.Set(nullptr);
+	EXPECT_FALSE(str.IsNull());
+	EXPECT_TRUE(str.IsEmpty());
 }
 
 TEST(Strings, Compare)

@@ -157,12 +157,11 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 								pszTitle = L"Choose command file";
 							}
 
-							wchar_t* pszRet = SelectFile(pszTitle, temp, nullptr, ghOpWnd, pszFilter, (CB==cbCmdLine)?sff_AutoQuote:sff_Default);
+							const CEStr pszRet = SelectFile(pszTitle, temp, nullptr, ghOpWnd, pszFilter, (CB == cbCmdLine) ? sff_AutoQuote : sff_Default);
 
 							if (pszRet)
 							{
 								SetDlgItemText(hDlg, (CB==cbCmdLine)?tCmdLine:tStartTasksFile, pszRet);
-								SafeFree(pszRet);
 							}
 						}
 						break;

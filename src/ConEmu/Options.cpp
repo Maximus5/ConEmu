@@ -347,13 +347,13 @@ void Settings::ReleasePointers()
 	SafeFree(psHistoryLocation);
 	SafeFree(psDefaultTerminalApps);
 
-	SafeFree(psAnsiAllowed);
+	SafeDelete(psAnsiAllowed);
 	SafeFree(pszAnsiLog);
 
 	SafeFree(pszCTSIntelligentExceptions);
 	SafeFree(sFarGotoEditor);
 	SafeFree(pszTabSkipWords);
-	SafeFree(psEnvironmentSet);
+	SafeDelete(psEnvironmentSet);
 
 	FreeCmdTasks();
 	FreeStartupTask();
@@ -369,7 +369,7 @@ void Settings::ReleasePointers()
 	ProgressesCount = 0;
 
 	UpdSet.FreePointers();
-	SafeFree(FindOptions.pszText);
+	FindOptions.text.Release();
 }
 
 Settings::~Settings()
@@ -453,7 +453,7 @@ void Settings::InitSettings()
 	}
 
 	AutoReloadEnvironment = true;
-	psEnvironmentSet = lstrdup(
+	psEnvironmentSet = new CEStr(
 		L"set PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\n"
 		L"\r\n"
 		L"# set ConEmuPromptNames=NO\r\n" // created after gh-1570
@@ -659,10 +659,10 @@ void Settings::InitSettings()
 
 	isProcessAnsi = true;
 	isAnsiExec = ansi_CmdOnly;
-	psAnsiAllowed = lstrdup(L"cmd -cur_console:R /cGitShowBranch.cmd\r\n");
+	psAnsiAllowed = new CEStr(L"cmd -cur_console:R /cGitShowBranch.cmd\r\n");
 	isAnsiLog = false;
 	isAnsiLogCodes = false;
-	pszAnsiLog = lstrdup(CEANSILOGFOLDER);
+	pszAnsiLog = lstrdup(CEANSILOGFOLDER).Detach();
 	isKillSshAgent = true;
 	isProcessNewConArg = true;
 	isProcessCmdStart = false; // gh#420
@@ -681,7 +681,7 @@ void Settings::InitSettings()
 	wcscpy_c(szTabModifiedSuffix, L"[*]");
 	wchar_t szTabSkipWords[64];
 	wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
-	pszTabSkipWords = lstrdup(szTabSkipWords);
+	pszTabSkipWords = lstrdup(szTabSkipWords).Detach();
 	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
@@ -692,7 +692,7 @@ void Settings::InitSettings()
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = nullptr; // если nullptr - то используется макрос по умолчанию
 	isCTSIntelligent = true;
-	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim");
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim").Detach();
 	isCTSAutoCopy = true;
 	isCTSResetOnRelease = false;
 	isCTSIBeam = true;
@@ -713,7 +713,7 @@ void Settings::InitSettings()
 	isPasteConfirmEnter = true;
 	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
-	sFarGotoEditor = lstrdup(HI_GOTO_EDITOR_FAR);
+	sFarGotoEditor = lstrdup(HI_GOTO_EDITOR_FAR).Detach();
 	isHighlightMouseRow = false; // Not turned on by default
 	isHighlightMouseCol = false; // Not turned on by default
 
@@ -1096,7 +1096,7 @@ void Settings::LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 					if (NewApps[nSucceeded]->AppNames /*&& *NewApps[nSucceeded]->AppNames*/)
 					{
 						NewApps[nSucceeded]->cchNameMax = wcslen(NewApps[nSucceeded]->AppNames)+1;
-						NewApps[nSucceeded]->AppNamesLwr = lstrdup(NewApps[nSucceeded]->AppNames);
+						NewApps[nSucceeded]->AppNamesLwr = lstrdup(NewApps[nSucceeded]->AppNames).Detach();
 						CharLowerBuff(NewApps[nSucceeded]->AppNamesLwr, lstrlen(NewApps[nSucceeded]->AppNamesLwr));
 						reg->Load(L"Elevated", NewApps[nSucceeded]->Elevated);
 						LoadAppSettings(reg, NewApps[nSucceeded]/*, NewAppColors[nSucceeded]->Colors*/);
@@ -1498,7 +1498,7 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 	{
 		Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
 		_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
-		Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
+		Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle).Detach();
 		Palettes[n]->bPredefined = true;
 		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = CEDEF_BackColorAuto/*16*/;
 		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = CEDEF_BackColorAuto/*16*/;
@@ -1977,7 +1977,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName,
 
 	// Сохранять допускается только пользовательские палитры
 	Palettes[nIndex]->bPredefined = false;
-	Palettes[nIndex]->pszName = lstrdup(asName);
+	Palettes[nIndex]->pszName = lstrdup(asName).Detach();
 
 	BOOL bTextChanged = !bNewPalette && ((Palettes[nIndex]->nTextColorIdx != anTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != anBackColorIdx));
 	BOOL bPopupChanged = !bNewPalette && ((Palettes[nIndex]->nPopTextColorIdx != anPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != anPopBackColorIdx));
@@ -2099,7 +2099,7 @@ void Settings::ProgressesSetDuration(LPCWSTR asName, DWORD anDuration)
 		return;
 	}
 
-	Progresses[ProgressesCount]->pszName = lstrdup(asName);
+	Progresses[ProgressesCount]->pszName = lstrdup(asName).Detach();
 	Progresses[ProgressesCount]->nDuration = anDuration;
 
 	ProgressesCount++;
@@ -2507,7 +2507,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
 		reg->Load(L"AnsiExecution", isAnsiExec); if (isAnsiExec > ansi_Disabled) isAnsiExec = ansi_Disabled;
-		this->LoadMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed, L"\r\n", true);
+		if (!psAnsiAllowed) psAnsiAllowed = new CEStr();
+		this->LoadMSZ(reg, L"AnsiAllowedCommands", *psAnsiAllowed, L"\r\n", true);
 
 		reg->Load(L"AnsiLog", isAnsiLog);
 		reg->Load(L"AnsiLogCodes", isAnsiLogCodes);
@@ -2688,7 +2689,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
 		reg->Load(L"AutoReloadEnvironment", AutoReloadEnvironment);
-		this->LoadMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", true);
+		if (!psEnvironmentSet) psEnvironmentSet = new CEStr(); else psEnvironmentSet->Clear();
+		this->LoadMSZ(reg, L"EnvironmentSet", *psEnvironmentSet, L"\r\n", true);
 
 		reg->Load(L"CTS.Intelligent", isCTSIntelligent);
 		{
@@ -2973,7 +2975,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		// FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll
 		// FindOptions.pszText may be used to pre-fill search dialog field if search-bar is hidden
-		reg->Load(L"FindText", &FindOptions.pszText);
+		reg->Load(L"FindText", &FindOptions.text.ms_Val);
 		reg->Load(L"FindMatchCase", FindOptions.bMatchCase);
 		reg->Load(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
 		reg->Load(L"FindFreezeConsole", FindOptions.bFreezeConsole);
@@ -3271,8 +3273,8 @@ void Settings::AutoSaveSettings(SettingsBase* reg/* = nullptr*/, bool saveAll/* 
 		// Таски пишутся в отдельный ключ
 		if (bTaskAutoSave)
 		{
-			wchar_t* pszTabs = CVConGroup::GetTasks();
-			if (pszTabs && *pszTabs)
+			CEStr pszTabs = CVConGroup::GetTasks();
+			if (pszTabs)
 			{
 				BOOL lbOpened = FALSE;
 				wchar_t szCmdKey[MAX_PATH+64];
@@ -3293,7 +3295,7 @@ void Settings::AutoSaveSettings(SettingsBase* reg/* = nullptr*/, bool saveAll/* 
 					if (StartupTask)
 					{
 						wchar_t szConfig[300] = L"";
-						LPCWSTR pszConfigName = gpSetCls->GetConfigName();
+						const wchar_t* pszConfigName = gpSetCls->GetConfigName();
 						if (pszConfigName && *pszConfigName)
 						{
 							swprintf_c(szConfig, L"/config \"%s\"", pszConfigName);
@@ -3316,7 +3318,6 @@ void Settings::AutoSaveSettings(SettingsBase* reg/* = nullptr*/, bool saveAll/* 
 					gpConEmu->LogWindowPos(L"AutoSaveSettings - FAILED(OpenKey(AutoStartTaskName, KEY_WRITE))");
 				}
 			}
-			SafeFree(pszTabs);
 		}
 	}
 	else
@@ -3401,7 +3402,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = nullptr*/)
 		}
 	}
 
-	reg->Save(L"FindText", FindOptions.pszText);
+	reg->Save(L"FindText", FindOptions.text.c_str());
 	reg->Save(L"FindMatchCase", FindOptions.bMatchCase);
 	reg->Save(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
 #if 0
@@ -3621,14 +3622,13 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"DefaultTerminalDebugLog", isDefaultTerminalDebugLog);
 		reg->Save(L"DefaultTerminalConfirm", static_cast<BYTE>(nDefaultTerminalConfirmClose));
 		{
-		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
-		reg->Save(L"DefaultTerminalApps", pszApps);
-		SafeFree(pszApps);
+		const CEStr pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
+		reg->Save(L"DefaultTerminalApps", pszApps.c_str());
 		}
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
 		reg->Save(L"AnsiExecution", isAnsiExec);
-		this->SaveMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed, L"\r\n", false);
+		this->SaveMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed ? psAnsiAllowed->c_str() : nullptr, L"\r\n", false);
 
 		reg->Save(L"AnsiLog", isAnsiLog);
 		reg->Save(L"AnsiLogCodes", isAnsiLogCodes);
@@ -3758,12 +3758,11 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.UncPaths", _bool(ComSpec.isAllowUncPaths));
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		reg->Save(L"AutoReloadEnvironment", AutoReloadEnvironment);
-		this->SaveMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", false);
+		this->SaveMSZ(reg, L"EnvironmentSet", psEnvironmentSet ? psEnvironmentSet->c_str() : nullptr, L"\r\n", false);
 		reg->Save(L"CTS.Intelligent", isCTSIntelligent);
 		{
-		wchar_t* pszApps = GetIntelligentExceptions(); // MSZ -> "|"-delimited string
-		reg->Save(L"CTS.IntelligentExceptions", pszApps);
-		SafeFree(pszApps);
+		const CEStr pszApps = GetIntelligentExceptions(); // MSZ -> "|"-delimited string
+		reg->Save(L"CTS.IntelligentExceptions", pszApps.c_str());
 		}
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Save(L"CTS.ResetOnRelease", isCTSResetOnRelease);
@@ -3793,9 +3792,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FixFarBorders", isFixFarBorders);
 		reg->Save(L"Anti-aliasing2", isAntiAlias2);
 		{
-		wchar_t* pszCharRanges = CreateCharRanges(mpc_CharAltFontRanges);
-		reg->Save(L"FixFarBordersRanges", pszCharRanges ? pszCharRanges : L"2013-25C4");
-		if (pszCharRanges) free(pszCharRanges);
+		CEStr pszCharRanges = CreateCharRanges(mpc_CharAltFontRanges);
+		reg->Save(L"FixFarBordersRanges", pszCharRanges.c_str(L"2013-25C4"));
 		}
 		reg->Save(L"ExtendUCharMap", isExtendUCharMap);
 		reg->Save(L"EnhanceGraphics", isEnhanceGraphics);
@@ -4268,15 +4266,15 @@ int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abV
 
 	int iRc = 0;
 	int n = 0, nMax = _tcslen(asRanges);
-	wchar_t *pszCopy = lstrdup(asRanges);
+	CEStr pszCopy(asRanges);
 	if (!pszCopy)
 	{
 		_ASSERTE(pszCopy!=nullptr);
 		return -1;
 	}
-	wchar_t *pszRange = pszCopy;
+	wchar_t *pszRange = pszCopy.data();
 	wchar_t *pszNext = nullptr;
-	UINT cBegin, cEnd;
+	UINT cBegin = -1, cEnd;
 
 	memset(Chars, 0, sizeof(Chars));
 
@@ -4319,16 +4317,14 @@ int Settings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abV
 
 	iRc = 0; // ok
 wrap:
-	if (pszCopy)
-		free(pszCopy);
 	return iRc;
 }
 
-// caller must free(result)
-wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
+CEStr Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 {
-	size_t nMax = 1024;
-	wchar_t* pszRanges = (wchar_t*)calloc(nMax,sizeof(*pszRanges));
+	const size_t nMax = 1024;
+	CEStr result;
+	wchar_t* pszRanges = result.GetBuffer(nMax);
 	if (!pszRanges)
 	{
 		_ASSERTE(pszRanges!=nullptr);
@@ -4338,19 +4334,19 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 	wchar_t* psz = pszRanges;
 	wchar_t* pszEnd = pszRanges + nMax;
 	UINT c = 0;
-	_ASSERTE((countof(Chars)-1) == 0xFFFF);
+	_ASSERTE((countof(Chars) - 1) == 0xFFFF);
 	while (c < countof(Chars))
 	{
 		if (Chars[c])
 		{
 			if ((psz + 10) >= pszEnd)
 			{
-				// Слишком длинный блок
+				// Too long block
 				_ASSERTE((psz + 10) < pszEnd);
 				break;
 			}
 
-			UINT cBegin = (c++);
+			const UINT cBegin = (c++);
 			UINT cEnd = cBegin;
 
 			while (c < countof(Chars) && Chars[c])
@@ -4374,7 +4370,7 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 		}
 	}
 
-	return pszRanges;
+	return result;
 }
 
 bool Settings::CheckCharAltFont(ucs32 inChar)
@@ -4426,7 +4422,7 @@ void Settings::CheckConsoleSettings()
 	}
 }
 
-wchar_t* Settings::GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix)
+CEStr Settings::GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix)
 {
 	SettingsStorage temp = {};
 	if (apStorage == nullptr)
@@ -4435,7 +4431,7 @@ wchar_t* Settings::GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWST
 		apStorage = &temp;
 	}
 
-	return lstrmerge(
+	return CEStr(
 		asPrefix,
 		// [reg], [xml], ...
 		L" ", apStorage->getTypeName(),
@@ -5235,7 +5231,7 @@ bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
 			SafeFree(args.pszSpecialCmd);
 
 			// Run all tabs of the task, if they were specified
-			args.pszSpecialCmd = lstrdup(pGrp->pszName);
+			args.pszSpecialCmd = lstrdup(pGrp->pszName).Detach();
 			lsTitle.Set(pGrp->pszName);
 			break;
 		}
@@ -5243,7 +5239,7 @@ bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
 
 	if (!args.pszSpecialCmd)
 	{
-		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
+		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec).Detach(); //lstrdup(L"cmd");
 		if (!args.pszSpecialCmd)
 		{
 			_ASSERTE(FALSE && "Memory allocation failure");
@@ -5256,12 +5252,17 @@ bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
 		if (lsTitle.IsEmpty())
 			lsTitle.Set(L"cmd.exe");
 
-		lstrmerge(&args.pszSpecialCmd, L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+		CEStr merged(args.pszSpecialCmd, L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+		if (merged)
+		{
+			SafeFree(args.pszSpecialCmd);
+			args.pszSpecialCmd = merged.Detach();
+		}
 	}
 
 	if (!args.pszStartupDir)
 	{
-		args.pszStartupDir = lstrdup(L"%CD%");
+		args.pszStartupDir = lstrdup(L"%CD%").Detach();
 	}
 
 	return true;
@@ -5455,7 +5456,7 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 				bool bDuplicate = false;
 				wchar_t szIndex[16] = L"";
 				if (s) swprintf_c(szIndex, L" (%u)", s);
-				lsName.Attach(lstrmerge(TaskBracketLeftS, lsNaked.ms_Val, szIndex, TaskBracketRightS));
+				lsName = CEStr(TaskBracketLeftS, lsNaked.ms_Val, szIndex, TaskBracketRightS);
 
 				for (INT_PTR i = 0; (i < CmdTaskCount) && !bDuplicate; i++)
 				{
@@ -5512,7 +5513,7 @@ const wchar_t* Settings::GetDefaultTerminalAppsMSZ()
 }
 
 // returns "|"-delimited string
-wchar_t* Settings::GetDefaultTerminalApps()
+CEStr Settings::GetDefaultTerminalApps()
 {
 	return MSZ2LineDelimited(psDefaultTerminalApps);
 }
@@ -5529,7 +5530,7 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 	// "|" delimited String -> MSZ
 	if (apszApps && *apszApps)
 	{
-		psDefaultTerminalApps = LineDelimited2MSZ(apszApps);
+		psDefaultTerminalApps = LineDelimited2MSZ(apszApps).Detach();
 	}
 
 	if (gpConEmu)
@@ -5540,15 +5541,16 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 
 
 // MSZ -> "<asDelim>"-delimited string
-wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
+CEStr Settings::MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
 {
-	if (!apszLines || !*apszLines)
+	if (IsStrEmpty(apszLines))
 	{
-		return lstrdup(L"");
+		return CEStr(L"");
 	}
+
 	// Evaluate required len
 	INT_PTR nTotalLen = bFinalToo ? 2 : 1, nLen;
-	INT_PTR nDelimLen = asDelim ? _tcslen(asDelim) : 0;
+	const INT_PTR nDelimLen = asDelim ? _tcslen(asDelim) : 0;
 	const wchar_t* psz = apszLines;
 	while (*psz)
 	{
@@ -5557,11 +5559,12 @@ wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim /
 		nTotalLen += nLen + nDelimLen;
 	}
 	// Buffer
-	wchar_t* pszRet = (wchar_t*)malloc(nTotalLen*sizeof(*pszRet));
+	CEStr result;
+	wchar_t* pszRet = result.GetBuffer(nTotalLen);
 	if (!pszRet)
 	{
 		_ASSERTE(pszRet);
-		return lstrdup(L"");
+		return CEStr(L"");
 	}
 	// Conversion
 	wchar_t* pszDst = pszRet; psz = apszLines;
@@ -5589,19 +5592,20 @@ wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim /
 	}
 	*pszDst = 0;
 
-	return pszRet;
+	return result;
 }
+
 // "|"-delimited string -> MSZ
 // !!! Returns LOWER-CASE string !!!
-wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase /*= true*/)
+CEStr Settings::LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase /*= true*/) const
 {
-	wchar_t* pszDst = nullptr;
+	CEStr result;
 
 	// "|" delimited String -> MSZ
-	if (apszApps && *apszApps)
+	if (IsStrNotEmpty(apszApps))
 	{
-		INT_PTR nLen = _tcslen(apszApps);
-		pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
+		const INT_PTR nLen = _tcslen(apszApps);
+		auto* pszDst = result.GetBuffer(nLen + 3);
 
 		if (pszDst)
 		{
@@ -5629,30 +5633,31 @@ wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase /*
 				apszApps = pszNext + 1;
 			}
 			*(psz++) = 0;
-			*(psz++) = 0; // для гарантии
+			*(psz++) = 0; // ASCIIZZ
 		}
 	}
 
-	return pszDst;
+	return result;
 }
 
 
 // "\r\n"-delimited string -> MSZ
-wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in bytes*/)
+CEStr Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in bytes*/) const
 {
-	wchar_t* pszDst = nullptr;
+	CEStr result;
 	DWORD cbSize = 0;
 
 	if (apszLines && *apszLines)
 	{
-		CEStr lsLine;
 		INT_PTR nLenMax = lstrlen(apszLines) + 2;
-		if ((pszDst = (wchar_t*)malloc(nLenMax*sizeof(wchar_t))) == nullptr)
+		auto* pszDst = result.GetBuffer(nLenMax);
+		if (pszDst == nullptr)
 		{
 			_ASSERTE(FALSE && "Memory allocation failed");
 		}
 		else
 		{
+			CEStr lsLine;
 			wchar_t* psz = pszDst;
 			LPCWSTR pszSrc = apszLines;
 			while ((pszSrc = NextLine(pszSrc, lsLine, NLF_NONE)))
@@ -5661,11 +5666,11 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 				// That is a registry limitation
 				if (lsLine.IsEmpty())
 					lsLine.Set(L" ");
-				int iLineLen = lstrlen(lsLine.ms_Val) + 1;
+				const int iLineLen = lstrlen(lsLine.ms_Val) + 1;
 				if ((psz - pszDst + 1 + iLineLen) >= nLenMax)
 				{
-					INT_PTR nNewLenMax = std::max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
-					wchar_t* pszRealloc = (wchar_t*)realloc(pszDst, nNewLenMax*sizeof(wchar_t));
+					const INT_PTR nNewLenMax = std::max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
+					auto* pszRealloc = result.GetBuffer(nNewLenMax);
 					if (!pszRealloc)
 					{
 						_ASSERTE(FALSE && "Reallocation failed");
@@ -5690,17 +5695,17 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 
 	if (pcbSize)
 		*pcbSize = cbSize;
-	return pszDst;
+	return result;
 }
 
-bool Settings::LoadMSZ(SettingsBase* reg, LPCWSTR asName, wchar_t*& rsLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
+bool Settings::LoadMSZ(SettingsBase* reg, LPCWSTR asName, CEStr& rsLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
 {
 	wchar_t* pszMsz = nullptr; // MSZZ
 
-	bool bRc = reg->Load(asName, &pszMsz);
+	const bool bRc = reg->Load(asName, &pszMsz);
 	if (bRc && pszMsz)
 	{
-		SafeFree(rsLines);
+		rsLines.Clear();
 		rsLines = MSZ2LineDelimited(pszMsz, asDelim, bFinalToo);
 		free(pszMsz);
 	}
@@ -5713,11 +5718,9 @@ void Settings::SaveMSZ(SettingsBase* reg, LPCWSTR asName, LPCWSTR rsLines, LPCWS
 {
 	// MSZZ
 	DWORD nCbSize = 0;
-	wchar_t* psMSZ = MultiLine2MSZ(rsLines, &nCbSize/*in bytes*/);
+	CEStr psMSZ = MultiLine2MSZ(rsLines, &nCbSize/*in bytes*/);
 
 	reg->SaveMSZ(asName, psMSZ, nCbSize);
-
-	SafeFree(psMSZ);
 }
 
 // "\0"-delimited
@@ -5726,7 +5729,7 @@ const wchar_t* Settings::GetIntelligentExceptionsMSZ()
 	return pszCTSIntelligentExceptions;
 }
 // returns "|"-delimited
-wchar_t* Settings::GetIntelligentExceptions()
+CEStr Settings::GetIntelligentExceptions()
 {
 	return MSZ2LineDelimited(pszCTSIntelligentExceptions);
 }
@@ -5734,7 +5737,7 @@ wchar_t* Settings::GetIntelligentExceptions()
 void Settings::SetIntelligentExceptions(const wchar_t* apszApps)
 {
 	SafeFree(pszCTSIntelligentExceptions);
-	pszCTSIntelligentExceptions = LineDelimited2MSZ(apszApps);
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(apszApps).Detach();
 }
 
 
@@ -5996,7 +5999,7 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 				SafeFree(ppHK->GuiMacro);
 				if (MacroVersion < GUI_MACRO_VERSION)
 				{
-					ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
+					ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true).Detach();
 					SafeFree(pszMacro);
 				}
 				else

@@ -197,7 +197,7 @@ bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 		gpConEmu->LogString(lsLog);
 	}
 
-	const int iRc = ReadTextFile(asFile, 1 << 24 /*16Mb max*/, lsJsonData.ms_Val, jsonDataSize, nErrCode);
+	const int iRc = ReadTextFile(asFile, 1 << 24 /*16Mb max*/, lsJsonData, jsonDataSize, nErrCode);
 	if (iRc != 0)
 	{
 		// TODO: Log error
@@ -282,7 +282,7 @@ bool CLngRc::LoadLanguages(MJsonValue* pJson)
 			LngDefinition lng = {};
 			lng.id = lsId.Detach();
 			lng.name = lsName.Detach();
-			lng.descr = lstrmerge(lng.id, L": ", lng.name);
+			lng.descr = CEStr(lng.id, L": ", lng.name).Detach();
 			m_Languages.push_back(lng);
 		}
 	} // for (size_t i = 0; i < iCount; i++)
@@ -446,12 +446,11 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, const int idx, LPCWSTR asValue,
 		}
 		else
 		{
-			auto* newStr = lstrdup(asValue);
+			CEStr newStr(asValue);
 			if (newStr)
 			{
 				item.MaxLen = static_cast<uint16_t>(iLen);
-				std::swap(item.Str, newStr);
-				free(newStr);
+				newStr.Swap(item.Str);
 			}
 		}
 		bOk = (item.Str != nullptr);
@@ -479,7 +478,7 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson)
 			_ASSERTE(FALSE && "String format failure");
 			return false;
 		}
-		lstrmerge(&lsValue.ms_Val, jStr.getString());
+		lsValue.Append(jStr.getString());
 	}
 
 	if (lsValue.IsEmpty())

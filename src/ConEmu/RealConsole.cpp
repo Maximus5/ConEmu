@@ -556,15 +556,6 @@ CRealConsole::~CRealConsole()
 
 	SafeDelete(mpcs_CurWorkDir);
 
-	SafeFree(mpsz_PostCreateMacro);
-
-	//SafeFree(mpsz_CmdBuffer);
-
-	//if (mp_Rgn)
-	//{
-	//	delete mp_Rgn;
-	//	mp_Rgn = nullptr;
-	//}
 	SafeCloseHandle(mh_UpdateServerActiveEvent);
 	SafeCloseHandle(mh_MonitorThreadEvent);
 	SafeDelete(mp_Files);
@@ -1273,7 +1264,7 @@ bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	{
 		SafeFree(m_Args.pszSpecialCmd);
 		_ASSERTE(m_Args.Detached == crb_On);
-		m_Args.pszSpecialCmd = lstrdup(rStartStop->sCmdLine);
+		m_Args.pszSpecialCmd = lstrdup(rStartStop->sCmdLine).Detach();
 	}
 
 	_ASSERTE(hProcess==nullptr || (mp_sei && mp_sei->hProcess));
@@ -1410,7 +1401,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 
 	if (gpSet->psEnvironmentSet)
 	{
-		env.AddLines(gpSet->psEnvironmentSet, true);
+		env.AddLines(gpSet->psEnvironmentSet->c_str(), true);
 	}
 
 	size_t cchData = 0;
@@ -1433,7 +1424,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	}
 	if (pszPalette && *pszPalette)
 	{
-		pRet.PaletteName.Set(lstrdup(pszPalette), wcslen(pszPalette)+1);
+		pRet.PaletteName.Set(lstrdup(pszPalette).Detach());
 	}
 
 	if (pPal)
@@ -1452,7 +1443,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	_ASSERTE(pRet.TaskName.psz == nullptr);
 	if (m_Args.pszTaskName && *m_Args.pszTaskName)
 	{
-		pRet.TaskName.Set(lstrdup(m_Args.pszTaskName), wcslen(m_Args.pszTaskName)+1);
+		pRet.TaskName.Set(lstrdup(m_Args.pszTaskName).Detach());
 	}
 }
 
@@ -1468,7 +1459,7 @@ void CRealConsole::PasteExplorerPath(bool bDoCd /*= true*/, bool bSetFocus /*= t
 {
 	AssertThis();
 
-	wchar_t* pszPath = getFocusedExplorerWindowPath();
+	CEStr pszPath = getFocusedExplorerWindowPath();
 
 	if (pszPath)
 	{
@@ -1482,8 +1473,6 @@ void CRealConsole::PasteExplorerPath(bool bDoCd /*= true*/, bool bSetFocus /*= t
 			if (!mp_ConEmu->isMeForeground())
 				mp_ConEmu->DoMinimizeRestore(sih_SetForeground);
 		}
-
-		free(pszPath);
 	}
 }
 
@@ -4085,8 +4074,8 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 				}
 				for (int i = 0; i < nCount; i++)
 				{
-					lstrmerge(&lsPID.ms_Val, lsPID.ms_Val ? L"," : nullptr, ultow_s(pPrc[i].ProcessID, szExe, 10));
-					if (lstrlen(lsPID.ms_Val) > MAX_PATH)
+					lsPID = CEStr(lsPID.ms_Val ? L"," : nullptr, ultow_s(pPrc[i].ProcessID, szExe, 10));
+					if (lsPID.GetLen() > MAX_PATH)
 						break;
 				}
 				swprintf_c(szExe, L"\"%s\" /DEBUGPID=%s /DUMP", pszServer, lsPID.ms_Val);
@@ -4137,7 +4126,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 		|| (((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree)) && bShowStartDlg)
 		)
 	{
-		Args.pszSpecialCmd = lstrdup(szExe);
+		Args.pszSpecialCmd = lstrdup(szExe).Detach();
 		Args.nSplitValue = 700;
 
 		int nRc = mp_ConEmu->RecreateDlg(&Args, true);
@@ -4935,7 +4924,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 			// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
 			HRESULT hr = E_FAIL;
 			wchar_t szUserDir[MAX_PATH] = L"";
-			wchar_t* pszChangedCmd = nullptr;
+			CEStr pszChangedCmd;
 			// Issue 1557: switch -new_console:u:"other_user:password" lock the account of other_user
 			if (!lpszWorkDir || !*lpszWorkDir)
 			{
@@ -4948,11 +4937,11 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 				CmdArg exe;
 				LPCWSTR pszTemp = psCurCmd;
 				if ((pszTemp = NextArg(pszTemp, exe)))
-					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
+					pszChangedCmd = CEStr(exe, L" /PROFILECD ", pszTemp);
 			}
 			DWORD nFlags = (Args.RunAsNetOnly == crb_On) ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
 			lbRc = (CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
-										nFlags, nullptr, pszChangedCmd ? pszChangedCmd : psCurCmd,
+										nFlags, nullptr, pszChangedCmd ? pszChangedCmd.data() : psCurCmd,
 										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
 										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 										, nullptr, lpszWorkDir, &si, &pi) != FALSE);
@@ -4963,7 +4952,6 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 			dwLastError = GetLastError();
 
 			SecureZeroMemory(Args.szUserPassword, sizeof(Args.szUserPassword));
-			SafeFree(pszChangedCmd);
 		}
 		else if (Args.RunAsRestricted == crb_On)
 		{
@@ -5635,15 +5623,15 @@ void CRealConsole::OnSelectionChanged()
 		if (sel.dwFlags & CONSOLE_MOUSE_SELECTION)
 			m_Mouse.bWasMouseSelection = true;
 
-		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
-		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
+		const bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
+		const int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
 
 		wchar_t szCoords[128] = L"", szChars[20];
 		swprintf_c(szCoords, L"{%i,%i}-{%i,%i}:{%i,%i}",
 			sel.srSelection.Left+1, sel.srSelection.Top+1,
 			sel.srSelection.Right+1, sel.srSelection.Bottom+1,
 			sel.dwSelectionAnchor.X+1, sel.dwSelectionAnchor.Y+1);
-		szSelInfo = lstrmerge(
+		szSelInfo = CEStr(
 			ltow_s(nCellsCount, szChars, 10),
 			CLngRc::getRsrc(lng_SelChars/*" chars "*/),
 			szCoords,
@@ -5737,7 +5725,7 @@ void CRealConsole::DoFindText(int nDirection)
 	}
 	if (mp_ABuf)
 	{
-		mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+		mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.text, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
 	}
 }
 
@@ -6100,7 +6088,7 @@ void CRealConsole::StopSignal()
 		CConEmuChild::ProcessVConClosed(mp_VCon);
 
 		// Clear some vars
-		SafeFree(mpsz_PostCreateMacro);
+		mpsz_PostCreateMacro.Release();
 	}
 }
 
@@ -8200,11 +8188,11 @@ LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
 					m_RootInfo.nPID,
 					CLngRc::getRsrc(lng_ExitCode/*"exit code"*/),
 					m_RootInfo.nExitCode);
-			rsInfo = lstrmerge(ms_RootProcessName, szExitInfo);
+			rsInfo = CEStr(ms_RootProcessName, szExitInfo);
 		}
 		else if ((m_StartState < rss_ProcessActive) && ms_RootProcessName[0])
 		{
-			rsInfo = lstrmerge(L"Starting: ", ms_RootProcessName);
+			rsInfo = CEStr(L"Starting: ", ms_RootProcessName);
 		}
 		else
 		{
@@ -8526,7 +8514,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	if (wcschr(pszName, L'.') == nullptr)
 	{
 		// If extension was not defined, assume it's an .exe
-		szExe.Attach(lstrmerge(szExe.c_str(), L".exe"));
+		szExe = CEStr(szExe.c_str(), L".exe");
 		pszName = PointToName(szExe);
 	}
 
@@ -9903,15 +9891,15 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 		if (mp_ConEmu->IsConsoleBatchOrTask(args->pszSpecialCmd))
 		{
 			// Load Task contents
-			wchar_t* pszTaskCommands = mp_ConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
-			if (!pszTaskCommands || !*pszTaskCommands)
+			CEStr pszTaskCommands = mp_ConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
+			if (pszTaskCommands.IsEmpty())
 			{
 				CEStr lsMsg(L"Can't load task contents!\n", args->pszSpecialCmd);
 				MsgBox(lsMsg, MB_ICONSTOP);
 				return false;
 			}
 			// Only one command can started in a console
-			wchar_t* pszBreak = (wchar_t*)wcspbrk(pszTaskCommands, L"\r\n");
+			wchar_t* pszBreak = wcspbrk(pszTaskCommands.data(), L"\r\n");
 			if (pszBreak)
 			{
 				CEStr lsMsg(L"Task ", args->pszSpecialCmd, L" contains more than a command.\n" L"Only first will be executed.");
@@ -9922,7 +9910,7 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 			}
 			// Run contents but not a "task"
 			SafeFree(args->pszSpecialCmd);
-			args->pszSpecialCmd = pszTaskCommands;
+			args->pszSpecialCmd = pszTaskCommands.Detach();
 		}
 	}
 
@@ -9934,9 +9922,8 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 		wchar_t szPrefix[128];
 		swprintf_c(szPrefix, L"CRealConsole::RecreateProcess, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
 			LODWORD(mp_VCon->GetView()), static_cast<UINT>(args->Detached), static_cast<UINT>(args->RunAsAdministrator));
-		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<nullptr>");
-		LogString(pszInfo ? pszInfo : szPrefix);
-		SafeFree(pszInfo);
+		const CEStr pszInfo(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<nullptr>");
+		LogString(pszInfo.c_str(szPrefix));
 	}
 
 	const bool bCopied = m_Args.AssignFrom(*args, true);
@@ -11093,9 +11080,8 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 				{
 					case IDOK:
 						{
-							wchar_t* pszNew = GetDlgItemTextPtr(hDlg, tNewTabName);
+							const CEStr pszNew = GetDlgItemTextPtr(hDlg, tNewTabName);
 							pRCon->RenameTab(pszNew);
-							SafeFree(pszNew);
 							EndDialog(hDlg, IDOK);
 							return TRUE;
 						}
@@ -11195,7 +11181,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 	else
 	{
 		CEStr szWorkDir; GetConsoleCurDir(szWorkDir, true);
-		CEStr szConfirm(L"Do you want to duplicate tab with root?\n",
+		const CEStr szConfirm(L"Do you want to duplicate tab with root?\n",
 			L"Process: ", p->Name, L"\n",
 			L"Directory: ", szWorkDir);
 		if (bSkipMsg || !gpSet->isMultiDupConfirm
@@ -11211,21 +11197,21 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 				bRootCmdRedefined = true;
 				SafeFree(args.pszSpecialCmd);
 				if (asParm)
-					args.pszSpecialCmd = lstrmerge(asApp, L" ", asParm);
+					args.pszSpecialCmd = CEStr(asApp, L" ", asParm).Detach();
 				else
-					args.pszSpecialCmd = lstrdup(asApp);
+					args.pszSpecialCmd = CEStr(asApp).Detach();
 			}
 			else if (asParm && *asParm)
 			{
 				bRootCmdRedefined = true;
-				lstrmerge(&args.pszSpecialCmd, L" ", asParm);
+				CEStr(args.pszSpecialCmd, L" ", asParm).Swap(args.pszSpecialCmd);
 			}
 
 
 			if (asNewConsole && *asNewConsole)
 			{
-				lstrmerge(&args.pszSpecialCmd, L" ", asNewConsole);
 				bRootCmdRedefined = true;
+				CEStr(args.pszSpecialCmd, L" ", asNewConsole).Swap(args.pszSpecialCmd);
 			}
 
 			// Нужно оставить там "new_console", иначе не отключается подтверждение закрытия например
@@ -11233,7 +11219,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 
 			// Explicitly load "detected" working directory
 			SafeFree(args.pszStartupDir);
-			args.pszStartupDir = lstrdup(szWorkDir);
+			args.pszStartupDir = lstrdup(szWorkDir).Detach();
 
 			// Mark as detached, because the new console will be started from active shell process,
 			// but not from ConEmu (yet, behavior planned to be changed)
@@ -12260,7 +12246,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 		if (MyOpenClipboard(L"GetClipboard"))
 		{
-			buffer = GetCliboardText(nErrCode, szErr, countof(szErr));
+			buffer = GetClipboardText(nErrCode, szErr, countof(szErr));
 			MyCloseClipboard();
 		}
 
@@ -12374,7 +12360,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	if (nBufLen && m_Term.bBracketedPaste)
 	{
-		CEStr bracketedText = lstrmerge(L"\x1B[200~", buffer.c_str(), L"\x1B[201~");
+		CEStr bracketedText(L"\x1B[200~", buffer.c_str(), L"\x1B[201~");
 		if (bracketedText.IsEmpty())
 		{
 			_ASSERTE(bracketedText.IsEmpty());
@@ -13537,12 +13523,8 @@ const RConStartArgsEx& CRealConsole::GetArgs()
 
 void CRealConsole::SetPaletteName(LPCWSTR asPaletteName)
 {
-	wchar_t* pszOld = m_Args.pszPalette;
-	wchar_t* pszNew = nullptr;
-	if (asPaletteName && *asPaletteName)
-		pszNew = lstrdup(asPaletteName);
-	m_Args.pszPalette = pszNew;
-	SafeFree(pszOld);
+	CEStr pszNew(asPaletteName);
+	pszNew.Swap(m_Args.pszPalette);
 	_ASSERTE(!mp_VCon->m_SelfPalette.bPredefined);
 	PrepareDefaultColors();
 }
@@ -13559,7 +13541,7 @@ LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 		return L"";
 }
 
-wchar_t* CRealConsole::CreateCommandLine(const bool abForTasks /*= false*/)
+CEStr CRealConsole::CreateCommandLine(const bool abForTasks /*= false*/)
 {
 	AssertThisRet(nullptr);
 
@@ -13576,11 +13558,11 @@ wchar_t* CRealConsole::CreateCommandLine(const bool abForTasks /*= false*/)
 		const auto* pszRenamed = tab->Renamed.Ptr();
 		if (pszRenamed && *pszRenamed)
 		{
-			m_Args.pszRenameTab = lstrdup(pszRenamed);
+			m_Args.pszRenameTab = lstrdup(pszRenamed).Detach();
 		}
 	}
 
-	wchar_t* pszCmd = m_Args.CreateCommandLine(abForTasks);
+	CEStr pszCmd = m_Args.CreateCommandLine(abForTasks);
 
 	m_Args.pszStartupDir = pszDirSave;
 
@@ -15551,7 +15533,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 
 	wchar_t szPrefix[128];
 	swprintf_c(szPrefix, L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
-	wchar_t* pszInfo = lstrmerge(szPrefix, *asStatus ? asStatus : L"<Empty>");
+	CEStr pszInfo(szPrefix, *asStatus ? asStatus : L"<Empty>");
 	DEBUGSTRSTATUS(pszInfo);
 
 	#ifdef _DEBUG
@@ -15562,8 +15544,6 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 	#endif
 
 	LogString(pszInfo);
-
-	SafeFree(pszInfo);
 
 	size_t cchMax = countof(m_ConStatus.szText);
 	if (asStatus[0])
@@ -15895,13 +15875,14 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 		// This is GuiMacro, but not a Far Manager macros
 		if (asMacro[1])
 		{
-			CEStr pszGui(asMacro+1), szRc;
+			CEStr pszGui(asMacro + 1);
+			CEStr szRc;
 			if (isLogging())
 			{
-				CEStr lsLog(L"CRealConsole::PostMacro: ", asMacro);
+				const CEStr lsLog(L"CRealConsole::PostMacro: ", asMacro);
 				LogString(lsLog);
 			}
-			szRc = ConEmuMacro::ExecuteMacro(pszGui.ms_Val, this);
+			szRc = ConEmuMacro::ExecuteMacro(std::move(pszGui), this);
 			LogString(szRc.c_str(L"<nullptr>"));
 			TODO("Show result in the status line?");
 		}
@@ -16017,7 +15998,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 	}
 }
 
-wchar_t* CRealConsole::PostponeMacro(wchar_t*&& asMacro)
+CEStr CRealConsole::PostponeMacro(CEStr&& asMacro)
 {
 	AssertThisRet(lstrdup(L"InvalidPointer"));
 	if (!asMacro)
@@ -16028,12 +16009,12 @@ wchar_t* CRealConsole::PostponeMacro(wchar_t*&& asMacro)
 
 	if (!mpsz_PostCreateMacro)
 	{
-		mpsz_PostCreateMacro = asMacro;
+		mpsz_PostCreateMacro = std::move(asMacro);
 	}
 	else
 	{
 		ConEmuMacro::ConcatMacro(mpsz_PostCreateMacro, asMacro);
-		SafeFree(asMacro);
+		asMacro.Release();
 	}
 
 	return lstrdup(L"PostponedRCon");
@@ -16043,23 +16024,20 @@ void CRealConsole::ProcessPostponedMacro()
 {
 	AssertThis();
 
-	wchar_t* pszMacro = nullptr;
-	wchar_t* pszResult = nullptr;
+	CEStr pszMacro = nullptr;
+	CEStr pszResult = nullptr;
 
 	if (mpsz_PostCreateMacro)
 	{
-		pszMacro = mpsz_PostCreateMacro;
+		pszMacro = std::move(mpsz_PostCreateMacro);
 		mpsz_PostCreateMacro = nullptr;
 	}
 
 	if (pszMacro)
 	{
 		CVConGuard VCon(mp_VCon);
-		pszResult = ConEmuMacro::ExecuteMacro(pszMacro, this);
+		pszResult = ConEmuMacro::ExecuteMacro(std::move(pszMacro), this);
 	}
-
-	SafeFree(pszMacro);
-	SafeFree(pszResult);
 }
 
 DWORD CRealConsole::InitiateDetach()

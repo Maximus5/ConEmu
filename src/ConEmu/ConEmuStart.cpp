@@ -156,7 +156,7 @@ void CESwitch::SetStr(LPCWSTR NewVal, CESwitchType NewType /*= sw_Str*/)
 {
 	if (GetStr())
 		free(Str);
-	Str = (NewVal && *NewVal) ? lstrdup(NewVal) : nullptr;
+	Str = (NewVal && *NewVal) ? lstrdup(NewVal).Detach() : nullptr;
 	Exists = true;
 	if (Type != NewType)
 	{
@@ -353,12 +353,12 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 			wcscat_c(szFar, L"\"");
 
 			// Finally - Result
-			pszNewCmd = lstrdup(szFar);
+			pszNewCmd = lstrdup(szFar).Detach();
 		}
 		else
 		{
 			// Если Far.exe не найден рядом с ConEmu - запустить cmd.exe
-			pszNewCmd = GetComspec(&gpSet->ComSpec);
+			pszNewCmd = GetComspec(&gpSet->ComSpec).Detach();
 			//wcscpy_c(szFar, L"cmd");
 		}
 
@@ -366,7 +366,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	else
 	{
 		// Simple Copy
-		pszNewCmd = lstrdup(GetDefaultCmd());
+		pszNewCmd = lstrdup(GetDefaultCmd()).Detach();
 	}
 
 	SetCurCmd(pszNewCmd, false);
@@ -518,7 +518,7 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, 
 
 	// We need independent absolute file paths, Working dir changes during ConEmu session
 	if (bExpandAndDup)
-		Val.Str = GetFullPathNameEx(curCommand); // it allocates memory
+		Val.Str = GetFullPathNameEx(curCommand).Detach(); // it allocates memory
 	else
 		Val.SetStr(curCommand, Val.Type); // #OPTIMIZE - no need to copy, move instead
 
@@ -543,10 +543,7 @@ void CConEmuStart::ProcessConEmuArgsVar()
 	// Full command line: config switches AND -cmd/-cmdlist
 	_ASSERTE(!opt.cmdLine.IsEmpty());
 
-	// Don't set `nullptr`, it would remove var from env block!
-	LPCWSTR pszValue;
-
-	pszValue = opt.cfgSwitches.IsEmpty() ? L"" : opt.cfgSwitches.ms_Val;
+	const wchar_t* pszValue = opt.cfgSwitches.IsEmpty() ? L"" : opt.cfgSwitches.ms_Val;
 	SetEnvironmentVariableW(L"ConEmuArgs", pszValue);
 
 	if (opt.runCommand.IsEmpty())
@@ -556,7 +553,7 @@ void CConEmuStart::ProcessConEmuArgsVar()
 	}
 	else
 	{
-		opt.cmdRunCommand.Attach(lstrmerge(opt.isScript ? L"-cmd " : L"-cmdlist ", opt.runCommand));
+		opt.cmdRunCommand.Set(opt.isScript ? L"-cmd " : L"-cmdlist ", opt.runCommand);
 		_ASSERTE(!opt.cmdRunCommand.IsEmpty());
 		SetEnvironmentVariableW(L"ConEmuArgs2", opt.cmdRunCommand);
 	}
@@ -882,14 +879,14 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						{
 							if (pi.dwProcessId)
 								swprintf_c(szExtra, L", PID=%u", pi.dwProcessId);
-							lsLog = lstrmerge(
+							lsLog = CEStr(
 								L"Process was created successfully",
 								szExtra);
 						}
 						else
 						{
 							swprintf_c(szExtra, L", ErrorCode=%u", nErr);
-							lsLog = lstrmerge(
+							lsLog = CEStr(
 								L"Failed to start process",
 								szExtra);
 						}
@@ -1475,7 +1472,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		if ((lstrcmpni(pszTestSwitch, L"new_console", 11) == 0)
 			|| (lstrcmpni(pszTestSwitch, L"cur_console", 11) == 0))
 		{
-			szNewConWarn = lstrmerge(L"\r\n\r\n",
+			szNewConWarn = CEStr(L"\r\n\r\n",
 				CLngRc::getRsrc(lng_UnknownSwitch4/*"Switch -new_console must be specified *after* -run or -runlist"*/)
 				);
 		}

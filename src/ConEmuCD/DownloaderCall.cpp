@@ -156,12 +156,12 @@ public:
 		SafeFree(m_Proxy.szProxyPassword);
 
 		// Empty string - for ‘autoconfig’
-		m_Proxy.szProxy = lstrdup(asProxy ? asProxy : L"");
+		m_Proxy.szProxy = lstrdup(asProxy ? asProxy : L"").Detach();
 
 		if (asProxyUser)
-			m_Proxy.szProxyUser = lstrdup(asProxyUser);
+			m_Proxy.szProxyUser = lstrdup(asProxyUser).Detach();
 		if (asProxyPassword)
-			m_Proxy.szProxyPassword = lstrdup(asProxyPassword);
+			m_Proxy.szProxyPassword = lstrdup(asProxyPassword).Detach();
 	};
 
 	// Logging, errors, download progress
@@ -181,7 +181,7 @@ public:
 		SafeFree(szCmdStringFormat);
 		if (asFormat && *asFormat)
 		{
-			szCmdStringFormat = lstrdup(asFormat);
+			szCmdStringFormat = lstrdup(asFormat).Detach();
 		}
 	}
 
@@ -472,11 +472,11 @@ protected:
 		}
 		// Exit
 		return iRc;
-	};
+	}
 
-	wchar_t* CreateCommand(LPCWSTR asSource, LPCWSTR asTarget, UINT& iRc)
+	CEStr CreateCommand(LPCWSTR asSource, LPCWSTR asTarget, UINT& iRc)
 	{
-		wchar_t* pszCommand = nullptr;
+		CEStr pszCommand = nullptr;
 
 		if (!szCmdStringFormat || !*szCmdStringFormat)
 		{
@@ -512,14 +512,14 @@ protected:
 			        "full_url_to_file" "local_path_name"
 			*/
 
-			if (!(pszCommand = lstrmerge(L"\"", szConEmuC, L"\" -download ")))
+			if ((pszCommand = CEStr(L"\"", szConEmuC, L"\" -download ")).IsEmpty())
 			{
 				iRc = E_OUTOFMEMORY;
 				goto wrap;
 			}
 
 			#if defined(_DEBUG)
-			lstrmerge(&pszCommand, L"-debug ");
+			pszCommand.Append(L"-debug ");
 			#endif
 
 			for (INT_PTR i = 0; i < countof(Switches); i++)
@@ -529,14 +529,14 @@ protected:
 					&& ((*pszValue)
 						|| (lstrcmp(Switches[i].pszName, L"-proxy") == 0) // Pass empty string for proxy autoconfig
 						)
-					&& !lstrmerge(&pszCommand, Switches[i].pszName, L" \"", pszValue, L"\" "))
+					&& !pszCommand.Append(Switches[i].pszName, L" \"", pszValue, L"\" "))
 				{
 					iRc = E_OUTOFMEMORY;
 					goto wrap;
 				}
 			}
 
-			if (!lstrmerge(&pszCommand, asSource, L" \"", asTarget, L"\""))
+			if (!pszCommand.Append(asSource, L" \"", asTarget, L"\""))
 			{
 				iRc = E_OUTOFMEMORY;
 				goto wrap;
@@ -578,7 +578,7 @@ public:
 		LPCWSTR pszName = PointToName(asTarget);
 		if (pszName > asTarget)
 		{
-			szCmdDirectory = lstrdup(asTarget);
+			szCmdDirectory = lstrdup(asTarget).Detach();
 			if (!szCmdDirectory)
 			{
 				iRc = E_OUTOFMEMORY;
@@ -588,7 +588,7 @@ public:
 		}
 
 		// Prepare command line for downloader tool
-		pszCommand = CreateCommand(asSource, pszName, iRc);
+		pszCommand = CreateCommand(asSource, pszName, iRc).Detach();
 		if (!pszCommand)
 		{
 			_ASSERTE(iRc!=0);

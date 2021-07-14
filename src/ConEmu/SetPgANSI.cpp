@@ -51,7 +51,7 @@ LRESULT CSetPgANSI::OnInitDialog(HWND hDlg, bool abInitial)
 	_ASSERTE(ansi_Allowed==0 && rbAnsiSecureCmd==(rbAnsiSecureAny+ansi_CmdOnly) && rbAnsiSecureOff==(rbAnsiSecureAny+ansi_Disabled));
 	checkRadioButton(hDlg, rbAnsiSecureAny, rbAnsiSecureOff, rbAnsiSecureAny+gpSet->isAnsiExec);
 
-	SetDlgItemText(hDlg, tAnsiSecure, gpSet->psAnsiAllowed ? gpSet->psAnsiAllowed : L"");
+	SetDlgItemText(hDlg, tAnsiSecure, gpSet->psAnsiAllowed ? gpSet->psAnsiAllowed->c_str() : L"");
 
 	return 0;
 }
@@ -62,8 +62,12 @@ LRESULT CSetPgANSI::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	{
 	case tAnsiSecure:
 	{
-		size_t cchMax = gpSet->psAnsiAllowed ? (_tcslen(gpSet->psAnsiAllowed)+1) : 0;
-		MyGetDlgItemText(hDlg, tAnsiSecure, cchMax, gpSet->psAnsiAllowed);
+		if (gpSet->psAnsiAllowed == nullptr)
+		{
+			_ASSERTE(gpSet->psAnsiAllowed != nullptr);
+			gpSet->psAnsiAllowed = new CEStr();
+		}
+		MyGetDlgItemText(hDlg, tAnsiSecure, *gpSet->psAnsiAllowed);
 	}
 	break;
 

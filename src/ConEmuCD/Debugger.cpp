@@ -176,7 +176,7 @@ int DebuggerInfo::RunDebugger()
 	}
 
 	SafeFree(gpszRunCmd);
-	gpszRunCmd = lstrdup(L"");
+	gpszRunCmd = lstrdup(L"").Detach();
 	if (!gpszRunCmd)
 	{
 		PrintBuffer("Can't allocate 1 wchar!\n");
@@ -395,7 +395,7 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 				_wcscpyn_c(szProc, countof(szProc), info.szExeFile, countof(szProc));
 
 			swprintf_c(szInfo, L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
-			CEStr lsInfo(lstrmerge(szInfo, dbgInfo.szDebuggingCmdLine, L"\n"));
+			const CEStr lsInfo(szInfo, dbgInfo.szDebuggingCmdLine, L"\n");
 			PrintBuffer(lsInfo);
 			return CERR_CANTSTARTDEBUGGER;
 		}
@@ -459,7 +459,7 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 
 				// Добавить процесс в список для запуска альтернативного дебаггера соотвествующей битности
 				// Force trailing "," even if only one PID specified ( --> bDebugMultiProcess = TRUE)
-				lstrmerge(&szOtherBitPids.ms_Val, ltow_s(nDbgProcessID, szPID, 10), L",");
+				szOtherBitPids.Append(ltow_s(nDbgProcessID, szPID, 10), L",");
 
 				// Может там еще процессы в списке на дамп?
 				continue;
@@ -521,11 +521,11 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 			// Reverted to current bitness
 			wcscat_c(szExe, WIN3264TEST(L"ConEmuC64.exe", L"ConEmuC.exe"));
 
-			szOtherDebugCmd.Attach(lstrmerge(L"\"", szExe, L"\" "
+			szOtherDebugCmd = CEStr(L"\"", szExe, L"\" "
 				L"/DEBUGPID=", szOtherBitPids.ms_Val,
 				(dbgInfo.debugDumpProcess == DumpProcessType::AskUser) ? L" /DUMP" :
 				(dbgInfo.debugDumpProcess == DumpProcessType::MiniDump) ? L" /MINIDUMP" :
-				(dbgInfo.debugDumpProcess == DumpProcessType::FullDump) ? L" /FULLDUMP" : L""));
+				(dbgInfo.debugDumpProcess == DumpProcessType::FullDump) ? L" /FULLDUMP" : L"");
 
 			STARTUPINFO si = {};
 			si.cb = sizeof(si);
@@ -541,7 +541,7 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 			{
 				DWORD dwErr = GetLastError();
 				swprintf_c(szInfo, L"Can't start external debugger, ErrCode=0x%08X\n", dwErr);
-				CEStr lsInfo(lstrmerge(szInfo, szOtherDebugCmd, L"\n"));
+				const CEStr lsInfo(szInfo, szOtherDebugCmd, L"\n");
 				PrintBuffer(lsInfo);
 			}
 		}
@@ -610,7 +610,7 @@ bool DebuggerInfo::IsDumpMulti() const
 	return false;
 }
 
-wchar_t* DebuggerInfo::FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull) const
+void DebuggerInfo::FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull) const
 {
 	//TODO: Добавить в DmpFile имя без пути? <exename>-<ver>-<pid>-<yymmddhhmmss>.[m]dmp
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
@@ -620,7 +620,6 @@ wchar_t* DebuggerInfo::FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD 
 		MVV_1, MVV_2, MVV_3, szMinor, dwProcessId,
 		lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds,
 		bFull ? L"dmp" : L"mdmp");
-	return DmpFile;
 }
 
 bool DebuggerInfo::GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpFile, const DWORD cchMaxDmpFile) const

@@ -881,12 +881,12 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		{
 			_ASSERTE(!bAsciiPrint || !DefaultCP);
 			DWORD nSize = 0, nErrCode = 0;
-			int iRead = ReadTextFile(szArg, (1<<24), szTemp.ms_Val, cchLen, nErrCode, bAsciiPrint ? (DWORD)-1 : DefaultCP);
+			const int iRead = ReadTextFile(szArg, (1<<24), szTemp, cchLen, nErrCode, bAsciiPrint ? static_cast<DWORD>(-1) : DefaultCP);
 			if (iRead < 0)
 			{
 				wchar_t szInfo[100];
 				swprintf_c(szInfo, L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
-				szTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
+				szTemp = CEStr(L"Reading source file failed!\r\n", szArg, szInfo);
 				cchLen = static_cast<DWORD>(szTemp.GetLen());
 				bAsciiPrint = false;
 				iRc = 4;
@@ -927,11 +927,11 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			}
 
 			// Concatenate result text
-			lstrmerge(&szTemp.ms_Val, szTemp.IsEmpty() ? nullptr : L" ", pszAdd);
+			szTemp.Append(szTemp.IsEmpty() ? nullptr : L" ", pszAdd);
 		}
 
 		if (bAddNewLine)
-			lstrmerge(&szTemp.ms_Val, L"\r\n");
+			szTemp.Append(L"\r\n");
 		pszText = szTemp.ms_Val;
 		cchLen = pszText ? lstrlen(pszText) : 0;
 	}

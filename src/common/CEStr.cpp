@@ -62,17 +62,20 @@ CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= nullptr*/, const wc
 	CESTRLOG3("CEStr::CEStr(const wchar_t* x%p, x%p, x%p, ...)", asStr1, asStr2, asStr3);
 
 	ssize_t cchMax = 0;
+	size_t nonNulls = 0;
 	const size_t Count = 9;
 	ssize_t cch[Count] = {};
 	const wchar_t* pszStr[Count] = { asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8, asStr9 };
 
 	for (size_t i = 0; i < Count; i++)
 	{
-		cch[i] = pszStr[i] ? lstrlen(pszStr[i]) : 0;
+		if (pszStr[i] == nullptr) continue;
+		cch[i] = lstrlen(pszStr[i]);
 		cchMax += cch[i];
+		++nonNulls;
 	}
 
-	if (GetBuffer(cchMax))
+	if (nonNulls && GetBuffer(cchMax))
 	{
 		wchar_t* psz = data();
 
@@ -244,9 +247,9 @@ wchar_t* CEStr::GetBuffer(const ssize_t cchMaxLen)
 {
 	CESTRLOG1("CEStr::GetBuffer(%i)", static_cast<int>(cchMaxLen));
 
-	if (cchMaxLen <= 0)
+	if (cchMaxLen < 0)
 	{
-		_ASSERTE(cchMaxLen > 0);
+		_ASSERTE(cchMaxLen >= 0);
 		return nullptr;
 	}
 
@@ -303,6 +306,13 @@ wchar_t* CEStr::Detach()
 	_ASSERTE(IsEmpty());
 
 	return psz;
+}
+
+void CEStr::Swap(wchar_t*& asPtr)
+{
+	maxCount_ = 0;
+	std::swap(asPtr, ms_Val);
+	maxCount_ = ms_Val ? (wcslen(ms_Val) + 1) : 0;
 }
 
 void CEStr::Release()

@@ -2365,10 +2365,9 @@ bool CRealBuffer::ApplyConsoleInfo()
 		{
 			wchar_t szInfo[128];
 			swprintf_c(szInfo, L"mp_RCon->m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_GetDataPipe.GetErrorCode());
-			wchar_t* pszFull = lstrmerge(szInfo, mp_RCon->m_GetDataPipe.GetErrorText());
+			const CEStr pszFull(szInfo, mp_RCon->m_GetDataPipe.GetErrorText());
 			//MBoxA(pszFull);
 			LogString(pszFull);
-			SafeFree(pszFull);
 		}
 		#endif
 	}
@@ -3125,11 +3124,10 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								//_ASSERTE(pszWinPath!=nullptr); // must not be here!
 								//pszWinPath = cmd.szFile; -- file not found, do not open absent files!
 								CEStr szDir;
-								wchar_t* pszErrMsg = lstrmerge(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir, false));
+								const CEStr pszErrMsg(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir, false));
 								if (pszErrMsg)
 								{
 									MsgBox(pszErrMsg, MB_ICONSTOP);
-									free(pszErrMsg);
 								}
 							}
 							else if (bUseExtEditor || !CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, nullptr, &VCon))
@@ -3142,11 +3140,11 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									//LPCWSTR pszVar[] = {L"%1", L"%2", L"%3", ...};
 									//%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
 
-									CEStr szSlashed; szSlashed.Attach(MakeStraightSlashPath(pszWinPath));
+									CEStr szSlashed(MakeStraightSlashPath(pszWinPath));
 									CEStr szCygwin;  DupCygwinPath(pszWinPath, false, mp_RCon->GetMntPrefix(), szCygwin);
 									LPCWSTR pszVal[] = {szRow, szCol, pszWinPath, (LPCWSTR)szSlashed, (LPCWSTR)szCygwin};
 									//_ASSERTE(countof(pszVar)==countof(pszVal));
-									wchar_t* pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));
+									CEStr pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));
 									if (!pszCmd)
 									{
 										DisplayLastError(L"Invalid command specified in \"External editor\"", -1);
@@ -3157,16 +3155,16 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										bool bRunOutside = (pszCmd[0] == L'#');
 										if (bRunOutside)
 										{
-											args.pszSpecialCmd = lstrdup(pszCmd+1);
-											SafeFree(pszCmd);
+											args.pszSpecialCmd = lstrdup(pszCmd.c_str() + 1).Detach();
+											pszCmd.Release();
 										}
 										else
 										{
-											args.pszSpecialCmd = pszCmd; pszCmd = nullptr;
+											args.pszSpecialCmd = pszCmd.Detach();
 										}
 
 										WARNING("Здесь нужно бы попытаться взять текущую директорию из шелла. Точнее, из консоли НА МОМЕНТ выдачи этой строки.");
-										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : nullptr;
+										args.pszStartupDir = CEStr(mp_RCon->m_Args.pszStartupDir).Detach();
 										args.RunAsAdministrator = mp_RCon->m_Args.RunAsAdministrator;
 										args.ForceUserDialog = (
 												(mp_RCon->m_Args.ForceUserDialog == crb_On)
@@ -3186,11 +3184,11 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 											{
 												if (SearchAppPaths(szExe.c_str(), szExe, true, &szPrevPath))
 												{
-													wchar_t* pszChanged = MergeCmdLine(szExe, pszTemp);
+													CEStr pszChanged(MergeCmdLine(szExe, pszTemp));
 													if (pszChanged)
 													{
 														SafeFree(args.pszSpecialCmd);
-														args.pszSpecialCmd = pszChanged;
+														args.pszSpecialCmd = pszChanged.Detach();
 													}
 												}
 											}
@@ -5518,9 +5516,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		GlobalFree(hUnicode);
 		if (iWriteRc < 0)
 		{
-			wchar_t* pszErr = lstrmerge(L"Failed to create file\n", pszDstFile);
+			const CEStr pszErr(L"Failed to create file\n", pszDstFile);
 			DisplayLastError(pszErr, nErrCode);
-			SafeFree(pszErr);
 			return false;
 		}
 		return true;

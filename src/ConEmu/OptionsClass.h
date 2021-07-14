@@ -131,7 +131,7 @@ class CSettings
 		RecreateActionParm GetDefaultCreateAction();
 
 		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
-		bool IsSingleInstanceArg();
+		bool IsSingleInstanceArg() const;
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
 		bool ResetCmdHistory(HWND hParent = nullptr);
 		void SetSaveCmdHistory(bool bSaveHistory);
@@ -175,10 +175,10 @@ class CSettings
 		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
 		bool PollBackgroundFile(); // true, если файл изменен
 		#else
-		CBackgroundInfo* GetBackgroundObject();
+		CBackgroundInfo* GetBackgroundObject() const;
 		#endif
 		bool LoadBackgroundFile(LPCWSTR inPath, bool abShowErrors=false);
-		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
+		bool IsBackgroundEnabled(CVirtualConsole* apVCon) const;
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
 	public:
@@ -269,6 +269,8 @@ class CSettings
 		//
 		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
+		LRESULT OnNextPage();
+		LRESULT OnPrevPage();
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		UINT mn_ActivateTabMsg;
@@ -290,7 +292,7 @@ class CSettings
 		HWND hwndTip, hwndBalloon;
 		TOOLINFO tiBalloon;
 		static BOOL CALLBACK RegisterTipsForChild(HWND hChild, LPARAM lParam);
-		void RecreateFont(WORD wFromID);
+		void RecreateFont(WORD wFromID) const;
 #if 0
 		// Theming
 		HMODULE mh_Uxtheme;

@@ -216,14 +216,13 @@ bool PtMouseDblClickTest(const MSG& msg1, const MSG msg2);
 bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase = 10, LPCWSTR* rsEnd = nullptr);
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin = 0, int nMax = 0);
 bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin = 0, DWORD nMax = 0);
-wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
-template <size_t size> bool MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size]);
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText);
+CEStr GetDlgItemTextPtr(HWND hDlg, WORD nID);
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, CEStr& rsText);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
-wchar_t* getFocusedExplorerWindowPath();
+CEStr getFocusedExplorerWindowPath();
 enum CESelectFileFlags
 {
 	sff_Default      = 0,
@@ -231,8 +230,8 @@ enum CESelectFileFlags
 	sff_Cygwin       = 2,
 	sff_SaveNewFile  = 4,
 };
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = nullptr, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = nullptr);
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = nullptr, LPCWSTR asDefPath = nullptr, HWND hParent = ghWnd, LPCWSTR asFilter = nullptr, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = nullptr);
+CEStr SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = nullptr, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = nullptr);
+CEStr SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = nullptr, LPCWSTR asDefPath = nullptr, HWND hParent = ghWnd, LPCWSTR asFilter = nullptr, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = nullptr);
 
 #include "../common/RConStartArgsEx.h"
 
