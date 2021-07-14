@@ -31,9 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	#define DebugString(x) //OutputDebugString(x)
 	#define DBG_XTERM(x) //CEAnsi::DebugXtermOutput(x)
+	#define DBG_XTERM_MSGBOX(msg) //_ASSERTE(FALSE && msg)
 #else
 	#define DebugString(x) //OutputDebugString(x)
 	#define DBG_XTERM(x)
+	#define DBG_XTERM_MSGBOX(msg)
 #endif
 
 #include "../common/Common.h"
@@ -152,11 +154,11 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 				{
 					if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
 					{
-						_ASSERTE(FALSE && "ENABLE_VIRTUAL_TERMINAL_INPUT On");
+						DBG_XTERM_MSGBOX("ENABLE_VIRTUAL_TERMINAL_INPUT On");
 					}
 					else
 					{
-						_ASSERTE(FALSE && "ENABLE_VIRTUAL_TERMINAL_INPUT Off");
+						DBG_XTERM_MSGBOX("ENABLE_VIRTUAL_TERMINAL_INPUT Off");
 					}
 				}
 				prevInputMode = dwMode;
