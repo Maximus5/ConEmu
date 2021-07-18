@@ -284,7 +284,7 @@ wchar_t* CEStr::GetBuffer(const ssize_t cchMaxLen)
 
 	if (ms_Val)
 	{
-		_ASSERTE(cchMaxLen > 0 && nOldLen >= 0 && std::min(cchMaxLen,nOldLen) < GetMaxCount());
+		_ASSERTE(cchMaxLen >= 0 && nOldLen >= 0 && std::min(cchMaxLen,nOldLen) < GetMaxCount());
 		SetAt(std::min(cchMaxLen,nOldLen), 0);
 		if (cchMaxLen > 0)
 			SetAt(cchMaxLen, 0);
