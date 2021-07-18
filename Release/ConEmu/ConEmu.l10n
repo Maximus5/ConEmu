@@ -1472,6 +1472,10 @@
     "cbIntegralSize": {
       "en": [ "When checked, ConEmu windows size is changed proportionally to console cells.\n"
             , "Option is disabled automatically for Quake and Inside modes, and for 100% window width or height." ],
+      "ko": [ "선택하면 콘솔 셀에 비례하여 ConEmu 창 크기가 변경됩니다.\n"
+            , "옵션은 Quake 및 내부 모드 및 100% 창 너비 또는 높이에 대해 자동으로 사용할 수 없습니다." ],
+      "ko_KR": [ "선택하면 콘솔 셀에 비례하여 ConEmu 창 크기가 변경됩니다.\n"
+            , "옵션은 Quake 및 내부 모드 및 100% 창 너비 또는 높이에 대해 자동으로 사용할 수 없습니다." ],
       "id": 2594 }
     ,
     "cbItalic": {
@@ -3494,6 +3498,8 @@
     ,
     "tFarHourglass": {
       "en": "Far Manager not-responding duration in milliseconds before changing mouse cursor to AppStarting",
+      "ko": "마우스 커서를 AppStarting으로 변경하기 전 Far 관리자가 응답하지 않는 밀리초 시간",
+      "ko_KR": "마우스 커서를 AppStarting으로 변경하기 전 Far 관리자가 응답하지 않는 밀리초 시간",
       "id": 3111 }
     ,
     "tFontCharset": {
@@ -11147,8 +11153,8 @@
       "_es": "Cambiar cursor del ratón si está ocupado",
       "_pl": "Zmień kursor myszy, jeśli jest zajęty",
       "_it_IT": "Cambia cursore mouse se occupato",
-      "_ko": "바쁜 경우 마우스 커서 변경",
-      "_ko_KR": "바쁜 경우 마우스 커서 변경",
+      "ko": "사용 중인 경우 마우스 커서 변경 (ms)",
+      "ko_KR": "사용 중인 경우 마우스 커서 변경 (ms)",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
