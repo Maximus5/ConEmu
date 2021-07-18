@@ -5405,8 +5405,8 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		}
 
 		#ifdef _DEBUG
-		if ((rc.bottom - rc.top) > 1200)
-			_ASSERTE((rc.bottom - rc.top) == 0);
+		//if ((rc.bottom - rc.top) > 1200)
+		//	_ASSERTE((rc.bottom - rc.top) == 0);
 		#endif
 
 		const DpiValue dpi(dpiX, dpiY, DpiValue::DpiSource::Explicit);
