@@ -132,12 +132,12 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 			}
 
-			LPCWSTR pszActivePage = (LPCWSTR)lParam;
+			const wchar_t* pszActivePage = reinterpret_cast<LPCWSTR>(lParam);
 
-			LPCWSTR psStage = (ConEmuVersionStage == CEVS_STABLE) ? L"{Stable}"
-							: (ConEmuVersionStage == CEVS_PREVIEW) ? L"{Preview}"
-							: L"{Alpha}";
-			CEStr lsTitle(
+			const wchar_t* psStage = (ConEmuVersionStage == CEVS_STABLE) ? L"{Stable}"
+				: (ConEmuVersionStage == CEVS_PREVIEW) ? L"{Preview}"
+				: L"{Alpha}";
+			const CEStr lsTitle(
 				CLngRc::getRsrc(lng_DlgAbout/*"About"*/),
 				L" ",
 				gpConEmu->GetDefaultTitle(),
@@ -151,9 +151,9 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (hClassIcon)
 			{
-				SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-				SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)CreateNullIcon());
-				SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
+				SendMessage(hDlg, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+				SendMessage(hDlg, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(CreateNullIcon()));
+				SetClassLongPtr(hDlg, GCLP_HICON, reinterpret_cast<LONG_PTR>(hClassIcon));
 			}
 
 			// "Console Emulation program (local terminal)"
@@ -193,14 +193,15 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				pszLabel.Release();
 			}
 
-			const HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
+			// ReSharper disable once CppLocalVariableMayBeConst
+			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
 			INT_PTR nPage = -1;
 
 			for (size_t i = 0; i < countof(Pages); i++)
 			{
 				TCITEM tie = {};
 				tie.mask = TCIF_TEXT;
-				tie.pszText = (LPWSTR)Pages[i].Title;
+				tie.pszText = const_cast<wchar_t*>(Pages[i].Title);
 				TabCtrl_InsertItem(hTab, i, &tie);
 
 				if (pszActivePage && (lstrcmpi(pszActivePage, Pages[i].Title) == 0))
@@ -210,8 +211,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (nPage >= 0)
 			{
-				TabSelected(hDlg, nPage);
-				TabCtrl_SetCurSel(hTab, (int)nPage);
+				TabSelected(hDlg, static_cast<int>(nPage));
+				TabCtrl_SetCurSel(hTab, static_cast<int>(nPage));
 			}
 			else if (!pszActivePage)
 			{
@@ -228,25 +229,24 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		}
 
 		case WM_CTLCOLORSTATIC:
-			if (GetWindowLongPtr((HWND)lParam, GWLP_ID) == stConEmuUrl)
+			if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
 			{
-				SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
+				SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_HOTLIGHT));
 				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-				SetBkMode((HDC)wParam, TRANSPARENT);
-				return (INT_PTR)hBrush;
+				SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
+				return reinterpret_cast<INT_PTR>(hBrush);
 			}
 			else
 			{
-				SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
+				SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_WINDOWTEXT));
 				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-				SetBkMode((HDC)wParam, TRANSPARENT);
-				return (INT_PTR)hBrush;
+				SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
+				return reinterpret_cast<INT_PTR>(hBrush);
 			}
-			break;
 
 		case WM_SETCURSOR:
 			{
-				if (GetWindowLongPtr((HWND)wParam, GWLP_ID) == stConEmuUrl)
+				if (GetWindowLongPtr(reinterpret_cast<HWND>(wParam), GWLP_ID) == stConEmuUrl)
 				{
 					SetCursor(LoadCursor(nullptr, IDC_HAND));
 					SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
@@ -254,7 +254,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				}
 				return FALSE;
 			}
-			break;
 
 		case WM_COMMAND:
 			switch (HIWORD(wParam))
@@ -278,9 +277,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				case tAboutText:
 					{
 						// Do not autosel all text
-						HWND hEdit = (HWND)lParam;
+						// ReSharper disable once CppLocalVariableMayBeConst
+						HWND hEdit = reinterpret_cast<HWND>(lParam);
 						DWORD nStart = 0, nEnd = 0;
-						SendMessage(hEdit, EM_GETSEL, (WPARAM)&nStart, (LPARAM)&nEnd);
+						SendMessage(hEdit, EM_GETSEL, reinterpret_cast<WPARAM>(&nStart), reinterpret_cast<LPARAM>(&nEnd));
 						if (nStart != nEnd)
 						{
 							SendMessage(hEdit, EM_SETSEL, nTextSelStart, nTextSelEnd);
@@ -293,22 +293,22 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 		case WM_NOTIFY:
 		{
-			LPNMHDR nmhdr = (LPNMHDR)lParam;
+			const auto* nmhdr = reinterpret_cast<LPNMHDR>(lParam);
 			if ((nmhdr->code == TCN_SELCHANGE) && (nmhdr->idFrom == tbAboutTabs))
 			{
-				int iPage = TabCtrl_GetCurSel(nmhdr->hwndFrom);
-				if ((iPage >= 0) && (iPage < (int)countof(Pages)))
+				const int iPage = TabCtrl_GetCurSel(nmhdr->hwndFrom);
+				if ((iPage >= 0) && (iPage < static_cast<int>(countof(Pages))))
 					TabSelected(hDlg, iPage);
 			}
 			break;
 		}
 
 		case UM_SEARCH:
-			searchProc(hDlg, (HWND)lParam, false);
+			searchProc(hDlg, reinterpret_cast<HWND>(lParam), false);
 			break;
 
 		case UM_EDIT_KILL_FOCUS:
-			SendMessage((HWND)lParam, EM_GETSEL, (WPARAM)&nTextSelStart, (LPARAM)&nTextSelEnd);
+			SendMessage(reinterpret_cast<HWND>(lParam), EM_GETSEL, reinterpret_cast<WPARAM>(&nTextSelStart), reinterpret_cast<LPARAM>(&nTextSelEnd));
 			break;
 
 		case WM_CLOSE:
@@ -336,20 +336,21 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 {
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hEdit = GetDlgItem(hDlg, tAboutText);
-	CEStr pszPart = GetDlgItemTextPtr(hSearch, 0);
-	CEStr pszText = GetDlgItemTextPtr(hEdit, 0);
+	const CEStr pszPart = GetDlgItemTextPtr(hSearch, 0);
+	const CEStr pszText = GetDlgItemTextPtr(hEdit, 0);
 	bool bRetry = false;
 
-	if (pszPart && *pszPart && pszText && *pszText)
+	if (!pszPart.IsEmpty() && !pszText.IsEmpty())
 	{
-		LPCWSTR pszFrom = pszText;
+		LPCWSTR pszFrom = pszText.c_str();
 
 		DWORD nStart = 0, nEnd = 0;
-		SendMessage(hEdit, EM_GETSEL, (WPARAM)&nStart, (LPARAM)&nEnd);
+		SendMessage(hEdit, EM_GETSEL, reinterpret_cast<WPARAM>(&nStart), reinterpret_cast<LPARAM>(&nEnd));
 
-		size_t cchMax = wcslen(pszText);
-		size_t cchFrom = std::max(nStart,nEnd);
+		const size_t cchMax = wcslen(pszText);
+		const size_t cchFrom = std::max(nStart,nEnd);
 		if (cchMax > cchFrom)
 			pszFrom += cchFrom;
 
@@ -361,26 +362,27 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 		{
 			const wchar_t szBrkChars[] = L"()[]<>{}:;,.-=\\/ \t\r\n";
 			LPCWSTR pszEnd = wcspbrk(pszFind, szBrkChars);
-			INT_PTR nPartLen = wcslen(pszPart);
+			const INT_PTR nPartLen = wcslen(pszPart);
 			if (!pszEnd || ((pszEnd - pszFind) > std::max<ssize_t>(nPartLen,60)))
 				pszEnd = pszFind + nPartLen;
 			while ((pszFind > pszFrom) && !wcschr(szBrkChars, *(pszFind-1)))
 				pszFind--;
 			//SetFocus(hEdit);
-			nTextSelStart = (DWORD)(pszEnd-pszText);
-			nTextSelEnd = (DWORD)(pszFind-pszText);
+			nTextSelStart = static_cast<DWORD>(pszEnd - pszText.c_str());
+			nTextSelEnd = static_cast<DWORD>(pszFind - pszText.c_str());
 			SendMessage(hEdit, EM_SETSEL, nTextSelStart, nTextSelEnd);
 			SendMessage(hEdit, EM_SCROLLCARET, 0, 0);
 		}
 		else if (!bReentr)
 		{
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
-			int iPage = TabCtrl_GetCurSel(hTab);
+			const int iPage = TabCtrl_GetCurSel(hTab);
 			int iFound = -1;
 			for (int s = 0; (iFound == -1) && (s <= 1); s++)
 			{
-				int iFrom = (s == 0) ? (iPage+1) : 0;
-				int iTo = (s == 0) ? (int)countof(Pages) : (iPage-1);
+				const int iFrom = (s == 0) ? (iPage+1) : 0;
+				const int iTo = (s == 0) ? static_cast<int>(countof(Pages)) : (iPage - 1);
 				for (int i = iFrom; i < iTo; i++)
 				{
 					if (StrStrI(Pages[i].Title, pszPart)
@@ -411,7 +413,7 @@ void ConEmuAbout::InitCommCtrls()
 	if (mb_CommCtrlsInitialized)
 		return;
 
-	INITCOMMONCONTROLSEX icex;
+	INITCOMMONCONTROLSEX icex{};
 	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES|ICC_TAB_CLASSES|ICC_PROGRESS_CLASS; //|ICC_STANDARD_CLASSES|ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&icex);
@@ -421,8 +423,9 @@ void ConEmuAbout::InitCommCtrls()
 
 void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= nullptr*/)
 {
-	CEStr szUrl(CEWIKIBASE, asPageName ? asPageName : L"TableOfContents", L".html");
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, nullptr, nullptr, SW_SHOWNORMAL);
+	const CEStr szUrl(CEWIKIBASE, asPageName ? asPageName : L"TableOfContents", L".html");
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", szUrl, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -431,7 +434,7 @@ void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= nullptr*/)
 
 void ConEmuAbout::OnInfo_Donate()
 {
-	int nBtn = MsgBox(
+	const int nBtn = MsgBox(
 		L"You can show your appreciation and support future development by donating.\n\n"
 		L"Open ConEmu's donate web page?"
 		,MB_YESNO|MB_ICONINFORMATION);
@@ -445,7 +448,8 @@ void ConEmuAbout::OnInfo_Donate()
 
 void ConEmuAbout::OnInfo_DonateLink()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDonatePage, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsDonatePage, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -453,7 +457,8 @@ void ConEmuAbout::OnInfo_DonateLink()
 }
 void ConEmuAbout::OnInfo_FlattrLink()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsFlattrPage, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsFlattrPage, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -462,7 +467,7 @@ void ConEmuAbout::OnInfo_FlattrLink()
 
 void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 {
-	if (idx < 0 || idx >= countof(Pages))
+	if (idx < 0 || idx >= static_cast<int>(countof(Pages)))
 		return;
 
 	wcscpy_c(sLastOpenTab, Pages[idx].Title);
@@ -498,11 +503,12 @@ void ConEmuAbout::ReloadSysInfo()
 
 	_ASSERTE(isMainThread());
 	_ASSERTE(lstrcmp(Pages[countof(Pages)-1].Title, L"SysInfo") == 0);
-	gsSysInfo->Clear();
+	if (gsSysInfo)
+		gsSysInfo->Clear();
 
 	LoadStartupEnvEx::ToString(gpStartEnv, LogStartEnvInt, 0);
 
-	Pages[countof(Pages)-1].Text = gsSysInfo->c_str();
+	Pages[countof(Pages)-1].Text = gsSysInfo ? gsSysInfo->c_str(L"") : L"";
 }
 
 void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= nullptr*/)
@@ -522,9 +528,10 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= nullptr*/)
 	{
 		DontEnable de;
 		CDpiForDialog::Create(mp_DpiAware);
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Modal dialog (CreateDialog)
-		INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_ABOUT, hParent, aboutProc, (LPARAM)asPageName);
+		const INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_ABOUT, hParent, aboutProc, reinterpret_cast<LPARAM>(asPageName));
 		bOk = (iRc != 0 && iRc != -1);
 
 		mh_AboutDlg = nullptr;
@@ -539,7 +546,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= nullptr*/)
 
 	if (!bOk)
 	{
-		CEStr szTitle(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
+		const CEStr szTitle(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
@@ -558,11 +565,12 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 
 	if (bLocal)
 	{
-		CEStr sFile(gpConEmu->ms_ConEmuBaseDir, L"\\WhatsNew-ConEmu.txt");
+		const CEStr sFile(gpConEmu->ms_ConEmuBaseDir, L"\\WhatsNew-ConEmu.txt");
 
 		if (FileExists(sFile))
 		{
-			iExec = (INT_PTR)ShellExecute(ghWnd, L"open", sFile, nullptr, nullptr, SW_SHOWNORMAL);
+			iExec = reinterpret_cast<INT_PTR>(
+				ShellExecute(ghWnd, L"open", sFile, nullptr, nullptr, SW_SHOWNORMAL));
 			if (iExec >= 32)
 			{
 				return;
@@ -570,13 +578,14 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 		}
 	}
 
-	iExec = (INT_PTR)ShellExecute(ghWnd, L"open", gsWhatsNew, nullptr, nullptr, SW_SHOWNORMAL);
+	iExec = reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsWhatsNew, nullptr, nullptr, SW_SHOWNORMAL));
 	if (iExec >= 32)
 	{
 		return;
 	}
 
-	DisplayLastError(L"File 'WhatsNew-ConEmu.txt' not found, go to web page failed", (int)LODWORD(iExec));
+	DisplayLastError(L"File 'WhatsNew-ConEmu.txt' not found, go to web page failed", static_cast<int>(LODWORD(iExec)));
 }
 
 void ConEmuAbout::OnInfo_Help()
@@ -590,7 +599,8 @@ void ConEmuAbout::OnInfo_Help()
 	if (hhctrl)
 	{
 		typedef BOOL (WINAPI* HTMLHelpW_t)(HWND hWnd, LPCWSTR pszFile, INT uCommand, INT dwData);
-		HTMLHelpW_t fHTMLHelpW = (HTMLHelpW_t)GetProcAddress(hhctrl, "HtmlHelpW");
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HTMLHelpW_t fHTMLHelpW = reinterpret_cast<HTMLHelpW_t>(GetProcAddress(hhctrl, "HtmlHelpW"));
 
 		if (fHTMLHelpW)
 		{
@@ -610,7 +620,8 @@ void ConEmuAbout::OnInfo_Help()
 
 void ConEmuAbout::OnInfo_HomePage()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsHomePage, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -619,7 +630,8 @@ void ConEmuAbout::OnInfo_HomePage()
 
 void ConEmuAbout::OnInfo_DownloadPage()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDownlPage, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsDownlPage, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -628,7 +640,8 @@ void ConEmuAbout::OnInfo_DownloadPage()
 
 void ConEmuAbout::OnInfo_FirstStartPage()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsFirstStart, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsFirstStart, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -637,7 +650,8 @@ void ConEmuAbout::OnInfo_FirstStartPage()
 
 void ConEmuAbout::OnInfo_ReportBug()
 {
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportBug, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsReportBug, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -649,7 +663,7 @@ void ConEmuAbout::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 	if (nLastCrashReported)
 	{
 		// if previous gsReportCrash was opened less than 60 sec ago
-		DWORD nLast = GetTickCount() - nLastCrashReported;
+		const DWORD nLast = GetTickCount() - nLastCrashReported;
 		if (nLast < 60000)
 		{
 			// Skip this time
@@ -662,7 +676,8 @@ void ConEmuAbout::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 		asDumpWasCreatedMsg = nullptr;
 	}
 
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsReportCrash, nullptr, nullptr, SW_SHOWNORMAL);
+	const DWORD shellRc = static_cast<DWORD>(reinterpret_cast<INT_PTR>(
+		ShellExecute(ghWnd, L"open", gsReportCrash, nullptr, nullptr, SW_SHOWNORMAL)));
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
