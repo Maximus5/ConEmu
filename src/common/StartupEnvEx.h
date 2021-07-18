@@ -352,11 +352,11 @@ public:
 			L"  Build: %s, ReactOS: %u%s%s%s, Rsrv: %u, WINE: %u, PE: %u, R2: %u\r\n"
 			L"  DBCS: %u, IMM: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
 			L"  StartTime: %s\r\n"
-			, szBuild, WIN3264TEST(32,64),
+			, szBuild, WIN3264TEST(32, 64),
 			szTitle,
 			szProdType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask,
-			pszWinBuild ? pszWinBuild : L"", apStartEnv->bIsReactOS, *pszReactOS?L" (":L"", pszReactOS, *pszReactOS?L")":L"",
-				osv.wReserved, apStartEnv->bIsWine, apStartEnv->bIsWinPE, GetSystemMetrics(89/*SM_SERVERR2*/),
+			pszWinBuild.c_str(L""), apStartEnv->bIsReactOS, *pszReactOS ? L" (" : L"", pszReactOS, *pszReactOS ? L")" : L"",
+			osv.wReserved, apStartEnv->bIsWine, apStartEnv->bIsWinPE, GetSystemMetrics(89/*SM_SERVERR2*/),
 			apStartEnv->bIsDbcs, apStartEnv->bIsImm, apStartEnv->bIsRemote,
 			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szStartTime);
@@ -398,7 +398,7 @@ public:
 			is_themed ? 1 : 0, is_dwm ? 1 : 0,
 			apStartEnv->si.lpTitle ? L"`" : L"", szTitle, apStartEnv->si.lpTitle ? L"`" : L"",
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
-			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),
+			apStartEnv->si.dwFlags, static_cast<DWORD>(apStartEnv->si.wShowWindow), LODWORD(hConWnd),
 			LODWORD(sizeof(CHAR)), LODWORD(sizeof(short)), LODWORD(sizeof(int)), LODWORD(sizeof(long)), LODWORD(sizeof(uint64_t)),
 			LODWORD(apStartEnv->si.hStdInput), LODWORD(apStartEnv->si.hStdOutput), LODWORD(apStartEnv->si.hStdError)
 			);

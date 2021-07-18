@@ -206,7 +206,7 @@ wrap:
 
 		swprintf_c(dumpInfo.fullInfo, L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s",
 			what, pszExeName, GetCurrentProcessId(),
-			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), WIN3264TEST(L"",L"64"));
+			(MVV_1 % 100), MVV_2, MVV_3, _T(MVV_4a), WIN3264TEST(L"", L"64"));
 	}
 	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != nullptr)
 	{

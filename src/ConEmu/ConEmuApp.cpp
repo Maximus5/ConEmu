@@ -1821,7 +1821,7 @@ HRESULT UpdateAppUserModelID()
 
 	// Log the change
 	wchar_t szLog[200];
-	swprintf_c(szLog, L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Val, (DWORD)hr);
+	swprintf_c(szLog, L"AppUserModelID was changed to `%s` Result=x%08X", AppID.c_str(L""), static_cast<DWORD>(hr));
 	LogString(szLog);
 
 	return hr;

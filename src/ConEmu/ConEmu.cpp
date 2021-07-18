@@ -285,7 +285,7 @@ CConEmuMain::CConEmuMain()
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 	// Same as ConsoleMain.cpp::SetWorkEnvVar()
 	swprintf_c(ms_ConEmuBuild, L"%02u%02u%02u%s%s",
-		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
+		(MVV_1 % 100), MVV_2, MVV_3, szVer4[0] && szVer4[1] ? L"-" : L"", szVer4);
 	// And title
 	swprintf_c(ms_ConEmuDefTitle, L"ConEmu %s [%i%s]",
 		ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"));
@@ -9810,7 +9810,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #ifdef _DEBUG
 	swprintf_c(szDbg, L"GUI::Mouse %s at screen {%ix%i} x%08X%s\n",
 		GetMouseMsgName(messg),
-		ptCurScreen.x,ptCurScreen.y,(DWORD)wParam,
+		ptCurScreen.x, ptCurScreen.y, (DWORD)wParam,
 		bContinue ? L"" : L" - SKIPPED!");
 	DEBUGSTRMOUSE(szDbg);
 #endif
