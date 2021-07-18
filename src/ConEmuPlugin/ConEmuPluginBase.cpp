@@ -169,6 +169,9 @@ DWORD GetMainThreadId();
 int gnSynchroCount = 0;
 bool gbSynchroProhibited = false;
 bool gbInputSynchroPending = false;
+// When we are in Macro - we can't load certain data from Far and Synchro calls should be throttled
+DWORD gnSynchroThrottleTick = 0;
+const DWORD gnSynchroThrottleDelay = 500;
 
 struct HookModeFar gFarMode = {sizeof(HookModeFar), true/*bFarHookMode*/,
 	false, false, false, false, false, {}, nullptr};
@@ -3170,6 +3173,8 @@ void CPluginBase::OnMainThreadActivated()
 		DEBUGSTRCURDIR(L"UpdatePanelDirs()");
 		gbNeedReloadFarDir = FALSE;
 		Plugin()->UpdatePanelDirs();
+
+		gnSynchroThrottleTick = 0;
 	}
 
 	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
@@ -4702,7 +4707,9 @@ void CPluginBase::OnConsolePeekReadInput(bool abPeek)
 	if (gbNeedPostReloadFarInfo || gbNeedReloadFarDir || gbNeedPostEditCheck
 		|| gbRequestUpdateTabs || gbNeedPostTabSend || gbNeedBgActivate)
 	{
-		lbNeedSynchro = true;
+		const DWORD delay = (gnSynchroThrottleTick == 0) ? gnSynchroThrottleDelay
+			: (GetTickCount() - gnSynchroThrottleTick);
+		lbNeedSynchro = (delay >= gnSynchroThrottleDelay);
 	}
 
 	// В некоторых случаях (CMD_LEFTCLKSYNC,CMD_CLOSEQSEARCH,...) нужно дождаться, пока очередь опустеет
@@ -4727,6 +4734,7 @@ void CPluginBase::OnConsolePeekReadInput(bool abPeek)
 		if (lbNeedSynchro && !gbInputSynchroPending)
 		{
 			gbInputSynchroPending = true;
+			gnSynchroThrottleTick = GetTickCount();
 			Plugin()->ExecuteSynchro();
 		}
 	}
