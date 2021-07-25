@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "../common/MHandle.h"
+
 #include "ConEmu.h"
 #include "DpiAware.h"
 #include "Options.h"
@@ -49,10 +51,10 @@ SizeInfo::SizeInfo(CConEmuMain* _ConEmu)
 
 SizeInfo::SizeInfo(const SizeInfo& src)
 	: mp_ConEmu(src.mp_ConEmu)
+	, mb_temp(true)
 	, mcs_lock(true)
 	, m_opt(src.m_opt)
 	, m_size(src.m_size)
-	, mb_temp(true)
 {
 }
 
@@ -200,7 +202,7 @@ RECT SizeInfo::VisibleRect()
 
 // *** Relative to the upper-left corner of the client area ***
 
-HRGN SizeInfo::CreateSelfFrameRgn()
+MRgn SizeInfo::CreateSelfFrameRgn()
 {
 	if (!mp_ConEmu->isCaptionHidden())
 		return nullptr;
@@ -214,18 +216,14 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 		&& RectHeight(m_size.rr.client) == RectHeight(m_size.rr.real_client))
 		return nullptr;
 
-	HRGN hWhole, hClient;
-	hWhole = CreateRectRgnIndirect(&m_size.rr.real_client);
-	hClient = CreateRectRgnIndirect(&m_size.rr.client);
-	int iRc = CombineRgn(hWhole, hWhole, hClient, RGN_DIFF);
+	MRgn hWhole{ CreateRectRgnIndirect(&m_size.rr.real_client), MRgn::ApiClose };
+	const MRgn hClient{ CreateRectRgnIndirect(&m_size.rr.client), MRgn::ApiClose };
+	const int iRc = CombineRgn(hWhole, hWhole, hClient, RGN_DIFF);
 	if (iRc != SIMPLEREGION && iRc != COMPLEXREGION)
 	{
 		_ASSERTEX(iRc == COMPLEXREGION);
-		DeleteObject(hWhole);
-		DeleteObject(hClient);
 		return nullptr;
 	}
-	DeleteObject(hClient);
 	return hWhole;
 }
 

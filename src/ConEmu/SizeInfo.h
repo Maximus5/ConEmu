@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct DpiValue;
 class CConEmuMain;
+class MRgn;
 
 class SizeInfo
 {
@@ -62,7 +63,7 @@ public:
 
 	// *** Relative to the upper-left corner of the client area ***
 
-	HRGN CreateSelfFrameRgn();
+	MRgn CreateSelfFrameRgn();
 
 	// The Frame with Caption (if visible)
 	RECT FrameMargins();

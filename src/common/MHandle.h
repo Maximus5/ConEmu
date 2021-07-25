@@ -31,46 +31,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include <functional>
+#include <utility>
 
-class MHandle final
+template <typename HandleType = HANDLE>
+class MHandleBase
 {
-private:
-	HANDLE handle_ = nullptr;
-	std::function<void(HANDLE)> closeFunc_ = nullptr;
+protected:
+	HandleType handle_ = nullptr;
+	std::function<void(HandleType)> closeFunc_ = nullptr;
 
 public:
 	// ReSharper disable once CppNonExplicitConvertingConstructor
 	// ReSharper disable once CppParameterMayBeConst
-	MHandle(HANDLE handle) noexcept
+	MHandleBase(HandleType handle) noexcept
 		: handle_(handle)
 	{
 	}
 
-	MHandle(HANDLE handle, const std::function<void(HANDLE)>& closeFunc) noexcept
-		: handle_(handle), closeFunc_(closeFunc)
+	MHandleBase(HandleType handle, std::function<void(HandleType)> closeFunc) noexcept
+		: handle_(handle), closeFunc_(std::move(closeFunc))
 	{
 	}
 
-	MHandle() noexcept
+	MHandleBase() noexcept
 	{
 	}
 
-	~MHandle() noexcept
+	~MHandleBase() noexcept
 	{
 		Close();
 	}
 
 	// non-copyable
-	MHandle(const MHandle&) = delete;
-	MHandle& operator=(const MHandle&) = delete;
+	MHandleBase(const MHandleBase&) = delete;
+	MHandleBase& operator=(const MHandleBase&) = delete;
 	// movable
-	MHandle(MHandle&& src) noexcept
+	MHandleBase(MHandleBase&& src) noexcept
 	{
 		handle_ = src.handle_;
 		closeFunc_ = std::move(src.closeFunc_);
 		src.handle_ = nullptr;
 	}
-	MHandle& operator=(MHandle&& src) noexcept
+	MHandleBase& operator=(MHandleBase&& src) noexcept
 	{
 		if (handle_ != src.handle_)
 			Close();
@@ -79,6 +81,58 @@ public:
 		src.handle_ = nullptr;
 		return *this;
 	}
+
+public:
+	bool HasHandle() const noexcept
+	{
+		return handle_ != nullptr && handle_ != INVALID_HANDLE_VALUE;
+	}
+
+	operator HandleType() const noexcept
+	{
+		return handle_;
+	}
+
+	HandleType GetHandle() const noexcept
+	{
+		return handle_;
+	}
+
+	bool SetHandle(HandleType handle) noexcept
+	{
+		if (handle_ != handle)
+			Close();
+		handle_ = handle;
+		closeFunc_ = nullptr;
+		return HasHandle();
+	}
+
+	bool SetHandle(HandleType handle, std::function<void(HandleType)> closeFunc) noexcept
+	{
+		if (handle_ != handle)
+			Close();
+		handle_ = handle;
+		closeFunc_ = std::move(closeFunc);
+		return HasHandle();
+	}
+
+	void Close() noexcept
+	{
+		if (HasHandle() && closeFunc_ != nullptr)
+		{
+			HandleType handle = nullptr;
+			std::swap(handle, handle_);
+			closeFunc_(handle);
+		}
+		closeFunc_ = nullptr;
+		handle_ = nullptr;
+	}
+};
+
+class MHandle final : public MHandleBase<HANDLE>
+{
+public:
+	using MHandleBase::MHandleBase;
 
 	MHandle Duplicate(const DWORD desiredAccess, const bool inheritHandle = false) const
 	{
@@ -102,50 +156,34 @@ public:
 			::CloseHandle(handle);
 		}
 	}
+};
 
+class MRgn final : public MHandleBase<HRGN>
+{
 public:
-	bool HasHandle() const noexcept
-	{
-		return handle_ != nullptr && handle_ != INVALID_HANDLE_VALUE;
-	}
+	using MHandleBase::MHandleBase;
 
-	operator HANDLE() const noexcept
+	// ReSharper disable once CppParameterMayBeConst
+	static void ApiClose(HRGN handle) noexcept
 	{
-		return handle_;
-	}
-
-	HANDLE GetHandle() const noexcept
-	{
-		return handle_;
-	}
-
-	bool SetHandle(HANDLE handle) noexcept
-	{
-		if (handle_ != handle)
-			Close();
-		handle_ = handle;
-		closeFunc_ = nullptr;
-		return HasHandle();
-	}
-
-	bool SetHandle(HANDLE handle, const std::function<void(HANDLE)>& closeFunc) noexcept
-	{
-		if (handle_ != handle)
-			Close();
-		handle_ = handle;
-		closeFunc_ = closeFunc;
-		return HasHandle();
-	}
-
-	void Close() noexcept
-	{
-		if (HasHandle() && closeFunc_ != nullptr)
+		if (handle && handle != INVALID_HANDLE_VALUE)
 		{
-			HANDLE handle = nullptr;
-			std::swap(handle, handle_);
-			closeFunc_(handle);
+			::DeleteObject(handle);
 		}
-		closeFunc_ = nullptr;
-		handle_ = nullptr;
+	}
+};
+
+class MBrush final : public MHandleBase<HBRUSH>
+{
+public:
+	using MHandleBase::MHandleBase;
+
+	// ReSharper disable once CppParameterMayBeConst
+	static void ApiClose(HRGN handle) noexcept
+	{
+		if (handle && handle != INVALID_HANDLE_VALUE)
+		{
+			::DeleteObject(handle);
+		}
 	}
 };

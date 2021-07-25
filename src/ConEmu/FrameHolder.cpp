@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
+#include "../common/MHandle.h"
 #include "../common/MSetter.h"
 
 #ifdef _DEBUG
@@ -671,21 +672,21 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 
 	// Go
 
-	RECT wr, cr;
+	RECT cr{};
 
 	RecalculateFrameSizes();
 
-	wr = mp_ConEmu->ClientRect();
+	RECT wr = mp_ConEmu->ClientRect();
 	rcClientReal = mp_ConEmu->RealClientRect();
 
 	if (mp_ConEmu->isSelfFrame())
 	{
-		if (HRGN hRgn = mp_ConEmu->CreateSelfFrameRgn())
+		const auto hRgn = mp_ConEmu->CreateSelfFrameRgn();
+		if (hRgn.HasHandle())
 		{
-			int idx = mb_NcActive ? COLOR_ACTIVEBORDER : COLOR_INACTIVEBORDER;
-			HBRUSH hbr = GetSysColorBrush(idx);
+			const int idx = mb_NcActive ? COLOR_ACTIVEBORDER : COLOR_INACTIVEBORDER;
+			const MBrush hbr{ GetSysColorBrush(idx), nullptr };
 			FillRgn(hdc, hRgn, hbr);
-			DeleteObject(hRgn);
 		}
 	}
 

@@ -5071,11 +5071,11 @@ void CConEmuMain::InvalidateFrame()
 {
 	if (!isSelfFrame())
 		return;
-	HRGN hRgn = CreateSelfFrameRgn();
-	if (hRgn)
+	auto hRgn = CreateSelfFrameRgn();
+	if (hRgn.HasHandle())
 	{
 		InvalidateRgn(ghWnd, hRgn, FALSE);
-		DeleteObject(hRgn);
+		hRgn.GetHandle();
 	}
 	// avoid glitches at the top of the window (Win10)
 	RECT rc = SizeInfo::RealClientRect();
