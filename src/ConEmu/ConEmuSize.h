@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SizeInfo.h"
 
 class CConEmuMain;
+struct MonitorInfo;
 
 enum DpiChangeSource
 {
@@ -294,8 +295,8 @@ public:
 	HWND FindNextSiblingApp(bool bActivate);
 
 public:
-	HMONITOR GetNearestMonitor(MONITORINFO* pmi = nullptr, LPCRECT prcWnd = nullptr);
-	HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = nullptr);
+	MonitorInfo GetNearestMonitor(LPCRECT prcWnd = nullptr);
+	MonitorInfo GetPrimaryMonitor() const;
 	void StorePreMinimizeMonitor();
 
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);

@@ -1970,9 +1970,9 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopup
 		rcStore.right-(rcFrame.left+1)*2 /*rcStore.left+(rcFrame.left+1)*3*/,
 		rcStore.bottom-(rcFrame.top+1)*2 /*rcStore.top+(rcFrame.top+1)*3*/
 	};
-	MONITORINFO mi; GetNearestMonitor(&mi, &rcFind);
+	MonitorInfo mi = GetNearestMonitor(&rcFind);
 	// Get work area (may be FullScreen)
-	rcWork = (wndMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
+	rcWork = (wndMode == wmFullScreen) ? mi.mi.rcMonitor : mi.mi.rcWork;
 
 	// TODO: Проверить в Windows 10 с её невидимыми рамками
 	RECT rcInvisible = CalcMargins_InvisibleFrame();
@@ -1990,9 +1990,10 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopup
 	if (nBorders & CEB_ALLOW_PARTIAL)
 	{
 		RECT rcFind2 = {rcStore.right-rcFrame.left-1, rcStore.bottom-rcFrame.top-1, rcStore.right, rcStore.bottom};
-		MONITORINFO mi2; GetNearestMonitor(&mi2, &rcFind2);
+		MonitorInfo mi2 = GetNearestMonitor(&rcFind2);
 		RECT rcInter2, rcInter3;
-		if (IntersectRect(&rcInter2, &mi2.rcMonitor, &rcStore) || IntersectRect(&rcInter3, &mi.rcMonitor, &rcStore))
+		if (IntersectRect(&rcInter2, &mi2.mi.rcMonitor, &rcStore)
+			|| IntersectRect(&rcInter3, &mi.mi.rcMonitor, &rcStore))
 		{
 			// It's partially visible, OK
 			return false;
@@ -2054,8 +2055,8 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopup
 				// Yes, right-bottom corner is out-of-screen
 				RECT rcTest = {rcWnd.right, rcWnd.bottom, rcWnd.right, rcWnd.bottom};
 
-				MONITORINFO mi2; GetNearestMonitor(&mi2, &rcTest);
-				RECT rcWork2 = (wndMode == wmFullScreen) ? mi2.rcMonitor : mi2.rcWork;
+				MonitorInfo mi2 = GetNearestMonitor(&rcTest);
+				RECT rcWork2 = (wndMode == wmFullScreen) ? mi2.mi.rcMonitor : mi2.mi.rcWork;
 
 				rcWnd.right = std::min(rcWork2.right+rcMargins.right,rcWnd.right);
 				rcWnd.bottom = std::min(rcWork2.bottom+rcMargins.bottom,rcWnd.bottom);
@@ -2416,72 +2417,62 @@ void CConEmuSize::StorePreMinimizeMonitor()
 	}
 }
 
-HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= nullptr*/, LPCRECT prcWnd /*= nullptr*/)
+MonitorInfo CConEmuSize::GetNearestMonitor(LPCRECT prcWnd /*= nullptr*/)
 {
 	NestedCallAssert(1);
 
-	HMONITOR hMon = nullptr;
-	MONITORINFO mi = {sizeof(mi)};
+	MonitorInfo mi{};
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hWndFrom = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetParentRoot() : ghWnd;
 
 	// #SIZE_TODO Utilize mh_MinFromMonitor during restore?
 
 	if (prcWnd)
 	{
-		hMon = GetNearestMonitorInfo(&mi, nullptr, prcWnd);
+		mi = GetNearestMonitorInfo(nullptr, prcWnd);
 	}
 	else if (!hWndFrom || (gpSet->isQuakeStyle && isIconic()))
 	{
 		_ASSERTE(WndWidth.Value>0 && WndHeight.Value>0);
 		RECT rcEvalWnd = GetDefaultRect();
-		hMon = GetNearestMonitorInfo(&mi, nullptr, &rcEvalWnd);
+		mi = GetNearestMonitorInfo(nullptr, &rcEvalWnd);
 	}
 	else if (!mp_ConEmu->mp_Menu->GetRestoreFromMinimized() && !isIconic())
 	{
-		hMon = GetNearestMonitorInfo(&mi, nullptr, nullptr, hWndFrom);
+		mi = GetNearestMonitorInfo(nullptr, nullptr, hWndFrom);
 	}
 	else
 	{
 		_ASSERTEX(hWndFrom);
 		// !! We can't use CalcRect, it may call GetNearestMonitor in turn !!
 		//RECT rcDefault = CalcRect(CER_MAIN);
-		WINDOWPLACEMENT wpl = wpl = WinApi::GetWindowPlacement(hWndFrom);
+		const WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(hWndFrom);
 		RECT rcDefault = wpl.rcNormalPosition;
-		hMon = GetNearestMonitorInfo(&mi, mh_MinFromMonitor, &rcDefault);
+		mi = GetNearestMonitorInfo(mh_MinFromMonitor, &rcDefault);
 	}
 
 	// GetNearestMonitorInfo failed?
-	_ASSERTE(hMon && mi.cbSize && !IsRectEmpty(&mi.rcMonitor) && !IsRectEmpty(&mi.rcWork));
-
-	if (pmi)
-	{
-		*pmi = mi;
-	}
-	return hMon;
+	_ASSERTE(mi.hMon && mi.mi.cbSize && !IsRectEmpty(&mi.mi.rcMonitor) && !IsRectEmpty(&mi.mi.rcWork));
+	return mi;
 }
 
-HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= nullptr*/)
+MonitorInfo CConEmuSize::GetPrimaryMonitor() const
 {
-	MONITORINFO mi = {sizeof(mi)};
-	HMONITOR hMon = GetPrimaryMonitorInfo(&mi);
+	MonitorInfo mi = GetPrimaryMonitorInfo();
 
 	// GetPrimaryMonitorInfo failed?
-	_ASSERTE(hMon && mi.cbSize && !IsRectEmpty(&mi.rcMonitor) && !IsRectEmpty(&mi.rcWork));
+	_ASSERTE(mi.hMon && mi.mi.cbSize && !IsRectEmpty(&mi.mi.rcMonitor) && !IsRectEmpty(&mi.mi.rcWork));
 
 	if (gpSet->isLogging(2))
 	{
 		wchar_t szInfo[255];
 		swprintf_c(szInfo, L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
-			(hMon!=nullptr), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
+			(mi.hMon != nullptr), LODWORD(mi.hMon), LOGRECTCOORDS(mi.mi.rcWork), LOGRECTCOORDS(mi.mi.rcMonitor));
 		LogString(szInfo);
 	}
 
-	if (pmi)
-	{
-		*pmi = mi;
-	}
-	return hMon;
+	return mi;
 }
 
 LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
@@ -4453,9 +4444,10 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		//-- GetWindowRect(hJumpWnd, &rcMain);
 	}
 
-	MONITORINFO mi = {};
-	HMONITOR hNext = hJumpMon ? (GetMonitorInfoSafe(hJumpMon, mi) ? hJumpMon : nullptr) : GetNextMonitorInfo(&mi, &rcMain, Next);
-	if (!hNext)
+	const MonitorInfo miNext = hJumpMon
+		? GetNearestMonitorInfo(hJumpMon, nullptr, nullptr)
+		: GetNextMonitorInfo(&rcMain, Next);
+	if (!miNext.hMon)
 	{
 		if (gpSet->isLogging())
 		{
@@ -4471,28 +4463,26 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		swprintf_c(szInfo,
 			L"JumpNextMonitor(%i), GetNextMonitorInfo({%i,%i}-{%i,%i}) returns 0x%08X ({%i,%i}-{%i,%i})",
 			static_cast<int>(Next), LOGRECTCOORDS(rcMain),
-			static_cast<DWORD>(reinterpret_cast<DWORD_PTR>(hNext)), LOGRECTCOORDS(mi.rcMonitor));
+			static_cast<DWORD>(reinterpret_cast<DWORD_PTR>(miNext.hMon)), LOGRECTCOORDS(miNext.mi.rcMonitor));
 		LogString(szInfo);
 	}
 
-	SetRequestedMonitor(hNext);
+	SetRequestedMonitor(miNext.hMon);
 
-	MONITORINFO miCur{};
-	DEBUGTEST(HMONITOR hCurMonitor = )
-		GetNearestMonitor(&miCur, &rcMain);
+	MonitorInfo miCur = GetNearestMonitor(&rcMain);
 
 	RECT rcNewMain = rcMain;
 
 	if ((bFullScreen || bMaximized) && (hJumpWnd == ghWnd))
 	{
 		_ASSERTE(hJumpWnd == ghWnd);
-		rcNewMain = CalcRect(bFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED, mi.rcMonitor, CER_MAIN);
+		rcNewMain = CalcRect(bFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED, miNext.mi.rcMonitor, CER_MAIN);
 	}
 	else
 	{
 		_ASSERTE(WindowMode==wmNormal || hJumpWnd!=ghWnd);
 
-		EvalNewNormalPos(miCur, hNext, mi, rcMain, rcNewMain);
+		EvalNewNormalPos(miCur.mi, miNext.hMon, miNext.mi, rcMain, rcNewMain);
 	}
 
 
@@ -4502,7 +4492,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		if (CDpiAware::IsPerMonitorDpi())
 		{
-			DpiValue dpi = CDpiAware::QueryDpiForMonitor(hNext);
+			DpiValue dpi = CDpiAware::QueryDpiForMonitor(miNext.hMon);
 			OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false, dcs_Jump);
 		}
 
@@ -4725,20 +4715,20 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				}
 				else if (IsWindowVisible(ghWnd))
 				{
-					LPCWSTR pszInfo = L"WM_SYSCOMMAND(SC_RESTORE)";
+					const wchar_t* pszInfo = L"WM_SYSCOMMAND(SC_RESTORE)";
 					if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 					DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
 				}
 				else
 				{
-					LPCWSTR pszInfo = L"ShowMainWindow(SW_SHOWNORMAL)";
+					const wchar_t* pszInfo = L"ShowMainWindow(SW_SHOWNORMAL)";
 					if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 					ShowMainWindow(SW_SHOWNORMAL, abFirstShow);
 				}
 
-				LPCWSTR pszInfo = L"OnSize(false).1";
+				const wchar_t* pszInfo = L"OnSize(false).1";
 				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 			}
@@ -4840,7 +4830,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//RePaint();
 				mp_ConEmu->InvalidateAll();
 
-				LPCWSTR pszInfo = L"OnSize(false).2";
+				const wchar_t* pszInfo = L"OnSize(false).2";
 				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 				//OnSize(false); // консоль уже изменила свой размер
@@ -4860,7 +4850,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				resetSize = true;
 				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, abFirstShow);
 
-				LPCWSTR pszInfo = L"OnSize(false).3";
+				const wchar_t* pszInfo = L"OnSize(false).3";
 				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 			}
 
@@ -4906,18 +4896,16 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			RECT rcShift = CalcMargins(CEM_FRAMEONLY);
 			_ASSERTE(rcShift.left==0 && rcShift.right==0 && rcShift.top==0 && rcShift.bottom==0);
 
-			//GetCWShift(ghWnd, &rcShift); // Обновить, на всякий случай
-			// Умолчания
+			// default
 			ptFullScreenSize.x = GetSystemMetrics(SM_CXSCREEN)+rcShift.left+rcShift.right;
 			ptFullScreenSize.y = GetSystemMetrics(SM_CYSCREEN)+rcShift.top+rcShift.bottom;
-			// которые нужно уточнить для текущего монитора!
-			MONITORINFO mi = {};
-			HMONITOR hMon = GetNearestMonitor(&mi);
+			// need to be checked and adjusted
+			const MonitorInfo miNearest = GetNearestMonitor();
 
-			if (hMon)
+			if (miNearest.hMon)
 			{
-				ptFullScreenSize.x = (mi.rcMonitor.right-mi.rcMonitor.left)+rcShift.left+rcShift.right;
-				ptFullScreenSize.y = (mi.rcMonitor.bottom-mi.rcMonitor.top)+rcShift.top+rcShift.bottom;
+				ptFullScreenSize.x = (miNearest.mi.rcMonitor.right - miNearest.mi.rcMonitor.left) + rcShift.left + rcShift.right;
+				ptFullScreenSize.y = (miNearest.mi.rcMonitor.bottom - miNearest.mi.rcMonitor.top) + rcShift.top + rcShift.bottom;
 			}
 
 			//120820 - Тут нужно проверять реальный IsZoomed
@@ -4947,9 +4935,11 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
 			setWindowPos(nullptr,
-			                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
-			                ptFullScreenSize.x,ptFullScreenSize.y,
-			                SWP_NOZORDER);
+				-rcShift.left + miNearest.mi.rcMonitor.left,
+				-rcShift.top + miNearest.mi.rcMonitor.top,
+				ptFullScreenSize.x,
+				ptFullScreenSize.y,
+				SWP_NOZORDER);
 
 			OnSize(false); // Align children windows
 
@@ -4964,7 +4954,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				lSet.Unlock();
 				//WindowMode = inMode; // Запомним!
 
-				LPCWSTR pszInfo = L"OnSize(false).5";
+				const wchar_t* pszInfo = L"OnSize(false).5";
 				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 				OnSize(false); // подровнять ТОЛЬКО дочерние окошки
@@ -5003,9 +4993,9 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	if (gpSet->isLogging())
 	{
-		wchar_t szInfo[64];
-		swprintf_c(szInfo, L"SetWindowMode(%u) end", inMode);
-		if (!mp_ConEmu->LogWindowPos(szInfo)) { DEBUGSTRWMODE(szInfo); }
+		wchar_t logInfo[64] = L"";
+		swprintf_c(logInfo, L"SetWindowMode(%u) end", inMode);
+		if (!mp_ConEmu->LogWindowPos(logInfo)) { DEBUGSTRWMODE(logInfo); }
 	}
 
 	//Sync ConsoleToWindow(); 2009-09-10 А это вроде вообще не нужно - ресайз консоли уже сделан
@@ -5014,8 +5004,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 wrap:
 	if (!lbRc)
 	{
-		LPCWSTR pszInfo = L"Failed to switch WindowMode";
-		if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
+		const wchar_t* logInfo = L"Failed to switch WindowMode";
+		if (!LogString(logInfo)) { DEBUGSTRWMODE(logInfo); }
 		_ASSERTE(lbRc && "Failed to switch WindowMode");
 		WindowMode = changeFromWindowMode;
 	}

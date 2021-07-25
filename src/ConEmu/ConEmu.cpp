@@ -12666,14 +12666,13 @@ bool CConEmuMain::LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd /*= nullptr*/)
 		GetWindowRect(ghWnd, &rcWnd);
 	else if (prcWnd)
 		rcWnd = *prcWnd;
-	MONITORINFO mi = {sizeof(mi)};
-	HMONITOR hMon = GetNearestMonitor(&mi, &rcWnd);
+	const auto mi = GetNearestMonitor(&rcWnd);
 	swprintf_c(szInfo, L"%s: %s %s WindowMode=%s Rect={%i,%i}-{%i,%i} Mon(x%08X)=({%i,%i}-{%i,%i}),({%i,%i}-{%i,%i})",
 		asPrefix ? asPrefix : L"WindowPos",
 		::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
 		::IsIconic(ghWnd) ? L"Iconic" : ::IsZoomed(ghWnd) ? L"Maximized" : L"Normal",
-		GetWindowModeName((ConEmuWindowMode)(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
-		LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcMonitor), LOGRECTCOORDS(mi.rcWork));
+		GetWindowModeName(static_cast<ConEmuWindowMode>(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
+		LOGRECTCOORDS(rcWnd), LODWORD(mi.hMon), LOGRECTCOORDS(mi.mi.rcMonitor), LOGRECTCOORDS(mi.mi.rcWork));
 	return LogString(szInfo);
 }
 

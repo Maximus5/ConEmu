@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #include "Header.h"
 #include "../common/MSetter.h"
+#include "../common/Monitors.h"
 #include "TabBar.h"
 #include "TabCtrlBase.h"
 #include "TabCtrlWin.h"
@@ -55,8 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "LngRc.h"
 #include "VirtualConsole.h"
-#include "TrayIcon.h"
-#include "VConChild.h"
 #include "VConGroup.h"
 #include "Status.h"
 #include "Menu.h"
@@ -1295,9 +1294,10 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		RECT rcBtnRect = {0};
 		mp_Rebar->GetToolBtnRect(TID_SYSMENU, &rcBtnRect);
 		const DWORD nAddFlags = ((gpSet->nTabsLocation == 1) ? TPM_BOTTOMALIGN : 0) | TPM_RIGHTALIGN;
-		MONITORINFO mi = {}; gpConEmu->GetNearestMonitor(&mi);
-		--mi.rcWork.right; --mi.rcWork.bottom;
-		RECT rcVisible = {}; const BOOL visible = IntersectRect(&rcVisible, &rcBtnRect, &mi.rcWork);
+		MonitorInfo mi = gpConEmu->GetNearestMonitor();
+		--mi.mi.rcWork.right;
+		--mi.mi.rcWork.bottom;
+		RECT rcVisible = {}; const BOOL visible = IntersectRect(&rcVisible, &rcBtnRect, &mi.mi.rcWork);
 		LogString(L"ShowSysmenu called from (ToolBar)");
 		gpConEmu->mp_Menu->ShowSysmenu(
 			visible ? rcVisible.right : rcBtnRect.right,
@@ -1311,7 +1311,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-void CTabBarClass::Invalidate()
+void CTabBarClass::Invalidate() const
 {
 	if (gpConEmu->mp_TabBar->IsTabsActive())
 		mp_Rebar->InvalidateBar();
