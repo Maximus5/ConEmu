@@ -709,7 +709,7 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 
 	if (gpSet->isStatusBarShow)
 	{
-		int nHeight = gpSet->StatusBarHeight();
+		const int nHeight = gpSet->StatusBarHeight();
 		if (nHeight < (wr.bottom - wr.top))
 		{
 			RECT rcStatus =

@@ -98,13 +98,15 @@ public:
 	const WindowRectangles& GetRectState() const;
 	int GetDefaultTabbarHeight() const;
 
-	// Check if sizes are up to date
+	/// @brief Check if sizes are up to date
 	bool isCalculated() const;
-	// Following functions deprecate current sizes, recalculation will be executed on next size request
+	/// @brief Following functions deprecate current sizes, recalculation will be executed on next size request
 	void RequestRecalc();
-	// Change used DPI
+	/// @brief Set current state to valid sizes calculation
+	void SetCalculated();
+	/// @brief Change used DPI
 	void RequestDpi(const DpiValue& _dpi);
-	// Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
+	/// @brief Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
 	void RequestRect(const RECT& _window);
 	void RequestSize(const int _width, const int _height);
 	void RequestPos(const int _x, const int _y);
@@ -115,9 +117,9 @@ public:
 protected:
 	// Calculates new rectangles, if required, based on current settings and options
 	void DoCalculate();
-	void LogRequest(LPCWSTR asFrom, LPCWSTR asMessage = nullptr);
-	void LogRequest(const RECT& rcNew, LPCWSTR asFrom);
-	void LogRequest(const int dpi, LPCWSTR asFrom);
+	void LogRequest(LPCWSTR asFrom, LPCWSTR asMessage = nullptr) const;
+	void LogRequest(const RECT& rcNew, LPCWSTR asFrom) const;
+	void LogRequest(const int dpi, LPCWSTR asFrom) const;
 	void RequestRectInt(const RECT& _window, LPCWSTR asFrom);
 
 protected:

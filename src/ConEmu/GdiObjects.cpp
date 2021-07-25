@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "GdiObjects.h"
 
-#define DEBUGSTRCOUNT(s) DEBUGSTR(s)
+#define DEBUGSTRCOUNT(s) //DEBUGSTR(s)
 
 HandleMonitor::HandleMonitor()
 {

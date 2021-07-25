@@ -62,11 +62,6 @@ SizeInfo::~SizeInfo()
 {
 }
 
-bool SizeInfo::isCalculated() const
-{
-	return m_size.valid;
-}
-
 //static
 bool SizeInfo::IsRectMinimized(const RECT& rc)
 {
@@ -79,22 +74,31 @@ bool SizeInfo::IsRectMinimized(const int x, const int y)
 	return (x <= WINDOWS_ICONIC_POS || y <= WINDOWS_ICONIC_POS);
 }
 
-// Following functions deprecate current sizes, recalculation will be executed on next size request
+bool SizeInfo::isCalculated() const
+{
+	return m_size.valid;
+}
+
 void SizeInfo::RequestRecalc()
 {
 	m_size.valid = false;
 }
 
-void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/)
+void SizeInfo::SetCalculated()
 {
-	CEStr lsMsg(L"Size recalc requested",
+	m_size.valid = true;
+}
+
+void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/) const
+{
+	const CEStr lsMsg(L"Size recalc requested",
 		mb_temp ? L" (temp)" : L" (main)",
 		asFrom ? L" from: " : nullptr, asFrom,
 		asMessage?L" - ":nullptr, asMessage);
 	if (!mp_ConEmu->LogString(lsMsg)) { DEBUGSTRSIZE(lsMsg); }
 }
 
-void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom)
+void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom) const
 {
 	wchar_t szInfo[120];
 	msprintf(szInfo, countof(szInfo), L"OldRect={%i,%i}-{%i,%i} {%i*%i} NewRect={%i,%i}-{%i,%i} {%i*%i}",
@@ -103,7 +107,7 @@ void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom)
 	LogRequest(asFrom, szInfo);
 }
 
-void SizeInfo::LogRequest(const int dpi, LPCWSTR asFrom)
+void SizeInfo::LogRequest(const int dpi, LPCWSTR asFrom) const
 {
 	wchar_t szInfo[120];
 	msprintf(szInfo, countof(szInfo), L"OldDpi=%i NewDpi=%i", m_opt.dpi, dpi);
@@ -130,13 +134,13 @@ void SizeInfo::RequestRectInt(const RECT& _window, LPCWSTR asFrom)
 		return;
 	}
 
-	const RECT& curRect = m_size.valid ? m_size.rr.window : m_size.source_window;
+	const RECT& curRect = isCalculated() ? m_size.rr.window : m_size.source_window;
 	// If nothing was changed
 	if (_window == curRect)
 		return;
 
 	// If the window is just moved but not resized
-	if (m_size.valid && (RectWidth(_window) == RectWidth(curRect) && RectHeight(_window) == RectHeight(curRect)))
+	if (isCalculated() && (RectWidth(_window) == RectWidth(curRect) && RectHeight(_window) == RectHeight(curRect)))
 	{
 		const auto cur_mi = mp_ConEmu->NearestMonitorInfo(curRect);
 		const auto new_mi = mp_ConEmu->NearestMonitorInfo(_window);
@@ -168,16 +172,16 @@ void SizeInfo::RequestRect(const RECT& _window)
 
 void SizeInfo::RequestSize(const int _width, const int _height)
 {
-	RECT rcCur = m_size.rr.window;
-	RECT rcNew = {rcCur.left, rcCur.top, rcCur.left + _width, rcCur.top + _height};
+	const RECT rcCur = m_size.rr.window;
+	const RECT rcNew = {rcCur.left, rcCur.top, rcCur.left + _width, rcCur.top + _height};
 	RequestRectInt(rcNew, L"RequestSize");
 }
 
 void SizeInfo::RequestPos(const int _x, const int _y)
 {
-	RECT rcCur = m_size.rr.window;
-	RECT rcNew = {_x, _y, _x + RectWidth(rcCur), _y + RectHeight(rcCur)};
-	if (rcNew == (m_size.valid ? m_size.rr.window : m_size.source_window))
+	const RECT rcCur = m_size.rr.window;
+	const RECT rcNew = {_x, _y, _x + RectWidth(rcCur), _y + RectHeight(rcCur)};
+	if (rcNew == (isCalculated() ? m_size.rr.window : m_size.source_window))
 		return;
 	RequestRectInt(rcNew, L"RequestPos");
 }
@@ -286,7 +290,7 @@ RECT SizeInfo::WorkspaceRect()
 // Calculates new rectangles, if required, based on current settings and options
 void SizeInfo::DoCalculate()
 {
-	if (m_size.valid)
+	if (isCalculated())
 		return;
 
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
@@ -296,7 +300,7 @@ void SizeInfo::DoCalculate()
 		// Inside mode?
 		_ASSERTEX(RectWidth(m_size.source_window)>0 && RectHeight(m_size.source_window)>0);
 		// m_size.rr = {}; // -- don't touch current values?
-		m_size.valid = true;
+		SetCalculated();
 		return;
 	}
 
@@ -403,5 +407,5 @@ void SizeInfo::DoCalculate()
 
 	// Apply changes
 	m_size.rr = new_rr;
-	m_size.valid = true;
+	SetCalculated();
 }

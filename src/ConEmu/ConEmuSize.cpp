@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRSTYLE(s) //DEBUGSTR(s)
 #define DEBUGSTRWMODE(s) //DEBUGSTR(s)
-#define DEBUGSTRDPI(s) //DEBUGSTR(s)
+#define DEBUGSTRDPI(s) DEBUGSTR(s)
 #define DEBUGSTRRGN(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
@@ -3140,7 +3140,8 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 	if (InMinimizing(p))
 		return false;
 
-	RECT rcOld = SizeInfo::m_size.rr.window, rcNew;
+	const RECT rcOld = SizeInfo::m_size.rr.window;
+	RECT rcNew;
 	if ((p->flags & SWP_NOMOVE))
 		rcNew = RECT{rcOld.left, rcOld.top, rcOld.left + p->cx, rcOld.top + p->cy};
 	else if ((p->flags & SWP_NOSIZE))
@@ -3150,10 +3151,7 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 
 	bool bResized = (RectWidth(rcNew) != RectWidth(rcOld)) || (RectHeight(rcNew) != RectHeight(rcOld));
 
-	// Lets go
-
-	HMONITOR hMon = nullptr;
-	DpiValue dpi;
+	DpiValue dpi{};
 
 	#ifdef _DEBUG
 	BOOL bVis = IsWindowVisible(ghWnd);
@@ -3461,19 +3459,19 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= nullptr*/, bool bWmMove /*= fals
 {
 	BOOL bModified = FALSE;
 	HMONITOR hMon = nullptr;
-	MONITORINFO mi = {sizeof(mi)};
-	RECT rcCur = {};
-	RECT rcShift;
-	RECT rcUnshifted;
-	RECT rcWnd;
-	RECT rcWorkFix;
-	int nMagnetSize;
-	bool magnet_left, magnet_right, magnet_top, magnet_bottom;
-	int nWidth, nHeight;
+	MONITORINFO mi{}; mi.cbSize = sizeof(mi);
+	RECT rcCur{};
+	RECT rcShift{};
+	RECT rcUnShifted{};
+	RECT rcWnd{};
+	RECT rcWorkFix{};
+	int nMagnetSize = 0;
+	bool magnetLeft = 0, magnetRight = 0, magnetTop = 0, magnetBottom = 0;
+	int nWidth = 0, nHeight = 0;
 	POINT ptShift = {};
 	DWORD SnappingFlags = smf_None;
 	POINT ptCur = {};
-	bool drag_by_mouse = false;
+	bool dragByMouse = false;
 
 	if (!gpSet->isSnapToDesktopEdges && (m_TileMode == cwc_Current))
 		goto wrap;
@@ -3487,7 +3485,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= nullptr*/, bool bWmMove /*= fals
 	if (bWmMove && isPressed(VK_LBUTTON))
 	{
 		// Prefer the monitor under mouse cursor
-		drag_by_mouse = true;
+		dragByMouse = true;
 		GetCursorPos(&ptCur);
 		hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
 	}
@@ -3510,7 +3508,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= nullptr*/, bool bWmMove /*= fals
 	nMagnetSize = gpSetCls->EvalSize(GetSystemMetrics(SM_CYCAPTION)*2/3, esf_CanUseDpi|esf_Vertical);
 
 	// Windows aero snap feature
-	if (drag_by_mouse && prcWnd && IsWin7())
+	if (dragByMouse && prcWnd && IsWin7())
 	{
 		// We receive TWO OnMoving messages, first with proposed "aero snapped" rect,
 		// and second with "real" window rect. We shall not reset snap flags on first.
@@ -3542,79 +3540,79 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= nullptr*/, bool bWmMove /*= fals
 	else
 		GetWindowRect(ghWnd, &rcCur);
 
+	nWidth = rcCur.right - rcCur.left;
+	nHeight = rcCur.bottom - rcCur.top;
+
 	// Evaluate
-	rcUnshifted = rcCur;
+	rcUnShifted = rcCur;
 	if (m_Snapping.LastFlags)
 	{
-		rcUnshifted.left += m_Snapping.CorrectionX;
-		rcUnshifted.right += m_Snapping.CorrectionX;
-		rcUnshifted.top += m_Snapping.CorrectionY;
-		rcUnshifted.bottom += m_Snapping.CorrectionY;
+		rcUnShifted.left += m_Snapping.CorrectionX;
+		rcUnShifted.right += m_Snapping.CorrectionX;
+		rcUnShifted.top += m_Snapping.CorrectionY;
+		rcUnShifted.bottom += m_Snapping.CorrectionY;
 	}
 	// TODO: current tile mode
-	magnet_left = (_abs(rcWorkFix.left - rcUnshifted.left) <= nMagnetSize);
-	magnet_right = (_abs(rcWorkFix.right - rcUnshifted.right) <= nMagnetSize);
-	magnet_top = (_abs(rcWorkFix.top - rcUnshifted.top) <= nMagnetSize);
-	magnet_bottom = (_abs(rcWorkFix.bottom - rcUnshifted.bottom) <= nMagnetSize);
+	magnetLeft = (_abs(rcWorkFix.left - rcUnShifted.left) <= nMagnetSize);
+	magnetRight = (_abs(rcWorkFix.right - rcUnShifted.right) <= nMagnetSize);
+	magnetTop = (_abs(rcWorkFix.top - rcUnShifted.top) <= nMagnetSize);
+	magnetBottom = (_abs(rcWorkFix.bottom - rcUnShifted.bottom) <= nMagnetSize);
 
 	// If the window edges are far from monitor's working area
-	if (!magnet_left && !magnet_right && !magnet_top && !magnet_bottom)
+	if (!magnetLeft && !magnetRight && !magnetTop && !magnetBottom)
 	{
 		if (m_Snapping.LastFlags)
 		{
-			rcWnd = rcUnshifted;
+			rcWnd = rcUnShifted;
 			SnappingFlags = smf_None;
 			goto modified;
 		}
 		goto wrap;
 	}
 
-	nWidth = rcCur.right - rcCur.left;
-	nHeight = rcCur.bottom - rcCur.top;
-
 	rcWnd = rcCur;
-	if (magnet_left)
+	if (magnetLeft)
 	{
 		rcWnd.left = rcWorkFix.left;
 		rcWnd.right = std::min<int>(rcWorkFix.right, rcWnd.left + nWidth);
-		ptShift.x = rcUnshifted.left - rcWnd.left;
+		ptShift.x = rcUnShifted.left - rcWnd.left;
 		SnappingFlags |= smf_Left;
 	}
 	// TODO: tile width
-	else if (magnet_right)
+	else if (magnetRight)
 	{
 		rcWnd.right = rcWorkFix.right;
 		rcWnd.left = std::max<int>(rcWorkFix.left, rcWorkFix.right - nWidth);
-		ptShift.x = rcUnshifted.right - rcWnd.right;
+		ptShift.x = rcUnShifted.right - rcWnd.right;
 		SnappingFlags |= smf_Right;
 	}
 	// no-mod horz
 	if (!(SnappingFlags & smf_Horz) && (m_Snapping.LastFlags & smf_Horz))
 	{
-		rcWnd.left = rcUnshifted.left;
-		rcWnd.right = rcUnshifted.right;
+		rcWnd.left = rcUnShifted.left;
+		rcWnd.right = rcUnShifted.right;
 	}
 
-	if (magnet_top)
+	if (magnetTop)
 	{
 		rcWnd.top = rcWorkFix.top;
 		rcWnd.bottom = std::min(rcWorkFix.bottom, rcWnd.top + nHeight);
-		ptShift.y = rcUnshifted.top - rcWnd.top;
+		ptShift.y = rcUnShifted.top - rcWnd.top;
 		SnappingFlags |= smf_Top;
 	}
 	// TODO: Tile height
-	else if (magnet_bottom)
+	else if (magnetBottom)
 	{
 		rcWnd.bottom = rcWorkFix.bottom;
 		rcWnd.top = std::max<int>(rcWorkFix.top, rcWorkFix.bottom - nHeight);
-		ptShift.y = rcUnshifted.bottom - rcWnd.bottom;
+		ptShift.y = rcUnShifted.bottom - rcWnd.bottom;
 		SnappingFlags |= smf_Bottom;
 	}
 	// no-mod vert
 	if (!(SnappingFlags & smf_Vert) && (m_Snapping.LastFlags & smf_Vert))
 	{
-		rcWnd.top = rcUnshifted.top;
-		rcWnd.bottom = rcUnshifted.bottom;
+		rcWnd.top = rcUnShifted.top;
+		rcWnd.bottom = rcUnShifted.bottom;
 	}
 
 	if (memcmp(&rcWnd, &rcCur, sizeof(rcWnd)) == 0)
@@ -5413,7 +5411,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		SizeInfo::RequestDpi(dpi);
 
 		// it returns false if DPI was not changed
-		if (gpFontMgr->RecreateFontByDpi(dpi, prcSuggested))
+		if (gpFontMgr->RecreateFontByDpi(dpi))
 		{
 			// Вернуть флажок
 			lRc = TRUE;

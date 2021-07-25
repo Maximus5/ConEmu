@@ -1311,9 +1311,7 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 	return false;
 }
 
-// Till now prcSuggested is not used
-// However it may be needed for 'Auto sized' fonts
-bool CFontMgr::RecreateFontByDpi(const DpiValue& dpi, LPRECT prcSuggested)
+bool CFontMgr::RecreateFontByDpi(const DpiValue& dpi)
 {
 	if ((_dpi_font.Xdpi == dpi.Xdpi && _dpi_font.Ydpi == dpi.Ydpi) || (dpi.Ydpi < 72) || (dpi.Ydpi > 960))
 	{
