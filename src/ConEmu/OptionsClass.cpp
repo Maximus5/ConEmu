@@ -851,7 +851,7 @@ void CSettings::SettingsPreSave()
 
 
 // Помножить размер на масштаб * dpi * юниты(-1)
-LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags, DpiValue* apDpi /*= nullptr*/)
+LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags, const DpiValue* apDpi /*= nullptr*/) const
 {
 	if (nSize <= 0)
 	{
@@ -865,12 +865,12 @@ LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags, DpiValue* apDpi /*= nu
 	if (!apDpi)
 		apDpi = &_dpi;
 
-	LONG iMul = 1, iDiv = 1, iResult;
+	LONG iMul = 1, iDiv = 1;
 
 	// DPI текущего(!) монитора
 	if ((Flags & esf_CanUseDpi) && gpSet->FontUseDpi)
 	{
-		int iDpi = (Flags & esf_Horizontal) ? apDpi->Xdpi : apDpi->Ydpi;
+		const int iDpi = (Flags & esf_Horizontal) ? apDpi->Xdpi : apDpi->Ydpi;
 		if (iDpi > 0)
 		{
 			iMul *= iDpi;
@@ -902,7 +902,7 @@ LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags, DpiValue* apDpi /*= nu
 		iMul = -iMul;
 	}
 
-	iResult = MulDiv(nSize, iMul, iDiv);
+	const LONG iResult = MulDiv(nSize, iMul, iDiv);
 	return iResult;
 }
 

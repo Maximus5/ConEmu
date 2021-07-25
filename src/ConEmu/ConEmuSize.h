@@ -204,7 +204,7 @@ public:
 			Right  = ABE_RIGHT,
 			Top    = ABE_TOP,
 			Bottom = ABE_BOTTOM,
-			Absent = (UINT)-1,
+			Absent = static_cast<UINT>(-1),
 		} taskbarLocation;
 	};
 protected:
@@ -262,7 +262,9 @@ public:
 	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen) const;
 	bool IsCantExceedMonitor() const;
 	bool IsPosLocked() const;
+	// deprecated (unused?)
 	bool IsInResize() const;
+	// deprecated (unused?)
 	bool IsInWindowModeChange() const;
 	void LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1 = 0, DWORD nParm2 = 0, DWORD nParm3 = 0);
 	bool JumpNextMonitor(bool Next);
@@ -358,6 +360,8 @@ protected:
 	RECT SetNormalWindowSize();
 	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
 	bool CheckDpiOnMoving(WINDOWPOS *p);
+	/// @brief Correct size and positioning if monitors differ in size or dpi
+	/// @note Function may be used for any window not only ghConEmu. E.g. for moving settings dialog.
 	void EvalNewNormalPos(const MonitorInfo& miOld, const MonitorInfo& miNew, RECT rcOld, RECT& rcNew);
 	BOOL AnimateWindow(DWORD dwTime, DWORD dwFlags);
 

@@ -4991,7 +4991,7 @@ void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
 // Изменить размер консоли по размеру окна (главного)
 void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=nullptr*/, bool bSync/*=false*/)
 {
-	if (gb_SkipSyncSize || isNtvdm())
+	if (gb_SkipSyncSize || gpConEmu->IsWindowModeChanging() || isNtvdm())
 		return;
 
 	CVConGuard VCon(gp_VActive);
@@ -5002,9 +5002,9 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=nullptr*/, bool bSync/*=
 
 	#ifdef _DEBUG
 	// Не должно вызываться в процессе изменения режима окна
-	if (gpConEmu->changeFromWindowMode!=wmNotChanging)
+	if (gpConEmu->changeFromWindowMode != wmNotChanging)
 	{
-		_ASSERTE(gpConEmu->changeFromWindowMode==wmNotChanging);
+		_ASSERTE(gpConEmu->changeFromWindowMode == wmNotChanging);
 	}
 	#endif
 
@@ -5204,7 +5204,7 @@ RECT CVConGroup::AllTextRect(SIZE* rpSplits /*= nullptr*/, bool abMinimal /*= fa
 // #SIZE_TODO Replace rcWnd with SIZE?
 bool CVConGroup::PreReSize(unsigned WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
 {
-	bool lbRc = true;
+	const bool lbRc = true;
 	CVConGuard VCon(gp_VActive);
 
 	_ASSERTEX(tFrom == CER_MAIN || tFrom == CER_MAINCLIENT);
@@ -5231,7 +5231,7 @@ bool CVConGroup::PreReSize(unsigned WindowMode, RECT rcWnd, enum ConEmuRect tFro
 		rcCon.bottom = DEF_CON_HEIGHT;
 	}
 
-	COORD size = MakeCoord(rcCon.right, rcCon.bottom);
+	const COORD size = MakeCoord(rcCon.right, rcCon.bottom);
 	if (isVConExists(0))
 	{
 		SetAllConsoleWindowsSize(rcWnd, size, bSetRedraw);

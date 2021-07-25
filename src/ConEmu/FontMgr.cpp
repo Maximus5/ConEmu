@@ -2471,7 +2471,8 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 		SaveFontSizes((mn_AutoFontWidth == -1), true);
 
 		{
-			gpConEmu->Update(true);
+			if (!gpConEmu->IsWindowModeChanging())
+				gpConEmu->Update(true);
 
 			if (gpConEmu->GetWindowMode() == wmNormal)
 				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется

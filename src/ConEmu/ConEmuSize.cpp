@@ -577,6 +577,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			_ASSERTE(!IsRectMinimized(rc) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
 			// Avoid wrong sized when resize is not finished yet
 			SizeInfo temp(*static_cast<SizeInfo*>(this));
+			// Avoid to pass X,Y from rFrom as it could be calculated over console cells and X,Y are just zeros
 			temp.RequestSize(RectWidth(rFrom), RectHeight(rFrom));
 			rc = temp.ClientRect();
 			tFromNow = CER_MAINCLIENT;
@@ -602,7 +603,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					rcShift = CalcMargins(tTabAction|CEM_ALL_MARGINS);
 					AddMargins(rc, rcShift, rcop_AddSize);
 					WARNING("Неправильно получается при DoubleView");
-					tFromNow = CER_MAINCLIENT;
+					tFromNow = CER_MAIN;
 				} break;
 				case CER_MAINCLIENT:
 				{
@@ -630,7 +631,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					rc.top += rcShift.top; rc.bottom += rcShift.top;
 					_ASSERTE(rcShift.left == 0 && rcShift.right == 0 && rcShift.bottom == 0);
 					WARNING("Неправильно получается при DoubleView");
-					tFromNow = CER_MAINCLIENT;
+					tFromNow = CER_BACK;
 				} break;
 				default:
 					_ASSERTE(FALSE && "Unexpected tWhat");
@@ -3264,7 +3265,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 
 	BOOL lbIsPicView = mp_ConEmu->isPictureView();		UNREFERENCED_PARAMETER(lbIsPicView);
 
-	if (bResizeRCon && (changeFromWindowMode == wmNotChanging) && (mn_InResize <= 1))
+	if (bResizeRCon && (changeFromWindowMode == wmNotChanging) && (mn_InResize <= 1) && !m_JumpMonitor.bInJump)
 	{
 		CVConGroup::SyncAllConsoles2Window(work, true);
 	}
@@ -4300,10 +4301,12 @@ bool CConEmuSize::IsPosLocked() const
 	// Положение - строго не ограничивается
 	return false;
 }
+// deprecated (unused?)
 bool CConEmuSize::IsInResize() const
 {
 	return (mn_InResize > 0);
 }
+// deprecated (unused?)
 bool CConEmuSize::IsInWindowModeChange() const
 {
 	return (changeFromWindowMode != wmNotChanging);
@@ -4362,12 +4365,22 @@ void CConEmuSize::EvalNewNormalPos(const MonitorInfo& miOld, const MonitorInfo& 
 	RECT rcNextMon = miNew.mi.rcWork;
 	#endif
 
-	// Если мониторы различаются по разрешению или рабочей области - коррекция позиционирования
-	int shiftX = rcOld.left - miOld.mi.rcWork.left;
-	int shiftY = rcOld.top - miOld.mi.rcWork.top;
+	const MonitorInfoCache extOldInfo = NearestMonitorInfo(miOld.hMon);
+	const MonitorInfoCache extNewInfo = NearestMonitorInfo(miNew.hMon);
 
-	int width = (rcOld.right - rcOld.left);
-	int height = (rcOld.bottom - rcOld.top);
+	const int oldWidth = (rcOld.right - rcOld.left);
+	const int oldHeight = (rcOld.bottom - rcOld.top);
+	int newWidth, newHeight;
+	if (extOldInfo.dpi.IsValid() && extNewInfo.dpi.IsValid() && extOldInfo.dpi != extNewInfo.dpi)
+	{
+		newWidth = oldWidth * extNewInfo.dpi.Xdpi / extOldInfo.dpi.Xdpi;
+		newHeight = oldHeight * extNewInfo.dpi.Ydpi / extOldInfo.dpi.Ydpi;
+	}
+	else
+	{
+		newWidth = oldWidth; newHeight = oldHeight;
+	}
+
 
 	// Если ширина или высота были заданы в процентах (от монитора)
 	if ((WndWidth.Style == ss_Percents) || (WndHeight.Style == ss_Percents))
@@ -4380,9 +4393,9 @@ void CConEmuSize::EvalNewNormalPos(const MonitorInfo& miOld, const MonitorInfo& 
 			if ((szNewSize.cx > 0) && (szNewSize.cy > 0))
 			{
 				if (WndWidth.Style == ss_Percents)
-					width = szNewSize.cx;
+					newWidth = szNewSize.cx;
 				if (WndHeight.Style == ss_Percents)
-					height = szNewSize.cy;
+					newHeight = szNewSize.cy;
 			}
 			else
 			{
@@ -4391,37 +4404,51 @@ void CConEmuSize::EvalNewNormalPos(const MonitorInfo& miOld, const MonitorInfo& 
 		}
 	}
 
-
-	if (shiftX > 0)
+	const int oldShiftX = rcOld.left - miOld.mi.rcWork.left;
+	const int oldShiftY = rcOld.top - miOld.mi.rcWork.top;
+	int newShiftX = 0, newShiftY = 0;
+	/*
+	if (extOldInfo.dpi.IsValid() && extNewInfo.dpi.IsValid() && extOldInfo.dpi != extNewInfo.dpi)
 	{
-		const int spaceX = ((miOld.mi.rcWork.right - miOld.mi.rcWork.left) - width);
-		const int newSpaceX = ((miNew.mi.rcWork.right - miNew.mi.rcWork.left) - width);
+		newShiftX = oldShiftX * extNewInfo.dpi.Xdpi / extOldInfo.dpi.Xdpi;
+		newShiftY = oldShiftY * extNewInfo.dpi.Ydpi / extOldInfo.dpi.Ydpi;
+	}
+	else
+	{
+		newShiftX = oldShiftX; newShiftY = oldShiftY;
+	}
+	*/
+
+	if (oldShiftX > 0)
+	{
+		const int spaceX = ((miOld.mi.rcWork.right - miOld.mi.rcWork.left) - oldWidth);
+		const int newSpaceX = ((miNew.mi.rcWork.right - miNew.mi.rcWork.left) - oldWidth);
 		if (spaceX > 0)
 		{
 			if (newSpaceX <= 0)
-				shiftX = 0;
+				newShiftX = 0;
 			else
-				shiftX = shiftX * newSpaceX / spaceX;
+				newShiftX = oldShiftX * newSpaceX / spaceX;
 		}
 	}
 
-	if (shiftY > 0)
+	if (oldShiftY > 0)
 	{
-		const int spaceY = ((miOld.mi.rcWork.bottom - miOld.mi.rcWork.top) - height);
-		const int newSpaceY = ((miNew.mi.rcWork.bottom - miNew.mi.rcWork.top) - height);
+		const int spaceY = ((miOld.mi.rcWork.bottom - miOld.mi.rcWork.top) - oldHeight);
+		const int newSpaceY = ((miNew.mi.rcWork.bottom - miNew.mi.rcWork.top) - newHeight);
 		if (spaceY > 0)
 		{
 			if (newSpaceY <= 0)
-				shiftY = 0;
+				newShiftY = 0;
 			else
-				shiftY = shiftY * newSpaceY / spaceY;
+				newShiftY = oldShiftY * newSpaceY / spaceY;
 		}
 	}
 
-	rcNew.left = miNew.mi.rcWork.left + shiftX;
-	rcNew.top = miNew.mi.rcWork.top + shiftY;
-	rcNew.right = rcNew.left + width;
-	rcNew.bottom = rcNew.top + height;
+	rcNew.left = miNew.mi.rcWork.left + newShiftX;
+	rcNew.top = miNew.mi.rcWork.top + newShiftY;
+	rcNew.right = rcNew.left + newWidth;
+	rcNew.bottom = rcNew.top + newHeight;
 }
 
 bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos /*= nullptr*/)
@@ -4443,6 +4470,12 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		//-- GetWindowRect(hJumpWnd, &rcMain);
 	}
+
+	const RECT rcConAll = CalcRect(CER_CONSOLE_ALL, rcMain, CER_MAIN);
+	#ifdef _DEBUG
+	const RECT oldEvalWnd = CalcRect(CER_MAIN, rcConAll, CER_CONSOLE_ALL);
+	const RECT oldEvalCon = CalcRect(CER_CONSOLE_ALL, oldEvalWnd, CER_MAIN);
+	#endif
 
 	const MonitorInfo miNext = hJumpMon
 		? GetNearestMonitorInfo(hJumpMon, nullptr, nullptr)
@@ -4469,7 +4502,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 
 	SetRequestedMonitor(miNext.hMon);
 
-	MonitorInfo miCur = GetNearestMonitor(&rcMain);
+	const MonitorInfo miCur = GetNearestMonitor(&rcMain);
 
 	RECT rcNewMain = rcMain;
 
@@ -4490,19 +4523,46 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	// прыжки и для других окон, например окна настроек
 	if (hJumpWnd == ghWnd)
 	{
-		if (CDpiAware::IsPerMonitorDpi())
-		{
-			DpiValue dpi = CDpiAware::QueryDpiForMonitor(miNext.hMon);
-			OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false, dcs_Jump);
-		}
-
-		// Коррекция (заранее)
-		OnMoving(&rcNewMain);
-
 		m_JumpMonitor.rcNewPos = rcNewMain;
 		m_JumpMonitor.bInJump = true;
 		m_JumpMonitor.bFullScreen = bFullScreen;
 		m_JumpMonitor.bMaximized = bMaximized;
+
+		if (CDpiAware::IsPerMonitorDpi())
+		{
+			const DpiValue dpi = CDpiAware::QueryDpiForMonitor(miNext.hMon);
+			OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &m_JumpMonitor.rcNewPos/*rcNewMain*/, false, dcs_Jump);
+		}
+
+		if (!bFullScreen && !bMaximized)
+		{
+			// Set in our size calculation new expected window position and size (to update dpi, frames, etc.)
+			RequestRect(m_JumpMonitor.rcNewPos);
+			// trigger recalc of our internal structures (frames, etc.)
+			DoCalculate();
+			
+			const RECT rcMainByCon = CalcRect(CER_MAIN, rcConAll, CER_CONSOLE_ALL);
+			m_JumpMonitor.rcNewPos = MakeRect(
+				m_JumpMonitor.rcNewPos.left, m_JumpMonitor.rcNewPos.top,
+				m_JumpMonitor.rcNewPos.left + RectWidth(rcMainByCon),
+				m_JumpMonitor.rcNewPos.top + RectHeight(rcMainByCon));
+		}
+
+		#ifdef _DEBUG
+		const RECT newEvalCon = CalcRect(CER_CONSOLE_ALL, m_JumpMonitor.rcNewPos, CER_MAIN);
+		#endif
+
+		// Коррекция (заранее)
+		OnMoving(&m_JumpMonitor.rcNewPos/*rcNewMain*/);
+
+		rcNewMain = m_JumpMonitor.rcNewPos;
+
+		/*
+		m_JumpMonitor.rcNewPos = rcNewMain;
+		m_JumpMonitor.bInJump = true;
+		m_JumpMonitor.bFullScreen = bFullScreen;
+		m_JumpMonitor.bMaximized = bMaximized;
+		*/
 
 		#ifdef _DEBUG
 		const DWORD nStylesDbg = GetWindowLong(ghWnd, GWL_STYLE);

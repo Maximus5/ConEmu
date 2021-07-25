@@ -102,6 +102,11 @@ bool DpiValue::operator!=(const DpiValue& dpi) const
 	return !Equals(dpi);
 }
 
+bool DpiValue::IsValid() const
+{
+	return Xdpi != 0 && Ydpi != 0;
+}
+
 int DpiValue::GetDpi() const
 {
 	return Ydpi;

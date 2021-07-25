@@ -84,6 +84,7 @@ public:
 	bool Equals(const DpiValue& dpi) const;
 	bool operator==(const DpiValue& dpi) const;
 	bool operator!=(const DpiValue& dpi) const;
+	bool IsValid() const;
 
 	int GetDpi() const;
 
