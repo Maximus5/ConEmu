@@ -2312,24 +2312,29 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 		RECT rc = WinApi::GetWindowRect(ghWnd);
 		WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(ghWnd);
 		mrc_StoredTiledRect = RECT{};
+
+		#ifdef _DEBUG
+		// Just for checking that everything works as expected
+		MonitorInfo miMy{}, miOs{}, miRc{};
+		#endif
+
 		if (!IsRectMinimized(mrc_StoredNormalRect))
 		{
 			const auto miOld = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
 			const auto miNew = GetNearestMonitorInfo(nullptr, &rc, nullptr);
+
 			EvalNewNormalPos(miOld.mi, miNew.hMon, miNew.mi, mrc_StoredNormalRect, mrc_StoredNormalRect);
-		}
-#ifdef _DEBUG
-		// Just for checking that everything works as expected
-		MonitorInfo miMy{}, miOs{}, miRc{};
-		if (!IsRectMinimized(mrc_StoredNormalRect))
-		{
+
+			#ifdef _DEBUG
 			miMy = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
 			miOs = GetNearestMonitorInfo(nullptr, &wpl.rcNormalPosition, nullptr);
 			miRc = GetNearestMonitorInfo(nullptr, &rc, nullptr);
-			_ASSERTE(miMy.hMon == miOs.hMon);  // We expect that OS suggests the same monitor as we stored in NormalRect
-			_ASSERTE(miOs.hMon == miRc.hMon);  // Monitor from GetWindowRect should match with wpl.rcNormalPosition
+			// fails if we move maximized window via internally processed hotkeys
+			//_ASSERTE(miMy.hMon == miOs.hMon);  // We expect that OS suggests the same monitor as we stored in NormalRect
+			//_ASSERTE(miOs.hMon == miRc.hMon);  // Monitor from GetWindowRect should match with wpl.rcNormalPosition
+			#endif
 		}
-#endif
+
 		std::ignore = wpl;
 	}
 }
@@ -2338,10 +2343,10 @@ void CConEmuSize::CascadedPosFix()
 {
 	if (gpSet->wndCascade && (ghWnd == nullptr) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
 	{
-		constexpr float cascadeMultiplier = 1.5;
+		constexpr int cascadeMul = 3, cascadeDiv = 2;
 		const auto captionHeight = GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION);
 		// Shift distance on Cascade
-		const int nShift = static_cast<int>(cascadeMultiplier * captionHeight);
+		const int nShift = (cascadeMul * captionHeight / cascadeDiv);
 		// Preferred window size
 		int nDefWidth = 0, nDefHeight = 0;
 
