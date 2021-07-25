@@ -358,7 +358,7 @@ protected:
 	RECT SetNormalWindowSize();
 	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
 	bool CheckDpiOnMoving(WINDOWPOS *p);
-	void EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, RECT rcOld, RECT& rcNew);
+	void EvalNewNormalPos(const MonitorInfo& miOld, const MonitorInfo& miNew, RECT rcOld, RECT& rcNew);
 	BOOL AnimateWindow(DWORD dwTime, DWORD dwFlags);
 
 	friend class CSettings;

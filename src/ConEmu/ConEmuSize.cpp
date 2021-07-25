@@ -2250,7 +2250,7 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 				{
 					const auto miOld = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
 					const auto miNew = GetNearestMonitorInfo(nullptr, &rcNormal, nullptr);
-					EvalNewNormalPos(miOld.mi, miNew.hMon, miNew.mi, mrc_StoredNormalRect, mrc_StoredNormalRect);
+					EvalNewNormalPos(miOld, miNew, mrc_StoredNormalRect, mrc_StoredNormalRect);
 				}
 			}
 		}
@@ -2324,7 +2324,7 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 			const auto miOld = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
 			const auto miNew = GetNearestMonitorInfo(nullptr, &rc, nullptr);
 
-			EvalNewNormalPos(miOld.mi, miNew.hMon, miNew.mi, mrc_StoredNormalRect, mrc_StoredNormalRect);
+			EvalNewNormalPos(miOld, miNew, mrc_StoredNormalRect, mrc_StoredNormalRect);
 
 			#ifdef _DEBUG
 			miMy = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
@@ -4355,34 +4355,34 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 	return JumpNextMonitor(hJump, nullptr, Next, rcMain);
 }
 
-void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT rcOld, RECT& rcNew)
+void CConEmuSize::EvalNewNormalPos(const MonitorInfo& miOld, const MonitorInfo& miNew, const RECT rcOld, RECT& rcNew)
 {
 	#ifdef _DEBUG
-	RECT rcPrevMon = miOld.rcWork;
-	RECT rcNextMon = miNew.rcWork;
+	RECT rcPrevMon = miOld.mi.rcWork;
+	RECT rcNextMon = miNew.mi.rcWork;
 	#endif
 
 	// Если мониторы различаются по разрешению или рабочей области - коррекция позиционирования
-	int ShiftX = rcOld.left - miOld.rcWork.left;
-	int ShiftY = rcOld.top - miOld.rcWork.top;
+	int shiftX = rcOld.left - miOld.mi.rcWork.left;
+	int shiftY = rcOld.top - miOld.mi.rcWork.top;
 
-	int Width = (rcOld.right - rcOld.left);
-	int Height = (rcOld.bottom - rcOld.top);
+	int width = (rcOld.right - rcOld.left);
+	int height = (rcOld.bottom - rcOld.top);
 
 	// Если ширина или высота были заданы в процентах (от монитора)
 	if ((WndWidth.Style == ss_Percents) || (WndHeight.Style == ss_Percents))
 	{
 		_ASSERTE(!gpSet->isQuakeStyle); // Quake?
 
-		if ((WindowMode == wmNormal) && hNextMon)
+		if ((WindowMode == wmNormal) && miNew.hMon)
 		{
-			SIZE szNewSize = GetDefaultSize(false, &WndWidth, &WndHeight, hNextMon);
+			const SIZE szNewSize = GetDefaultSize(false, &WndWidth, &WndHeight, miNew.hMon);
 			if ((szNewSize.cx > 0) && (szNewSize.cy > 0))
 			{
 				if (WndWidth.Style == ss_Percents)
-					Width = szNewSize.cx;
+					width = szNewSize.cx;
 				if (WndHeight.Style == ss_Percents)
-					Height = szNewSize.cy;
+					height = szNewSize.cy;
 			}
 			else
 			{
@@ -4392,36 +4392,36 @@ void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, 
 	}
 
 
-	if (ShiftX > 0)
+	if (shiftX > 0)
 	{
-		int SpaceX = ((miOld.rcWork.right - miOld.rcWork.left) - Width);
-		int NewSpaceX = ((miNew.rcWork.right - miNew.rcWork.left) - Width);
-		if (SpaceX > 0)
+		const int spaceX = ((miOld.mi.rcWork.right - miOld.mi.rcWork.left) - width);
+		const int newSpaceX = ((miNew.mi.rcWork.right - miNew.mi.rcWork.left) - width);
+		if (spaceX > 0)
 		{
-			if (NewSpaceX <= 0)
-				ShiftX = 0;
+			if (newSpaceX <= 0)
+				shiftX = 0;
 			else
-				ShiftX = ShiftX * NewSpaceX / SpaceX;
+				shiftX = shiftX * newSpaceX / spaceX;
 		}
 	}
 
-	if (ShiftY > 0)
+	if (shiftY > 0)
 	{
-		int SpaceY = ((miOld.rcWork.bottom - miOld.rcWork.top) - Height);
-		int NewSpaceY = ((miNew.rcWork.bottom - miNew.rcWork.top) - Height);
-		if (SpaceY > 0)
+		const int spaceY = ((miOld.mi.rcWork.bottom - miOld.mi.rcWork.top) - height);
+		const int newSpaceY = ((miNew.mi.rcWork.bottom - miNew.mi.rcWork.top) - height);
+		if (spaceY > 0)
 		{
-			if (NewSpaceY <= 0)
-				ShiftY = 0;
+			if (newSpaceY <= 0)
+				shiftY = 0;
 			else
-				ShiftY = ShiftY * NewSpaceY / SpaceY;
+				shiftY = shiftY * newSpaceY / spaceY;
 		}
 	}
 
-	rcNew.left = miNew.rcWork.left + ShiftX;
-	rcNew.top = miNew.rcWork.top + ShiftY;
-	rcNew.right = rcNew.left + Width;
-	rcNew.bottom = rcNew.top + Height;
+	rcNew.left = miNew.mi.rcWork.left + shiftX;
+	rcNew.top = miNew.mi.rcWork.top + shiftY;
+	rcNew.right = rcNew.left + width;
+	rcNew.bottom = rcNew.top + height;
 }
 
 bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos /*= nullptr*/)
@@ -4482,7 +4482,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		_ASSERTE(WindowMode==wmNormal || hJumpWnd!=ghWnd);
 
-		EvalNewNormalPos(miCur.mi, miNext.hMon, miNext.mi, rcMain, rcNewMain);
+		EvalNewNormalPos(miCur, miNext, rcMain, rcNewMain);
 	}
 
 
@@ -5421,10 +5421,10 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 			// и новый режим "прилепленный" к краю экрана,
 			// то не будет обновлен желаемый размер wmNormal консоли
 			// 150816 - Called from JumpNextMonitor, EvalTileMode raises an assertion (IsWindowModeChanged)
-			ConEmuWindowCommand Tile = (m_JumpMonitor.bInJump || IsRectEmpty(&rc))
+			const ConEmuWindowCommand tile = (m_JumpMonitor.bInJump || IsRectEmpty(&rc))
 				? m_TileMode
 				: EvalTileMode(rc);
-			if (Tile != cwc_Current)
+			if (tile != cwc_Current)
 			{
 				RECT rcOld = IsRectMinimized(mrc_StoredNormalRect) ? GetDefaultRect() : mrc_StoredNormalRect;
 				RECT rcNew = {}, rcNewFix = {};
@@ -5432,13 +5432,12 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 					rcNew = rc;
 				else
 					GetWindowRect(ghWnd, &rcNew);
-				MONITORINFO miOld = {}, miNew = {};
-				HMONITOR hOld = GetNearestMonitorInfo(&miOld, nullptr, &rcOld);
-				HMONITOR hNew = GetNearestMonitorInfo(&miNew, nullptr, &rcNew);
-				if (hOld && hNew && (hOld != hNew))
+				const MonitorInfo miOld = GetNearestMonitorInfo(nullptr, &rcOld);
+				const MonitorInfo miNew = GetNearestMonitorInfo(nullptr, &rcNew);
+				if (miOld.hMon && miNew.hMon && (miOld.hMon != miNew.hMon))
 				{
 					// Сменился монитор, нужно обновить NormalRect
-					EvalNewNormalPos(miOld, hNew, miNew, rcOld, rcNewFix);
+					EvalNewNormalPos(miOld, miNew, rcOld, rcNewFix);
 					// И сохранить
 					StoreNormalRect(&rcNewFix);
 				}
