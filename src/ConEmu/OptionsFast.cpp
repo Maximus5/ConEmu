@@ -2285,6 +2285,12 @@ static void CreateVisualStudioTasks()
 		? L"%ProgramFiles(x86)%\\Microsoft Visual Studio" : L"%ProgramFiles%\\Microsoft Visual Studio"));
 	EnumFiles(programFiles, L"*", EnumVisualStudioVersions, static_cast<void*>(App), 1);
 
+	if (IsWindows64())
+	{
+		const CEStr programFiles64(ExpandEnvStr(L"%ProgramW6432%\\Microsoft Visual Studio"));
+		EnumFiles(programFiles64, L"*", EnumVisualStudioVersions, static_cast<void*>(App), 1);
+	}
+
 	App[0].Commit();
 	App[1].Commit();
 
