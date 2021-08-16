@@ -1039,7 +1039,7 @@ void CSettings::SearchForControls()
 				{
 					if (lstrcmpi(szClass, L"ListBox") == 0)
 					{
-						lFind = SendMessage(hCtrl, LB_FINDSTRING, lLastListFind, (LPARAM)pszPart);
+						lFind = SendMessage(hCtrl, LB_FINDSTRING, lLastListFind, reinterpret_cast<LPARAM>(pszPart.c_str()));
 						// LB_FINDSTRING search from begin of string, but may be "In string"?
 						if (lFind < 0)
 						{
