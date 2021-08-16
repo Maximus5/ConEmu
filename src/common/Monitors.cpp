@@ -132,7 +132,7 @@ HMONITOR MonitorFromParam(LPCWSTR asMonitor)
 		Impl.nIndex = wcstoul(asMonitor, &pszEnd, 10);
 	else
 		Impl.pszName = asMonitor;
-	EnumDisplayMonitors(nullptr, nullptr, impl::FindMonitor, (LPARAM)&Impl);
+	EnumDisplayMonitors(nullptr, nullptr, impl::FindMonitor, reinterpret_cast<LPARAM>(&Impl));
 
 	// Return what found or not
 	return Impl.hMon;
@@ -162,7 +162,7 @@ RECT GetAllMonitorsWorkspace()
 {
 	RECT rcAllMonRect = {};
 
-	if (!EnumDisplayMonitors(nullptr, nullptr, FindMonitorsWorkspace, (LPARAM)&rcAllMonRect) || IsRectEmpty(&rcAllMonRect))
+	if (!EnumDisplayMonitors(nullptr, nullptr, FindMonitorsWorkspace, reinterpret_cast<LPARAM>(&rcAllMonRect)) || IsRectEmpty(&rcAllMonRect))
 	{
 		#ifdef _DEBUG
 		DWORD nErr = GetLastError();

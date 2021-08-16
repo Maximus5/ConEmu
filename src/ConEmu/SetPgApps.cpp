@@ -114,7 +114,7 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 	if (abInitial)
 	{
 		int nTab[2] = {4*4, 7*4}; // represent the number of quarters of the average character width for the font
-		SendDlgItemMessage(hDlg, lbAppDistinct, LB_SETTABSTOPS, countof(nTab), (LPARAM)nTab);
+		SendDlgItemMessage(hDlg, lbAppDistinct, LB_SETTABSTOPS, countof(nTab), reinterpret_cast<LPARAM>(nTab));
 
 		LONG_PTR nStyles = GetWindowLongPtr(GetDlgItem(hDlg, lbAppDistinct), GWL_STYLE);
 		if (!(nStyles & LBS_NOTIFY))
@@ -130,7 +130,7 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 		const ColorPalette* pPal;
 		for (int i = 0; (pPal = gpSet->PaletteGet(i)) != nullptr; i++)
 		{
-			SendDlgItemMessage(mh_Child, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+			SendDlgItemMessage(mh_Child, lbColorsOverride, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pPal->pszName));
 			if ((!iCurPalette) && (lstrcmp(pPal->pszName, gsDefaultColorScheme) == 0))
 				iCurPalette = i;
 		}
@@ -170,7 +170,7 @@ INT_PTR CSetPgApps::SetListAppName(const AppSettings* pApp, int nAppIndex/*1-bas
 	if (pApp->AppNames)
 		lstrcpyn(szItem+nPrefix, pApp->AppNames, countof(szItem)-nPrefix);
 
-	iIndex = SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_INSERTSTRING, iBefore, (LPARAM)szItem);
+	iIndex = SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_INSERTSTRING, iBefore, reinterpret_cast<LPARAM>(szItem));
 	if ((iBefore >= 0) && (iIndex >= 0))
 	{
 		_ASSERTE(iIndex == iBefore);
@@ -752,7 +752,7 @@ void CSetPgApps::DoFillControls(const AppSettings* pApp)
 
 	checkDlgButton(mh_Child, cbColorsOverride, pApp->OverridePalette);
 	// Don't add unknown palettes in the list!
-	int nIdx = SendDlgItemMessage(mh_Child, lbColorsOverride, CB_FINDSTRINGEXACT, -1, (LPARAM)pApp->szPaletteName);
+	int nIdx = SendDlgItemMessage(mh_Child, lbColorsOverride, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(pApp->szPaletteName));
 	SendDlgItemMessage(mh_Child, lbColorsOverride, CB_SETCURSEL, std::max(nIdx, 0), 0);
 
 	checkDlgButton(mh_Child, cbClipboardOverride, pApp->OverrideClipboard);
@@ -916,7 +916,7 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					wchar_t* pszText = (nLen > 0) ? (wchar_t*)calloc((nLen+1),sizeof(wchar_t)) : nullptr;
 					if (pszText)
 					{
-						SendMessage(hList, CB_GETLBTEXT, nIdx, (LPARAM)pszText);
+						SendMessage(hList, CB_GETLBTEXT, nIdx, reinterpret_cast<LPARAM>(pszText));
 						int iPal = (nIdx == 0) ? -1 : gpSet->PaletteGetIndex(pszText);
 						if ((nIdx == 0) || (iPal >= 0))
 						{

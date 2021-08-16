@@ -90,9 +90,9 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 		int nPrefix = lstrlen(szItem);
 		lstrcpyn(szItem+nPrefix, pGrp->pszName, countof(szItem)-nPrefix);
 
-		INT_PTR iIndex = SendDlgItemMessage(hDlg, lbCmdTasks, LB_ADDSTRING, 0, (LPARAM)szItem);
+		INT_PTR iIndex = SendDlgItemMessage(hDlg, lbCmdTasks, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szItem));
 		UNREFERENCED_PARAMETER(iIndex);
-		//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)pGrp);
+		//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, reinterpret_cast<LPARAM>(pGrp));
 
 		nGroup++;
 	}

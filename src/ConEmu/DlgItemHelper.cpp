@@ -204,7 +204,7 @@ INT_PTR CDlgItemHelper::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr,
 		if (abListBox)
 		{
 			if (nSel >= 0)
-				SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)pszNew);
+				SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, nSel, reinterpret_cast<LPARAM>(pszNew));
 		}
 		else
 		{

@@ -130,7 +130,7 @@ INT_PTR CSetPgTabs::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			switch (nCtrlId)
 			{
 			case tTabFontFace:
-				SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sTabFontFace);
+				SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, reinterpret_cast<LPARAM>(gpSet->sTabFontFace));
 				break;
 			case tTabFontHeight:
 				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))

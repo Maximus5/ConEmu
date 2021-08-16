@@ -2394,7 +2394,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 			}
 		} fill = { &m_GuiInfo, 0};
 
-		CVConGroup::EnumVCon(evf_All, FillConsoles::Fill, (LPARAM)&fill);
+		CVConGroup::EnumVCon(evf_All, FillConsoles::Fill, reinterpret_cast<LPARAM>(&fill));
 
 		if (fill.nCount < countof(m_GuiInfo.Consoles))
 			memset(m_GuiInfo.Consoles + fill.nCount, 0, sizeof(m_GuiInfo.Consoles[0])*(countof(m_GuiInfo.Consoles) - fill.nCount));
@@ -2988,7 +2988,7 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				return true; // continue;
 			};
 		};
-		CVConGroup::EnumVCon(evf_All, impl::DoLockUnlock, (LPARAM)nSessionCode);
+		CVConGroup::EnumVCon(evf_All, impl::DoLockUnlock, static_cast<LPARAM>(nSessionCode));
 
 		// Refresh child windows
 		OnSize();
@@ -3043,12 +3043,12 @@ BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 		{
 			// We can lock, if Activate VCon is called from ChildGui.
 			// That's why - PostMessage instead of SendMessage
-			PostMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+			PostMessage(ghWnd, mn_MsgActivateVCon, 0, reinterpret_cast<LPARAM>(apVCon));
 			lRc = 0;
 		}
 		else
 		{
-			lRc = SendMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+			lRc = SendMessage(ghWnd, mn_MsgActivateVCon, 0, reinterpret_cast<LPARAM>(apVCon));
 		}
 		lbRc = (lRc == (LRESULT)apVCon);
 	}
@@ -3245,7 +3245,7 @@ void CConEmuMain::PostCreateCon(const RConStartArgsEx& args)
 	Impl->pArgs = pArgs;
 
 	// Execute asynchronously
-	CallMainThread(false, impl::CreateConMainThread, (LPARAM)Impl);
+	CallMainThread(false, impl::CreateConMainThread, reinterpret_cast<LPARAM>(Impl));
 }
 
 LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgsEx* pArgs)
@@ -3495,7 +3495,7 @@ wrap:
 
 void CConEmuMain::CreateGhostVCon(CVirtualConsole* apVCon)
 {
-	PostMessage(ghWnd, mn_MsgInitVConGhost, 0, (LPARAM)apVCon);
+	PostMessage(ghWnd, mn_MsgInitVConGhost, 0, reinterpret_cast<LPARAM>(apVCon));
 }
 
 void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
@@ -3606,7 +3606,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 	if (abTrySync)
 	{
 		DWORD_PTR dwResult = 0;
-		LRESULT lRc = SendMessageTimeout(ahWnd, WM_SETTEXT, 0, (LPARAM)asTitle, SMTO_ABORTIFHUNG, 500, &dwResult);
+		LRESULT lRc = SendMessageTimeout(ahWnd, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(asTitle), SMTO_ABORTIFHUNG, 500, &dwResult);
 		if (lRc != 0)
 		{
 			return; // OK
@@ -3643,7 +3643,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 		};
 	};
 
-	CallMainThread(false, impl::setTitle, (LPARAM)new impl(ahWnd, asTitle, this));
+	CallMainThread(false, impl::setTitle, reinterpret_cast<LPARAM>(new impl(ahWnd, asTitle, this)));
 }
 
 bool CConEmuMain::ExecuteProcessPrepare()
@@ -3710,14 +3710,14 @@ void CConEmuMain::SetTaskbarIcon(HICON ahNewIcon)
 		// Have to "force refresh" the icon on TaskBar, otherwise
 		// icon would not be updated on sequential clicks on cbTaskbarOverlay
 		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, 0);
-		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 	}
 
 	#endif
 
 	// This would change window icon (TaskBar, TitleBar, Alt+Tab)
 	#if 0
-	HICON hOldIcon = (HICON)SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)ahNewIcon);
+	HICON hOldIcon = (HICON)SendMessage(ghWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(ahNewIcon));
 	if (hOldIcon && (hOldIcon != hClassIconSm))
 		DestroyIcon(hOldIcon);
 	if (mh_TaskbarIcon && (mh_TaskbarIcon != hClassIconSm) && (mh_TaskbarIcon != hOldIcon))
@@ -3908,7 +3908,7 @@ void CConEmuMain::PostDragCopy(bool abMove, bool abReceived/*=FALSE*/)
 {
 	if (!abReceived)
 	{
-		PostMessage(ghWnd, mn_MsgPostCopy, 0, (LPARAM)abMove);
+		PostMessage(ghWnd, mn_MsgPostCopy, 0, static_cast<LPARAM>(abMove));
 	}
 	else
 	{
@@ -3949,7 +3949,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 void CConEmuMain::PostFontSetSize(int nRelative/*0/1/2*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,..., для ==2 - zoom в процентах*/)
 {
 	// It will call `gpSetCls->MacroFontSetSize((int)wParam, (int)lParam)` in the main thread
-	PostMessage(ghWnd, mn_MsgFontSetSize, (WPARAM)nRelative, (LPARAM)nValue);
+	PostMessage(ghWnd, mn_MsgFontSetSize, (WPARAM)nRelative, static_cast<LPARAM>(nValue));
 }
 
 void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted)
@@ -3958,7 +3958,7 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 	{
 		wchar_t* pszDup = lstrdup(pszFontName).Detach();
 		WPARAM wParam = (((DWORD)anHeight) << 16) | (anWidth);
-		PostMessage(ghWnd, mn_MsgMacroFontSetName, wParam, (LPARAM)pszDup);
+		PostMessage(ghWnd, mn_MsgMacroFontSetName, wParam, reinterpret_cast<LPARAM>(pszDup));
 	}
 	else
 	{
@@ -3973,7 +3973,7 @@ void CConEmuMain::PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown,
 	if (!abPosted)
 	{
 		// Synchronous!
-		SendMessage(ghWnd, mn_MsgReqChangeCurPalette, (WPARAM)bChangeDropDown, (LPARAM)pszPalette);
+		SendMessage(ghWnd, mn_MsgReqChangeCurPalette, (WPARAM)bChangeDropDown, reinterpret_cast<LPARAM>(pszPalette));
 	}
 	else
 	{
@@ -3992,7 +3992,7 @@ LRESULT CConEmuMain::SyncExecMacro(WPARAM wParam, LPARAM lParam)
 void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 {
 	//CVConGuard VCon(apRCon->VCon());
-	//SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
+	//SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, reinterpret_cast<LPARAM>(pszErrMsg));
 
 	if (RELEASEDEBUGTEST(mb_FindBugMode,true))
 	{
@@ -4000,7 +4000,7 @@ void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 		RaiseTestException();
 	}
 
-	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
+	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, reinterpret_cast<LPARAM>(pszErrMsg));
 }
 
 GlobalHotkeys& CConEmuMain::GetGlobalHotkeys() const
@@ -4023,7 +4023,7 @@ void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
 {
 	// We can't use SendMessage because of server thread blocking
 	DEBUGTEST(LRESULT lRc =)
-		PostMessage(ghWnd, mn_MsgDeleteVConMainThread, 0, (LPARAM)apVCon);
+		PostMessage(ghWnd, mn_MsgDeleteVConMainThread, 0, reinterpret_cast<LPARAM>(apVCon));
 	//if (!lRc)
 	//{
 	//	if (CVConGroup::isValid(apVCon))
@@ -4694,7 +4694,7 @@ void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 	{
 		ConsoleInfoArg* pDup = (ConsoleInfoArg*)malloc(sizeof(*pDup));
 		*pDup = *pInfo;
-		PostMessage(ghWnd, mn_MsgUpdateCursorInfo, 0, (LPARAM)pDup);
+		PostMessage(ghWnd, mn_MsgUpdateCursorInfo, 0, reinterpret_cast<LPARAM>(pDup));
 		return;
 	}
 
@@ -5054,7 +5054,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 
 void CConEmuMain::InitInactiveDC(CVirtualConsole* apVCon)
 {
-	PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, (LPARAM)apVCon);
+	PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, reinterpret_cast<LPARAM>(apVCon));
 }
 
 void CConEmuMain::Invalidate(LPRECT lpRect, BOOL bErase /*= TRUE*/)
@@ -5942,8 +5942,8 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 		}
 
 		// Теперь переключаем раскладку
-		PostMessage(ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeybLayout);
-		PostMessage(ghWnd, WM_INPUTLANGCHANGE, 0, (LPARAM)dwNewKeybLayout);
+		PostMessage(ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, static_cast<LPARAM>(dwNewKeybLayout));
+		PostMessage(ghWnd, WM_INPUTLANGCHANGE, 0, static_cast<LPARAM>(dwNewKeybLayout));
 	}
 	else
 	{
@@ -6913,7 +6913,7 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 	}
 	else
 	{
-		hChild = (HWND)SendMessage(ghWnd, mn_MsgCreateViewWindow, 0, (LPARAM)pChild);
+		hChild = (HWND)SendMessage(ghWnd, mn_MsgCreateViewWindow, 0, reinterpret_cast<LPARAM>(pChild));
 	}
 	return hChild;
 }
@@ -6989,7 +6989,7 @@ void CConEmuMain::DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro
 			| (bFromMacro ? 0x00400000 : 0);
 	}
 
-	PostMessage(ghWnd, mn_MsgFlashWindow, wParam, (LPARAM)pFlash->hWnd.u);
+	PostMessage(ghWnd, mn_MsgFlashWindow, wParam, static_cast<LPARAM>(pFlash->hWnd.u));
 }
 
 void CConEmuMain::setFocus()
@@ -9259,7 +9259,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 			LogString(szInfo);
 		}
 
-		PostMessage(ghWnd, mn_ConsoleLangChanged, dwLayoutName, (LPARAM)apVCon);
+		PostMessage(ghWnd, mn_ConsoleLangChanged, dwLayoutName, reinterpret_cast<LPARAM>(apVCon));
 		return 0;
 	}
 	else

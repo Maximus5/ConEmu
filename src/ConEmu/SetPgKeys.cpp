@@ -266,7 +266,7 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 			if (nItem == -1)
 			{
 				lvi.iItem = ItemsCount + 1; // to the end
-				lvi.lParam = (LPARAM)ppHK;
+				lvi.lParam = reinterpret_cast<LPARAM>(ppHK);
 				nItem = ListView_InsertItem(hList, &lvi);
 				//_ASSERTE(nItem==ItemsCount && nItem>=0);
 				ItemsCount++;

@@ -62,10 +62,10 @@ LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 			{
 				BOOL bMono = iter->pCustom->GetFont(0,0,0,0)->IsMonospace();
 
-				int nIdx = SendDlgItemMessage(hDlg, tFontFace, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
+				int nIdx = SendDlgItemMessage(hDlg, tFontFace, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(iter->szFontName));
 				SendDlgItemMessage(hDlg, tFontFace, CB_SETITEMDATA, nIdx, bMono ? 1 : 0);
 
-				nIdx = SendDlgItemMessage(hDlg, tFontFace2, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
+				nIdx = SendDlgItemMessage(hDlg, tFontFace2, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(iter->szFontName));
 				SendDlgItemMessage(hDlg, tFontFace2, CB_SETITEMDATA, nIdx, bMono ? 1 : 0);
 			}
 		}
@@ -133,7 +133,7 @@ LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 			LPCWSTR pszRange = wcsstr(cszFontRanges[i], L": ");
 			if (!pszRange) { _ASSERTE(pszRange); continue; }
 
-			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)cszFontRanges[i]);
+			SendMessageW(hCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(cszFontRanges[i]));
 
 			if (!bExist && (lstrcmpi(pszRange+2, pszCurrentRange) == 0))
 			{
@@ -142,7 +142,7 @@ LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 			}
 		}
 		if (pszCurrentRange && *pszCurrentRange && !bExist)
-			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszCurrentRange);
+			SendMessageW(hCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pszCurrentRange));
 		// And show current value
 		SetWindowText(hCombo, pszCurrentRange ? pszCurrentRange : L"");
 	}
@@ -186,7 +186,7 @@ void CSetPgFonts::CopyFontsTo(HWND hDlgTo, int nList1, ...)
 	for (i = 0; i < nCount; i++)
 	{
 		// Взять список шрифтов с главной страницы
-		if (SendDlgItemMessage(hMainPg, tFontFace, CB_GETLBTEXT, i, (LPARAM) szFontName) > 0)
+		if (SendDlgItemMessage(hMainPg, tFontFace, CB_GETLBTEXT, i, reinterpret_cast<LPARAM>(szFontName)) > 0)
 		{
 			// Показывать [Raster Fonts WxH] смысла нет
 			if (szFontName[0] == L'[' && !wcsncmp(szFontName+1, CFontMgr::RASTER_FONTS_NAME, _tcslen(CFontMgr::RASTER_FONTS_NAME)))
@@ -201,7 +201,7 @@ void CSetPgFonts::CopyFontsTo(HWND hDlgTo, int nList1, ...)
 			// Теперь создаем новые строки
 			for (int j = 0; j < nCtrls; j++)
 			{
-				nIdx = SendDlgItemMessage(hDlgTo, nCtrlIds[j], CB_ADDSTRING, 0, (LPARAM) szFontName);
+				nIdx = SendDlgItemMessage(hDlgTo, nCtrlIds[j], CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szFontName));
 				SendDlgItemMessage(hDlgTo, nCtrlIds[j], CB_SETITEMDATA, nIdx, bAlmostMonospace);
 			}
 		}

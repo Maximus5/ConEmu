@@ -654,7 +654,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		//		if (newV != gpSet->nTransparentInactive)
 		//		{
 		//			gpSet->nTransparentInactive = newV;
-		//			SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM)gpSet->nTransparentInactive);
+		//			SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM) true, reinterpret_cast<LPARAM>(gpSet)->nTransparentInactive);
 		//			//gpConEmu->OnTransparent(); -- смысла нет, ConEmu сейчас "активен"
 		//		}
 		//	} break;
@@ -1470,7 +1470,7 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 		else
 		{
-			//SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
+			//SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(pszName));
 			CEStr pszFull = GetDlgItemTextPtr(hDlg, tCmdGroupCommands);
 			if (pszFull.IsEmpty())
 			{
@@ -1548,7 +1548,7 @@ void CSetDlgButtons::OnBtn_CmdTasksParm(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 		//wcscat_c(temp, L"\r\n\r\n");
 
-		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
+		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(pszName));
 	}
 } // cbCmdTasksParm
 
@@ -1568,7 +1568,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDir(HWND hDlg, WORD CB, BYTE uCheck)
 	bi.lpszTitle = lstrcpyn(szTitle, L"Choose tab startup directory", countof(szTitle));
 	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
 	bi.lpfn = CRecreateDlg::BrowseCallbackProc;
-	bi.lParam = (LPARAM)szFolder;
+	bi.lParam = reinterpret_cast<LPARAM>(szFolder);
 	LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
 
 	if (pRc)
@@ -1578,7 +1578,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDir(HWND hDlg, WORD CB, BYTE uCheck)
 			bool bQuot = IsQuotationNeeded(szFolder);
 			CEStr lsFull(L" -new_console:d:", bQuot ? L"\"" : nullptr, szFolder, bQuot ? L"\" " : L" ");
 
-			SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)lsFull.ms_Val);
+			SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(lsFull.c_str()));
 		}
 
 		CoTaskMemFree(pRc);
@@ -3845,9 +3845,9 @@ void CSetDlgButtons::OnBtn_Transparent(HWND hDlg, WORD CB, BYTE uCheck)
 
 		if (hDlg)
 		{
-			SendDlgItemMessage(hDlg, slTransparent, TBM_SETPOS, (WPARAM) true, (LPARAM)gpSet->nTransparent);
+			SendDlgItemMessage(hDlg, slTransparent, TBM_SETPOS, (WPARAM) true, static_cast<LPARAM>(gpSet->nTransparent));
 			if (!gpSet->isTransparentSeparate)
-				SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->nTransparent);
+				SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM) true, static_cast<LPARAM>(gpSet->nTransparent));
 		}
 
 		gpConEmu->OnTransparent();

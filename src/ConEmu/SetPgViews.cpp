@@ -166,14 +166,14 @@ INT_PTR CSetPgViews::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					InvalidateCtrl(GetDlgItem(hDlg, c34), TRUE);
 					break;
 				case tThumbsFontName:
-					SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Thumbs.sFontName);
+					SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, reinterpret_cast<LPARAM>(gpSet->ThSet.Thumbs.sFontName));
 					break;
 				case tThumbsFontSize:
 					if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))
 						gpSet->ThSet.Thumbs.nFontHeight = val;
 					break;
 				case tTilesFontName:
-					SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Tiles.sFontName);
+					SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, reinterpret_cast<LPARAM>(gpSet->ThSet.Tiles.sFontName));
 					break;
 				case tTilesFontSize:
 					if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))

@@ -105,7 +105,7 @@ bool CRealServer::Start()
 	mp_RConServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
 	// ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
-	if (!mp_RConServer->StartPipeServer(false, mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
+	if (!mp_RConServer->StartPipeServer(false, mp_RCon->ms_VConServer_Pipe, reinterpret_cast<LPARAM>(this), LocalSecurity(),
 			ServerCommand, ServerCommandFree, nullptr, nullptr, ServerThreadReady))
 	{
 		MBoxAssert("mp_RConServer->StartPipeServer"==0);
@@ -1216,7 +1216,7 @@ CESERVER_REQ* CRealServer::cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, U
 			if (pCopy)
 			{
 				memmove(pCopy, &pIn->PeekReadInfo, nDataSize);
-				PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+				PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, reinterpret_cast<LPARAM>(pCopy));
 			}
 		}
 	}

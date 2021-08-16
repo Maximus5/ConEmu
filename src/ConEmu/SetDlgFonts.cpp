@@ -73,15 +73,16 @@ int CSetDlgFonts::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 		aiFontCount[1]++;
 	}
 
-	DWORD bAlmostMonospace = CFontMgr::IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
+	const DWORD bAlmostMonospace = CFontMgr::IsAlmostMonospace(lplf->lfFaceName,
+		reinterpret_cast<LPTEXTMETRIC>(lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hFontsPg = gpSetCls->GetPage(thi_Fonts);
-	if (SendDlgItemMessage(hFontsPg, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1)
+	if (SendDlgItemMessage(hFontsPg, tFontFace, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(lplf->lfFaceName))==-1)
 	{
-		int nIdx;
-		nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		int nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(lplf->lfFaceName));
 		SendDlgItemMessage(hFontsPg, tFontFace, CB_SETITEMDATA, nIdx, bAlmostMonospace);
-		nIdx = SendDlgItemMessage(hFontsPg, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		nIdx = SendDlgItemMessage(hFontsPg, tFontFace2, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(lplf->lfFaceName));
 		SendDlgItemMessage(hFontsPg, tFontFace2, CB_SETITEMDATA, nIdx, bAlmostMonospace);
 	}
 
@@ -131,7 +132,7 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 	int aFontCount[] = { 0, 0, 0 };
 	wchar_t szName[MAX_PATH];
 	// Сначала загрузить имена шрифтов, установленных в систему (или зарегистрированных нами)
-	EnumFontFamilies(hdc, (LPCTSTR) nullptr, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
+	EnumFontFamilies(hdc, (LPCTSTR) nullptr, (FONTENUMPROC) EnumFamCallBack, reinterpret_cast<LPARAM>(aFontCount));
 	// Теперь - загрузить размеры установленных терминальных шрифтов (aka Raster fonts)
 	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; wcscpy_c(term.lfFaceName, L"Terminal");
 	//CFontMgr::szRasterSizes[0].cx = CFontMgr::szRasterSizes[0].cy = 0;
@@ -168,7 +169,7 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 		for (size_t sz=0; sz<countof(CFontMgr::szRasterSizes) && CFontMgr::szRasterSizes[sz].cy; sz++)
 		{
 			swprintf_c(szName, L"[%s %ix%i]", CFontMgr::RASTER_FONTS_NAME, CFontMgr::szRasterSizes[sz].cx, CFontMgr::szRasterSizes[sz].cy);
-			int nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
+			int nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_INSERTSTRING, sz, reinterpret_cast<LPARAM>(szName));
 			SendDlgItemMessage(hFontsPg, tFontFace, CB_SETITEMDATA, nIdx, 1);
 		}
 

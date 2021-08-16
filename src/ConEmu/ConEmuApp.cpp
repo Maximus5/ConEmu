@@ -440,7 +440,7 @@ CEStr SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= nullptr*/, HWND hPar
 	bi.lpszTitle = lstrcpyn(szTitle, asTitle ? asTitle : L"Choose folder", countof(szTitle));
 	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
 	bi.lpfn = CRecreateDlg::BrowseCallbackProc;
-	bi.lParam = (LPARAM)szFolder;
+	bi.lParam = reinterpret_cast<LPARAM>(szFolder);
 	LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
 
 	if (pRc)
@@ -806,8 +806,8 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 				// Reset immediately, to avoid stack overflow
 				ghDlgPendingFrom = nullptr;
 				// And patch the icon
-				SendMessage(hFore, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-				SendMessage(hFore, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+				SendMessage(hFore, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+				SendMessage(hFore, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 			}
 		}
 	}

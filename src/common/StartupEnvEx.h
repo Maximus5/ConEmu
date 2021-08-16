@@ -226,7 +226,7 @@ public:
 			wchar_t* psz = (wchar_t*)ptrEnd;
 
 			pEnv->nMonitorsCount = 0;
-			EnumDisplayMonitors(NULL, NULL, LoadStartupEnv_FillMonitors, (LPARAM)pEnv);
+			EnumDisplayMonitors(NULL, NULL, LoadStartupEnv_FillMonitors, reinterpret_cast<LPARAM>(pEnv));
 
 			HDC hDC = CreateCompatibleDC(NULL);
 			pEnv->nBPP = GetDeviceCaps(hDC, BITSPIXEL);

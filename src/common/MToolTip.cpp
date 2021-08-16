@@ -114,9 +114,9 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 			pti->uId = (UINT_PTR)ahControl;
 			GetClientRect(ahControl, &(pti->rect));
 			// Associate the ToolTip with the tool window.
-			SendMessage(mh_Ball, TTM_ADDTOOL, 0, (LPARAM)pti);
+			SendMessage(mh_Ball, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(pti));
 			// Allow multiline
-			SendMessage(mh_Ball, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+			SendMessage(mh_Ball, TTM_SETMAXTIPWIDTH, 0, static_cast<LPARAM>(300));
 		}
 	}
 	else
@@ -145,12 +145,12 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 
 	pti->lpszText = mpsz_LastTip;
 
-	SendMessage(hTip, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
+	SendMessage(hTip, TTM_UPDATETIPTEXT, 0, reinterpret_cast<LPARAM>(pti));
 	//RECT rcControl; GetWindowRect(GetDlgItem(hDlg, nCtrlID), &rcControl);
 	//int ptx = rcControl.right - 10;
 	//int pty = (rcControl.top + rcControl.bottom) / 2;
 	SendMessage(hTip, TTM_TRACKPOSITION, 0, MAKELONG(pt.x,pt.y));
-	SendMessage(hTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
+	SendMessage(hTip, TTM_TRACKACTIVATE, TRUE, reinterpret_cast<LPARAM>(pti));
 
 	//SetTimer(hDlg, FAILED_FONT_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);
 }
@@ -160,5 +160,5 @@ void CToolTip::HideTip()
 	TOOLINFO *pti = (mb_LastTipBalloon == 0) ? (&mti_Tip) : (&mti_Ball);
 
 	if (hTip)
-		SendMessage(hTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)pti);
+		SendMessage(hTip, TTM_TRACKACTIVATE, FALSE, reinterpret_cast<LPARAM>(pti));
 }

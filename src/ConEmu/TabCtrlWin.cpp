@@ -47,11 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FindPanel.h"
 #include "VirtualConsole.h"
 #include "ToolImg.h"
-#include "TrayIcon.h"
-#include "VConChild.h"
 #include "VConGroup.h"
-#include "Status.h"
-#include "Menu.h"
 #include "../common/WUser.h"
 
 //WNDPROC CTabPanelWin::_defaultTabProc = nullptr;
@@ -425,7 +421,7 @@ void CTabPanelWin::CreateRebar()
 
 	COLORREF clrBack = GetSysColor(COLOR_BTNFACE);
 	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, clrBack);
-	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, (LPARAM)L" ");
+	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, reinterpret_cast<LPARAM>(L" "));
 
 	// Пока табы есть всегда
 	ShowTabsPane(true);
@@ -486,7 +482,7 @@ HWND CTabPanelWin::CreateTabbar()
 	SetObj(mh_Tabbar, this, defaultProc);
 
 	// It may be nullptr
-	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mp_Owner->GetTabIcons(nHeightExpected));
+	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(mp_Owner->GetTabIcons(nHeightExpected)));
 
 	if (!mh_TabTip || !IsWindow(mh_TabTip))
 		InitTooltips(mh_Tabbar);
@@ -761,7 +757,7 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 		return false;
 	}
 
-	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, (LPARAM)rcBtnRect);
+	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, reinterpret_cast<LPARAM>(rcBtnRect));
 	MapWindowPoints(mh_Toolbar, nullptr, (LPPOINT)rcBtnRect, 2);
 
 	return true;

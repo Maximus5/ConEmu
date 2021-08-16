@@ -51,6 +51,6 @@ void MFileLogEx::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool
 
 void MFileLogEx::LogStartEnv(CEStartupEnv* apStartEnv)
 {
-	LoadStartupEnvEx::ToString(apStartEnv, LogStartEnvInt, (LPARAM)this);
+	LoadStartupEnvEx::ToString(apStartEnv, LogStartEnvInt, reinterpret_cast<LPARAM>(this));
 	LogString(L"MFileLog::LogStartEnv finished", true);
 }

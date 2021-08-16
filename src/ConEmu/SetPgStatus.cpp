@@ -114,13 +114,13 @@ void CSetPgStatus::UpdateStatusItems(HWND hDlg)
 
 		if (gpSet->isStatusColumnHidden[nID])
 		{
-			iMaxAvail = SendMessage(hAvail, LB_ADDSTRING, 0, (LPARAM)pColumns[i].sName);
+			iMaxAvail = SendMessage(hAvail, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pColumns[i].sName));
 			if (iMaxAvail >= 0)
 				SendMessage(hAvail, LB_SETITEMDATA, iMaxAvail, nID);
 		}
 		else
 		{
-			iMaxSeltd = SendMessage(hSeltd, LB_ADDSTRING, 0, (LPARAM)pColumns[i].sName);
+			iMaxSeltd = SendMessage(hSeltd, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pColumns[i].sName));
 			if (iMaxSeltd >= 0)
 				SendMessage(hSeltd, LB_SETITEMDATA, iMaxSeltd, nID);
 		}
@@ -158,7 +158,7 @@ INT_PTR CSetPgStatus::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			switch (nCtrlId)
 			{
 			case tStatusFontFace:
-				SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sStatusFontFace);
+				SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, reinterpret_cast<LPARAM>(gpSet->sStatusFontFace));
 				break;
 			case tStatusFontHeight:
 				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))

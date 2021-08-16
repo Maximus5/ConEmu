@@ -112,7 +112,7 @@ void CAttachDlg::AttachDlg()
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	// (CreateDialog)
 	SafeFree(mp_Dlg);
-	mp_Dlg = CDynDialog::ShowDialog(IDD_ATTACHDLG, nullptr, AttachDlgProc, (LPARAM)this);
+	mp_Dlg = CDynDialog::ShowDialog(IDD_ATTACHDLG, nullptr, AttachDlgProc, reinterpret_cast<LPARAM>(this));
 	mh_Dlg = mp_Dlg ? mp_Dlg->mh_Dlg : nullptr;
 	gpConEmu->SetSkipOnFocus(bPrev);
 }
@@ -520,8 +520,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 
 			// Window 2000 doesn't have 'AttachConsole' function required for the mode
@@ -566,7 +566,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			else
 				pDlg->mn_ExplorerPID = 0;
 
-			EnumWindows(AttachDlgEnumWin, (LPARAM)pDlg);
+			EnumWindows(AttachDlgEnumWin, reinterpret_cast<LPARAM>(pDlg));
 
 			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::End");
 
@@ -700,7 +700,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 						{
 							ListView_DeleteAllItems(pDlg->mh_List);
 							pDlg->mp_ProcessData = new CProcessData;
-							EnumWindows(AttachDlgEnumWin, (LPARAM)pDlg);
+							EnumWindows(AttachDlgEnumWin, reinterpret_cast<LPARAM>(pDlg));
 							delete pDlg->mp_ProcessData;
 							pDlg->mp_ProcessData = nullptr;
 						}

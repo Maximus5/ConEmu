@@ -172,7 +172,7 @@ void CConEmuChild::PostOnVConClosed()
 		&& !InterlockedExchange(&this->mn_VConTerminatedPosted, gn_MsgVConTerminated))
 	{
 		ShutdownGuiStep(L"ProcessVConClosed - repost");
-		PostMessage(this->mh_WndDC, gn_MsgVConTerminated, 0, (LPARAM)pVCon);
+		PostMessage(this->mh_WndDC, gn_MsgVConTerminated, 0, reinterpret_cast<LPARAM>(pVCon));
 	}
 
 #ifdef _DEBUG
@@ -1023,7 +1023,7 @@ void CConEmuChild::CreateDbgDlg()
 	{
 		if (!isMainThread())
 		{
-			PostMessage(mh_WndDC, mn_MsgCreateDbgDlg, 0, (LPARAM)this);
+			PostMessage(mh_WndDC, mn_MsgCreateDbgDlg, 0, reinterpret_cast<LPARAM>(this));
 		}
 		else
 		{
@@ -2119,5 +2119,5 @@ void CConEmuChild::SetAutoCopyTimer(bool bEnabled)
 
 void CConEmuChild::PostDetach(bool bSendCloseConsole /*= false*/)
 {
-	PostMessage(mh_WndDC, mn_MsgDetachPosted, 0, (LPARAM)bSendCloseConsole);
+	PostMessage(mh_WndDC, mn_MsgDetachPosted, 0, static_cast<LPARAM>(bSendCloseConsole));
 }

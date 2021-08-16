@@ -641,7 +641,7 @@ void CDynDialog::LocalizeDialog(HWND hDlg, UINT nTitleRsrcId /*= 0*/)
 	// Control text may be overriden only by ConEmu.l10n
 	if (!CLngRc::isLocalized())
 		return;
-	EnumChildWindows(hDlg, CDynDialog::LocalizeControl, (LPARAM)hDlg);
+	EnumChildWindows(hDlg, CDynDialog::LocalizeControl, reinterpret_cast<LPARAM>(hDlg));
 }
 
 // static, CALLBACK

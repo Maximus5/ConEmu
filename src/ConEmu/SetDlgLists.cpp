@@ -157,7 +157,7 @@ void CSetDlgLists::FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat
 
 	for (unsigned i = 0; i < nItems; i++)
 	{
-		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)Items[i].sValue); //-V108
+		SendMessage(hList, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(Items[i].sValue)); //-V108
 	}
 }
 
@@ -174,7 +174,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& n
 
 	for (unsigned i = 0; i < nItems; i++)
 	{
-		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) Items[i].sValue); //-V108
+		SendMessage(hList, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(Items[i].sValue)); //-V108
 
 		if (Items[i].nValue == nValue) num = i; //-V108
 	}
@@ -234,7 +234,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, 
 	for (unsigned i = 0; i < nItems; i++)
 	{
 		swprintf_c(szNumber, L"%u", pnValues[i]);
-		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)szNumber);
+		SendMessage(hList, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szNumber));
 
 		if (pnValues[i] == nValue)
 			num = i;
@@ -344,7 +344,7 @@ INT_PTR CSetDlgLists::GetSelectedString(HWND hParent, WORD nListCtrlId, CEStr& s
 		}
 		else
 		{
-			nLen = SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXT, nCur, (LPARAM)pszNew);
+			nLen = SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXT, nCur, reinterpret_cast<LPARAM>(pszNew));
 			if (nLen > 0)
 			{
 				if (!szStr.IsEmpty())
@@ -378,7 +378,7 @@ int CSetDlgLists::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	_ASSERTE(hChild!=nullptr);
 #endif
 	// Осуществляет поиск по _началу_ (!) строки
-	int nIdx = (int)SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
+	int nIdx = (int)SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, reinterpret_cast<LPARAM>(asText));
 	return nIdx;
 }
 
@@ -391,7 +391,7 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	HWND hList = nCtrlId ? GetDlgItem(hParent, nCtrlId) : hParent;
 	_ASSERTE(hList!=nullptr);
 
-	int nIdx = SendMessage(hList, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
+	int nIdx = SendMessage(hList, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(asText));
 
 	if (nIdx < 0)
 	{
@@ -407,7 +407,7 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 
 			for (int i = 0; i < nCount; i++)
 			{
-				if (!SendMessage(hList, CB_GETLBTEXT, i, (LPARAM)temp))
+				if (!SendMessage(hList, CB_GETLBTEXT, i, reinterpret_cast<LPARAM>(temp)))
 					break;
 
 				nCurVal = _wtol(temp);
@@ -419,7 +419,7 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 				}
 				else if (nCurVal > nNewVal)
 				{
-					nIdx = SendMessage(hList, CB_INSERTSTRING, i, (LPARAM)asText);
+					nIdx = SendMessage(hList, CB_INSERTSTRING, i, reinterpret_cast<LPARAM>(asText));
 					break;
 				}
 			}
@@ -427,7 +427,7 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 
 		if (nIdx < 0)
 		{
-			nIdx = SendMessage(hList, CB_INSERTSTRING, 0, (LPARAM)asText);
+			nIdx = SendMessage(hList, CB_INSERTSTRING, 0, reinterpret_cast<LPARAM>(asText));
 		}
 	}
 
@@ -492,7 +492,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled)
 //	uint8_t num = 4; /*индекс DEFAULT_CHARSET*/ \
 //	for (size_t i = 0; i < countof(SettingsNS::CharSets); i++) \
 //	{ \
-//		SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::CharSets[i].sValue); \
+//		SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(SettingsNS)::CharSets[i].sValue); \
 //		if (SettingsNS::CharSets[i].nValue == Value) num = i; \
 //	} \
 //	SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
@@ -503,7 +503,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled)
 //	uint8_t num = Value;  \
 //	for (size_t i = 0; i < countof(SettingsNS::tt##DblClickActions); i++) \
 //	{ \
-//	SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::tt##DblClickActions[i].name); \
+//	SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(SettingsNS)::tt##DblClickActions[i].name); \
 //		if (SettingsNS::tt##DblClickActions[i].value == num) num = i; \
 //	} \
 //	SendDlgItemMessage(hDlg, nDlgID, CB_SETCURSEL, num, 0); \
@@ -591,7 +591,7 @@ int CSetDlgLists::GetListboxSelection(HWND hDlg, UINT nCtrlID, int*& rItems)
 	}
 
 	rItems = new int[lCount];
-	lCount = SendMessage(hCtrl, LB_GETSELITEMS, lCount, (LPARAM)rItems);
+	lCount = SendMessage(hCtrl, LB_GETSELITEMS, lCount, reinterpret_cast<LPARAM>(rItems));
 	if (lCount <= 0)
 	{
 		delete[] rItems;
@@ -638,7 +638,7 @@ void CSetDlgLists::FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefin
 		// Add user defined string to list
 		if (bUser)
 		{
-			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszUser);
+			SendMessageW(hCombo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pszUser));
 		}
 	}
 

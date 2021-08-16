@@ -76,7 +76,7 @@ HWND CSetPgBase::CreatePage(ConEmuSetupPages* p, HWND ahParent, UINT anActivateT
 	p->pPage = p->CreateObj();
 	p->pPage->InitObject(ahParent, anActivateTabMsg, apParentDpi, p);
 
-	p->pPage->mp_DynDialog = CDynDialog::ShowDialog(p->DialogID, ahParent, pageOpProc, (LPARAM)p->pPage);
+	p->pPage->mp_DynDialog = CDynDialog::ShowDialog(p->DialogID, ahParent, pageOpProc, reinterpret_cast<LPARAM>(p->pPage));
 	p->hPage = p->pPage->Dlg();
 
 	return p->hPage;
@@ -183,7 +183,7 @@ INT_PTR CSetPgBase::OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTe
 
 INT_PTR CSetPgBase::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 {
-	return gpSetCls->OnButtonClicked(hDlg, MAKELONG(nCtrlId, BN_CLICKED), (LPARAM)hBtn);
+	return gpSetCls->OnButtonClicked(hDlg, MAKELONG(nCtrlId, BN_CLICKED), reinterpret_cast<LPARAM>(hBtn));
 }
 
 // Общая DlgProc на _все_ вкладки
@@ -415,7 +415,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 					CSettings::checkDlgButton(hDlg, cbTransparent, (newV != MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
 					gpSet->nTransparent = newV;
 					if (!gpSet->isTransparentSeparate)
-						SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM)true, (LPARAM)gpSet->nTransparent);
+						SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM)true, static_cast<LPARAM>(gpSet->nTransparent));
 					gpConEmu->OnTransparent();
 				}
 			}

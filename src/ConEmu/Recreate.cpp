@@ -151,8 +151,8 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	CDynDialog::LocalizeDialog(hDlg);
 
 	// Visual
-	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+	SendMessage(hDlg, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+	SendMessage(hDlg, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 
 	// Set password style (avoid "bars" on some OS)
 	SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
@@ -541,7 +541,7 @@ INT_PTR CRecreateDlg::OnUserControls(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			else
 			{
 				// Добавить хотя бы текущего
-				SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)ms_CurUser);
+				SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(ms_CurUser));
 			}
 		}
 
@@ -1009,11 +1009,11 @@ void CRecreateDlg::AddCommandList(LPCWSTR asCommand, INT_PTR iAfter /*= -1*/)
 		return;
 
 	//Already exist?
-	INT_PTR nId = SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)asCommand);
+	INT_PTR nId = SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(asCommand));
 
 	if (nId < 0)
 	{
-		SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_INSERTSTRING, iAfter, (LPARAM)asCommand);
+		SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_INSERTSTRING, iAfter, reinterpret_cast<LPARAM>(asCommand));
 	}
 }
 
@@ -1023,10 +1023,10 @@ void CRecreateDlg::AddDirectoryList(LPCWSTR asDirectory, INT_PTR iAfter /*= -1*/
 		return;
 
 	//Already exist?
-	INT_PTR nId = SendDlgItemMessage(mh_Dlg, IDC_STARTUP_DIR, CB_FINDSTRINGEXACT, -1, (LPARAM)asDirectory);
+	INT_PTR nId = SendDlgItemMessage(mh_Dlg, IDC_STARTUP_DIR, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(asDirectory));
 
 	if (nId < 0)
 	{
-		SendDlgItemMessage(mh_Dlg, IDC_STARTUP_DIR, CB_INSERTSTRING, iAfter, (LPARAM)asDirectory);
+		SendDlgItemMessage(mh_Dlg, IDC_STARTUP_DIR, CB_INSERTSTRING, iAfter, reinterpret_cast<LPARAM>(asDirectory));
 	}
 }

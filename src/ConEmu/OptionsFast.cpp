@@ -265,8 +265,8 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	ghFastCfg = hDlg;
 
-	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+	SendMessage(hDlg, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+	SendMessage(hDlg, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 
 	CDynDialog::LocalizeDialog(hDlg);
 
@@ -300,9 +300,9 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_RESETCONTENT, 0, 0);
 			for (INT_PTR nLang = 0; nLang < languages.size(); nLang++)
 			{
-				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_ADDSTRING, 0, (LPARAM)languages[nLang]);
+				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(languages[nLang]));
 			}
-			INT_PTR nIdx = SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_FINDSTRING, -1, (LPARAM)CLngRc::getLanguage());
+			const INT_PTR nIdx = SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_FINDSTRING, -1, reinterpret_cast<LPARAM>(CLngRc::getLanguage()));
 			if (nIdx >= 0)
 				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_SETCURSEL, nIdx, 0);
 		}

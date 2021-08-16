@@ -40,9 +40,9 @@ void SystemEnvironment::LoadFromRegistry()
 {
 	env_data.clear();
 	RegEnumValues(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
-		SysEnvValueCallback, (LPARAM)this, true);
+		SysEnvValueCallback, reinterpret_cast<LPARAM>(this), true);
 	RegEnumValues(HKEY_CURRENT_USER, L"Environment",
-		SysEnvValueCallback, (LPARAM)this, true);
+		SysEnvValueCallback, reinterpret_cast<LPARAM>(this), true);
 }
 
 std::set<std::wstring> SystemEnvironment::GetKeys() const

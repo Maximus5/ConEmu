@@ -97,11 +97,11 @@ LRESULT CSetPgSizePos::OnInitDialog(HWND hDlg, bool abInitial)
 	// 16bit Height
 	if (abInitial)
 	{
-		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
-		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
-		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
-		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
-		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"Auto"));
+		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"25 lines"));
+		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"28 lines"));
+		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"43 lines"));
+		SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"50 lines"));
 	}
 	SendDlgItemMessage(hDlg, lbNtvdmHeight, CB_SETCURSEL, !gpSet->ntvdmHeight ? 0 :
 	                   ((gpSet->ntvdmHeight == 25) ? 1 : ((gpSet->ntvdmHeight == 28) ? 2 : ((gpSet->ntvdmHeight == 43) ? 3 : 4))), 0); //-V112

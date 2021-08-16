@@ -3161,13 +3161,21 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 		dpi = CDpiAware::QueryDpiForRect(rcNew);
 		if (dpi.GetDpi() > 0)
 		{
-			// Это нужно делать до изменения размеров окна,
-			// иначе будет неправильно рассчитан размер консоли
+			// Have to do that before window size change to avoid wrong calculations of the console size
+			const RECT rcSuggested = rcNew;
 			if (OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNew, false, dcs_Internal))
 			{
-				// Вернуть флаг того, что DPI изменилось
+				// signalize that dpi was changed
 				bResized = true;
 				mb_MonitorDpiChanged = true;
+				if (rcNew != rcSuggested)
+				{
+					p->flags &= ~(SWP_NOMOVE | SWP_NOSIZE);
+					p->x = rcNew.left;
+					p->y = rcNew.top;
+					p->cx = RectWidth(rcNew);
+					p->cy = RectHeight(rcNew);
+				}
 			}
 		}
 	}
@@ -5484,7 +5492,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 			const ConEmuWindowCommand tile = (m_JumpMonitor.bInJump || IsRectEmpty(&rc))
 				? m_TileMode
 				: EvalTileMode(rc);
-			if (tile != cwc_Current)
+			if (tile != cwc_Maximize && tile != cwc_FullScreen)
 			{
 				RECT rcOld = IsRectMinimized(mrc_StoredNormalRect) ? GetDefaultRect() : mrc_StoredNormalRect;
 				RECT rcNew = {}, rcNewFix = {};
@@ -5496,10 +5504,14 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 				const MonitorInfo miNew = GetNearestMonitorInfo(nullptr, &rcNew);
 				if (miOld.hMon && miNew.hMon && (miOld.hMon != miNew.hMon))
 				{
-					// Сменился монитор, нужно обновить NormalRect
+					// After monitor change need to evaluate new normal rect
 					EvalNewNormalPos(miOld, miNew, rcOld, rcNewFix);
-					// И сохранить
+					// save it
 					StoreNormalRect(&rcNewFix);
+					if (prcSuggested)
+						*prcSuggested = rcNewFix;
+					else
+						SizeInfo::RequestRect(rcNewFix);
 				}
 			}
 		}

@@ -230,7 +230,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 			pds->bInDrag = TRUE;
 			wchar_t szStep[255]; _wsprintf(szStep, countof(szStep), L"Posting DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource);
 			DebugLog(szStep);
-			PostMessage(pds->hWnd, MSG_STARTDRAG, dwAllowedEffects, (LPARAM)pDropSource);
+			PostMessage(pds->hWnd, MSG_STARTDRAG, dwAllowedEffects, reinterpret_cast<LPARAM>(pDropSource));
 			pDropSource = nullptr; // чтобы ниже не от-release-илось
 		}
 		else

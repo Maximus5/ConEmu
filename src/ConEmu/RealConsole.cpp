@@ -718,8 +718,8 @@ INT_PTR CRealConsole::priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	{
 		case WM_INITDIALOG:
 		{
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 
 			pRCon->mp_ConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=nullptr);
@@ -869,7 +869,7 @@ bool CRealConsole::ChangeAffinityPriority(LPCWSTR asAffinity /*= nullptr*/, LPCW
 	{
 		DontEnable de;
 		CDpiForDialog::Create(mp_PriorityDpiAware);
-		iRc = CDynDialog::ExecuteDialog(IDD_AFFINITY, ghWnd, priorityProc, (LPARAM)this);
+		iRc = CDynDialog::ExecuteDialog(IDD_AFFINITY, ghWnd, priorityProc, reinterpret_cast<LPARAM>(this));
 		SafeDelete(mp_PriorityDpiAware);
 	}
 
@@ -1730,7 +1730,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, PostStringFlag
 				}
 			}
 			*(psz) = 0;
-			PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_STR_MAGIC, (LPARAM)pCopy);
+			PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_STR_MAGIC, reinterpret_cast<LPARAM>(pCopy));
 		}
 	}
 
@@ -2517,7 +2517,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 			pCopy->cPeekRead = 'S';
 			pCopy->cUnicode = 'W';
 			pCopy->Buffer[0] = *piRec;
-			PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+			PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, reinterpret_cast<LPARAM>(pCopy));
 		}
 	}
 
@@ -11041,8 +11041,8 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hClassIconSm));
 
 			pRCon->mp_ConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=nullptr);
@@ -11120,7 +11120,7 @@ void CRealConsole::DoRenameTab()
 	DontEnable de;
 	CDpiForDialog::Create(mp_RenameDpiAware);
 	// Modal dialog (CreateDialog)
-	INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_RENAMETAB, ghWnd, renameProc, (LPARAM)this);
+	INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_RENAMETAB, ghWnd, renameProc, reinterpret_cast<LPARAM>(this));
 	if (iRc == IDOK)
 	{
 		//mp_ConEmu->mp_TabBar->Update(); -- уже, в RenameTab(...)
@@ -12206,7 +12206,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 
 	// В FAR при XLat делается так:
 	//PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
-	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
+	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, static_cast<LPARAM>(dwNewKeyboardLayout));
 }
 
 void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText /*= nullptr*/, bool abNoConfirm /*= false*/, PosixPasteMode posixMode /*= pxm_Auto*/)

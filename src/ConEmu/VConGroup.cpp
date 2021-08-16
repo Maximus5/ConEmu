@@ -669,7 +669,7 @@ void CVConGroup::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 			return true;
 		};
 	};
-	EnumVCon(evf_All, impl::ShowScroll, (LPARAM)abSync);
+	EnumVCon(evf_All, impl::ShowScroll, static_cast<LPARAM>(abSync));
 }
 
 void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
@@ -872,7 +872,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 	if (!isMainThread())
 	{
 		ReSizeSplitterHelperArg* p = new ReSizeSplitterHelperArg(apVCon, iHorz, iVert);
-		apVCon->mp_ConEmu->CallMainThread(false, ReSizeSplitterHelper, (LPARAM)p);
+		apVCon->mp_ConEmu->CallMainThread(false, ReSizeSplitterHelper, reinterpret_cast<LPARAM>(p));
 		return false;
 	}
 
@@ -3153,7 +3153,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 				swprintf_c(temp+iUsed, MAX_PATH-iUsed/*#SECURELEN*/, L"[%i.%i] %s - PID:%i",
 						 j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
 				if (hInfo)
-					SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
+					SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(temp));
 			}
 
 			SafeFree(pPrc);

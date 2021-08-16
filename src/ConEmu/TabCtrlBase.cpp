@@ -194,7 +194,7 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 		// Associate the ToolTip with the tool window.
 		SendMessage(mh_Balloon, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tiBalloon);
 		// Allow multiline
-		SendMessage(mh_Balloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+		SendMessage(mh_Balloon, TTM_SETMAXTIPWIDTH, 0, static_cast<LPARAM>(300));
 	}
 }
 

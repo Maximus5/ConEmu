@@ -69,9 +69,9 @@ LRESULT CSetPgGeneral::OnInitDialog(HWND hDlg, bool abInitial)
 			SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_RESETCONTENT, 0, 0);
 			for (INT_PTR nLang = 0; nLang < languages.size(); nLang++)
 			{
-				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_ADDSTRING, 0, (LPARAM)languages[nLang]);
+				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(languages[nLang]));
 			}
-			INT_PTR nIdx = SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_FINDSTRING, -1, (LPARAM)CLngRc::getLanguage());
+			const INT_PTR nIdx = SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_FINDSTRING, -1, reinterpret_cast<LPARAM>(CLngRc::getLanguage()));
 			if (nIdx >= 0)
 				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_SETCURSEL, nIdx, 0);
 		}
@@ -82,18 +82,18 @@ LRESULT CSetPgGeneral::OnInitDialog(HWND hDlg, bool abInitial)
 	SendDlgItemMessage(hDlg, lbStartupShellFast, CB_RESETCONTENT, 0, 0);
 	if (gpSet->psStartSingleApp && *gpSet->psStartSingleApp)
 	{
-		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)gpSet->psStartSingleApp);
+		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(gpSet->psStartSingleApp));
 	}
 	if (gpSet->psStartTasksFile && *gpSet->psStartTasksFile)
 	{
 		wchar_t prefix[2] = {CmdFilePrefix};
 		CEStr command(prefix, gpSet->psStartTasksFile);
-		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)command.c_str());
+		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(command.c_str()));
 	}
 	const CommandTasks* pGrp = nullptr;
 	for (int nGroup = 0; (pGrp = gpSet->CmdTaskGet(nGroup)) != nullptr; nGroup++)
 	{
-		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
+		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pGrp->pszName));
 	}
 	RECT rcCombo = {}, rcButton = {};
 	GetWindowRect(GetDlgItem(hDlg, lbStartupShellFast), &rcCombo);
@@ -117,7 +117,7 @@ LRESULT CSetPgGeneral::OnInitDialog(HWND hDlg, bool abInitial)
 	const ColorPalette* pPal = nullptr;
 	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != nullptr; nPal++)
 	{
-		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pPal->pszName));
 	}
 	// Show active (default) palette
 	colorOptions.palette = gpSet->PaletteFindCurrent(true);

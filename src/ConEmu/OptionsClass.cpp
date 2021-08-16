@@ -609,7 +609,7 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 			return 0;
 		};
 
-		lbRc = (gpConEmu->CallMainThread(true, reloadBgImage, (LPARAM)asValue) != 0);
+		lbRc = (gpConEmu->CallMainThread(true, reloadBgImage, reinterpret_cast<LPARAM>(asValue)) != 0);
 	}
 	else if (!lstrcmpi(asName, L"Scheme"))
 	{
@@ -1644,7 +1644,7 @@ void CSettings::SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost /*= false
 	if (!bPost)
 		TreeView_SelectItem(hTree, hItem);
 	else
-		PostMessage(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hItem);
+		PostMessage(hTree, TVM_SELECTITEM, TVGN_CARET, reinterpret_cast<LPARAM>(hItem));
 }
 
 LRESULT CSettings::OnNextPage()
@@ -3589,7 +3589,7 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 				{
 					if ((dwType == REG_DWORD) && *szName && *szValue)
 					{
-						SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
+						SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szValue));
 						bLoaded = true;
 					}
 
@@ -3898,8 +3898,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					LF.lfWidth = GetNumber(hWnd2, tConsoleFontSizeX);
 
 				LF.lfWeight = FW_NORMAL;
-				gpSetCls->nConFontError = 0;                                                                                 //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
-				const int nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM)LF.lfFaceName); //-V103
+				gpSetCls->nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
+				const int nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(LF.lfFaceName)); //-V103
 
 				if (nIdx < 0)
 				{
@@ -4016,7 +4016,8 @@ LPCWSTR CSettings::CreateConFontError(LPCWSTR asReqFont/*=nullptr*/, LPCWSTR asG
 
 	wchar_t sConFontError[512] = L"";
 
-	SendMessage(gpSetCls->hwndConFontBalloon, TTM_SETTITLE, TTI_WARNING, (LPARAM)(asReqFont ? asReqFont : gpSet->ConsoleFont.lfFaceName));
+	SendMessage(gpSetCls->hwndConFontBalloon, TTM_SETTITLE, TTI_WARNING,
+		reinterpret_cast<LPARAM>(asReqFont ? asReqFont : gpSet->ConsoleFont.lfFaceName));
 	wcscpy_c(sConFontError, L"Console font test failed!\n");
 	//wcscat_c(sConFontError, asReqFont ? asReqFont : ConsoleFont.lfFaceName);
 	//wcscat_c(sConFontError, L"\n");
@@ -4112,9 +4113,9 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	INT_PTR nIdx = -1;
 	if (hWnd2)
 	{
-		if (SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) LF.lfFaceName)==-1)
+		if (SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, reinterpret_cast<LPARAM>(LF.lfFaceName))==-1)
 		{
-			nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) LF.lfFaceName); //-V103
+			nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(LF.lfFaceName)); //-V103
 		}
 	}
 	UNREFERENCED_PARAMETER(nIdx);
@@ -4227,7 +4228,7 @@ bool CSettings::ActivatePage(TabHwndIndex showPage)
 		{
 			if (m_Pages[i].PageIndex == showPage)
 			{
-				//PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
+				//PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, reinterpret_cast<LPARAM>(gpSetCls)->m_Pages[i].hTI);
 				SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), m_Pages[i].hTI, true);
 				return true;;
 			}

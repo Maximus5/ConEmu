@@ -84,10 +84,10 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 			int nGroup = 0;
 			const CommandTasks* pGrp = nullptr;
 			SendDlgItemMessage(hDlg, lbStartNamedTask, CB_RESETCONTENT, 0,0);
-			SendDlgItemMessage(hDlg, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)csNoTask);
+			SendDlgItemMessage(hDlg, lbStartNamedTask, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(csNoTask));
 			// Fill tasks from settings
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
-				SendDlgItemMessage(hDlg, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
+				SendDlgItemMessage(hDlg, lbStartNamedTask, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pGrp->pszName));
 			// Select active task
 			pGrp = gpSet->psStartTasksName ? gpSet->CmdTaskGetByName(gpSet->psStartTasksName) : nullptr;
 			if (!pGrp || !pGrp->pszName

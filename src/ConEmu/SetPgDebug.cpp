@@ -304,7 +304,7 @@ void CSetPgDebug::debugLogShell(DWORD nParentPID, CESERVER_REQ_ONCREATEPROCESS* 
 	}
 	// end of "Append directory and bat/tmp files contents to pszParam"
 
-	PostMessage(pDbgPg->Dlg(), DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
+	PostMessage(pDbgPg->Dlg(), DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, reinterpret_cast<LPARAM>(shl));
 }
 
 void CSetPgDebug::debugLogShell(DebugLogShellActivity *pShl)
@@ -611,7 +611,7 @@ void CSetPgDebug::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTic
 		break;
 	}
 
-	PostMessage(pDbgPg->Dlg(), DBGMSG_LOG_ID, DBGMSG_LOG_CMD_MAGIC, (LPARAM)pData);
+	PostMessage(pDbgPg->Dlg(), DBGMSG_LOG_ID, DBGMSG_LOG_CMD_MAGIC, reinterpret_cast<LPARAM>(pData));
 }
 
 void CSetPgDebug::debugLog(WPARAM wParam, LPARAM lParam)

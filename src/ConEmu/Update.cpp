@@ -825,7 +825,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 			// the download was started after user confirmation
 			const LRESULT lRetryRc = (!gpConEmu || mb_RequestTerminate)
 				? IDCANCEL
-				: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, (LPARAM)szRetryPackageDownload);
+				: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, reinterpret_cast<LPARAM>(szRetryPackageDownload));
 
 			// Error must be already shown or logged, clear it
 			if (ms_LastErrorInfo)
@@ -1407,7 +1407,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 		}
 	}
 
-	Inet.SetCallback(dc_ProgressCallback, ProgressCallback, (LPARAM)this);
+	Inet.SetCallback(dc_ProgressCallback, ProgressCallback, reinterpret_cast<LPARAM>(this));
 
 	args[0].argType = at_Str;  args[0].strArg = asSource;
 	args[1].argType = at_Str;  args[1].strArg = asTarget;
@@ -1488,7 +1488,7 @@ void CConEmuUpdate::ReportErrorInt(const ErrorInfo& error)
 
 	// This will call back ShowLastError
 	if (gpConEmu)
-		gpConEmu->CallMainThread(false, ShowLastError, (LPARAM)this);
+		gpConEmu->CallMainThread(false, ShowLastError, reinterpret_cast<LPARAM>(this));
 	else
 		SafeFree(asErrorInfo);
 
@@ -2138,8 +2138,8 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 wrap:
 	if (bRc)
 	{
-		SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
-		SetCallback(dc_LogCallback, LogCallback, (LPARAM)apUpd);
+		SetCallback(dc_ErrCallback, ErrorCallback, reinterpret_cast<LPARAM>(apUpd));
+		SetCallback(dc_LogCallback, LogCallback, reinterpret_cast<LPARAM>(apUpd));
 	}
 	if (lhDll && !bRc)
 	{

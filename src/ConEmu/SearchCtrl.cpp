@@ -341,7 +341,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 					if ((Msg == WM_LBUTTONDOWN || Msg == WM_LBUTTONDBLCLK)
 						&& (GetWindowTextLength(hEditCtrl) > 0))
 					{
-						SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), (LPARAM)hEditCtrl);
+						SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), reinterpret_cast<LPARAM>(hEditCtrl));
 					}
 				}
 				goto wrap;
@@ -407,7 +407,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 				KillTimer(hEditCtrl, SEARCH_CTRL_TIMERID);
 				if ((iLen > 0) || (!hi.bSearchIcon))
 				{
-					SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), (LPARAM)hEditCtrl);
+					SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), reinterpret_cast<LPARAM>(hEditCtrl));
 				}
 				goto wrap;
 			} break;
@@ -666,7 +666,7 @@ static LRESULT WINAPI EditIconHintOtherProc(HWND hCtrl, UINT Msg, WPARAM wParam,
 		wID = LOWORD(GetWindowLong(hCtrl, GWL_ID));
 		if (wID == tAboutText)
 		{
-			SendMessage(iho.hRootDlg, UM_EDIT_KILL_FOCUS, 0, (LPARAM)hCtrl);
+			SendMessage(iho.hRootDlg, UM_EDIT_KILL_FOCUS, 0, reinterpret_cast<LPARAM>(hCtrl));
 		}
 		break;
 	}
@@ -693,7 +693,7 @@ void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg /*= nullptr*/)
 	if (!hRootDlg)
 		hRootDlg = hDlg;
 
-	EnumChildWindows(hDlg, EditIconHint_Enum, (LPARAM)hRootDlg);
+	EnumChildWindows(hDlg, EditIconHint_Enum, reinterpret_cast<LPARAM>(hRootDlg));
 }
 
 void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR sHint, bool bRedraw, UINT nSearchMsg, WORD nDefBtnID)

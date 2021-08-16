@@ -110,11 +110,11 @@ LRESULT CSetPgColors::OnInitDialog(HWND hDlg, bool abInitial)
 	}
 
 	SendMessage(GetDlgItem(hDlg, lbDefaultColors), CB_RESETCONTENT, 0, 0);
-	SendDlgItemMessage(hDlg, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)gLastColors.pszName);
+	SendDlgItemMessage(hDlg, lbDefaultColors, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(gLastColors.pszName));
 
 	for (int i = 0; (pPal = gpSet->PaletteGet(i)) != nullptr; i++)
 	{
-		SendDlgItemMessage(hDlg, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+		SendDlgItemMessage(hDlg, lbDefaultColors, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pPal->pszName));
 	}
 
 	// Find saved palette with current colors and attributes
@@ -193,7 +193,7 @@ INT_PTR CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					INT_PTR nLen = SendMessage(hList, CB_GETLBTEXTLEN, nIdx, 0);
 					pszText = (nLen > 0) ? (wchar_t*)malloc((nLen+1)*sizeof(wchar_t)) : nullptr;
 					if (pszText)
-						SendMessage(hList, CB_GETLBTEXT, nIdx, (LPARAM)pszText);
+						SendMessage(hList, CB_GETLBTEXT, nIdx, reinterpret_cast<LPARAM>(pszText));
 				}
 
 				if (pszText)

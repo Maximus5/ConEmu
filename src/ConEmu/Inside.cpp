@@ -653,7 +653,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 				hMenu2 = GetSubMenu(hMenu1, 2);
 				//if (!hMenu2)
 				//{
-				//	lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_MENUSELECT, MAKELONG(2,MF_POPUP), (LPARAM)hMenu1, SMTO_NOTIMEOUTIFNOTHUNG, 1500, &nRc);
+				//	lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_MENUSELECT, MAKELONG(2,MF_POPUP), reinterpret_cast<LPARAM>(hMenu1), SMTO_NOTIMEOUTIFNOTHUNG, 1500, &nRc);
 				//	hMenu2 = GetSubMenu(hMenu1, 2);
 				//}
 

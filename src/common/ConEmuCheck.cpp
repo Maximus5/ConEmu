@@ -830,7 +830,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD 
 			if (hOwner == myGetConsoleWindow())
 				SetConsoleTitle(szErr);
 			else
-				SendMessageTimeout(hOwner, WM_SETTEXT, 0, (LPARAM)szErr, SMTO_ABORTIFHUNG, 1000, &dwResult);
+				SendMessageTimeout(hOwner, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(szErr), SMTO_ABORTIFHUNG, 1000, &dwResult);
 		}
 		#endif
 
