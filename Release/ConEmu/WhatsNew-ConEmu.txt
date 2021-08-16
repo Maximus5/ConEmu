@@ -20,6 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.8.16
+* gh-2343: Add VS2022 command line tools detection.
+* Improve between monitor jumps. When two monitors have different dpi
+  ConEmu tries to preserve size in console cells for non-maximized window.
+* gh-2351: Fix crash while searching in settings dialog.
+
+
 2021.7.18
 * gh-2330: Fix crash on startup.
 * gh-2328: Fix 100% CPU load during `lua:far.Message(",)`.
