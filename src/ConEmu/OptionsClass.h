@@ -276,7 +276,7 @@ class CSettings
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 	public:
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = nullptr);
+		static void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = nullptr);
 		void CheckSelectionModifiers(HWND hWnd2);
 		void ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown);
 		void RegisterTipsFor(HWND hChildDlg);

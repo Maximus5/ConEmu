@@ -919,10 +919,14 @@ void CSettings::SearchForControls()
 		return;
 	}
 
-	TOOLINFO toolInfo = { 44, TTF_IDISHWND, ghOpWnd, (UINT_PTR)hSearchEdit }; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
-	SendMessage(hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+	TOOLINFO toolInfo{};
+	toolInfo.cbSize = 44; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
+	toolInfo.uFlags = TTF_IDISHWND;
+	toolInfo.hwnd = ghOpWnd;
+	toolInfo.uId = reinterpret_cast<UINT_PTR>(hSearchEdit);
+	SendMessage(hwndTip, TTM_DELTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
 
-	size_t i, s, iTab, iCurTab;
+	size_t i, s, iTab = 0, iCurTab = 0;
 	INT_PTR lFind = -1;
 	HWND hSelTab = nullptr, hCurTab = nullptr, hCtrl = nullptr;
 	static HWND hLastTab, hLastCtrl;
@@ -1044,19 +1048,19 @@ void CSettings::SearchForControls()
 						if (lFind < 0)
 						{
 							INT_PTR iCount = SendMessage(hCtrl, LB_GETCOUNT, 0, 0);
-							for (INT_PTR i = lLastListFind+1; i < iCount; i++)
+							for (INT_PTR j = lLastListFind + 1; j < iCount; j++)
 							{
-								INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, i, 0);
-								if (iLen >= (INT_PTR)countof(szText))
+								INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, j, 0);
+								if (iLen >= static_cast<INT_PTR>(countof(szText)))
 								{
-									_ASSERTE(iLen < countof(szText));
+									_ASSERTE(iLen < static_cast<INT_PTR>(countof(szText)));
 								}
 								else
 								{
-									SendMessage(hCtrl, LB_GETTEXT, i, (LPARAM)szText);
+									SendMessage(hCtrl, LB_GETTEXT, j, reinterpret_cast<LPARAM>(szText));
 									if (StrStrI(szText, pszPart) != nullptr)
 									{
-										lFind = i;
+										lFind = j;
 										break;
 									}
 								}
@@ -1068,35 +1072,36 @@ void CSettings::SearchForControls()
 							lLastListFind = lFind;
 							SendMessage(hCtrl, LB_SETCURSEL, lFind, 0);
 							INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, lFind, 0);
-							if (iLen >= (INT_PTR)countof(szText))
+							if (iLen >= static_cast<INT_PTR>(countof(szText)))
 							{
-								_ASSERTE(iLen < countof(szText));
-								lstrcpyn(szText, pszPart, countof(szText));
+								_ASSERTE(iLen < static_cast<INT_PTR>(countof(szText)));
+								_wcscpyn_c(szText, countof(szText), pszPart, countof(szText));
 							}
 							else
 							{
-								SendMessage(hCtrl, LB_GETTEXT, lFind, (LPARAM)szText);
+								SendMessage(hCtrl, LB_GETTEXT, lFind, reinterpret_cast<LPARAM>(szText));
 							}
 							break; // Found
 						}
 					} // End of "ListBox" processing
 					else if (lstrcmpi(szClass, L"SysListView32") == 0)
 					{
-						LVITEM lvi = {LVIF_TEXT|LVIF_STATE|LVIF_PARAM};
+						LVITEM lvi{};
+						lvi.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
 						lvi.pszText = szText;
 						INT_PTR iCount = ListView_GetItemCount(hCtrl);
 						lFind = -1;
 
-						for (INT_PTR i = lLastListFind+1; (i < iCount) && (lFind == -1); i++)
+						for (INT_PTR j = lLastListFind+1; (j < iCount) && (lFind == -1); j++)
 						{
 							for (lvi.iSubItem = 0; lvi.iSubItem <= 32; lvi.iSubItem++)
 							{
 								lvi.cchTextMax = countof(szText);
-								if (SendMessage(hCtrl, LVM_GETITEMTEXT, i, (LPARAM)&lvi) > 0)
+								if (SendMessage(hCtrl, LVM_GETITEMTEXT, j, reinterpret_cast<LPARAM>(&lvi)) > 0)
 								{
 									if (StrStrI(szText, pszPart) != nullptr)
 									{
-										lFind = i;
+										lFind = j;
 										break;
 									}
 								}
@@ -1194,14 +1199,14 @@ void CSettings::SearchForControls()
 
 		if (gpSetCls->hwndTip) SendMessage(gpSetCls->hwndTip, TTM_ACTIVATE, FALSE, 0);
 
-		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
+		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, reinterpret_cast<LPARAM>(pti));
 		RECT rcControl; GetWindowRect(hCtrl, &rcControl);
 		int ptx = /*bLeftAligh ?*/ (rcControl.left + 10) /*: (rcControl.right - 10)*/;
 		int pty = rcControl.top + 10; //bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
 		if ((lstrcmpi(szClass, L"ListBox") == 0) && (lFind >= 0))
 		{
 			RECT rcItem = {};
-			if (SendMessage(hCtrl, LB_GETITEMRECT, lFind, (LPARAM)&rcItem) != LB_ERR)
+			if (SendMessage(hCtrl, LB_GETITEMRECT, lFind, reinterpret_cast<LPARAM>(&rcItem)) != LB_ERR)
 			{
 				pty += rcItem.top;
 			}
@@ -1215,8 +1220,8 @@ void CSettings::SearchForControls()
 			}
 		}
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
-		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
-		SetTimer(hCurTab, BALLOON_MSG_TIMERID, CONTROL_FOUND_TIMEOUT, 0);
+		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, reinterpret_cast<LPARAM>(pti));
+		SetTimer(hCurTab, BALLOON_MSG_TIMERID, CONTROL_FOUND_TIMEOUT, nullptr);
 	}
 
 wrap:
@@ -1254,15 +1259,16 @@ LRESULT CSettings::OnInitDialog()
 	RECT rcEdt = {}, rcBtn = {};
 	if (GetWindowRect(GetDlgItem(ghOpWnd, tOptionSearch), &rcEdt))
 	{
-		MapWindowPoints(nullptr, ghOpWnd, (LPPOINT)&rcEdt, 2);
+		MapWindowPoints(nullptr, ghOpWnd, reinterpret_cast<LPPOINT>(&rcEdt), 2);
 
 		// Hate non-strict alignment...
 		WORD nCtrls[] = {cbExportConfig};
-		for (size_t i = 0; i < countof(nCtrls); i++)
+		for (unsigned short nCtrl : nCtrls)
 		{
-			HWND hBtn = GetDlgItem(ghOpWnd, nCtrls[i]);
+			// ReSharper disable once CppLocalVariableMayBeConst
+			HWND hBtn = GetDlgItem(ghOpWnd, nCtrl);
 			GetWindowRect(hBtn, &rcBtn);
-			MapWindowPoints(nullptr, ghOpWnd, (LPPOINT)&rcBtn, 2);
+			MapWindowPoints(nullptr, ghOpWnd, reinterpret_cast<LPPOINT>(&rcBtn), 2);
 			SetWindowPos(hBtn, nullptr, rcBtn.left, rcEdt.top-1, rcBtn.right-rcBtn.left, rcBtn.bottom-rcBtn.top, SWP_NOZORDER);
 		}
 
@@ -1281,16 +1287,17 @@ LRESULT CSettings::OnInitDialog()
 
 	RegisterTipsFor(ghOpWnd);
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
-	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
+	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
-	           | ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),
+	           | ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),  // NOLINT(misc-redundant-expression)
 	           ID_ALWAYSONTOP, _T("Al&ways on top..."));
 	RegisterTabs();
 	mn_LastChangingFontCtrlId = 0;
 
 	//wchar_t szType[8];
-	SettingsStorage Storage = gpSet->GetSettingsType();
+	const SettingsStorage Storage = gpSet->GetSettingsType();
 	if (Storage.ReadOnly || isResetBasicSettings)
 	{
 		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
@@ -1302,12 +1309,12 @@ LRESULT CSettings::OnInitDialog()
 
 	if (isResetBasicSettings)
 	{
-		CEStr lsBracketed(L"<", CLngRc::getRsrc(lng_BasicSettings/*"Настройки по умолчанию"*/), L">");
+		const CEStr lsBracketed(L"<", CLngRc::getRsrc(lng_BasicSettings/*"Настройки по умолчанию"*/), L">");
 		SetDlgItemText(ghOpWnd, tStorage, lsBracketed);
 	}
 	else if (Storage.Type == StorageType::REG)
 	{
-		CEStr szStorage(L"HKEY_CURRENT_USER\\", ConfigPath);
+		const CEStr szStorage(L"HKEY_CURRENT_USER\\", ConfigPath);
 		SetDlgItemText(ghOpWnd, tStorage, szStorage);
 	}
 	else
@@ -1337,7 +1344,11 @@ LRESULT CSettings::OnInitDialog()
 	MCHKHEAP
 	{
 		mb_IgnoreSelPage = true;
-		TVINSERTSTRUCT ti = {TVI_ROOT, TVI_LAST, {{TVIF_TEXT}}};
+		TVINSERTSTRUCT ti{};
+		ti.hParent = TVI_ROOT;
+		ti.hInsertAfter = TVI_LAST;
+		ti.itemex.mask = TVIF_TEXT;
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		HTREEITEM hLastRoot = TVI_ROOT;
 		bool bNeedExpand = true;
@@ -1375,6 +1386,7 @@ LRESULT CSettings::OnInitDialog()
 
 		TreeView_SelectItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[0].hTI);
 
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
 		apiShowWindow(hPlace, SW_HIDE);
 
@@ -1382,7 +1394,7 @@ LRESULT CSettings::OnInitDialog()
 
 		CSetPgBase::CreatePage(&(m_Pages[0]), ghOpWnd, mn_ActivateTabMsg, mp_DpiAware);
 
-		CEStr lsUrl(CEWIKIBASE, m_Pages[0].wikiPage);
+		const CEStr lsUrl(CEWIKIBASE, m_Pages[0].wikiPage);
 		SetDlgItemText(ghOpWnd, stSetPgWikiLink, lsUrl);
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
@@ -1411,16 +1423,16 @@ LRESULT CSettings::OnInitDialog()
 void CSettings::CheckSelectionModifiers(HWND hWnd2)
 {
 	struct {
-		WORD nCtrlID;
-		UINT nMouseBtn;
-		LPCWSTR Descr;
-		TabHwndIndex nDlgID;
-		bool bEnabled;
-		int nVkIdx;
-		bool bIgnoreInFar;
+		WORD nCtrlID = 0;
+		BYTE nMouseBtn = 0;
+		LPCWSTR Descr = nullptr;
+		TabHwndIndex nDlgID = TabHwndIndex::thi_General;
+		bool bEnabled = false;
+		int nVkIdx = 0;
+		bool bIgnoreInFar = false;
 		// Service
-		BYTE Vk;
-		HWND hPage;
+		BYTE Vk = 0;
+		HWND hPage = nullptr;
 	} Keys[] = {
 		{lbCTSBlockSelection, VK_LBUTTON, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, VK_LBUTTON, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
@@ -1436,7 +1448,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		{0},
 	};
 
-	bool bIsFar = CVConGroup::isFar(true);
+	const bool bIsFar = CVConGroup::isFar(true);
 
 	for (size_t i = 0; Keys[i].nCtrlID; i++)
 	{
@@ -1451,7 +1463,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		//GetListBoxByte(hDlg, nCtrlID[i], SettingsNS::szKeysAct, SettingsNS::nKeysAct, Vk[i]);
 		DWORD VkMod = gpSet->GetHotkeyById(Keys[i].nVkIdx);
 		_ASSERTE((VkMod & 0xFF) == VkMod); // One modifier only?
-		Keys[i].Vk = (BYTE)(VkMod & 0xFF);
+		Keys[i].Vk = static_cast<BYTE>(VkMod & 0xFF);
 	}
 
 	for (size_t i = 0; Keys[i+1].nCtrlID; i++)
@@ -1477,8 +1489,9 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 				ConEmuChord::GetVkKeyName(Keys[i].Vk, szMod, true);
 				CEStr szInfo;
 				ConEmuHotKey::CreateNotUniqueWarning(szMod, Keys[i].Descr, Keys[j].Descr, szInfo);
+				// ReSharper disable once CppLocalVariableMayBeConst
 				HWND hDlg = hWnd2;
-				WORD nID = (Keys[j].hPage == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
+				const WORD nID = (Keys[j].hPage == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
 				ShowModifierErrorTip(szInfo, hDlg, nID);
 				return;
 			}
@@ -1502,8 +1515,9 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 			pFound->GetDescription(szDescr2, countof(szDescr2));
 			CEStr szFailMsg;
 			ConEmuHotKey::CreateNotUniqueWarning(szMod, Keys[i].Descr, szDescr2, szFailMsg);
+			// ReSharper disable once CppLocalVariableMayBeConst
 			HWND hDlg = hWnd2;
-			WORD nID = Keys[i].nCtrlID;
+			const WORD nID = Keys[i].nCtrlID;
 			ShowModifierErrorTip(szFailMsg, hDlg, nID);
 			return;
 		}
@@ -1540,10 +1554,11 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 
 	if (gpSet->isLogging())
 	{
-		CEStr lsLog(L"Color Palette: `", pPal->pszName, L"` ChangeDropDown=", bChangeDropDown ? L"yes" : L"no");
+		const CEStr lsLog(L"Color Palette: `", pPal->pszName, L"` ChangeDropDown=", bChangeDropDown ? L"yes" : L"no");
 		LogString(lsLog);
 	}
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HWND hDlg = GetPage(thi_Colors);
 
 	if (bChangeDropDown && hDlg)
@@ -1551,15 +1566,16 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		CSetDlgLists::SelectStringExact(hDlg, lbDefaultColors, pPal->pszName);
 	}
 
-	unsigned nCount = pPal->Colors.size();
+	// ReSharper disable once CppVariableCanBeMadeConstexpr
+	const size_t nCount = pPal->Colors.size();
 
-	for (unsigned i = 0; i < nCount; i++)
+	for (size_t i = 0; i < nCount; i++)
 	{
 		gpSet->Colors[i] = pPal->Colors[i]; //-V108
 	}
 
-	BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
-	BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
+	const BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
+	const BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
 
 	// We need to change consoles contents if TEXT attributes was changed
 	if (bTextChanged || bPopupChanged)
@@ -2340,7 +2356,7 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName
 		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
-		DRAWITEMSTRUCT *pItem = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+		DRAWITEMSTRUCT* pItem = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
 		wchar_t szText[128]; szText[0] = 0;
 		SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, reinterpret_cast<LPARAM>(szText));
 		const DWORD bAlmostMonospace = static_cast<DWORD>(SendDlgItemMessage(hWnd2, wID, CB_GETITEMDATA, pItem->itemID, 0));
@@ -2365,11 +2381,11 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 		DeleteObject(hBr);
 		rc.left++;
 		const int nDpi = GetDialogDpi();
-		HFONT hFont = CreateFont(-8*nDpi/72, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
-		                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
-		                         L"MS Shell Dlg");
+		HFONT hFont = CreateFont(-8 * nDpi / 72, 0, 0, 0, (bAlmostMonospace == 1) ? FW_BOLD : FW_NORMAL, 0, 0, 0,
+			ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
+			L"MS Shell Dlg");
 		HFONT hOldF = static_cast<HFONT>(SelectObject(pItem->hDC, hFont));
-		DrawText(pItem->hDC, szText, _tcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
+		DrawText(pItem->hDC, szText, _tcslen(szText), &rc, DT_LEFT | DT_VCENTER | DT_NOPREFIX);
 		SelectObject(pItem->hDC, hOldF);
 		DeleteObject(hFont);
 	}
