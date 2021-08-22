@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.8.22
+* gh-2356: fix crash when running jom.exe.
+
+
 2021.8.16
 * gh-2343: Add VS2022 command line tools detection.
 * Improve between monitor jumps. When two monitors have different dpi
