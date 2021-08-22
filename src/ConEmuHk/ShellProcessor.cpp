@@ -1780,11 +1780,18 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	#else
 	#define isDebugAddConEmuC false
 	#endif
+	BOOL lbChanged = FALSE;
+	CESERVER_REQ *pIn = nullptr;
 
 	// In some cases we need to pre-replace command line,
 	// for example, in cmd prompt: start -new_console:z
 	CEStr lsReplaceFile, lsReplaceParm;
 	ms_ExeTmp.Clear();
+	if (IsStrEmpty(asFile) && IsStrEmpty(asParam))
+	{
+		_ASSERTE(FALSE && "asFile and asParam are empty");
+		goto wrap;
+	}
 	bForceCutNewConsole |= PrepareNewConsoleInFile(aCmd, asFile, asParam, lsReplaceFile, lsReplaceParm, ms_ExeTmp);
 
 	if (ms_ExeTmp.IsEmpty())
@@ -1799,6 +1806,11 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		// check image subsystem, vsnet debugger helpers, etc.
 		CheckForExeName(ms_ExeTmp, anCreateFlags);
 	}
+	else //if (ms_ExeTmp.IsEmpty())
+	{
+		_ASSERTE(!ms_ExeTmp.IsEmpty());
+		goto wrap; // ошибка?
+	}
 
 	// Some additional checks for "Default terminal" mode
 	if (!CheckForDefaultTerminal(aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd))
@@ -1807,12 +1819,10 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		return PrepareExecuteResult::Bypass;
 	}
 
-	BOOL lbChanged = FALSE;
-	CESERVER_REQ *pIn = nullptr;
 	pIn = NewCmdOnCreate(aCmd,
 			asAction, asFile, asParam, asDir,
 			anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
-			mn_ImageBits, mn_ImageSubsystem,
+			static_cast<int>(mn_ImageBits), static_cast<int>(mn_ImageSubsystem),
 			hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 	if (pIn)
 	{
@@ -2014,18 +2024,6 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 			goto wrap;
 		}
 	}
-
-	//bool lbGuiApp = false;
-	//DWORD ImageSubsystem = 0, ImageBits = 0;
-
-	//if (!pszExecFile || !*pszExecFile)
-	if (ms_ExeTmp[0] == 0)
-	{
-		_ASSERTE(ms_ExeTmp[0] != 0);
-		goto wrap; // ошибка?
-	}
-	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
-	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
 	if ((workOptions_ & ShellWorkOptions::ChildGui) && !(NewConsoleFlags || bForceNewConsole || (workOptions_ & ShellWorkOptions::VsNetHost)))
 	{
