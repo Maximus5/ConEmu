@@ -6293,7 +6293,8 @@ void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 	m_ChildGui.paf = *pStarted;
 	m_ChildGui.paf.hProcess = nullptr;
 
-	if (pStarted->nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+	// gh-681: NodeJSPortable.exe just runs "Server.cmd"
+	if (pStarted->nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || pStarted->nSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
 	{
 		if (!m_ChildGui.hGuiWnd || !IsWindow(m_ChildGui.hGuiWnd))
 		{

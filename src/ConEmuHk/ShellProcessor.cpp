@@ -1442,13 +1442,6 @@ void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlag
 	}
 	else if (FindImageSubsystem(exeName, mn_ImageSubsystem, mn_ImageBits))
 	{
-		// gh-681: NodeJSPortable.exe just runs "Server.cmd"
-		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
-		{
-			mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-			mn_ImageBits = GetComspecBitness();
-		}
-
 		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 		{
 			SetChildGui();
@@ -1902,7 +1895,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
 	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
 	if (!(NewConsoleFlags & CEF_NEWCON_SWITCH)
-		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
 		&& ((anShowCmd == nullptr) || (*anShowCmd != SW_HIDE)))
 	{
 		// 1. Цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ

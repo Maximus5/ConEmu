@@ -208,6 +208,8 @@ TEST(MStrSafe, wcscpyn_c)
 
 TEST(MStrSafe, strcpyn_c)
 {
+	gbVerifyIgnoreAsserts = true; // bypass debug asserts for invalid parameters
+
 	char data[16] = "";
 
 	memset(data, ' ', countof(data) - 1);
@@ -225,6 +227,8 @@ TEST(MStrSafe, strcpyn_c)
 	memset(data, ' ', countof(data) - 1);
 	_strcpyn_c(data, countof(data), "qwerty", 10);
 	EXPECT_STREQ(data, "qwerty");
+
+	gbVerifyIgnoreAsserts = false;
 }
 
 TEST(MStrSafe, wcscatn_c)
