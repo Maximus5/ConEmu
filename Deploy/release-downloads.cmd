@@ -1,4 +1,4 @@
 @setlocal
-@set dt=%date:~8,2%%date:~3,2%%date:~0,2%
-@powershell -noprofile -ExecutionPolicy RemoteSigned -command "%~dp0github-release-downloads.ps1" > "%~dp0downloads-%dt%.txt"
-@type "%~dp0downloads-%dt%.txt"
+@call "%~dp0GetCurDate.cmd"
+@powershell -noprofile -ExecutionPolicy RemoteSigned -command "%~dp0github-release-downloads.ps1" > "%~dp0downloads-%curdt%.txt"
+@type "%~dp0downloads-%curdt%.txt"
