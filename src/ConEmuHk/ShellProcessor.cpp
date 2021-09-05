@@ -872,7 +872,8 @@ BOOL CShellProc::ChangeExecuteParams(enum CmdOnCreateType aCmd,
 	#endif
 
 	// Starting CONSOLE application from GUI tab? This affect "Default terminal" too.
-	lbNewConsoleFromGui = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) && (gbPrepareDefaultTerminal || mb_isCurrentGuiClient);
+	lbNewConsoleFromGui = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
+	&& (gbPrepareDefaultTerminal || mb_isCurrentGuiClient);
 
 	#if 0
 	if (lbNewGuiConsole)
@@ -1934,7 +1935,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 		&& !mb_Opt_SkipCmdStart // Issue 1822
 		&& (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE)))
 		&& !(NewConsoleFlags & CEF_NEWCON_SWITCH) && !bForceNewConsole
-		&& (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		&& (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
 		&& ((anShowCmd == nullptr)
 			|| ((*anShowCmd != SW_HIDE)
 				&& (*anShowCmd != SW_SHOWMINNOACTIVE) && (*anShowCmd != SW_SHOWMINIMIZED) && (*anShowCmd != SW_MINIMIZE))
@@ -2099,7 +2100,7 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 					const auto& ver = gFarMode.farVer;
 					// Certain builds of Far Manager 3.x use ShellExecute
 					if ((aCmd == eShellExecute)
-						&& (ver.dwVerMajor >= 3)
+						&& (ver.dwVerMajor >= 3U)
 						&& (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
 					{
 						bGoChangeParm = true; break;
@@ -2109,10 +2110,10 @@ CShellProc::PrepareExecuteResult CShellProc::PrepareExecuteParams(
 					if (createDefaultErrorMode
 						// gh-1307: when user runs "script.py" it's executed by Far3 via ShellExecuteEx->CreateProcess(py.exe),
 						// we don't know it's a console process at the moment of ShellExecuteEx
-						&& ((ver.dwVerMajor <= 2)
-							|| ((gnInShellExecuteEx > 0) && (ver.dwVerMajor >= 3))
+						&& ((ver.dwVerMajor <= 2U)
+							|| ((gnInShellExecuteEx > 0) && (ver.dwVerMajor >= 3U))
 							// gh-2201: Far 3 build 5709 executor changes
-							|| ((gnInShellExecuteEx == 0) && ((ver.dwVerMajor == 3 && ver.dwBuild >= 5709) || (ver.dwVerMajor >= 3)))
+							|| ((gnInShellExecuteEx == 0) && ((ver.dwVerMajor == 3U && ver.dwBuild >= 5709U) || (ver.dwVerMajor >= 3U)))
 							))
 					{
 						bGoChangeParm = true; break;
