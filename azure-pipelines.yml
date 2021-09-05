@@ -38,54 +38,12 @@ jobs:
     displayName: 'Tests $(platform)|$(configuration)'
     failOnStderr: false
 
-- job: 'x64_Debug'
-  displayName: 'x64|Debug'
-  timeoutInMinutes: 15
-  variables:
-    platform: 'x64'
-    configuration: 'Debug'
-  steps:
-  - checkout: self
-    submodules: true
-  - task: VSBuild@1
-    displayName: 'Build $(platform)|$(configuration)'
-    inputs:
-      solution: '$(solution)'
-      platform: '$(platform)'
-      configuration: '$(configuration)'
-  - script: |
-      cd
-      call "$(configuration)\Tests_$(configuration)_$(platform).exe" --gtest_color=yes
-    displayName: 'Tests $(platform)|$(configuration)'
-    failOnStderr: false
-
 - job: 'Win32_Release'
   displayName: 'Win32|Release'
   timeoutInMinutes: 15
   variables:
     platform: 'Win32'
     configuration: 'Release'
-  steps:
-  - checkout: self
-    submodules: true
-  - task: VSBuild@1
-    displayName: 'Build $(platform)|$(configuration)'
-    inputs:
-      solution: '$(solution)'
-      platform: '$(platform)'
-      configuration: '$(configuration)'
-  - script: |
-      cd
-      call "$(configuration)\Tests_$(configuration)_$(platform).exe" --gtest_color=yes
-    displayName: 'Tests $(platform)|$(configuration)'
-    failOnStderr: false
-
-- job: 'Win32_Debug'
-  displayName: 'Win32|Debug'
-  timeoutInMinutes: 15
-  variables:
-    platform: 'Win32'
-    configuration: 'Debug'
   steps:
   - checkout: self
     submodules: true

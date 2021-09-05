@@ -2,7 +2,6 @@ version: 1.0.{build}
 image: Visual Studio 2019
 configuration:
 - Release
-- Debug
 platform:
 - x64
 - Win32
