@@ -390,6 +390,7 @@
   vkScreenshotFull: "Make screenshot of entire desktop"
   vkSetFocusChild: "Set focus to child GUI application"
   vkSetFocusGui: "Set focus to ConEmu"
+  vkSetFocusParent: "Set focus to the ConEmu parent window (ConEmu Inside mode)"
   vkSetFocusSwitch: "Switch focus between ConEmu and child GUI application (e.g. PuTTY or Notepad)"
   vkShowCaption: "Show window caption"
   vkShowStatusBar: "Show status bar"

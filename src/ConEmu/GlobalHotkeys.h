@@ -55,10 +55,10 @@ public:
 
 	struct RegisteredHotKeys
 	{
-		int DescrID;
-		int RegisteredID; // wParam for WM_HOTKEY
-		UINT VK, MOD;     // to react on changes
-		BOOL IsRegistered;
+		int DescrID = 0;
+		int RegisteredID = 0; // wParam for WM_HOTKEY
+		UINT VK = 0, MOD = 0;     // to react on changes
+		BOOL IsRegistered = FALSE;
 	};
 	
 protected:

@@ -474,13 +474,19 @@ enum ToolbarCommandIdx
 	TID_MINIMIZE_SEP = 110,
 };
 
-enum SwitchGuiFocusOp
+// Change focus commands, used from hotkeys and GuiMacro
+enum class SwitchGuiFocusOp : int
 {
-	sgf_None = 0,
-	sgf_FocusSwitch,
-	sgf_FocusGui,
-	sgf_FocusChild,
-	sgf_Last
+	// Set focus into ConEmu window/process
+	FocusConEmu = 0,
+	// Switch focus between ConEmu and ChildGui
+	FocusSwitch = 1,
+	// Set focus into ChildGui window of the active console
+	FocusChild = 2,
+	// Set focus into the parent of the ConEmu window (ConEmu Inside mode)
+	FocusParent = 3,
+	// Max possible ID to validate input args
+	Last
 };
 
 enum CEStatusFlags

@@ -687,30 +687,6 @@ bool CConEmuCtrl::key_ForcedFullScreen(const ConEmuChord& VkState, bool TestOnly
 	return true;
 }
 
-bool CConEmuCtrl::key_SwitchGuiFocus(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-
-	// Должно обрабатываться через WM_HOTKEY, но позовем
-
-	SwitchGuiFocusOp FocusOp;
-	switch (hk->DescrLangID)
-	{
-	case vkSetFocusSwitch:
-		FocusOp = sgf_FocusSwitch; break;
-	case vkSetFocusGui:
-		FocusOp = sgf_FocusGui; break;
-	case vkSetFocusChild:
-		FocusOp = sgf_FocusChild; break;
-	default:
-		FocusOp = sgf_None;
-	}
-
-	gpConEmu->OnSwitchGuiFocus(FocusOp);
-	return true;
-}
-
 bool CConEmuCtrl::key_ChildSystemMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
@@ -722,6 +698,17 @@ bool CConEmuCtrl::key_ChildSystemMenu(const ConEmuChord& VkState, bool TestOnly,
 	{
 		VCon->RCon()->ChildSystemMenu();
 	}
+	return true;
+}
+
+bool CConEmuCtrl::key_InsideSetFocusParent(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (gpConEmu->mp_Inside == nullptr)
+		return false;
+	if (TestOnly)
+		return true;
+
+	gpConEmu->OnSwitchGuiFocus(SwitchGuiFocusOp::FocusParent);
 	return true;
 }
 

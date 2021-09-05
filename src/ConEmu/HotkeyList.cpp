@@ -215,7 +215,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	_ASSERTE(this->empty());
 
 	/*
-		*** User (Keys, Global) -- Добавить chk_Global недостаточно, нужно еще и gRegisteredHotKeys обработать
+		*** User (Keys, Global) -- New chk_Global should be added to gRegisteredHotKeys
 	*/
 	Add(vkMinimizeRestore,chk_Global, L"MinimizeRestore",       CConEmuCtrl::key_MinimizeRestore)
 		.SetHotKey(VK_OEM_3/*~*/,VK_CONTROL);
@@ -228,18 +228,20 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkForceFullScreen,chk_Global, L"ForcedFullScreen",      CConEmuCtrl::key_ForcedFullScreen)
 		.SetHotKey(VK_RETURN,VK_CONTROL,VK_LWIN,VK_MENU);
 	/*
-		-- Добавить chk_Local недостаточно, нужно еще и gActiveOnlyHotKeys обработать
+		-- New chk_Local should be added to gActiveOnlyHotKeys
 	*/
-	Add(vkSetFocusSwitch, chk_Local,  L"SwitchGuiFocus",        CConEmuCtrl::key_SwitchGuiFocus)
+	Add(vkSetFocusSwitch, chk_Local,  L"SwitchGuiFocus"       ).SetMacro(L"SetFocus(1)")
 		.SetHotKey('Z',VK_LWIN);
-	Add(vkSetFocusGui,    chk_Local,  L"SetFocusGui",           CConEmuCtrl::key_SwitchGuiFocus)
+	Add(vkSetFocusGui,    chk_Local,  L"SetFocusGui"          ).SetMacro(L"SetFocus(0)")
 		;
-	Add(vkSetFocusChild,  chk_Local,  L"SetFocusChild",         CConEmuCtrl::key_SwitchGuiFocus)
+	Add(vkSetFocusChild,  chk_Local,  L"SetFocusChild"        ).SetMacro(L"SetFocus(2)")
 		;
 	Add(vkChildSystemMenu,chk_Local,  L"ChildSystemMenu",       CConEmuCtrl::key_ChildSystemMenu);
 	/*
 		*** User (Keys)
 	*/
+	Add(vkSetFocusParent, chk_User,   L"SetFocusParent",        CConEmuCtrl::key_InsideSetFocusParent)
+		.SetHotKey(VK_ESCAPE,VK_LSHIFT);
 	Add(vkCheckUpdates,    chk_User,  L"CheckUpdates"         ).SetMacro(L"Update()")
 		.SetHotKey('U',VK_LWIN,VK_SHIFT);
 	Add(vkMultiNew,        chk_User,  L"Multi.NewConsole"     ).SetMacro(L"Create()") // it can be used to create multiple consoles by holding Win+W

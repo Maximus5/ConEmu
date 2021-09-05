@@ -401,8 +401,12 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"  - Use to stop selection\r\n" \
 	L"SetDpi(<DPI>)\r\n" \
 	L"  - Change effective dpi for ConEmu window: 96, 120, 144, 192\r\n" \
-	L"SetFocus()\r\n" \
-	L"  - Try to set focus in ConEmu window\r\n" \
+	L"SetFocus(<Type>)\r\n" \
+	L"  - Try to change active window\r\n" \
+	L"     Type: 0 - Set focus into ConEmu window/process (default)\r\n" \
+	L"     Type: 1 - Switch focus between ConEmu and ChildGui\r\n" \
+	L"     Type: 2 - Set focus into ChildGui window of the active console\r\n" \
+	L"     Type: 3 - Set focus into the parent of the ConEmu window (ConEmu Inside mode)\r\n" \
 	L"SetOption('\"Check\",<ID>,<Value>)\r\n" \
 	L"  - Set one of checkbox/radio ConEmu's options\r\n" \
 	L"    ID: numeric identifier of checkbox (ConEmu.rc, resource.h)\r\n" \

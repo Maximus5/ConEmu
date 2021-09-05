@@ -56,12 +56,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSetter.h"
 #include "../common/MToolTip.h"
 #include "../common/MWow64Disable.h"
-#include "../common/MSetter.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
 #include "../common/WUser.h"
-#include "../ConEmuCD/GuiHooks.h"
 #include "AltNumpad.h"
 #include "Attach.h"
 #include "ConEmu.h"
@@ -76,14 +74,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GestureEngine.h"
 #include "GlobalHotkeys.h"
 #include "Inside.h"
-#include "LngRc.h"
 #include "LoadImg.h"
 #include "Macro.h"
 #include "Menu.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "PushInfo.h"
-#include "RealBuffer.h"
 #include "Recreate.h"
 #include "RunQueue.h"
 #include "SetCmdTask.h"
@@ -8085,9 +8081,9 @@ UINT CConEmuMain::IsQuakeVisible()
 
 void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 {
-	if (!((FocusOp > sgf_None) && (FocusOp < sgf_Last)))
+	if (!((FocusOp >= static_cast<SwitchGuiFocusOp>(0)) && (FocusOp < SwitchGuiFocusOp::Last)))
 	{
-		Assert((FocusOp > sgf_None) && (FocusOp < sgf_Last));  // -V571
+		Assert((FocusOp >= static_cast<SwitchGuiFocusOp>(0)) && (FocusOp < SwitchGuiFocusOp::Last));  // -V571
 		return;
 	}
 
@@ -8096,9 +8092,9 @@ void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
 	{
-		bool bSetChild = (FocusOp == sgf_FocusChild);
+		bool bSetChild = (FocusOp == SwitchGuiFocusOp::FocusChild);
 
-		if (FocusOp == sgf_FocusSwitch)
+		if (FocusOp == SwitchGuiFocusOp::FocusSwitch)
 		{
 			DWORD nFocusPID = 0;
 			HWND hGet = GetFocus();
@@ -8109,21 +8105,28 @@ void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 
 			if (nFocusPID == GetCurrentProcessId())
 			{
-				// Вернуть фокус в дочернее приложение
+				// Set focus into ChildGui application
 				bSetChild = true;
 			}
 		}
 
 		if (bSetChild)
 		{
-			// Вернуть фокус в дочернее приложение
+			// Set focus into ChildGui application
 			VCon->RCon()->GuiWndFocusRestore();
 			return;
 		}
 	}
 
-	// Поставить фокус в ConEmu
-	setFocus();
+	if (FocusOp == SwitchGuiFocusOp::FocusConEmu)
+	{
+		setFocus();
+	}
+	else if (FocusOp == SwitchGuiFocusOp::FocusParent)
+	{
+		if (mp_Inside)
+			mp_Inside->SetFocusParent();
+	}
 }
 
 // During excessing keyboard activity weird things may happen:

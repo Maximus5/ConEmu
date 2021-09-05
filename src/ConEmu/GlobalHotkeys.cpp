@@ -283,10 +283,10 @@ void GlobalHotkeys::OnWmHotkey(WPARAM wParam, DWORD nTime /*= 0*/) const
 	case HOTKEY_SETFOCUSGUI_ID:
 	case HOTKEY_SETFOCUSCHILD_ID:
 	{
-		SwitchGuiFocusOp FocusOp =
-			(wParam == HOTKEY_SETFOCUSSWITCH_ID) ? sgf_FocusSwitch :
-			(wParam == HOTKEY_SETFOCUSGUI_ID) ? sgf_FocusGui :
-			(wParam == HOTKEY_SETFOCUSCHILD_ID) ? sgf_FocusChild : sgf_None;
+		const SwitchGuiFocusOp FocusOp =
+			(wParam == HOTKEY_SETFOCUSSWITCH_ID) ? SwitchGuiFocusOp::FocusSwitch
+			: (wParam == HOTKEY_SETFOCUSCHILD_ID) ? SwitchGuiFocusOp::FocusChild
+			: SwitchGuiFocusOp::FocusConEmu;
 		gpConEmu->OnSwitchGuiFocus(FocusOp);
 		break;
 	}

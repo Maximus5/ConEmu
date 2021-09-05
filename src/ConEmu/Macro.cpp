@@ -290,6 +290,7 @@ namespace ConEmuMacro
 		// End
 		{nullptr}
 	};
+
 };
 
 
@@ -2426,7 +2427,15 @@ CEStr ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugi
 // SetFocus
 CEStr ConEmuMacro::SetFocus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-	gpConEmu->setFocus();
+	int command = 0;
+	if (!p->GetIntArg(0, command))
+		command = 0;
+
+	if ((command < 0) || static_cast<SwitchGuiFocusOp>(command) >= SwitchGuiFocusOp::Last)
+		return lstrdup(L"InvalidArg");
+
+	gpConEmu->OnSwitchGuiFocus(static_cast<SwitchGuiFocusOp>(command));
+
 	return lstrdup(L"OK");
 }
 

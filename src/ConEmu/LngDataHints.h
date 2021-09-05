@@ -439,6 +439,7 @@ static LngPredefined gsDataHints[] = {
 	{ vkScreenshotFull,        L"Make screenshot of entire desktop" },
 	{ vkSetFocusChild,         L"Set focus to child GUI application" },
 	{ vkSetFocusGui,           L"Set focus to ConEmu" },
+	{ vkSetFocusParent,        L"Set focus to the ConEmu parent window (ConEmu Inside mode)" },
 	{ vkSetFocusSwitch,        L"Switch focus between ConEmu and child GUI application (e.g. PuTTY or Notepad)" },
 	{ vkShowCaption,           L"Show window caption" },
 	{ vkShowStatusBar,         L"Show status bar" },

@@ -406,6 +406,34 @@ CConEmuInside::InsideIntegration CConEmuInside::GetInsideIntegration() const
 	return m_InsideIntegration;
 }
 
+bool CConEmuInside::SetFocusParent() const
+{
+	const bool wasForeground = gpConEmu->isMeForeground(false, false);
+
+	auto* parentWnd = GetParentRoot();
+	if (parentWnd == nullptr)
+		return false;
+
+	const bool isVisualStudio = (_wcsicmp(m_InsideParentInfo.ExeName, L"devenv.exe") == 0);
+
+	SetForegroundWindow(parentWnd);
+	SetFocus(parentWnd);
+
+	// When working in VisualStudio as panel (ConEmu Integration extension)
+	if (wasForeground && isVisualStudio)
+	{
+		// We need to "deactivate" the panel. For that we need to send the "Esc" keypress
+		// but if the Shift key is still pressed, the panel is closed instead of deactivation.
+		if (!isPressed(VK_SHIFT))
+		{
+			PostMessage(parentWnd, WM_KEYDOWN, VK_ESCAPE, 0);
+			PostMessage(parentWnd, WM_KEYUP, VK_ESCAPE, 0);
+		}
+	}
+
+	return true;
+}
+
 const CConEmuInside::InsideParentInfo& CConEmuInside::GetParentInfo() const
 {
 	return m_InsideParentInfo;

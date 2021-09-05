@@ -6282,6 +6282,10 @@
       "ko_KR": "ConEmu에 초점 설정",
       "id": 2575 }
     ,
+    "vkSetFocusParent": {
+      "en": "Set focus to the ConEmu parent window (ConEmu Inside mode)",
+      "id": 3212 }
+    ,
     "vkSetFocusSwitch": {
       "en": "Switch focus between ConEmu and child GUI application (e.g. PuTTY or Notepad)",
       "ru": "Переключение фокуса между ConEmu и дочерним GUI приложением (например, PuTTY или Notepad)",

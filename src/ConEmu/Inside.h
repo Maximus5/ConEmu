@@ -88,6 +88,8 @@ public:
 	HWND  GetParentWnd() const;
 	InsideIntegration GetInsideIntegration() const;
 
+	bool SetFocusParent() const;
+
 	const InsideParentInfo& GetParentInfo() const;
 
 	bool IsInsideIntegrationAdmin() const;
