@@ -112,9 +112,20 @@ void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
 
 ConEmuUpdateSettings::Builds ConEmuUpdateSettings::GetDefaultUpdateChannel()
 {
-	return (ConEmuVersionStage == CEVS_ALPHA) ? Builds::Alpha
-		: (ConEmuVersionStage == CEVS_PREVIEW) ? Builds::Preview
-		: Builds::Undefined;
+	// ReSharper disable once CppLocalVariableMayBeConst
+	int stage = ConEmuVersionStage;
+	switch (stage)
+	{
+	case CEVS_ALPHA:
+		return Builds::Alpha;
+	case CEVS_PREVIEW:
+		return Builds::Preview;
+	case CEVS_STABLE:
+		return Builds::Stable;
+	default:
+		std::ignore = stage;
+		return Builds::Undefined;
+	}
 }
 
 void ConEmuUpdateSettings::ResetToDefaults()
