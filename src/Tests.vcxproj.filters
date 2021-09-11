@@ -1445,6 +1445,9 @@
     <ClCompile Include="common\WFiles.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\WFiles_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\WModuleCheck.cpp">
       <Filter>common</Filter>
     </ClCompile>

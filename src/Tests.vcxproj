@@ -777,6 +777,7 @@
     <ClCompile Include="common\WConsoleEx.cpp" />
     <ClCompile Include="common\WConsoleInfo.cpp" />
     <ClCompile Include="common\WFiles.cpp" />
+    <ClCompile Include="common\WFiles_test.cpp" />
     <ClCompile Include="common\WModuleCheck.cpp" />
     <ClCompile Include="common\WObjects.cpp" />
     <ClCompile Include="common\WRegistry.cpp" />

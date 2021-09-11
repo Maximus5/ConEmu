@@ -342,7 +342,7 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 
 	const DWORD nSize = GetFileSize(hFile, nullptr);
 
-	if (!nSize || nSize >= cchMax)
+	if (static_cast<int>(nSize) <= 0 || nSize >= cchMax)
 	{
 		rnErrCode = GetLastError();
 		return -2;
@@ -352,17 +352,17 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	char* pszDataA = ansiBuffer.GetBuffer(nSize+5);
 	if (!pszDataA)
 	{
-		_ASSERTE(pszDataA);
+		_ASSERTE(pszDataA); //-V571
 		return -3;
 	}
 	pszDataA[nSize] = 0; pszDataA[nSize+1] = 0; pszDataA[nSize+2] = 0; pszDataA[nSize+3] = 0; pszDataA[nSize+4] = 0;
 
 	DWORD nRead = 0;
-	const BOOL  bRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
+	const BOOL readSuccess = ReadFile(hFile, pszDataA, static_cast<DWORD>(ansiBuffer.GetMaxCount()), &nRead, nullptr);
 	rnErrCode = GetLastError();
 	hFile.Close();
 
-	if (!bRead || (nRead != nSize))
+	if (!readSuccess || (nRead != nSize))
 	{
 		return -4;
 	}
@@ -377,30 +377,31 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	}
 
 	// Detect codepage
-	if ((DefaultCP == CP_UTF8) || (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF'))
+	if ((DefaultCP == CP_UTF8) || (nRead >= 3 && pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF'))
 	{
-		const bool BOM = (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF');
-		const auto* pszNoBom = pszDataA + (BOM ? 3 : 0);
-		const DWORD nLenNoBom = nSize - (BOM ? 3 : 0);
+		const bool isBom = (nRead >= 3 && pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF');
+		const auto* pszNoBom = pszDataA + (isBom ? 3 : 0);
+		const DWORD nLenNoBom = nSize - (isBom ? 3 : 0);
 		// UTF-8 BOM
 		if (!rsBuffer.GetBuffer(nSize + 2))
 		{
 			_ASSERTE(rsBuffer);
 			return -5;
 		}
-		const int nLen = MultiByteToWideChar(CP_UTF8, 0, pszNoBom, nLenNoBom,
-			rsBuffer.data(), nSize);
+		const int nLen = MultiByteToWideChar(CP_UTF8, 0, pszNoBom, static_cast<int>(nLenNoBom),
+			rsBuffer.data(), static_cast<int>(nSize));
 		if ((nLen < 0) || (nLen > static_cast<int>(nSize)))
 		{
 			rsBuffer.Clear();
 			return -6;
 		}
+		rsBuffer.SetAt(nLen, 0);
 		rnChars = nLen;
 	}
-	else if ((DefaultCP == 1200) || (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE'))
+	else if ((DefaultCP == 1200) || (nRead >= 2 && pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE'))
 	{
-		const bool BOM = (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE');
-		if (!BOM)
+		const bool isBom = (nRead >= 2 && pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE');
+		if (!isBom)
 		{
 			rsBuffer.Attach(reinterpret_cast<wchar_t*>(ansiBuffer.Detach()));
 			pszDataA = nullptr;
@@ -414,10 +415,11 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 			rsBuffer.Set(reinterpret_cast<const wchar_t*>(pszNoBom));
 			if (!rsBuffer)
 			{
-				_ASSERTE(rsBuffer);
+				_ASSERTE(rsBuffer); //-V571
 				return -7;
 			}
 			rnChars = (nLenNoBom >> 1);
+			rsBuffer.SetAt(rnChars, 0);
 		}
 	}
 	else
@@ -428,13 +430,14 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 			rsBuffer.Clear();
 			return -8;
 		}
-		const int nLen = MultiByteToWideChar(DefaultCP ? DefaultCP : CP_ACP, 0, pszDataA, nSize,
+		const int nLen = MultiByteToWideChar(DefaultCP ? DefaultCP : CP_ACP, 0, pszDataA, static_cast<int>(nSize),
 			rsBuffer.data(), static_cast<int>(rsBuffer.GetMaxCount()));
 		if ((nLen < 0) || (nLen > static_cast<int>(nSize)))
 		{
 			rsBuffer.Clear();
 			return -8;
 		}
+		rsBuffer.SetAt(nLen, 0);
 		rnChars = nLen;
 	}
 
