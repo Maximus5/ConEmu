@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WFiles.h"
 
 #include "MHandle.h"
+#include "MModule.h"
 #include "WObjects.h"
 #include "WRegistry.h"
 
@@ -619,7 +620,6 @@ static bool EnumFilesInternal(
 		}
 
 		const CEStr lsChild(JoinPath(directory, fnd.cFileName));
-		found = true;
 
 		if (callback)
 		{
@@ -640,6 +640,10 @@ static bool EnumFilesInternal(
 				found = true;
 			if (stop)
 				break;
+		}
+		else
+		{
+			found = true;
 		}
 	}
 	while (FindNextFile(hFind, &fnd));
@@ -922,16 +926,17 @@ int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped)
 int apiCancelSynchronousIo(HANDLE hThread)
 {
 	int iRc = -1;
+	// ReSharper disable once CppTooWideScope
 	BOOL bRc = FALSE;
 
-	typedef BOOL (WINAPI* CancelSynchronousIo_t)(HANDLE hThread);
+	typedef BOOL (WINAPI* CancelSynchronousIo_t)(HANDLE thread);
 	static CancelSynchronousIo_t fnCancelSynchronousIo = nullptr;
 	static bool fnChecked = false;
 
 	if (!fnChecked)
 	{
-		HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
-		fnCancelSynchronousIo = hKernel ? (CancelSynchronousIo_t)GetProcAddress(hKernel, "CancelSynchronousIo") : nullptr;
+		const MModule hKernel(GetModuleHandle(L"Kernel32.dll"));
+		hKernel.GetProcAddress("CancelSynchronousIo", fnCancelSynchronousIo);
 		fnChecked = false;
 	}
 

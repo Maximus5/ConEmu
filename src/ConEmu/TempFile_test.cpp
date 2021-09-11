@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WObjects.h"
 
 namespace {
-const wchar_t testTempDir[] = L"%TEMP%\\ConEmuTest";
+constexpr wchar_t testTempDir[] = L"%TEMP%\\ConEmuTest";
 }
 
 class TempFileTest : public testing::Test
