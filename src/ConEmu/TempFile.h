@@ -56,7 +56,7 @@ public:
 	bool CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, ErrorInfo& ec);
 
 	bool IsValid() const;
-	void Release(bool deleteFile = true);
+	bool Release(bool deleteFile = true);
 	void CloseFile();
 	HANDLE GetHandle() const;
 	const wchar_t* GetFilePath() const;

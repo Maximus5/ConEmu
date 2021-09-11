@@ -190,19 +190,37 @@ bool TempFile::IsValid() const
 	return !path_.IsEmpty();
 }
 
-void TempFile::Release(const bool deleteFile)
+bool TempFile::Release(const bool deleteFile)
 {
+	bool result = true;
+	DWORD errCode = 0;
+
 	CloseFile();
 
-	if (deleteFile)
+	if (deleteFile && !path_.IsEmpty())
 	{
 		const CEStr fileToDelete(std::move(path_));
 		if (!fileToDelete.IsEmpty())
 		{
-			::DeleteFileW(fileToDelete.c_str());
+			SetFileAttributesW(fileToDelete.c_str(), FILE_ATTRIBUTE_NORMAL);
+
+			if (!::DeleteFileW(fileToDelete.c_str()))
+			{
+				errCode = GetLastError();
+				// MoveFileEx most probably will fail because ConEmu in most cases is not running as Admin
+				// and the MOVEFILE_DELAY_UNTIL_REBOOT is expected to modify the HKLM value.
+				if (!MoveFileExW(fileToDelete.c_str(), nullptr, MOVEFILE_DELAY_UNTIL_REBOOT))
+				{
+					errCode = GetLastError();
+					result = false;
+				}
+			}
 		}
 	}
 	path_.Release();
+
+	std::ignore = errCode;
+	return result;
 }
 
 void TempFile::CloseFile()
