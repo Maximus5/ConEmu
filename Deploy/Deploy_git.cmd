@@ -83,6 +83,7 @@ set ex7z_src=License.txt cmd_autorun.cmd About-ConEmu.txt FAQ-ConEmu.txt Setting
 set ex7z_src=%ex7z_src% -x!src\dosbox -x!src\*.plog -x!src\ConEmu_Org -x!\MinGW\ -x!src\_Profiler -x!src\_ToDo -x!*.diff -x!*.cab -x!src\Setup\setup_exe
 set ex7z_src=%ex7z_src% -x!src\ConEmuTh\Modules\mp3 -x!src\ConEmuTh\Modules\pe\ver_c0*.dll -x!src\ConEmuLn\x64 -x!src\ConEmuDW\Test\ConEmu
 set ex7z_src=%ex7z_src% -x!src\ConEmuDW\Test.std -x!src\ConEmuDW\95.mht -x!src\ConEmuDW\viewtopic.htm -x!src\ConEmuBg\x64 -x!_VCBUILD  -x!*.VC.db-*
+set ex7z_src=%ex7z_src% -x!coverage -x!far
 7z a -r "%ConEmu_Maximus5_src_7z%" src\* *.lng %ex7zlist% %ex7z_src%
 7z a -r "%ConEmu_Maximus5_src_7z%" PortableApps\*
 if errorlevel 1 goto err7z

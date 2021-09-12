@@ -20,6 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2021.9.12
+* gh-2363: Fix tasks file parser.
+* If temp file deletion fails register it to delete on reboot.
+* Default update channel for stable builds should be Stable.
+* l10n: translations were updated
+
+
 2021.9.5
 * Add hotkey to move focus from ConEmu to parent window during ConEmu Inside mode.
 * gh-2362: When ‘Process 'start'’ is enabled support starting .bat files from Far Manager by Shift+Enter in new tab automatically.
