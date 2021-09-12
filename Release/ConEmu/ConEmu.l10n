@@ -6284,6 +6284,8 @@
     ,
     "vkSetFocusParent": {
       "en": "Set focus to the ConEmu parent window (ConEmu Inside mode)",
+      "ko": "ConEmu 부모 창에 포커스 설정 (ConEmu Inside 모드)",
+      "ko_KR": "ConEmu 부모 창에 포커스 설정 (ConEmu Inside 모드)",
       "id": 3212 }
     ,
     "vkSetFocusSwitch": {
