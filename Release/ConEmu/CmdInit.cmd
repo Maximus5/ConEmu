@@ -1,5 +1,7 @@
-@rem !!! Do not change this file in-place, change its copy instead !!!
-@rem !!!  Otherwise you will lose your settings after next update  !!!
+@rem !!! Do not change this file in-place, otherwise you will lose !!!
+@rem !!! your settings after next update.                          !!!
+@rem !!! Create "%USERPROFILE%\.conemu\CmdInit.cmd" and add your   !!!
+@rem !!! custom settings there.                                    !!!
 
 @echo off
 
@@ -49,6 +51,11 @@ goto :end_git
 rem Set new prompt
 PROMPT %ConEmuPrompt1%%ConEmuPrompt2%%ConEmuPrompt3%
 :end_git
+
+rem User profile additions
+if exist "%USERPROFILE%\.conemu\CmdInit.cmd" (
+    call "%USERPROFILE%\.conemu\CmdInit.cmd"
+    )
 
 rem Support additional batch execution as `{cmd} "path\to\batch.cmd" <arguments>`
 rem Due to parsing rules of cmd.exe last argument must NOT ends with "
