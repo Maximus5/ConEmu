@@ -177,9 +177,9 @@ class CRealConsole
 		friend class CVirtualConsole;
 #endif
 	protected:
-		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
-		CConEmuMain*     mp_ConEmu;
-		bool mb_ConstuctorFinished;
+		CVirtualConsole* mp_VCon = nullptr;
+		CConEmuMain*     mp_ConEmu = nullptr;
+		bool mb_ConstuctorFinished = false;
 
 	public:
 
@@ -191,7 +191,7 @@ class CRealConsole
 
 	private:
 		HWND    hConWnd;
-		BYTE    m_ConsoleKeyShortcuts;
+		BYTE    m_ConsoleKeyShortcuts = 0;
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
 		HKEY    PrepareConsoleRegistryKey(LPCWSTR asSubKey) const;
 		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = nullptr);
@@ -377,7 +377,7 @@ class CRealConsole
 		CEStr mpsz_PostCreateMacro;
 		void ProcessPostponedMacro();
 		static DWORD WINAPI PostMacroThread(LPVOID lpParameter);
-		HANDLE mh_PostMacroThread; DWORD mn_PostMacroThreadID;
+		HANDLE mh_PostMacroThread = nullptr; DWORD mn_PostMacroThreadID = 0;
 		void PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData);
 		DWORD mn_InPostDeadChar;
 		void OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
@@ -632,7 +632,7 @@ class CRealConsole
 	public:
 		void MonitorAssertTrap();
 	private:
-		bool mb_MonitorAssertTrap;
+		bool mb_MonitorAssertTrap = false;
 
 	protected:
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
@@ -641,7 +641,7 @@ class CRealConsole
 		void SetInCloseConsole(bool InCloseConsole);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
-		uint64_t mn_ProcessAffinity; DWORD mn_ProcessPriority;
+		uint64_t mn_ProcessAffinity = 1; DWORD mn_ProcessPriority = NORMAL_PRIORITY_CLASS;
 		CDpiForDialog* mp_PriorityDpiAware = nullptr;
 		void RepositionDialogWithTab(HWND hDlg);
 		static INT_PTR CALLBACK priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -680,24 +680,29 @@ class CRealConsole
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
 		// Текущий заголовок консоли и его значение для сравнения (для определения изменений)
-		WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
+		WCHAR Title[MAX_TITLE_SIZE + 1] = L"";
+		WCHAR TitleCmp[MAX_TITLE_SIZE + 1] = L"";
 		// А здесь содержится то, что отображается в ConEmu (может быть добавлено " (Admin)")
-		WCHAR TitleFull[MAX_TITLE_SIZE+96], TitleAdmin[MAX_TITLE_SIZE+192];
+		WCHAR TitleFull[MAX_TITLE_SIZE + 96] = L"";
+		WCHAR TitleAdmin[MAX_TITLE_SIZE + 192] = L"";
 		// Буфер для CRealConsole::GetTitle
-		wchar_t TempTitleRenamed[MAX_RENAME_TAB_LEN/*128*/];
+		wchar_t TempTitleRenamed[MAX_RENAME_TAB_LEN/*128*/] = L"";
 		// Принудительно дернуть OnTitleChanged, например, при изменении процентов в консоли
-		bool mb_ForceTitleChanged;
+		bool mb_ForceTitleChanged = false;
 		// Здесь сохраняется заголовок окна (с панелями), когда FAR фокус с панелей уходит (переходит в редактор...).
-		WCHAR ms_PanelTitle[CONEMUTABMAX];
+		WCHAR ms_PanelTitle[CONEMUTABMAX] = L"";
 		// Процентики
 		struct {
-			short Progress, LastShownProgress;
-			short PreWarningProgress; DWORD LastWarnCheckTick;
-			short ConsoleProgress, LastConsoleProgress; DWORD LastConProgrTick;
+			short Progress = -1; // "-1" means - no percentage
+			short LastShownProgress = -1;
+			short PreWarningProgress = -1; DWORD LastWarnCheckTick = 0;
+			short ConsoleProgress = -1;
+			short LastConsoleProgress = -1;
+			DWORD LastConProgrTick = 0;
 			// Could be set from the console (Ansi codes, Macro)
-			AnsiProgressStatus AppProgressState;
+			AnsiProgressStatus AppProgressState = AnsiProgressStatus::None;
 			// Could be set from the console (Ansi codes, Macro)
-			short AppProgress;
+			short AppProgress = 0;
 		} m_Progress;
 		// a-la properties
 		void setProgress(short value);
@@ -725,7 +730,7 @@ class CRealConsole
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 		DWORD MonitorThreadWorker(bool bDetached, bool& rbChildProcessCreated);
 		static int WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine);
-		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID; bool mb_WasForceTerminated;
+		HANDLE mh_MonitorThread = nullptr; DWORD mn_MonitorThreadID = 0; bool mb_WasForceTerminated = false;
 		HANDLE mh_MonitorThreadEvent;
 		HANDLE mh_UpdateServerActiveEvent;
 		DWORD mn_ServerActiveTick1, mn_ServerActiveTick2;
@@ -813,17 +818,17 @@ class CRealConsole
 		struct _TabsInfo
 		{
 			CTabStack m_Tabs;
-			CTab* mp_ActiveTab;
-			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
-			bool mb_WasInitialized; // Информационно, чтобы ассертов не было
-			bool mb_TabsWasChanged;
+			CTab* mp_ActiveTab = nullptr;
+			int  mn_tabsCount = 0; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
+			bool mb_WasInitialized = false; // Информационно, чтобы ассертов не было
+			bool mb_TabsWasChanged = false;
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
-			CEFarWindowType nActiveType;
-			int  nActiveIndex;
-			int  nActiveFarWindow;
-			bool bConsoleDataChanged;
-			LONG nFlashCounter;
-			wchar_t sTabActivationErr[128];
+			CEFarWindowType nActiveType = fwt_Panels|fwt_CurrentFarWnd;
+			int  nActiveIndex = 0;
+			int  nActiveFarWindow = 0;
+			bool bConsoleDataChanged = false;
+			LONG nFlashCounter = 0;
+			wchar_t sTabActivationErr[128] = L"";
 			void StoreActiveTab(int anActiveIndex, CTab& ActiveTab);
 			bool RefreshFarPID(DWORD nNewPID);
 		} tabs;
@@ -844,8 +849,8 @@ class CRealConsole
 
 		void SetHwnd(HWND ahConWnd, bool abForceApprove = false);
 		void CheckVConRConPointer(bool bForceSet);
-		WORD mn_LastVKeyPressed;
-		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
+		WORD mn_LastVKeyPressed = 0;
+		int mn_Focused = -1; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
 		bool mb_RecreateFailed;
 		bool mb_InDetach; // DetachRCon was initiated
@@ -860,7 +865,7 @@ class CRealConsole
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
 		// Logging
-		MFileLog *mp_Log;
+		MFileLog *mp_Log = nullptr;
 		void CreateLogFiles();
 		void CloseLogFiles();
 		bool LogInput(INPUT_RECORD* pRec);
@@ -870,9 +875,9 @@ class CRealConsole
 		// CEFARALIVEEVENT, used to check if Far is reading console input (is alive)
 		MEvent m_FarAliveEvent;
 		// last tick when m_FarAliveEvent was checked
-		DWORD mn_LastFarReadTick;
+		DWORD mn_LastFarReadTick = 0;
 		// last tick when m_FarAliveEvent was set
-		DWORD mn_LastFarAliveTick;
+		DWORD mn_LastFarAliveTick = 0;
 
 		MPipe<CESERVER_REQ_HDR,CESERVER_REQ_HDR> m_GetDataPipe;
 		MEvent m_ConDataChanged;
@@ -892,11 +897,11 @@ class CRealConsole
 		AnnotationHeader m_TrueColorerHeader;
 		const AnnotationInfo *mp_TrueColorerData;
 		int mn_TrueColorMaxCells;
-		DWORD mn_LastColorFarID;
+		DWORD mn_LastColorFarID = 0;
 		void CreateColorMapping(); // Open TrueColor mapping
 		void CloseColorMapping();
 		//
-		DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx;
+		DWORD mn_LastConsoleDataIdx = -1, mn_LastConsolePacketIdx = -1;
 		bool OpenFarMapData();
 		void CloseFarMapData(MSectionLock* pCS = nullptr);
 		bool OpenMapHeader(bool abFromAttach = false);
@@ -929,9 +934,10 @@ class CRealConsole
 		void OnTitleChanged();
 		DWORD mn_LastInvalidateTick;
 		//
-		HWND hPictureView; bool mb_PicViewWasHidden;
+		HWND hPictureView = nullptr; bool mb_PicViewWasHidden = false;
 		//
-		SHELLEXECUTEINFO *mp_sei, *mp_sei_dbg;
+		SHELLEXECUTEINFO* mp_sei = nullptr;
+		SHELLEXECUTEINFO* mp_sei_dbg = nullptr;
 		//
 		HWND FindPicViewFrom(HWND hFrom);
 		//
@@ -943,8 +949,8 @@ class CRealConsole
 		bool mb_InPostCloseMacro;
 
 		// Searching for files on the console surface (hyperlinking)
-		CRConFiles* mp_Files;
+		CRConFiles* mp_Files = nullptr;
 
 		// XTerm keyboard substitutions
-		TermX* mp_XTerm;
+		TermX* mp_XTerm = nullptr;
 };

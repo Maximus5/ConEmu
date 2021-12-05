@@ -227,9 +227,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 
 	_ASSERTE(mp_VCon == apVCon);
 	mp_VCon = apVCon;
-	mp_Log = nullptr;
-	mp_Files = nullptr;
-	mp_XTerm = nullptr;
 
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu (2)", cso_ResetOnConsoleReady|cso_DontUpdate|cso_Critical);
@@ -244,23 +241,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 		PostMessage(apVCon->GetView(), WM_SETCURSOR, -1, -1);
 	}
 
-	mb_MonitorAssertTrap = false;
-
-	//mp_Rgn = new CRgnDetect();
-	//mn_LastRgnFlags = -1;
-	m_ConsoleKeyShortcuts = 0;
-	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
-
 	// Tabs
-	tabs.mn_tabsCount = 0;
-	tabs.mb_WasInitialized = false;
-	tabs.mb_TabsWasChanged = false;
-	tabs.bConsoleDataChanged = false;
-	tabs.nActiveIndex = 0;
-	tabs.nActiveFarWindow = 0;
-	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
-	tabs.sTabActivationErr[0] = 0;
-	tabs.nFlashCounter = 0;
 	tabs.mp_ActiveTab = new CTab("RealConsole:mp_ActiveTab",__LINE__);
 
 	#ifdef TAB_REF_PLACE
@@ -276,24 +257,11 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	else
 		mn_ProcessAffinity = 1;
 	mn_ProcessPriority = GetPriorityClass(GetCurrentProcess());
-	mp_PriorityDpiAware = nullptr;
 
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
 	wcscpy_c(Title, mp_ConEmu->GetDefaultTitle());
 	wcscpy_c(TitleFull, Title);
-	TitleAdmin[0] = 0;
-	ms_PanelTitle[0] = 0;
-	mb_ForceTitleChanged = FALSE;
-	m_Progress = {};
-	m_Progress.Progress = m_Progress.PreWarningProgress = m_Progress.LastShownProgress = -1; // Процентов нет
-	m_Progress.ConsoleProgress = m_Progress.LastConsoleProgress = -1;
-	hPictureView = nullptr; mb_PicViewWasHidden = FALSE;
-	mh_MonitorThread = nullptr; mn_MonitorThreadID = 0; mb_WasForceTerminated = FALSE;
-	mpsz_PostCreateMacro = nullptr;
-	mh_PostMacroThread = nullptr; mn_PostMacroThreadID = 0;
-	mp_sei = nullptr;
-	mp_sei_dbg = nullptr;
 	mn_MainSrv_PID = mn_ConHost_PID = 0; mh_MainSrv = nullptr; mb_MainSrv_Ready = false;
 	mn_CheckFreqLock = 0;
 	mn_ActiveLayout = 0;
@@ -406,24 +374,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	setGuiWndPID(nullptr, 0, 0, nullptr); // force set mn_GuiWndPID to 0
 
 	mn_InPostDeadChar = 0;
-
-	//hFileMapping = nullptr; pConsoleData = nullptr;
-	mn_Focused = -1;
-	mn_LastVKeyPressed = 0;
-	//mh_LogInput = nullptr; mpsz_LogInputFile = nullptr; //mpsz_LogPackets = nullptr; mn_LogPackets = 0;
-	//mh_FileMapping = mh_FileMappingData = mh_FarFileMapping =
-	//mh_FarAliveEvent = nullptr;
-	//mp_ConsoleInfo = nullptr;
-	//mp_ConsoleData = nullptr;
-	//mp_FarInfo = nullptr;
-	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
-	mn_LastFarReadTick = mn_LastFarAliveTick = 0;
-	//ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
-	//mh_ColorMapping = nullptr;
-	//mp_ColorHdr = nullptr;
-	//mp_ColorData = nullptr;
-	mn_LastColorFarID = 0;
-	//ms_ConEmuC_DataReady[0] = 0; mh_ConEmuC_DataReady = nullptr;
 
 	mp_TrueColorerData = nullptr;
 	mn_TrueColorMaxCells = 0;
