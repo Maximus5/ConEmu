@@ -41,6 +41,7 @@
 	<?define Guid.ClsEx.cmd = "A6778698-97C2-4CA6-88C2-E0E3E774B4AB" ?>
 	<?define Guid.Cmd_Autorun.cmd = "E4DDDE2E-D547-480A-BA5A-67B5FDE011A3" ?>
 	<?define Guid.CmdInit.cmd = "6D38C653-BC4B-47E2-941E-18607E5A430B" ?>
+	<?define Guid.CmdInit_user_sample.cmd = "6C42130B-A4C0-44CA-A349-79C68FB0BD16" ?>
 	<?define Guid.ColorPrompt.cmd = "8622B482-B737-4B4B-92B1-745AC7471752" ?>
 	<?define Guid.cecho.cmd = "62E78F5D-93C0-4FB5-8D23-B0D98CE542BA" ?>
 	<?define Guid.csudo.cmd = "A270A9A8-E549-474C-A6FE-E02E36796F82" ?>

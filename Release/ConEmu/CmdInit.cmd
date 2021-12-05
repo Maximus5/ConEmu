@@ -54,8 +54,8 @@ PROMPT %ConEmuPrompt1%%ConEmuPrompt2%%ConEmuPrompt3%
 
 rem User profile additions
 if exist "%USERPROFILE%\.conemu\CmdInit.cmd" (
-    call "%USERPROFILE%\.conemu\CmdInit.cmd"
-    )
+  call "%USERPROFILE%\.conemu\CmdInit.cmd"
+)
 
 rem Support additional batch execution as `{cmd} "path\to\batch.cmd" <arguments>`
 rem Due to parsing rules of cmd.exe last argument must NOT ends with "

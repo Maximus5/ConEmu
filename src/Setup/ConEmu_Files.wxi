@@ -80,6 +80,9 @@
       <Component Id="CmdInit.cmd" Guid="$(var.Guid.CmdInit.cmd)" Win64="$(var.Win64)">
         <File Id="CmdInit.cmd" Source="..\..\Release\ConEmu\CmdInit.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="CmdInit_user_sample.cmd" Guid="$(var.Guid.CmdInit_user_sample.cmd)" Win64="$(var.Win64)">
+        <File Id="CmdInit_user_sample.cmd" Source="..\..\Release\ConEmu\CmdInit_user_sample.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="ColorPrompt.cmd" Guid="$(var.Guid.ColorPrompt.cmd)" Win64="$(var.Win64)">
         <File Id="ColorPrompt.cmd" Source="..\..\Release\ConEmu\ColorPrompt.cmd"  KeyPath="yes" />
       </Component>
