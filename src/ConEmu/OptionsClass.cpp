@@ -409,7 +409,7 @@ void CSettings::InitVars_Pages()
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_GENERAL,     0, lng_SpgGeneral,      thi_General,      L"SettingsFast.html",         CSetPgGeneral::Create},
-		{IDD_SPG_FONTS,       1, lng_SpgFonts,        thi_Fonts,        L"SettingsMain.html",         CSetPgFonts::Create},
+		{IDD_SPG_FONTS,       1, lng_SpgFonts,        thi_Fonts,        L"SettingsFonts.html",         CSetPgFonts::Create},
 		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      L"SettingsSizePos.html",      CSetPgSizePos::Create},
 		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       L"SettingsAppearance.html",   CSetPgAppear::Create},
 		{IDD_SPG_QUAKE,       1, lng_SpgQuake,        thi_Quake,        L"SettingsQuake.html",        CSetPgQuake::Create},
