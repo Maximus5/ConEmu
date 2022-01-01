@@ -211,7 +211,7 @@ static LngPredefined gsDataHints[] = {
 	{ lbExtendFontNormalIdx,   L"When Bold or Italic font property was inverted, ConEmu may change background to default color (default is Blue #1)" },
 	{ lbGotoEditorCmd,         L"Command line for starting editor with file positioned on line and column" },
 	{ lbLDragKey,              L"Drag with left mouse button, only when pressed..." },
-	{ lbNtvdmHeight,           L"Old DOS programs may be run under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\r\nThis feature is not available in x64 OS." },
+	{ lbNtvdmHeight,           L"Old DOS programs may be run under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or leave the automatic selection.\r\nThis feature is not available in x64 OS." },
 	{ lbRDragKey,              L"Drag with right mouse button, only when pressed..." },
 	{ rCursorB,                L"Full cell (block) cursor, change ‘Color’ checkbox for changing cursor appearance" },
 	{ rCursorH,                L"Horizontal text cursor, like native console" },
