@@ -2600,7 +2600,7 @@ CShellProc::CreatePrepareData CShellProc::OnCreateProcessPrepare(
 	// For example, mintty starts root using pipe redirection
 	result.consoleNoWindow = (dwFlags & STARTF_USESTDHANDLES)
 		// or the caller need to run some process as "detached"
-		|| ((*anCreationFlags) & (DETACHED_PROCESS|CREATE_NO_WINDOW));
+		|| (anCreationFlags && ((*anCreationFlags) & (DETACHED_PROCESS|CREATE_NO_WINDOW)));
 
 	// Some "heuristics" - when created process may show its window? (Console or GUI)
 	result.showCmd = (dwFlags & STARTF_USESHOWWINDOW)
