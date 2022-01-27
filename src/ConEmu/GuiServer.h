@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 template <class T> struct PipeServer;
 //#include "../common/PipeServer.h"
+#include "../common/Common.h"
 
 class CGuiServer
 {

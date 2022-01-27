@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
+#include "../common/CEStr.h"
+#include "../common/RConStartArgs.h"
 
 class CConEmuMain;
 

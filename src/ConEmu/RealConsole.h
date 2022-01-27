@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MPipe.h"
 #include "../common/MSection.h"
 #include "../common/MFileMapping.h"
+#include "../common/RConStartArgsEx.h"
 
 #define DEFINE_EXIT_DESC
 #include "../ConEmuCD/ExitCodes.h"

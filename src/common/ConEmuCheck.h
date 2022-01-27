@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "defines.h"
 #include "Common.h"
 
 #define EXECUTE_CONNECT_GUI_CALL_TIMEOUT 1000

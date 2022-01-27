@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "Header.h"
+#include "../common/MSectionSimple.h"
+
 class CRealConsole;
 class CVirtualConsole;
 
