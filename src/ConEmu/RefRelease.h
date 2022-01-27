@@ -167,12 +167,12 @@ public:
 		mp_Ref = nullptr;
 		mn_Tick = GetTickCount();
 
-		Attach(apRef);
+		CRefGuard<T>::Attach(apRef);
 	};
 
 	virtual ~CRefGuard()
 	{
-		Release();
+		CRefGuard<T>::Release();
 	};
 
 	virtual void Release()
