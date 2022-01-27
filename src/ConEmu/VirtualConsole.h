@@ -99,7 +99,7 @@ class CVirtualConsole :
 
 
 	protected:
-		CVirtualConsole(CConEmuMain* pOwner, int index);
+		explicit CVirtualConsole(CConEmuMain* pOwner, int index);
 		bool Constructor(RConStartArgsEx *args);
 	public:
 		void InitGhost();

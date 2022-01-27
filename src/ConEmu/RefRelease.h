@@ -162,7 +162,7 @@ public:
 		mn_Tick = GetTickCount();
 	};
 
-	CRefGuard(T* apRef)
+	explicit CRefGuard(T* apRef)
 	{
 		mp_Ref = nullptr;
 		mn_Tick = GetTickCount();

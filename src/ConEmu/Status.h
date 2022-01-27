@@ -204,7 +204,7 @@ private:
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
 public:
-	CStatus(CConEmuMain* _owner);
+	explicit CStatus(CConEmuMain* _owner);
 	virtual ~CStatus();
 
 	static size_t GetAllStatusCols(StatusColInfo** ppColumns);

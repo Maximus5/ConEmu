@@ -289,7 +289,7 @@ class CRealConsole
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
 		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
-		CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner);
+		explicit CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner);
 		bool Construct(CVirtualConsole* apVCon, RConStartArgsEx *args);
 		~CRealConsole();
 
