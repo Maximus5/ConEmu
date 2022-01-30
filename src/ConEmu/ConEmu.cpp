@@ -12754,10 +12754,10 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	MSetter nestedLevel(&gnMessageNestingLevel);
 	bool bDestroyed = false;
 
-	gpConEmu->mp_HandleMonitor->DoCheck();
 
 	if (gpConEmu)
 	{
+		gpConEmu->mp_HandleMonitor->DoCheck();
 		gpConEmu->PreWndProc(messg);
 
 		if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Destroyed)
