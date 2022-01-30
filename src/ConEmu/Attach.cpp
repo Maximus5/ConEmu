@@ -192,6 +192,7 @@ bool CAttachDlg::OnStartAttach()
 		if (!L.nPID || !L.nBits || !L.nType || !L.hAttachWnd)
 		{
 			MBoxAssert(L.nPID && L.nBits && L.nType && L.hAttachWnd);
+			delete Parms;
 			goto wrap;
 		}
 
@@ -200,6 +201,7 @@ bool CAttachDlg::OnStartAttach()
 
 	if (Parms->empty())
 	{
+		delete Parms;
 		goto wrap;
 	}
 
