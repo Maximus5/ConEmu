@@ -573,7 +573,7 @@ bool CLngRc::getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 
 		if (item.Processed)
 		{
-			if (item.Str && *item.Str)
+			if (item.Str && *item.Str && lpBuffer)
 			{
 				lstrcpyn(lpBuffer, item.Str, nBufferMax);
 				// Succeeded
