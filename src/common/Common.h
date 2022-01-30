@@ -26,8 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _COMMON_HEADER_HPP_
-#define _COMMON_HEADER_HPP_
+#ifndef COMMON_HEADER_HPP_
+#define COMMON_HEADER_HPP_
 
 // Interface version
 #define CESERVER_REQ_VER    169
@@ -1604,25 +1604,22 @@ struct CEFAR_INFO_MAPPING
 	FarVersion FarVer;
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	DWORD nFarPID, nFarTID;
-	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
-	//DWORD nFarInterfaceSettings;
+	BYTE nFarColors[col_LastIndex]; // array with Far colors
 	CEFarInterfaceSettings FarInterfaceSettings;
-	//DWORD nFarPanelSettings;
 	CEFarPanelSettings FarPanelSettings;
-	//DWORD nFarConfirmationSettings;
 	BOOL  bFarPanelAllowed; // FCTL_CHECKPANELSEXIST
-	// Текущая область в фаре
+	// Current Area in Far Manager
 	CEFAR_MACRO_AREA nMacroArea;
 	BOOL bMacroActive;
-	// Информация собственно о панелях присутствовать не обязана
+	// Information about Panels, may be absent
 	BOOL bFarPanelInfoFilled;
 	BOOL bFarLeftPanel, bFarRightPanel;
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
-	BOOL bViewerOrEditor; // для облегчения жизни RgnDetect
+	BOOL bViewerOrEditor; // used in RgnDetect
 	DWORD nFarConsoleMode;
-	BOOL bBufferSupport; // FAR2 с ключом /w ?
-	CEFAR_PANELTABS PanelTabs; // Настройки плагина PanelTabs
-	// Далее идут строковые ресурсы, на которые в некоторых случаях ориентируется GUI
+	BOOL bBufferSupport; // FAR2+ with "/w" key
+	CEFAR_PANELTABS PanelTabs; // PanelTabs plugin settings
+	// Some string resources which GUI uses to parse the console contents
 	wchar_t sLngEdit[64]; // "edit"
 	wchar_t sLngView[64]; // "view"
 	wchar_t sLngTemp[64]; // "{Temporary panel"
@@ -2664,4 +2661,4 @@ template <typename T> bool _bool(const T V) { _ASSERTE((V)==FALSE || (V)==TRUE);
 #define MY_PROCESS_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0xFFF)
 
 // This must be the end line
-#endif // _COMMON_HEADER_HPP_
+#endif // COMMON_HEADER_HPP_

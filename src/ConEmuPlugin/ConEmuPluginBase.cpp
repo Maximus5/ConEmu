@@ -4426,7 +4426,7 @@ bool CPluginBase::ReloadFarInfo(bool abForce)
 
 	if (!ghFarAliveEvent)
 	{
-		wchar_t szEventName[64];
+		wchar_t szEventName[64] = L"";
 		swprintf_c(szEventName, CEFARALIVEEVENT, gnSelfPID);
 		ghFarAliveEvent = CreateEvent(gpLocalSecurity, FALSE, FALSE, szEventName);
 	}

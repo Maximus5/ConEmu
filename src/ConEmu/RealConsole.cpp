@@ -166,9 +166,9 @@ WARNING("Часто после разблокирования компьютер
 
 #define CHECK_CONHWND_TIMEOUT 500
 
-#define WAIT_THREAD_DETACH_TIMEOUT 5000
+#define WAIT_THREAD_DETACH_TIMEOUT 5'000
 
-#define HIGHLIGHT_RUNTIME_MIN 10000
+#define HIGHLIGHT_RUNTIME_MIN 10'000
 #define HIGHLIGHT_INVISIBLE_MIN 2000
 
 static BOOL gbInSendConEvent = FALSE;
@@ -3165,7 +3165,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					bLastAliveActive = true;
 
 					if (lbFarChanged)
-						mp_ConEmu->UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
+						mp_ConEmu->UpdateProcessDisplay(FALSE); // refresh PID in the Settings window
 				}
 				else
 				{
