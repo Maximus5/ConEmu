@@ -15442,7 +15442,27 @@ bool CRealConsole::CheckConsoleAppAlive(DWORD const nCurFarPID, bool const bLast
 		if (mn_LastFarReadTick == 0 || aliveReadDelta >= (gpSet->nFarHourglassDelay / 4))
 		{
 			const bool aliveEventSet = (m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0);
-			if (aliveEventSet)
+
+			bool waitingConIn = false;
+			if (!aliveEventSet)
+			{
+				// Check if Far is inside WaitForMultipleObjects on ConIn
+				MSectionLock CS; CS.Lock(&ms_FarInfoCS, TRUE);
+				if (m__FarInfo.IsValid() && m__FarInfo.Ptr() && m__FarInfo.Ptr()->nProtocolVersion == CESERVER_REQ_VER)
+				{
+					const DWORD ttl = m__FarInfo.Ptr()->activeTtl;
+					if (ttl)
+					{
+						const int delta = static_cast<int32_t>(ttl - GetTicks());
+						if (delta >= 0)
+						{
+							waitingConIn = true;
+						}
+					}
+				}
+			}
+
+			if (aliveEventSet || waitingConIn)
 			{
 				mn_LastFarAliveTick = mn_LastFarReadTick = aliveCurTick ? aliveCurTick : 1;
 				bAlive = true; // alive

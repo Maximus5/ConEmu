@@ -549,8 +549,9 @@ bool InitHooksFarExe()
 	{
 		/* ************************ */
 		HOOK_ITEM_BY_NAME(CompareStringW, KERNEL32),
+		HOOK_ITEM_BY_NAME(WaitForMultipleObjects, KERNEL32),
 		/* ************************ */
-		{0}
+		{}
 	};
 
 	if (lbIsFar)

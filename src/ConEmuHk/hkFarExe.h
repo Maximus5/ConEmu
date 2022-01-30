@@ -34,3 +34,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* *************************** */
 
 HOOK_PROTOTYPE(CompareStringW, int, WINAPI, (LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2));
+
+HOOK_PROTOTYPE(WaitForMultipleObjects, DWORD, WINAPI, (DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds));

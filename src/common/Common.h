@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    169
+#define CESERVER_REQ_VER    170
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1600,7 +1600,7 @@ static const CEFAR_MACRO_AREA
 struct CEFAR_INFO_MAPPING
 {
 	DWORD cbSize;
-	DWORD nFarInfoIdx;
+	DWORD nFarInfoIdx; // Incremented when ReloadFarInfo updates the mapping
 	FarVersion FarVer;
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	DWORD nFarPID, nFarTID;
@@ -1624,9 +1624,14 @@ struct CEFAR_INFO_MAPPING
 	wchar_t sLngView[64]; // "view"
 	wchar_t sLngTemp[64]; // "{Temporary panel"
 
+	// TODO: replace with atomic?
+	LONG nPanelDirIdx; // Separately of nFarInfoIdx. Incremented when StorePanelDirs is called
+
+	DWORD compareSentinel; // Below this variable ReloadFarInfo does not compare for changes
+
+	DWORD activeTtl; // GetTickCount when Far should be considered as "Inactive"
+
 	// Far current panel directories
-	// These MUST be last members!
-	LONG nPanelDirIdx; // Separately of nFarInfoIdx
 	wchar_t sActiveDir[MAX_WIDE_PATH_LENGTH], sPassiveDir[MAX_WIDE_PATH_LENGTH];
 };
 

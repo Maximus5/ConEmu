@@ -35,8 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "../common/Common.h"
+#include "../common/StartupEnvDef.h"
+#include "../common/WErrGuard.h"
 
 #include "hkFarExe.h"
+
+#include "DllOptions.h"
+#include "MainThread.h"
 
 /* **************** */
 
@@ -102,4 +107,34 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 		nCmp = F(CompareStringW)(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
 
 	return nCmp;
+}
+
+DWORD WINAPI OnWaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+{
+	SUPPRESSORIGINALSHOWCALL;
+	ORIGINAL_KRNL(WaitForMultipleObjects);
+
+	// gh-2323: detect if Far is ready to process console input
+	bool needPostCall = false;
+	if (ph && ph->PreCallBack)
+	{
+		if (nCount == 2 && lpHandles && lpHandles[0] == gpStartEnv->hIn.hStd)
+		{
+			CLastErrorGuard errorGuard;
+			SETARGS4(nullptr, nCount, lpHandles, bWaitAll, dwMilliseconds);
+			ph->PreCallBack(&args);
+			needPostCall = true;
+		}
+	}
+
+	const DWORD rc = F(WaitForMultipleObjects)(nCount, lpHandles, bWaitAll, dwMilliseconds);
+
+	if (needPostCall && ph && ph->PreCallBack)
+	{
+		CLastErrorGuard errorGuard;
+		SETARGS4(&rc, nCount, lpHandles, bWaitAll, dwMilliseconds);
+		ph->PostCallBack(&args);
+	}
+
+	return rc;
 }

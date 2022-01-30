@@ -182,6 +182,8 @@ public:
 	static BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs);
 	static bool OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft, PanelViewInputCallback pfnRight);
 	static BOOL WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnWaitForMultipleObjects(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnWaitForMultipleObjectsPost(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs);

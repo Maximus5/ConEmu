@@ -114,7 +114,7 @@ int  gnCurrentWindowType = 0; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
-MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
+MOUSE_EVENT_RECORD gLastMouseReadEvent{};
 BOOL gbUngetDummyMouseEvent = FALSE;
 LONG gnAllowDummyMouseEvent = 0;
 LONG gnDummyMouseEventFromMacro = 0;
@@ -5009,6 +5009,36 @@ BOOL /*WINAPI*/ CPluginBase::OnShellExecuteExW_Except(HookCallbackArg* pArgs)
 	return TRUE; // Result is ignored in this callback type
 }
 
+BOOL CPluginBase::OnWaitForMultipleObjects(HookCallbackArg* pArgs)
+{
+	// Far 3 waits for (conIn, event) up to end of the minute
+	if (pArgs->bMainThread && pArgs->lArguments[0] == 2)
+	{
+		const DWORD ticks = GetTicks();
+		const DWORD ttl = ticks + static_cast<DWORD>(pArgs->lArguments[3]);
+		if (gpFarInfo && gpFarInfoMapping)
+		{
+			gpFarInfo->activeTtl = ttl;
+			gpFarInfoMapping->activeTtl = ttl;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL CPluginBase::OnWaitForMultipleObjectsPost(HookCallbackArg* pArgs)
+{
+	if (pArgs->bMainThread && pArgs->lArguments[0] == 2)
+	{
+		if (gpFarInfo && gpFarInfoMapping)
+		{
+			gpFarInfo->activeTtl = 0;
+			gpFarInfoMapping->activeTtl = 0;
+		}
+	}
+
+	return TRUE;
+}
 
 // Used for detection of Far "aliveness"
 BOOL /*WINAPI*/ CPluginBase::OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
