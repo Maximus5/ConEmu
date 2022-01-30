@@ -12853,10 +12853,12 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
 
-	gpConEmu->mp_HandleMonitor->DoCheck();
 
 	if (gpConEmu)
+	{
+		gpConEmu->mp_HandleMonitor->DoCheck();
 		gpConEmu->PreWndProc(uMsg);
+	}
 
 	switch (uMsg)
 	{
