@@ -597,6 +597,9 @@ class CRealConsole
 		void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
 		void ChangeBufferHeightMode(bool abBufferHeight); // called from TabBar->ConEmu
 		bool isAlive();
+	protected:
+		bool CheckConsoleAppAlive(DWORD const nCurFarPID, bool const bLastAlive);
+	public:
 		bool GetMaxConSize(COORD* pcrMaxConSize);
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
 		const CRgnDetect* GetDetector();

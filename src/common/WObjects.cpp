@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "EnvVar.h"
 #include "MHandle.h"
 #include "MModule.h"
-#include "MStrDup.h"
 #include "WObjects.h"
 
 #include "MWow64Disable.h"
@@ -1277,3 +1276,17 @@ wrap:
 		return nCP;
 	return 0;
 }
+
+#ifndef __GNUC__
+#pragma warning( push )
+#pragma warning(disable : 28159)
+#endif
+
+DWORD GetTicks()
+{
+	return GetTickCount();
+}
+
+#ifndef __GNUC__
+#pragma warning( pop )
+#endif

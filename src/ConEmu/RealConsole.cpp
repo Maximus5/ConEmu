@@ -3116,44 +3116,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					lbFarChanged = true;
 				}
 
-				bool bAlive = false;
-				if (nCurFarPID && m_FarInfo.cbSize && m_FarAliveEvent.Open())
-				{
-					const DWORD aliveCurTick = GetTickCount();
-					const DWORD aliveReadDelta = aliveCurTick - mn_LastFarReadTick;
-					// Don't call Wait too often
-					if (mn_LastFarReadTick == 0 || aliveReadDelta >= (gpSet->nFarHourglassDelay /4))
-					{
-						//if (WaitForSingleObject(mh_FarAliveEvent, 0) == WAIT_OBJECT_0)
-						if (m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
-						{
-							mn_LastFarAliveTick = mn_LastFarReadTick = aliveCurTick ? aliveCurTick : 1;
-							bAlive = true; // живой
-							_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
-						}
-						#ifdef _DEBUG
-						else if (aliveReadDelta > gpSet->nFarHourglassDelay)
-						{
-							mn_LastFarReadTick = aliveCurTick - gpSet->nFarHourglassDelay - 1; // don't get too away
-							bAlive = false; // Far is buzy
-						}
-						#endif
-					}
-					else
-					{
-						bAlive = (aliveReadDelta < gpSet->nFarHourglassDelay); // Should be yet valid
-						_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
-					}
-				}
-				else
-				{
-					bAlive = true; // если нет фаровского плагина, или это не фар
-					_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
-				}
+				bool bAlive = CheckConsoleAppAlive(nCurFarPID, bLastAlive);
 
-				//if (!bAlive) {
-				//	bAlive = isAlive();
-				//}
 				if (bActive)
 				{
 					if (bLastAlive != bAlive || !bLastAliveActive)
@@ -15331,7 +15295,6 @@ SkipReopen:
 	m__FarInfo.GetTo(&m_FarInfo, sizeof(m_FarInfo));
 
 	m_FarAliveEvent.InitName(CEFARALIVEEVENT, nFarPID);
-
 	if (!m_FarAliveEvent.Open())
 	{
 		dwErr = GetLastError();
@@ -15466,6 +15429,47 @@ bool CRealConsole::isAlive()
 	}
 
 	return lbAlive;
+}
+
+bool CRealConsole::CheckConsoleAppAlive(DWORD const nCurFarPID, bool const bLastAlive)
+{
+	bool bAlive = false;
+	if (nCurFarPID && m_FarInfo.cbSize && m_FarAliveEvent.Open())
+	{
+		const DWORD aliveCurTick = GetTicks();
+		const DWORD aliveReadDelta = aliveCurTick - mn_LastFarReadTick;
+		// Don't call Wait too often
+		if (mn_LastFarReadTick == 0 || aliveReadDelta >= (gpSet->nFarHourglassDelay / 4))
+		{
+			const bool aliveEventSet = (m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0);
+			if (aliveEventSet)
+			{
+				mn_LastFarAliveTick = mn_LastFarReadTick = aliveCurTick ? aliveCurTick : 1;
+				bAlive = true; // alive
+				if (!bLastAlive) { DEBUGSTRALIVE(aliveEventSet ? L"MonitorThread: Alive set because of event" : L"MonitorThread: Alive set because of ConInWait"); }
+				_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
+			}
+			else if (aliveReadDelta > gpSet->nFarHourglassDelay)
+			{
+				mn_LastFarReadTick = aliveCurTick - gpSet->nFarHourglassDelay - 1; // don't get too away
+				bAlive = false; // Far is busy
+				if (bLastAlive) { DEBUGSTRALIVE(L"MonitorThread: Alive reset because of timeout"); }
+			}
+		}
+		else
+		{
+			bAlive = (aliveReadDelta < gpSet->nFarHourglassDelay); // Should be yet valid
+			if (bAlive != bLastAlive) { DEBUGSTRALIVE(L"MonitorThread: Alive state was changed"); }
+			_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
+		}
+	}
+	else
+	{
+		bAlive = true; // ConEmu Far plugin is not installed, or current app is not Far
+		_ASSERTE(IsDebuggerPresent() || isAlive() == bAlive);
+	}
+
+	return bAlive;
 }
 
 LPCWSTR CRealConsole::GetConStatus()
