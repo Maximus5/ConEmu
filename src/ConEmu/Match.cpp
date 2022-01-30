@@ -291,7 +291,7 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 					crFrom--;
 				break;
 			}
-			else if ((pChar[crFrom] == L'/') && (crFrom >= 1) && (pChar[crFrom-1] == L'/'))
+			else if ((crFrom >= 1) && (pChar[crFrom] == L'/') && (pChar[crFrom-1] == L'/'))
 			{
 				crFrom++;
 				break; // Комментарий в строке?
