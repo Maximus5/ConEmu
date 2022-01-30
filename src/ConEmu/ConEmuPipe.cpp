@@ -64,12 +64,14 @@ void CConEmuPipe::Close()
 
 BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 {
-	wchar_t szErr[MAX_PATH*2];
+	wchar_t szErr[MAX_PATH * 2] = L"";
 	mh_Pipe = ExecuteOpenPipe(ms_PipeName, szErr, gpConEmu->GetDefaultTitle());
 
 	if (!mh_Pipe || mh_Pipe == INVALID_HANDLE_VALUE)
 	{
-		MBoxA(szErr);
+		if (szErr[0]) {
+			MBoxA(szErr);
+		}
 		return FALSE;
 	}
 
