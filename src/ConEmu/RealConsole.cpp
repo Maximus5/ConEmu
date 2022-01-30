@@ -4846,7 +4846,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 				hr = SHGetFolderPath(nullptr, CSIDL_SYSTEM, nullptr, SHGFP_TYPE_CURRENT, szUserDir);
 				if (FAILED(hr) || !*szUserDir)
 					wcscpy_c(szUserDir, L"C:\\");
-				lpszWorkDir = szUserDir;
+				lpszWorkDir = lstrdup(szUserDir).Detach();
 				// Force SetCurrentDirectory("%USERPROFILE%") in the server
 				CmdArg exe;
 				LPCWSTR pszTemp = psCurCmd;
