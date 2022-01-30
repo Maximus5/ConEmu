@@ -517,6 +517,7 @@ void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 LONG   gnHookServerNeedStart = 0;
 HANDLE ghHookServerStarted = nullptr;
 void   StartHookServer();
+void   StopHookServer();
 
 PipeServer<CESERVER_REQ> *gpHookServer = nullptr;
 bool gbHookServerForcedTermination = false;
@@ -1447,14 +1448,8 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	if (bFinal && gpHookServer)
 	{
-		//TODO: Skip when (bFromTerminate == true)?
-		DLOG1("StopPipeServer",0);
 		print_timings(L"StopPipeServer");
-		gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
-		SafeCloseHandle(ghHookServerStarted);
-		free(gpHookServer);
-		gpHookServer = nullptr;
-		DLOGEND1();
+		StopHookServer();
 	}
 
 	DLL_STOP_STEP(7);
@@ -2784,6 +2779,17 @@ void StartHookServer()
 	}
 
 	SetLastError(nSaveErr);
+}
+
+void StopHookServer()
+{
+	//TODO: Skip when (bFromTerminate == true)?
+	DLOG1("StopPipeServer", 0);
+	gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
+	SafeCloseHandle(ghHookServerStarted);
+	free(gpHookServer);
+	gpHookServer = nullptr;
+	DLOGEND1();
 }
 
 void ReportPromptStarted()
