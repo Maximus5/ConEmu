@@ -10847,7 +10847,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 							nSize += nLen * sizeof(gpSet->sRClickMacro[0]);
 						}
 
-						const std::unique_ptr<BYTE> pcbData(new BYTE[nSize]);
+						const std::unique_ptr<BYTE[], std::default_delete<BYTE[]>> pcbData(new BYTE[nSize]);
 						_ASSERTE(pcbData.get() != nullptr);
 						memmove_s(pcbData.get(), nSize, &crMouse, sizeof(crMouse));
 
