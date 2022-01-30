@@ -470,7 +470,7 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 		// Like we do for Far events, MouseMove with RBtn pressed in tmm_ANY|tmm_BTN
 		// modes would send all intermediate coordinates between two events
 
-		BYTE code; bool released = false;
+		BYTE code = 0; bool released = false;
 		if (NewBtns & FROM_LEFT_1ST_BUTTON_PRESSED)
 			code = 0; // MB1 pressed
 		else if (NewBtns & FROM_LEFT_2ND_BUTTON_PRESSED)
