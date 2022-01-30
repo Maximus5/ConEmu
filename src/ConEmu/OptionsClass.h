@@ -79,7 +79,7 @@ const EvalSizeFlags
 	esf_CanUseUnits  = 0x0040, // Make the result negative IF gpSet->FontUseUnits is ON
 	// Must not be used together
 	esf_Vertical     = 0x0001, // Used to get lfHeight
-	esf_Horizontal   = 0x0000  // Used to get lfWidth
+	esf_Horizontal   = 0x0002  // Used to get lfWidth
 ;
 
 class CSettings
