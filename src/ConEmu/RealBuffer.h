@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	rbs_Any  = 3,
 //};
 
+enum ExpandTextRangeType;
+
 #ifndef CONSOLE_MOUSE_SELECTION
 	#define CONSOLE_SELECTION_IN_PROGRESS   0x0001   // selection has begun
 	#define CONSOLE_MOUSE_SELECTION         0x0004   // selecting with mouse
