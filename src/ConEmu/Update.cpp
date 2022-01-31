@@ -2171,7 +2171,7 @@ void CConEmuUpdate::ProgressCallback(const CEDownloadInfo* pError)
 	_ASSERTE(pError && pError->lParam == reinterpret_cast<LPARAM>(gpUpd));
 	if (!pError || pError->argCount < 1 || pError->Args[0].argType != at_Uint)
 	{
-		_ASSERTE(pError->argCount >= 1 && pError->Args[0].argType == at_Uint);
+		_ASSERTE(pError && (pError->argCount >= 1) && (pError->Args[0].argType == at_Uint));
 		return;
 	}
 	CConEmuUpdate* pUpd = reinterpret_cast<CConEmuUpdate*>(pError->lParam);
