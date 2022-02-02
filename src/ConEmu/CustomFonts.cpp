@@ -749,7 +749,7 @@ bool CEDC::TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpSt
 			{
 				// We get here when our display has 32bit color depth (OK and fast)
 				m_Font->pCustomFont->TextDraw(pPixels + X + Y*iWidth, iWidth,
-					FlipChannels(m_TextColor), fuOptions & ETO_OPAQUE ? FlipChannels(m_BkColor) : CLR_INVALID, lpString, cbCount);
+				    FlipChannels(m_TextColor), (fuOptions & ETO_OPAQUE) ? FlipChannels(m_BkColor) : CLR_INVALID, lpString, cbCount);
 			}
 			else
 			{
