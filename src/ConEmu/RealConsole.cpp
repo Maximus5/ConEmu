@@ -4838,15 +4838,16 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 			// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
 			HRESULT hr = E_FAIL;
 			wchar_t szUserDir[MAX_PATH] = L"";
+			LPCWSTR workDirTemp = lpszWorkDir;
 			CEStr pszChangedCmd;
 			// Issue 1557: switch -new_console:u:"other_user:password" lock the account of other_user
-			if (!lpszWorkDir || !*lpszWorkDir)
+			if (!workDirTemp || !*workDirTemp)
 			{
 				// We need something existing in both account to run our server process
 				hr = SHGetFolderPath(nullptr, CSIDL_SYSTEM, nullptr, SHGFP_TYPE_CURRENT, szUserDir);
 				if (FAILED(hr) || !*szUserDir)
 					wcscpy_c(szUserDir, L"C:\\");
-				lpszWorkDir = lstrdup(szUserDir).Detach();
+				workDirTemp = szUserDir;
 				// Force SetCurrentDirectory("%USERPROFILE%") in the server
 				CmdArg exe;
 				LPCWSTR pszTemp = psCurCmd;
@@ -4858,7 +4859,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 										nFlags, nullptr, pszChangedCmd ? pszChangedCmd.data() : psCurCmd,
 										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
 										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
-										, nullptr, lpszWorkDir, &si, &pi) != FALSE);
+										, nullptr, workDirTemp, &si, &pi) != FALSE);
 				//if (CreateProcessAsUser(Args.hLogonToken, nullptr, psCurCmd, nullptr, nullptr, FALSE,
 				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				//	, nullptr, Args.pszStartupDir, &si, &pi))
