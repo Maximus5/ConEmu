@@ -362,6 +362,7 @@
       "it_IT": "Apri la pagina web di clink https://chrisant996.github.io/clink/ nel tuo browser",
       "ko": "브라우저에서 clink 웹 페이지 https://chrisant996.github.io/clink/ 를 엽니다",
       "ko_KR": "브라우저에서 clink 웹 페이지 https://chrisant996.github.io/clink/ 를 엽니다",
+      "pt_BR": "Abra a página da web do clink https://chrisant996.github.io/clink/ em seu navegador",
       "id": 2614 }
     ,
     "cbCloseConsoleConfirm": {
@@ -526,7 +527,7 @@
       "it_IT": "Copia immediatamente su rilascio click sinistro (durante selezione con mouse)",
       "ko": "마우스 왼쪽 버튼 위로 즉시 복사 (마우스로 선택하는 경우)",
       "ko_KR": "마우스 왼쪽 버튼 위로 즉시 복사 (마우스로 선택하는 경우)",
-      "pt_BR": "Copiar imediatamente quando o botão principal do mouse for solto (ao selecionar com o mouse)",
+      "pt_BR": "Copie imediatamente com o botão esquerdo do mouse para cima (ao selecionar com o mouse)",
       "id": 2340 }
     ,
     "cbCTSBashMargin": {
@@ -1394,6 +1395,7 @@
       "it_IT": "Togli il bordo della finestra e la didascalia. Solo la console, la barra delle schede e di stato verranno mostrate.",
       "ko": "창 테두리와 캡션을 제거합니다. 콘솔, 탭 및 상태 표시줄만 표시됩니다.",
       "ko_KR": "창 테두리와 캡션을 제거합니다. 콘솔, 탭 및 상태 표시줄만 표시됩니다.",
+      "pt_BR": "Remova a borda e a legenda da janela. Apenas console, guias e barra de status serão mostrados.",
       "id": 1569 }
     ,
     "cbHideInactiveConTabs": {
@@ -1407,6 +1409,7 @@
       "it_IT": "Visualizzare schede solo dalla console attiva",
       "ko": "활성 콘솔의 탭만 표시",
       "ko_KR": "활성 콘솔의 탭만 표시",
+      "pt_BR": "Mostrar abas somente do console ativo",
       "id": 1642 }
     ,
     "cbInjectConEmuHkFast": {
@@ -1472,6 +1475,8 @@
     "cbIntegralSize": {
       "en": [ "When checked, ConEmu windows size is changed proportionally to console cells.\n"
             , "Option is disabled automatically for Quake and Inside modes, and for 100% window width or height." ],
+      "pl": [ "Gdy zaznaczone, rozmiar okien ConEmu jest zmieniany proporcjonalnie do komórek konsoli.\n"
+            , "Opcja jest automatycznie wyłączana w trybach Quake i Inside oraz dla 100% szerokości lub wysokości okna." ],
       "ko": [ "선택하면 콘솔 셀에 비례하여 ConEmu 창 크기가 변경됩니다.\n"
             , "옵션은 Quake 및 내부 모드 및 100% 창 너비 또는 높이에 대해 자동으로 사용할 수 없습니다." ],
       "ko_KR": [ "선택하면 콘솔 셀에 비례하여 ConEmu 창 크기가 변경됩니다.\n"
@@ -3498,6 +3503,7 @@
     ,
     "tFarHourglass": {
       "en": "Far Manager not-responding duration in milliseconds before changing mouse cursor to AppStarting",
+      "pl": "Czas braku odpowiedzi Far Managera w ms przed zmianą kursora myszy na Uruchamianie aplikacji",
       "ko": "마우스 커서를 AppStarting으로 변경하기 전 Far 관리자가 응답하지 않는 밀리초 시간",
       "ko_KR": "마우스 커서를 AppStarting으로 변경하기 전 Far 관리자가 응답하지 않는 밀리초 시간",
       "id": 3111 }
@@ -6284,6 +6290,7 @@
     ,
     "vkSetFocusParent": {
       "en": "Set focus to the ConEmu parent window (ConEmu Inside mode)",
+      "pl": "Ustaw fokus na okno nadrzędne ConEmu (tryb ConEmu Inside)",
       "ko": "ConEmu 부모 창에 포커스 설정 (ConEmu Inside 모드)",
       "ko_KR": "ConEmu 부모 창에 포커스 설정 (ConEmu Inside 모드)",
       "id": 3212 }
@@ -11157,7 +11164,7 @@
       "de": "Mauszeiger ändern wenn beschäftigt (ms)",
       "_ja": "ビジー状態の場合はマウスカーソルを変更する",
       "_es": "Cambiar cursor del ratón si está ocupado",
-      "_pl": "Zmień kursor myszy, jeśli jest zajęty",
+      "pl": "Zmień kursor myszy, jeśli jest zajęty (ms)",
       "_it_IT": "Cambia cursore mouse se occupato",
       "ko": "사용 중인 경우 마우스 커서 변경 (ms)",
       "ko_KR": "사용 중인 경우 마우스 커서 변경 (ms)",
@@ -17698,6 +17705,7 @@
       "fr": "NOTE!!! L'ordinateur doit redémarrer pour que les changements soient appliqués dans le registre",
       "ko": "실제 콘솔에서 글꼴과 크기를 변경할 수 있습니다. 콘솔을 다시 시작해야 합니다.",
       "ko_KR": "참고!!! 레지스트리 변경 사항을 적용하려면 컴퓨터를 다시 시작해야 할 수 있습니다",
+      "pt_BR": "NOTA!!! Pode ser necessário reiniciar o computador para aplicar as alterações do registro",
       "id": 1731 }
   }
 }
