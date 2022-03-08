@@ -70,6 +70,24 @@ DWORD gnInitializeErrCode = 0;
 WORD defConForeIdx = 7;
 WORD defConBackIdx = 0;
 
+struct ExtConsoleState
+{
+	// To emulate XTerm behavior (cursor stays *after* the last cell in a row until next char is issued to the next line)
+	bool wasWriteAtEol = false;
+	COORD lastWriteCoord{};
+
+	void SetWriteAtEol(const bool writeAtEol, const COORD lastWrite)
+	{
+		wasWriteAtEol = writeAtEol;
+		if (writeAtEol)
+		{
+			lastWriteCoord = lastWrite;
+		}
+	}
+};
+
+static ExtConsoleState gState{};
+
 typedef BOOL (WINAPI* WriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 
 struct ExtCurrentAttr
@@ -1080,6 +1098,76 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	const wchar_t *pFrom = Info->Buffer;
 	const wchar_t *pEnd = pFrom + Info->NumberOfCharsToWrite;
 
+	bool bAutoLfNl = ((Info->Flags & ewtf_NoLfNl) == 0);
+	bool bIntCursorOp = false;
+
+	const wchar_t *pCur = pFrom;
+	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
+	SHORT x2 = x, y2 = y;
+
+	Info->ScrolledRowsUp = 0;
+
+	auto advanceRow = [&]() {
+		//_ASSERTE(bWrap && L"todo for !Wrap");
+		if (y2 >= scrollBottom/*csbi.dwSize.Y*/)
+		{
+			// Screen was scrolled one line up
+
+			// We also need to scroll extended buffer
+			_ASSERTE((y-y2) == -1); // one line shift is expected
+			ExtScrollScreenParm Shift = {sizeof(Shift), essf_None, h, y-y2, DefClr.Attributes, L' '};
+			if (bScrollRegion)
+			{
+				Shift.Flags |= essf_Region;
+				Shift.Region = rcScrollRegion;
+				//Shift.Region.top += (y2-y);
+				if (scrollBottom >= csbi.dwSize.Y)
+					Shift.Flags |= essf_ExtOnly;
+			}
+			else
+			{
+				Shift.Flags |= essf_ExtOnly;
+			}
+			ExtScrollScreen(&Shift);
+
+			Info->ScrolledRowsUp++;
+
+			// emulate coord "revert" (it's kinda unchanged)
+			if (bScrollRegion && (scrollBottom < csbi.dwSize.Y))
+			{
+				y2 = LOSHORT(scrollBottom) - 1;
+				_ASSERTEX((int)y2 == (int)(scrollBottom - 1));
+
+				crScrollCursor.X = x2;
+				crScrollCursor.Y = y2;
+
+				SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
+
+				bIntCursorOp = false; // already processed
+			}
+			else
+			{
+				y2 = csbi.dwSize.Y - 1;
+			}
+		}
+		else //if (pTrueColorLine)
+		{
+			// Move to the next line in the extended buffer
+			nLinePosition += nWindowWidth;
+			//pTrueColorLine += nWindowWidth;
+		}
+		y = y2;
+	};
+
+	if (gState.wasWriteAtEol && (csbi.dwCursorPosition.Y == gState.lastWriteCoord.Y) && (csbi.dwCursorPosition.X == gState.lastWriteCoord.X))
+	{
+		lbRc = IntWriteText(h, x, x, L"\r\n", 2,
+						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : nullptr,
+						(pTrueColorEnd), AIColor, csbi, (WriteConsoleW_t)Info->Private);
+		++y2; x2 = 0;
+		advanceRow();
+	}
+
 	// tmux, status line
 	// top (from ssh-ed UNIX) - writes all lines using full console width and thereafter some ANSI-s and "\r\n"
 	if ((Info->Flags & ewtf_DontWrap))
@@ -1087,7 +1175,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		//TODO: These are assumptions, it'll be better to reimplement console interface from scratch...
 		if (bWrap
 			//&& (csbi.dwCursorPosition.Y == csbi.srWindow.Bottom)
-			&& ((csbi.dwCursorPosition.X + Info->NumberOfCharsToWrite) == csbi.dwSize.X))
+			&& ((csbi.dwCursorPosition.X + static_cast<int>(Info->NumberOfCharsToWrite)) == csbi.dwSize.X))
 		{
 			bRevertMode = true;
 			// If app was asked to write carriage return - don't enable non-wrap mode
@@ -1103,23 +1191,17 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			{
 				SetConsoleMode(h, Mode & ~ENABLE_WRAP_AT_EOL_OUTPUT);
 			}
+			gState.SetWriteAtEol(true, MakeCoord(csbi.dwSize.X - 1, csbi.dwCursorPosition.Y));
+		}
+		else
+		{
+			gState.SetWriteAtEol(false, {});
 		}
 	}
-	#ifdef _DEBUG
 	else
 	{
-		int iDbg = 0; // ewtf_DontWrap was not set
+		gState.SetWriteAtEol(false, {});
 	}
-	#endif
-
-	bool bAutoLfNl = ((Info->Flags & ewtf_NoLfNl) == 0);
-	bool bIntCursorOp = false;
-
-	const wchar_t *pCur = pFrom;
-	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
-	SHORT x2 = x, y2 = y;
-
-	Info->ScrolledRowsUp = 0;
 
 	TODO("Тут может быть засада - если другие приложения в это же время выводят в консоль - будет драка...");
 	for (; pCur < pEnd; pCur++)
@@ -1185,12 +1267,13 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if (((pCur + 1) < pEnd) && (*(pCur + 1) == L'\n'))
 			{
 				++pCur; // continue to L'\n' section
+				// [[fallthrough]];
 			}
 			else
 			{
 				break;
 			}
-		case L'\n':
+		case L'\n':  // NOLINT(clang-diagnostic-implicit-fallthrough)
 			if (x2 > 0)
 			{
 				ForceDumpX = x2 - 1;
@@ -1265,7 +1348,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			// Printing (including pCur) using extended attributes
 			if (pCur >= pFrom)
 				lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
-						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
+						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : nullptr,
 						(pTrueColorEnd), AIColor, csbi, (WriteConsoleW_t)Info->Private);
 
 			if (bAdvanceCur)
@@ -1294,60 +1377,14 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		}
 
 		if (controlChars != ControlChars::None)
+		{
 			x = x2;
+		}
 
-		// При смене строки
+		// When row was changed
 		if (y2 > y)
 		{
-			//_ASSERTE(bWrap && L"для !Wrap - доделать");
-			if (y2 >= scrollBottom/*csbi.dwSize.Y*/)
-			{
-				// Экран прокрутился на одну строку вверх
-
-				// расширенный буфер - прокрутить
-				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
-				ExtScrollScreenParm Shift = {sizeof(Shift), essf_None, h, y-y2, DefClr.Attributes, L' '};
-				if (bScrollRegion)
-				{
-					Shift.Flags |= essf_Region;
-					Shift.Region = rcScrollRegion;
-					//Shift.Region.top += (y2-y);
-					if (scrollBottom >= csbi.dwSize.Y)
-						Shift.Flags |= essf_ExtOnly;
-				}
-				else
-				{
-					Shift.Flags |= essf_ExtOnly;
-				}
-				ExtScrollScreen(&Shift);
-
-				Info->ScrolledRowsUp++;
-
-				// координату - "отмотать" (она как бы не изменилась)
-				if (bScrollRegion && (scrollBottom < csbi.dwSize.Y))
-				{
-					y2 = LOSHORT(scrollBottom) - 1;
-					_ASSERTEX((int)y2 == (int)(scrollBottom - 1));
-
-					crScrollCursor.X = x2;
-					crScrollCursor.Y = y2;
-
-					SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
-
-					bIntCursorOp = false; // already processed
-				}
-				else
-				{
-					y2 = csbi.dwSize.Y - 1;
-				}
-			}
-			else //if (pTrueColorLine)
-			{
-				// Перейти на следующую строку в расширенном буфере
-				nLinePosition += nWindowWidth;
-				//pTrueColorLine += nWindowWidth; //-V102
-			}
-			y = y2;
+			advanceRow();
 		}
 
 		// xterm-compatible
