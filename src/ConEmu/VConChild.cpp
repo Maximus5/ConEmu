@@ -1171,6 +1171,10 @@ LRESULT CConEmuChild::OnPaint()
 	if (gpSet->isLogging(2))
 		VCon->RCon()->LogString("CConEmuChild::OnPaint");
 
+	// Don't trigger recursive redraws
+	if (VCon->mb_InUpdate)
+		lbSkipDraw = TRUE;
+
 	//gpSetCls->Performance(tPerfBlt, FALSE);
 
 	if (gpConEmu->isPictureView())
