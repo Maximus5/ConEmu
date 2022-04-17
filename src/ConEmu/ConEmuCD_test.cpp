@@ -505,7 +505,7 @@ TEST_F(ServerDllTest, RunCommand)
 
 	executeRun(L"-c cmd.exe /c echo echo from cmd.exe", 0, L"echo from cmd.exe");
 
-	executeRun(L"-c \"%ConEmuBaseDir%\\cecho.cmd\" \"Hello\" \"World\"", 0, L"Hello");
+	executeRun(L"-c \"%ConEmuBaseDir%\\cecho.cmd\" /blue \"Hello\" \"World\"", 0, L"Hello");
 
 	executeRun(L"-c \"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -echo Hello World\"", 0, L"Hello World");
 
