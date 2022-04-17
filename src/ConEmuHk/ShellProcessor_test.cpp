@@ -218,12 +218,12 @@ TEST_F(ShellProcessor, Far300)
 		{Function::CreateW,
 			nullptr, LR"(""C:\1 @\a.cmd"")",
 			nullptr,
-			LR"("%ConEmuBaseDirTest%\)" ConEmuC_EXE_3264 R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			LR"("%ConEmuBaseDirTest%\)" ConEmuC_32_EXE R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 
 		{Function::CreateW,
 			LR"(C:\1 @\a.cmd)", nullptr, // important to have two double quotes, otherwise cmd will strip one and fail to find the file
 			nullptr,
-			LR"("%ConEmuBaseDirTest%\)" ConEmuC_EXE_3264 R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			LR"("%ConEmuBaseDirTest%\)" ConEmuC_32_EXE R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		
 		// #TODO: Add DosBox mock/test
 		{Function::CreateW,
@@ -300,7 +300,7 @@ TEST_F(ShellProcessor, Far175)
 		{Function::CreateA,
 			nullptr, R"(""C:\1 @\a.cmd"")",
 			nullptr,
-			R"("%ConEmuBaseDirTest%\)" WIN3264TEST("ConEmuC.exe", "ConEmuC64.exe") R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
+			R"("%ConEmuBaseDirTest%\)" "ConEmuC.exe" R"(" %ConEmuLogTest%/PARENTFARPID=%ConEmuTestPid% /C ""C:\1 @\a.cmd"")"},
 		{Function::CreateA,
 			nullptr, R"(C:\Windows\system32\cmd.exe /K ""C:\1 @\a.cmd"")",
 			nullptr,

@@ -508,6 +508,8 @@ BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 	const CESERVER_CONSOLE_MAPPING_HDR* pInfo = SrvInfoMapping.Open();
 	if (!pInfo || pInfo->nProtocolVersion != CESERVER_REQ_VER)
 	{
+		_ASSERTEX(pInfo != nullptr);
+		_ASSERTEX(pInfo != nullptr && pInfo->nProtocolVersion == CESERVER_REQ_VER);
 		return false;
 	}
 
