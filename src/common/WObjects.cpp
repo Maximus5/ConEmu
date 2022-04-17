@@ -74,7 +74,7 @@ bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/)
 
 	MHandle hFile;
 	MWow64Disable wow;
-	if (!hFile.SetHandle(CreateFileW(asFilePath, GENERIC_READ, FILE_SHARE_READ,
+	if (!hFile.SetHandle(CreateFileW(asFilePath, FILE_READ_ATTRIBUTES, FILE_SHARE_READ,
 		nullptr, OPEN_EXISTING, 0, nullptr), CloseHandle))
 	{
 		const DWORD nErrCode = GetLastError();
@@ -84,7 +84,7 @@ bool FileExists(const wchar_t* asFilePath, uint64_t* pnSize /*= nullptr*/)
 		{
 			wow.Disable();
 
-			hFile.SetHandle(CreateFileW(asFilePath, GENERIC_READ, FILE_SHARE_READ,
+			hFile.SetHandle(CreateFileW(asFilePath, FILE_READ_ATTRIBUTES, FILE_SHARE_READ,
 				nullptr, OPEN_EXISTING, 0, nullptr), CloseHandle);
 		}
 		#endif
