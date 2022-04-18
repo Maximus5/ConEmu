@@ -201,7 +201,7 @@ protected:
 		if (rc == 0 && ::GetLastError() == ERROR_ENVVAR_NOT_FOUND)
 			return nullptr;
 		return szResult;
-	};
+	}
 
 	MModule LoadServerDll()
 	{

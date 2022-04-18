@@ -382,6 +382,15 @@ int RunXTermTestParent()
 		}
 	}
 
+	// To post UpArrow to the proper console we should activate proper tab
+	if (result == 0)
+	{
+		cdbg() << "Trying to activate our console" << std::endl;
+		const auto macroRc = conemu::tests::GuiMacro().Execute(L"Tab 7 -2");
+		EXPECT_EQ(macroRc, L"OK");
+	}
+
+	cdbg() << "Waiting 10 seconds, console should be active" << std::endl;
 	Sleep(10000);
 
 	// Clean the input buffer
@@ -399,6 +408,7 @@ int RunXTermTestParent()
 	// Check what is sent through input queue
 	if (result == 0)
 	{
+		// MessageBox(nullptr, L"Continue to posting UpArrow", L"AnsiText", MB_SYSTEMMODAL);
 		cdbg() << "Posting UpArrow keypress" << std::endl;
 		PostMessage(srvMap.hConEmuWndDc, WM_KEYDOWN, VK_UP, 0);
 		PostMessage(srvMap.hConEmuWndDc, WM_KEYUP, VK_UP, (1U << 31) | (1U << 30));

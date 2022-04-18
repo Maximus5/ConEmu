@@ -19,6 +19,19 @@ namespace tests {
 void InitConEmuPathVars();
 void WaitDebugger(const std::string& label, const DWORD milliseconds = 15000);
 extern std::vector<std::string> gTestArgs;
+
+class GuiMacro final
+{
+	HMODULE m_ConEmuCD{nullptr};
+	GuiMacro(const GuiMacro&) = delete;
+	GuiMacro(GuiMacro&&) = delete;
+	GuiMacro& operator=(const GuiMacro&) = delete;
+	GuiMacro& operator=(GuiMacro&&) = delete;
+public:
+	GuiMacro();
+	~GuiMacro();
+	std::wstring Execute(const std::wstring& macro) const;
+};
 }  // namespace tests
 }  // namespace conemu
 

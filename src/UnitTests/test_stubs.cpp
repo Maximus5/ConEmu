@@ -28,7 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
-#include "../common/StartupEnvDef.h"
 #include "../common/wcwidth.h"
 #include "../ConEmu/helper.h"
 #include "../ConEmu/ConEmu.h"
@@ -37,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/Options.h"
 #include "../ConEmu/OptionsClass.h"
 #include "../ConEmuHk/Ansi.h"
+#include "../ConEmuCD/ExportedFunctions.h"
+#include "../ConEmuCD/ExitCodes.h"
 
 #include <iostream>
 
@@ -185,6 +186,55 @@ void WaitDebugger(const std::string& label, const DWORD milliseconds)
 		cdbg("", false) << ".";
 	}
 	cdbg("", false) << std::endl;
+}
+
+GuiMacro::GuiMacro()
+{
+	wchar_t szConEmuCD[MAX_PATH] = L"";
+	if (!GetModuleFileName(nullptr, szConEmuCD, LODWORD(std::size(szConEmuCD))))
+		throw std::runtime_error("GuiMacro failed: GetModuleFileName returns false");
+	auto* slash = const_cast<wchar_t*>(PointToName(szConEmuCD));
+	if (!slash)
+		throw std::runtime_error("GuiMacro failed: GetModuleFileName returns invalid data");
+	// Expected to be run from gtest suite
+	wcscpy_s(slash, std::size(szConEmuCD) - (slash - szConEmuCD), L"\\ConEmu\\" ConEmuCD_DLL_3264);
+	m_ConEmuCD = LoadLibrary(szConEmuCD);
+	if (!m_ConEmuCD)
+		throw std::runtime_error("GuiMacro failed: ConEmuCD LoadLibrary failed");
+}
+
+GuiMacro::~GuiMacro()
+{
+	if (m_ConEmuCD)
+	{
+		FreeLibrary(m_ConEmuCD);
+		m_ConEmuCD = nullptr;
+	}
+}
+
+std::wstring GuiMacro::Execute(const std::wstring& macro) const
+{
+	// ReSharper disable once CppLocalVariableMayBeConst
+	GuiMacro_t guiMacro = reinterpret_cast<GuiMacro_t>(GetProcAddress(m_ConEmuCD, FN_CONEMUCD_GUIMACRO_NAME));
+	if (!guiMacro)
+	{
+		return L"<GuiMacro exported name was not found>";
+	}
+
+	BSTR result = nullptr;
+	// ReSharper disable once CppLocalVariableMayBeConst
+	wchar_t szInstance[128] = L"T-2";
+	const auto macroRc = guiMacro(szInstance, macro.c_str(), &result);
+	if (macroRc != CERR_GUIMACRO_SUCCEEDED)
+	{
+		return L"<GuiMacro execution failed>";
+	}
+
+	std::wstring ret{result ? result : L"<nullptr>"};
+	if (result)
+		SysFreeString(result);
+
+	return ret;
 }
 
 }  // namespace tests
