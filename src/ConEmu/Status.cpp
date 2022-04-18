@@ -210,7 +210,7 @@ static StatusColInfo gStatusCols[] =
 
 	{csi_CursorInfo,	L"StatusBar.Hide.CurI",
 						L"Cursor information",
-						L"Col, Row, Height (visible|hidden): Console cursor, 0-based"},
+						L"Col, Row, Height (visible|hidden): Console cursor, 1-based"},
 
 	{csi_CellInfo,		L"StatusBar.Hide.CellI",
 						L"Cell information",
