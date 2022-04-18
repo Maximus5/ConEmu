@@ -158,6 +158,172 @@ int RunLineFeedTest()
 	return result;
 }
 
+int RunFishPromptTest()
+{
+	const MHandle hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!IsConEmuMode(hConOut, __FUNCTION__))
+		return 0;
+
+	auto testFishPrompt = [&]()
+	{
+		const DWORD outFlags = GetMode(hConOut);
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		GetConsoleScreenBufferInfo(hConOut, &csbi);
+		wchar_t buffer[255] = L"";
+		swprintf_s(buffer, 255, L"Current output console mode: 0x%08X (%s %s)\r\nScreen width: %i\r\n", outFlags,
+			(outFlags & ENABLE_VIRTUAL_TERMINAL_PROCESSING) ? L"ENABLE_VIRTUAL_TERMINAL_PROCESSING" : L"!ENABLE_VIRTUAL_TERMINAL_PROCESSING",
+			(outFlags & DISABLE_NEWLINE_AUTO_RETURN) ? L"DISABLE_NEWLINE_AUTO_RETURN" : L"!DISABLE_NEWLINE_AUTO_RETURN",
+			csbi.dwSize.X);
+		Write(hConOut, buffer);
+
+		SetConsoleTextAttribute(hConOut, 14);
+		Write(hConOut, L"Print(AAA\\r\\n\x23CE     ...     \\rCCC)\r\n");
+		SetConsoleTextAttribute(hConOut, 7);
+
+		Write(hConOut, L"AAA\r\n\x23CE");
+		const std::wstring spaces(csbi.dwSize.X - 1, L' ');
+		Write(hConOut, spaces);
+		Write(hConOut, L"\rCCC\r\n");
+
+		const std::wstring expected(L"AAA   CCC   ");
+
+		bool result = true;
+		if (!expected.empty())
+		{
+			GetConsoleScreenBufferInfo(hConOut, &csbi);
+			CHAR_INFO readBuffer[6 * 2] = {};
+			SMALL_RECT rcRead = { 0, static_cast<SHORT>(csbi.dwCursorPosition.Y - 2), 5, static_cast<SHORT>(csbi.dwCursorPosition.Y - 1) };
+			ReadConsoleOutputW(hConOut, readBuffer, COORD{ 6, 2 }, COORD{ 0, 0 }, &rcRead);
+			std::wstring data;
+			for (const auto& ci : readBuffer)
+			{
+				data += ci.Char.UnicodeChar;
+			}
+			if (data == expected)
+			{
+				SetConsoleTextAttribute(hConOut, 10);
+				Write(hConOut, L"OK\r\n");
+			}
+			else
+			{
+				SetConsoleTextAttribute(hConOut, 12);
+				Write(hConOut, L"FAILED: '" + data + L"' != '" + expected + L"'\r\n");
+				result = false;
+			}
+			SetConsoleTextAttribute(hConOut, 7);
+		}
+		return result;
+	};
+
+	// conemu::tests::WaitDebugger("Wait to start fish prompt test", 30000);
+
+	int result = 0;
+	const DWORD outFlags = GetMode(hConOut);
+	const bool isDefaultMode = (outFlags == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT));
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	GetConsoleScreenBufferInfo(hConOut, &csbi);
+
+	SetConsoleTextAttribute(hConOut, 7);
+
+	// Write(hConOut, L"\x1B]9;10\x07");
+	SetConsoleMode(hConOut, (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING));
+
+	if (!testFishPrompt())
+		result = 1;
+
+	if (!isDefaultMode)
+	{
+		SetConsoleMode(hConOut, (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT));
+		if (!testFishPrompt())
+			result = 1;
+	}
+
+	SetConsoleMode(hConOut, outFlags);
+	SetConsoleTextAttribute(hConOut, csbi.wAttributes);
+	return result;
+}
+
+int RunLineWrapWin11Test()
+{
+	const MHandle hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!IsConEmuMode(hConOut, __FUNCTION__))
+		return 0;
+
+	auto testLineWrap = [&]()
+	{
+		const DWORD outFlags = GetMode(hConOut);
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		GetConsoleScreenBufferInfo(hConOut, &csbi);
+		wchar_t buffer[255] = L"";
+		swprintf_s(buffer, 255, L"Current output console mode: 0x%08X (%s %s)\r\nScreen width: %i\r\n", outFlags,
+			(outFlags & ENABLE_VIRTUAL_TERMINAL_PROCESSING) ? L"ENABLE_VIRTUAL_TERMINAL_PROCESSING" : L"!ENABLE_VIRTUAL_TERMINAL_PROCESSING",
+			(outFlags & DISABLE_NEWLINE_AUTO_RETURN) ? L"DISABLE_NEWLINE_AUTO_RETURN" : L"!DISABLE_NEWLINE_AUTO_RETURN",
+			csbi.dwSize.X);
+		Write(hConOut, buffer);
+
+		SetConsoleTextAttribute(hConOut, 14);
+		Write(hConOut, L"Print(AAA...ABCD{line wrap is expected here}EFG\r\n");
+		SetConsoleTextAttribute(hConOut, 7);
+
+		const std::wstring aaa(csbi.dwSize.X - 3, L'A');
+		Write(hConOut, aaa);
+		const std::wstring rest(L"BCDEFG");
+		for (size_t i = 0; i < rest.size(); ++i)
+		{
+			Write(hConOut, rest.substr(i, 1));
+		}
+		Write(hConOut, L"\r\n");
+
+		const std::wstring expected(L"AAAEFG");
+
+		bool result = true;
+		if (!expected.empty())
+		{
+			GetConsoleScreenBufferInfo(hConOut, &csbi);
+			CHAR_INFO readBuffer[3 * 2] = {};
+			SMALL_RECT rcRead = { 0, static_cast<SHORT>(csbi.dwCursorPosition.Y - 2), 2, static_cast<SHORT>(csbi.dwCursorPosition.Y - 1) };
+			ReadConsoleOutputW(hConOut, readBuffer, COORD{ 3, 2 }, COORD{ 0, 0 }, &rcRead);
+			std::wstring data;
+			for (const auto& ci : readBuffer)
+			{
+				data += ci.Char.UnicodeChar;
+			}
+			if (data == expected)
+			{
+				SetConsoleTextAttribute(hConOut, 10);
+				Write(hConOut, L"OK\r\n");
+			}
+			else
+			{
+				SetConsoleTextAttribute(hConOut, 12);
+				Write(hConOut, L"FAILED: '" + data + L"' != '" + expected + L"'\r\n");
+				result = false;
+			}
+			SetConsoleTextAttribute(hConOut, 7);
+		}
+		return result;
+	};
+
+	// conemu::tests::WaitDebugger("Wait to start line wrap test", 30000);
+
+	int result = 0;
+	const DWORD outFlags = GetMode(hConOut);
+	const bool isDefaultMode = (outFlags == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT));
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	GetConsoleScreenBufferInfo(hConOut, &csbi);
+
+	SetConsoleTextAttribute(hConOut, 7);
+
+	SetConsoleMode(hConOut, (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING));
+
+	if (!testLineWrap())
+		result = 1;
+
+	SetConsoleMode(hConOut, outFlags);
+	SetConsoleTextAttribute(hConOut, csbi.wAttributes);
+	return result;
+}
+
 int RunLineFeedTestXTerm()
 {
 	const MHandle hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -445,6 +611,85 @@ TEST(Ansi, CheckLineFeed)
 	CEStr testExe;
 	GetModulePathName(nullptr, testExe);
 	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineFeedTest");
+	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
+	const auto created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, false, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
+	if (!created)
+	{
+		const DWORD errCode = GetLastError();
+		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str();
+		return;
+	}
+
+	const auto wait = WaitForSingleObject(pi.hProcess, 1000 * 180);
+	if (wait != WAIT_OBJECT_0)
+	{
+		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str();
+		TerminateProcess(pi.hProcess, 255);
+	}
+	else
+	{
+		DWORD exitCode = 255;
+		EXPECT_TRUE(GetExitCodeProcess(pi.hProcess, &exitCode));
+		EXPECT_EQ(0, exitCode);
+	}
+
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+}
+
+TEST(Ansi, CheckFishPrompt)
+{
+	const MHandle hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!conemu::tests::IsConEmuMode(hConOut, __FUNCTION__))
+		return;
+
+	conemu::tests::InitConEmuPathVars();
+
+	STARTUPINFOW si{}; si.cb = sizeof(si);
+	PROCESS_INFORMATION pi{};
+	CEStr testExe;
+	GetModulePathName(nullptr, testExe);
+	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunFishPromptTest");
+	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
+	const auto created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, false, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
+	if (!created)
+	{
+		const DWORD errCode = GetLastError();
+		EXPECT_TRUE(created) << "create process failed, code=" << errCode << ", cmd=" << cmdLine.c_str();
+		return;
+	}
+
+	const auto wait = WaitForSingleObject(pi.hProcess, 1000 * 180);
+	if (wait != WAIT_OBJECT_0)
+	{
+		EXPECT_EQ(wait, WAIT_OBJECT_0) << "process was not finished in time: " << cmdLine.c_str();
+		TerminateProcess(pi.hProcess, 255);
+	}
+	else
+	{
+		DWORD exitCode = 255;
+		EXPECT_TRUE(GetExitCodeProcess(pi.hProcess, &exitCode));
+		EXPECT_EQ(0, exitCode);
+	}
+
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+}
+
+// This test is created after gh-2404
+TEST(Ansi, CheckLineWrapWin11)
+{
+	const MHandle hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!conemu::tests::IsConEmuMode(hConOut, __FUNCTION__))
+		return;
+
+	conemu::tests::InitConEmuPathVars();
+
+	STARTUPINFOW si{}; si.cb = sizeof(si);
+	PROCESS_INFORMATION pi{};
+	CEStr testExe;
+	GetModulePathName(nullptr, testExe);
+	const CEStr envCmdLine(L"\"%ConEmuBaseDir%\\" ConEmuC_EXE_3264 L"\" -std -c \"", testExe, L"\" RunLineWrapWin11Test");
 	const CEStr cmdLine(ExpandEnvStr(envCmdLine));
 	const auto created = CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, false, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi);
 	if (!created)

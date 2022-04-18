@@ -1159,7 +1159,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		y = y2;
 	};
 
-	if (gState.wasWriteAtEol && (csbi.dwCursorPosition.Y == gState.lastWriteCoord.Y) && (csbi.dwCursorPosition.X == gState.lastWriteCoord.X))
+	if (gState.wasWriteAtEol && (Info->Buffer[0] != L'\r' && Info->Buffer[0] != L'\n')
+		&& (csbi.dwCursorPosition.Y == gState.lastWriteCoord.Y) && (csbi.dwCursorPosition.X == gState.lastWriteCoord.X))
 	{
 		lbRc = IntWriteText(h, x, x, L"\r\n", 2,
 						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : nullptr,

@@ -34,6 +34,8 @@ namespace conemu {
 namespace tests {
 void PrepareGoogleTests();
 int RunLineFeedTest();
+int RunFishPromptTest();
+int RunLineWrapWin11Test();
 int RunLineFeedTestXTerm();
 int RunLineFeedTestParent();
 int RunLineFeedTestChild();
@@ -58,6 +60,10 @@ int main(int argc, char** argv)
 	{
 		if (argv[i] && strcmp(argv[i], "RunLineFeedTest") == 0)
 			return conemu::tests::RunLineFeedTest();
+		if (argv[i] && strcmp(argv[i], "RunFishPromptTest") == 0)
+			return conemu::tests::RunFishPromptTest();
+		if (argv[i] && strcmp(argv[i], "RunLineWrapWin11Test") == 0)
+			return conemu::tests::RunLineWrapWin11Test();
 		if (argv[i] && strcmp(argv[i], "RunLineFeedTestXTerm") == 0)
 			return conemu::tests::RunLineFeedTestXTerm();
 		if (argv[i] && strcmp(argv[i], "RunLineFeedTestParent") == 0)
