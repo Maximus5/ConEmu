@@ -1082,6 +1082,7 @@ CESERVER_REQ* ConEmuRpc::Execute(CESERVER_REQ* pIn) const
 		{
 			if (lpRet)
 			{
+				// Might be false positive if GuiMacro Sleep is executed or so
 				_ASSERTE(nDelta <= nWarnExecutionTime || lpRet->hdr.IsDebugging);
 			}
 			else

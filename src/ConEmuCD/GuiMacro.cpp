@@ -256,7 +256,7 @@ void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst)
 					break;
 				pszID = pszEnd;
 			}
-			else if (wcschr(L"SsTt", pszID[0]) && isDigit(pszID[1]))
+			else if (wcschr(L"SsTt", pszID[0]) && (isDigit(pszID[1]) || (pszID[1] == L'-' && isDigit(pszID[2]))))
 			{
 				switch (pszID[0])
 				{
@@ -265,8 +265,8 @@ void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst)
 					swprintf_c(szLog, L"Split was requested: %u", inst.nSplitIndex);
 					break;
 				case L'T': case L't':
-					inst.nTabIndex = wcstoul(pszID+1, &pszEnd, 10);
-					swprintf_c(szLog, L"Tab was requested: %u", inst.nTabIndex);
+					inst.nTabIndex = wcstol(pszID+1, &pszEnd, 10);
+					swprintf_c(szLog, L"Tab was requested: %i", inst.nTabIndex);
 					break;
 				default:
 					_ASSERTE(FALSE && "Should not get here");
@@ -318,7 +318,8 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 	_ASSERTE(inst.hConEmuWnd!=NULL || gState.realConWnd_!=NULL || gState.conemuWnd_!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
 
 	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";
-	wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";
+	// ReSharper disable once CppVariableCanBeMadeConstexpr
+	const wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";
 
 	// Don't allow to execute on wrong instance
 	if ((inst.nPID && !inst.hConEmuWnd)
@@ -342,14 +343,17 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 		return CERR_GUIMACRO_FAILED;
 	}
 
-	auto* const hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : GetConEmuWindows(gState.realConWnd_).ConEmuRoot;
+	auto* const hCallWnd =
+			(inst.nTabIndex == -2) ? gState.realConWnd_
+			: inst.hConEmuWnd ? inst.hConEmuWnd
+			: GetConEmuWindows(gState.realConWnd_).ConEmuRoot;
 	_ASSERTE(hCallWnd != nullptr);
 
 	// Все что в asCmdArg - выполнить в Gui
 	int iRc = CERR_GUIMACRO_FAILED;
 	const int nLen = lstrlen(asCmdArg);
 	//SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	CESERVER_REQ *pIn = nullptr, *pOut = nullptr;
 	pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
 	pIn->GuiMacro.nTabIndex = inst.nTabIndex;
 	pIn->GuiMacro.nSplitIndex = inst.nSplitIndex;

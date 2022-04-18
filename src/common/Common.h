@@ -2262,7 +2262,7 @@ struct CESERVER_REQ_ACTIVATECONSOLE
 struct CESERVER_REQ_GUIMACRO
 {
 	DWORD   nSucceeded;
-	DWORD   nTabIndex;    // Specially selected tab, 1-based
+	int     nTabIndex;    // Specially selected tab, 1-based; -1 means last tab; -2 means tab of RCon
 	DWORD   nSplitIndex;  // Specially selected split, 1-based
 	wchar_t sMacro[1];    // Variable length
 };

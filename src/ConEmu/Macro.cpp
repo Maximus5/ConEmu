@@ -77,7 +77,7 @@ namespace ConEmuMacro
 
 	static bool mb_ChangeContext = false;
 	static UINT mn_ChangeContextTab = 0, mn_ChangeContextSplit = 0;
-	CRealConsole* ChangeContext(CRealConsole* apRCon, UINT nTabIndex, UINT nSplitIndex, CVConGuard& VCon, CEStr& pszError);
+	CRealConsole* ChangeContext(CRealConsole* apRCon, int nTabIndex, UINT nSplitIndex, CVConGuard& VCon, CEStr& pszError);
 
 	/* ****************************** */
 	/* ****** Macros functions ****** */
@@ -347,7 +347,7 @@ CEStr ConEmuMacro::ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErr
 	return pszCvt;
 }
 
-CRealConsole* ConEmuMacro::ChangeContext(CRealConsole* apRCon, UINT nTabIndex, UINT nSplitIndex, CVConGuard& VCon, CEStr& pszError)
+CRealConsole* ConEmuMacro::ChangeContext(CRealConsole* apRCon, int nTabIndex, UINT nSplitIndex, CVConGuard& VCon, CEStr& pszError)
 {
 	if (!nTabIndex && !nSplitIndex)
 	{
@@ -361,7 +361,22 @@ CRealConsole* ConEmuMacro::ChangeContext(CRealConsole* apRCon, UINT nTabIndex, U
 		// Special (non-active) tab or split was selected
 		if (nTabIndex)
 		{
-			gpConEmu->mp_TabBar->GetVConFromTab(nTabIndex - 1, &VConTab, nullptr);
+			if (nTabIndex > 0)
+			{
+				gpConEmu->mp_TabBar->GetVConFromTab(nTabIndex - 1, &VConTab, nullptr);
+			}
+			else if (nTabIndex == -1)
+			{
+				const int nCon = CVConGroup::GetConCount() - 1;
+				CVConGroup::GetVCon(nCon, &VConTab, false);
+			}
+			else if (nTabIndex == -2)
+			{
+				if (apRCon)
+				{
+					VConTab.Attach(apRCon->VCon());
+				}
+			}
 		}
 		else if (apRCon)
 		{
@@ -378,8 +393,8 @@ CRealConsole* ConEmuMacro::ChangeContext(CRealConsole* apRCon, UINT nTabIndex, U
 		if (nSplitIndex && CVConGroup::isGroup(VConTab.VCon(), &pGr))
 		{
 			MArray<CVConGuard*> Panes;
-			int iCount = pGr->GetGroupPanes(&Panes);
-			if ((int)nSplitIndex > iCount)
+			const int iCount = pGr->GetGroupPanes(&Panes);
+			if (static_cast<int>(nSplitIndex) > iCount)
 			{
 				CVConGroup::FreePanesArray(Panes);
 				pszError = lstrdup(L"InvalidSplitIndex");
@@ -2852,13 +2867,13 @@ CEStr ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		int nParm = 0;
 		p->GetIntArg(1, nParm);
 
-		switch (nTabCmd)
+		switch (static_cast<ConEmuTabCommand>(nTabCmd))
 		{
 		case ctc_ShowHide:
 		case ctc_SwitchCommit: // commit lazy changes
 		case ctc_SwitchNext:
 		case ctc_SwitchPrev:
-			gpConEmu->TabCommand((ConEmuTabCommand)nTabCmd);
+			CConEmuCtrl::TabCommand(static_cast<ConEmuTabCommand>(nTabCmd));
 			pszResult = lstrdup(L"OK");
 			break;
 		case ctc_SwitchDirect: // switch tab direct (no recent mode), parm=(1,-1)
@@ -2887,7 +2902,7 @@ CEStr ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			break;
 		case ctc_SwitchConsoleDirect: // switch console direct (no recent mode), parm=(1,-1)
 			{
-				int nActive = gpConEmu->ActiveConNum(); // 0-based
+				const int nActive = gpConEmu->ActiveConNum(); // 0-based
 				if (nParm == 1)
 				{
 					// Прокрутка вперед (циклически)
@@ -2912,7 +2927,7 @@ CEStr ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					}
 					else
 					{
-						int nNew = gpConEmu->GetConCount()-1;
+						const int nNew = gpConEmu->GetConCount()-1;
 						if (nNew > nActive)
 						{
 							gpConEmu->ConActivate(nNew);
@@ -2922,11 +2937,21 @@ CEStr ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				}
 			}
 			break;
-		case ctc_ActivateConsole: // activate console by number, parm=(one-based console index)
-			if ((nParm >= 1) && CVConGroup::isVConExists(nParm-1))
+		case ctc_ActivateConsole: // activate console by number
+			if ((nParm >= 1) && CVConGroup::isVConExists(nParm-1))  // parm=(one-based console index)
 			{
-				gpConEmu->ConActivate(nParm-1);
-				pszResult = lstrdup(L"OK");
+				const bool ok = gpConEmu->ConActivate(nParm-1);
+				pszResult = lstrdup(ok ? L"OK" : L"NotFound");
+			}
+			else if (nParm == -1)  // Activate last console
+			{
+				const bool ok = gpConEmu->ConActivate(-1);
+				pszResult = lstrdup(ok ? L"OK" : L"NotFound");
+			}
+			else if (nParm == -2 && apRCon)  // Activate console, from which Macro is executed
+			{
+				const bool ok = CVConGroup::Activate(apRCon->VCon());
+				pszResult = lstrdup(ok ? L"OK" : L"NotFound");
 			}
 			break;
 		case ctc_ActivateByName: // activate console by renamed title, console title, active process name, root process name
@@ -2955,7 +2980,7 @@ CEStr ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		case ctc_SwitchPaneDirect: // switch visible panes direct (no recent mode), parm=(1,-1), like ctc_SwitchConsoleDirect but for Splits
 			if (apRCon && (nParm == 1 || nParm == -1))
 			{
-				bool bNext = (nParm == 1);
+				const bool bNext = (nParm == 1);
 				if (CVConGroup::PaneActivateNext(bNext))
 				{
 					pszResult = lstrdup(L"OK");
@@ -2974,6 +2999,9 @@ CEStr ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				}, 0);
 				return data.GetData().Detach();
 			}
+			break;  // NOLINT(clang-diagnostic-unreachable-code-break)
+		default:
+			_ASSERTE(FALSE && "Tab command is unknown");
 			break;
 		}
 	}

@@ -3383,7 +3383,7 @@ bool CVConGroup::Activate(CVirtualConsole* apVCon)
 	{
 		if (gp_VCon[i] == apVCon)
 		{
-			ConActivate(i);
+			ConActivate(static_cast<int>(i));
 			lbRc = (gp_VActive == apVCon);
 			break;
 		}
@@ -4044,7 +4044,7 @@ void CVConGroup::StoreActiveVCon(CVirtualConsole* pVCon)
 	}
 }
 
-bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
+bool CVConGroup::ConActivate(CVConGuard& VCon, const int nCon)
 {
 	CVirtualConsole* pVCon = VCon.VCon();
 
@@ -4147,13 +4147,13 @@ bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
 // nCon - zero-based index of console; -1 for last console
 bool CVConGroup::ConActivate(int nCon)
 {
-	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+	FLASHWINFO fl{}; fl.cbSize = sizeof(FLASHWINFO); fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+	FlashWindowEx(&fl);  // During multiple creation tab icon might be blinking, stop it
 
 	if (nCon == -1)
 		nCon = GetConCount() - 1;
 
-	if (nCon >= 0 && nCon < (int)countof(gp_VCon))
+	if (nCon >= 0 && nCon < static_cast<int>(countof(gp_VCon)))
 	{
 		CVConGuard VCon(gp_VCon[nCon]);
 		CVirtualConsole* pVCon = VCon.VCon();

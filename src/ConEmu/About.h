@@ -467,7 +467,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Cmd==4: switch tab direct (no recent mode), Parm=(1,-1)\r\n" \
 	L"     Cmd==5: switch tab recent, Parm=(1,-1)\r\n" \
 	L"     Cmd==6: switch console direct (no recent mode), Parm=(1,-1)\r\n" \
-	L"     Cmd==7: activate console by number, Parm=(1-based console index or -1 for last tab)\r\n" \
+	L"     Cmd==7: activate console, Parm=(1-based console index, -1 for the last tab, -2 for the tab of execution)\r\n" \
 	L"     Cmd==8: show tabs list menu (indiffirent Far/Not Far)\r\n" \
 	L"     Cmd==9: close active tab, same as Close(3)\r\n" \
 	L"     Cmd==10: switches visible split-panes, Parm=(1,-1)\r\n" \

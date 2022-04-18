@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct MacroInstance
 {
 	HWND  hConEmuWnd;  // Root! window
-	DWORD nTabIndex;   // Specially selected tab, 1-based
+	int   nTabIndex;   // Specially selected tab, 1-based; -1 means last tab; -2 means tab of RCon
 	DWORD nSplitIndex; // Specially selected split, 1-based
 	DWORD nPID;
 };
