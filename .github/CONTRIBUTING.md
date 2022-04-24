@@ -27,7 +27,7 @@ Please read the [article on the official site](https://conemu.github.io/en/BadIs
 
 If you catch a bug in the Adobe Reader you would not report it on Microsoft Connect because you run Reader in Windows, would you?
 
-A lot of users say ‘It works in cygwin’ or ‘It works in git bash’, but since both of them uses the mintty terminal, it can exhibit different behavior. Read more in [Do not compare with Cygwin or Git Bash](#donotcompare).
+A lot of users say ‘It works in cygwin’ or ‘It works in git bash’, but since both of them uses the mintty terminal, it can exhibit different behavior. Read more in [Do not compare with Cygwin or Git Bash](#do-not-compare-with-cygwin-or-git-bash).
 
 
 ##### TLDR;
