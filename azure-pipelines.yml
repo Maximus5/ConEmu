@@ -8,6 +8,12 @@ trigger:
     include:
     - master
     - daily
+  paths:
+    exclude:
+    - '**/*.md'
+    - '*.md'
+    - '**/*.txt'
+    - '*.txt'
 
 pool:
   vmImage: 'windows-2019'
