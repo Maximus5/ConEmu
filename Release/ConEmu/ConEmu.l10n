@@ -388,8 +388,8 @@
       "es": "Pedir confirmación antes de cerrar la pestaña de editor o visor de Far Manager",
       "pl": "Pokaż potwierdzenie przed zamknięciem edytora lub przeglądarki przeglądarki Far Manager",
       "it_IT": "Mostra conferma prima di chiudere una scheda di Far Manager",
-      "ko": "Far 관리자 편집기 또는 뷰어 탭을 닫기 전에 확인 표시",
-      "ko_KR": "Far 관리자 편집기 또는 뷰어 탭을 닫기 전에 확인 표시",
+      "ko": "Far Manager 편집기 또는 뷰어 탭을 닫기 전에 확인 표시",
+      "ko_KR": "Far Manager 편집기 또는 뷰어 탭을 닫기 전에 확인 표시",
       "pt_BR": "Exibir confirmação antes de fechar a aba do editor ou do visualizador do Far Manager",
       "id": 2517 }
     ,
@@ -934,9 +934,9 @@
             , "3er-estado - permitir parpadeo corto." ],
       "pl": [ "Wyłącz flashowanie (od Far Managera) na pasku zadań Windows.\n"
             , "3. stan - pozwala na krótkie flashowanie." ],
-      "ko": [ "Windows 작업 표시줄에서 (Far 관리자에서) 깜박임을 비활성화합니다\r\n"
+      "ko": [ "Windows 작업 표시줄에서 (Far Manager에서) 깜박임을 비활성화합니다\r\n"
             , "3 단계 - 짧은 깜박임을 허용합니다." ],
-      "ko_KR": [ "Windows 작업 표시줄에서 (Far 관리자에서) 깜박임을 비활성화합니다\r\n"
+      "ko_KR": [ "Windows 작업 표시줄에서 (Far Manager에서) 깜박임을 비활성화합니다\r\n"
             , "3 단계 - 짧은 깜박임을 허용합니다." ],
       "id": 1718 }
     ,
@@ -1190,9 +1190,9 @@
       "it_IT": [ "ConEmu è in grado di utilizzare font normali, in grassetto e in corsivo sulla stessa linea.\r\n"
             , "Questa caratteristica può tornare utile per decorare il prompt o con il plugin Colorer di Far Manager (1.7x, 2.x)." ],
       "ko": [ "ConEmu는 일반, 굵은 글꼴, 기울임 글꼴을 나란히 사용할 수 있습니다.\r\n"
-            , "이 기능은 프롬프트 장식 또는 Far 관리자용 Colorer 플러그인 (1.7x, 2.x)에 유용할 수 있습니다." ],
+            , "이 기능은 프롬프트 장식 또는 Far Manager용 Colorer 플러그인 (1.7x, 2.x)에 유용할 수 있습니다." ],
       "ko_KR": [ "ConEmu는 일반, 굵은 글꼴, 기울임 글꼴을 나란히 사용할 수 있습니다.\r\n"
-            , "이 기능은 프롬프트 장식 또는 Far 관리자용 Colorer 플러그인 (1.7x, 2.x)에 유용할 수 있습니다." ],
+            , "이 기능은 프롬프트 장식 또는 Far Manager용 Colorer 플러그인 (1.7x, 2.x)에 유용할 수 있습니다." ],
       "id": 1576 }
     ,
     "cbExtendUCharMap": {
@@ -1344,8 +1344,8 @@
       "ja": "DetEach(CtrlAltTab)で作成されたConEmuの新しいFar Manager コンソールへの自動接続",
       "es": "Enganchar automáticamente a ConEmu el nuevo terminal de Far manager, creado al desenganchar (CtrlAltTab) ",
       "pl": "Automatyczne dołączanie do nowej konsoli Far Manager ConEmu, utworzonej przy odłączeniu (CtrlAltTab)",
-      "ko": "분리시 생성된 ConEmu 새 Far 관리자 콘솔에 자동 연결 (CtrlAltTab)",
-      "ko_KR": "분리시 생성된 ConEmu 새 Far 관리자 콘솔에 자동 연결 (CtrlAltTab)",
+      "ko": "분리시 생성된 ConEmu 새 Far Manager 콘솔에 자동 연결 (CtrlAltTab)",
+      "ko_KR": "분리시 생성된 ConEmu 새 Far Manager 콘솔에 자동 연결 (CtrlAltTab)",
       "id": 1619 }
     ,
     "cbHereName": {
@@ -1627,9 +1627,9 @@
       "pl": [ "Monitoruj zmianę języka wprowadzania w czasie rzeczywistym\n"
             , "konsola (np. obsługa przełączania Far Manager XLat)" ],
       "ko": [ "실제 콘솔에서 입력 언어 변경 모니터링\r\n"
-            , "(예: Far 관리자 XLat 전환 지원)" ],
+            , "(예: Far Manager XLat 전환 지원)" ],
       "ko_KR": [ "실제 콘솔에서 입력 언어 변경 모니터링\r\n"
-            , "(예: Far 관리자 XLat 전환 지원)" ],
+            , "(예: Far Manager XLat 전환 지원)" ],
       "id": 1537 }
     ,
     "cbMonospace": {
@@ -1942,8 +1942,8 @@
       "ja": "ConEmuウィンドウを閉じたときにコンソールウィンドウではなく Far Manager を閉じるように試みる",
       "es": "Intentar el cierre de Far Manager, en vez de cerrar la terminal, cuando se cierra la ventana de ConEmu",
       "pl": "Staraj się delikatnie zamykać Far Managera zamiast zamykać okno konsoli po zamknięciu okna ConEmu",
-      "ko": "ConEmu 창을 닫을 때 콘솔 창을 닫는 대신 Far 관리자를 부드럽게 닫습니다",
-      "ko_KR": "ConEmu 창을 닫을 때 콘솔 창을 닫는 대신 Far 관리자를 부드럽게 닫습니다",
+      "ko": "ConEmu 창을 닫을 때 콘솔 창을 닫는 대신 Far Manager를 부드럽게 닫습니다",
+      "ko_KR": "ConEmu 창을 닫을 때 콘솔 창을 닫는 대신 Far Manager를 부드럽게 닫습니다",
       "id": 1654 }
     ,
     "cbScrollbarDynamic": {
@@ -2048,8 +2048,8 @@
       "ja": "コンソール1つではなく,すべてのFar Managerウィンドウ(パネル,エディタ,ビューア)を表示する",
       "es": "Mostrar todas las ventanas de Far Manager (paneles, editores, visores) en vez de una pestaña por cada terminal",
       "pl": "Pokaż wszystkie okna Far Managera (panele, edytory, przeglądarki) zamiast jednej karty dla jednej konsoli",
-      "ko": "하나의 콘솔에 하나의 탭 대신 모든 Far 관리자 창 (패널, 편집기, 뷰어) 표시",
-      "ko_KR": "하나의 콘솔에 하나의 탭 대신 모든 Far 관리자 창 (패널, 편집기, 뷰어) 표시",
+      "ko": "하나의 콘솔에 하나의 탭 대신 모든 Far Manager 창 (패널, 편집기, 뷰어) 표시",
+      "ko_KR": "하나의 콘솔에 하나의 탭 대신 모든 Far Manager 창 (패널, 편집기, 뷰어) 표시",
       "id": 2053 }
     ,
     "cbShowHelpTooltips": {
@@ -2207,8 +2207,8 @@
       "ja": "'開いたタブを自動的に保存/復元する'ときは,Far Manager エディタやビューアも保存/復元する",
       "es": "Cuando se activa 'Auto guardar/recuperar pestañas abiertas' guardar/recuperar también los editores/visores de Far Manager",
       "pl": "Kiedy „Auto zapis/przywrót otwartych kart” zapisuje/przywraca edytorów / przeglądających Far Managera",
-      "ko": "열린 탭 자동 저장/복원' 시 Far 관리자 편집기/뷰어도 저장/복원",
-      "ko_KR": "'열린 탭 자동 저장/복원' 시 Far 관리자 편집기/뷰어도 저장/복원",
+      "ko": "열린 탭 자동 저장/복원' 시 Far Manager 편집기/뷰어도 저장/복원",
+      "ko_KR": "'열린 탭 자동 저장/복원' 시 Far Manager 편집기/뷰어도 저장/복원",
       "id": 2238 }
     ,
     "cbStartFarRestoreFolders": {
@@ -2219,8 +2219,8 @@
       "ja": "'開いたタブの自動保存/復元'がFar Managerパネルのフォルダを保存/復元するとき",
       "es": "Cuando esté activo 'Auto guardado/recuperación de pestañas abiertas' guardar/recuperar también los paneles de carpetas de Far Manager",
       "pl": "Gdy „Auto zapis/Przywrót otwartych kart” również zapisuje / przywraca foldery paneli Far Managera",
-      "ko": "'열린 탭 자동 저장/복원' 시 Far 관리자 패널 폴더도 저장/복원",
-      "ko_KR": "'열린 탭 자동 저장/복원' 시 Far 관리자 패널 폴더도 저장/복원",
+      "ko": "'열린 탭 자동 저장/복원' 시 Far Manager 패널 폴더도 저장/복원",
+      "ko_KR": "'열린 탭 자동 저장/복원' 시 Far Manager 패널 폴더도 저장/복원",
       "id": 2237 }
     ,
     "cbSuppressBells": {
@@ -2508,10 +2508,10 @@
       "pl": [ "Użyj Alt+NumpadAdd+HexNumbers aby wprowadzić symbol Unicode za pomocą szesnastkowej bazy kodów\n"
             , "Zignorowany w Far Managerze\n"
             , "Nie ma wpływu na wyraźny skrót" ],
-      "ko": [ "Far 관리자에서 무시되는 16진수 코드베이스로 유니코드 기호를 입력하려면\r\n"
+      "ko": [ "Far Manager에서 무시되는 16진수 코드베이스로 유니코드 기호를 입력하려면\r\n"
             , "Alt+숫자패드추가+Hex 숫자를 사용하십시오\r\n"
             , "명시적 단축키에는 영향을주지 않습니다" ],
-      "ko_KR": [ "Far 관리자에서 무시되는 16진수 코드베이스로 유니코드 기호를 입력하려면\r\n"
+      "ko_KR": [ "Far Manager에서 무시되는 16진수 코드베이스로 유니코드 기호를 입력하려면\r\n"
             , "Alt+숫자패드추가+Hex 숫자를 사용하십시오\r\n"
             , "명시적 단축키에는 영향을주지 않습니다" ],
       "id": 3061 }
@@ -2765,10 +2765,10 @@
             , "<No-Mod>jest ignorowany w Far Managerze, aby ominąć\n"
             , "kliknięcie przycisku myszy powoduje konsolę" ],
       "ko": [ "마우스 버튼 클릭을 콘솔로 우회하기 위해\r\n"
-            , "Far 관리자에서 1 동작에 대해 필요한\r\n"
+            , "Far Manager에서 1 동작에 대해 필요한\r\n"
             , "눌린 수정자를 선택하면 무시됩니다" ],
       "ko_KR": [ "마우스 버튼 클릭을 콘솔로 우회하기 위해\r\n"
-            , "Far 관리자에서 <No-Mod> 동작에 대해 필요한\r\n"
+            , "Far Manager에서 <No-Mod> 동작에 대해 필요한\r\n"
             , " 눌린 수정자를 선택하면 무시됩니다" ],
       "id": 1645 }
     ,
@@ -3039,8 +3039,8 @@
       "es": "Sólo SO de 64bit (System32 o SysWOW64) - igual nº de bits que la aplicación (ConEmu, Far Manager, ...)",
       "pl": "Tylko 64-bitowy system operacyjny, (System32 lub SysWOW64) - te same bity co aplikacja (ConEmu, Far Manager, ...)",
       "it_IT": "Solo sistema operativo a 64 bit (System32 o SysWOW64) - stessi bit dell'applicazione (ConEmu, Far Manager, ...)",
-      "ko": "64비트 OS 전용, (System32 또는 SysWOW64) - 응용프로그램과 동일한 비트 (ConEmu, Far 관리자, ...)",
-      "ko_KR": "64비트 OS 전용, (System32 또는 SysWOW64) - 응용프로그램과 동일한 비트 (ConEmu, Far 관리자, ...)",
+      "ko": "64비트 OS 전용, (System32 또는 SysWOW64) - 응용프로그램과 동일한 비트 (ConEmu, Far Manager, ...)",
+      "ko_KR": "64비트 OS 전용, (System32 또는 SysWOW64) - 응용프로그램과 동일한 비트 (ConEmu, Far Manager, ...)",
       "id": 2158 }
     ,
     "rbComspec_OSbit": {
@@ -3324,11 +3324,11 @@
       "ko": [ "배경 이미지로 대체될,\r\n"
             , "배경색 색인을 선택합니다,\r\n"
             , "기본값은 '#0#1' 검정색과 파란색입니다..\r\n"
-            , "Far 관리자 패널 배경색에는 \"*\" (별표)를 사용합니다." ],
+            , "Far Manager 패널 배경색에는 \"*\" (별표)를 사용합니다." ],
       "ko_KR": [ "배경 이미지로 대체될,\r\n"
             , "배경색 색인을 선택합니다,\r\n"
             , "기본값은 '#0#1' 검정색과 파란색입니다..\r\n"
-            , "Far 관리자 패널 배경색에는 \"*\" (별표)를 사용합니다." ],
+            , "Far Manager 패널 배경색에는 \"*\" (별표)를 사용합니다." ],
       "id": 1575 }
     ,
     "tCloseTabMacro": {
@@ -3346,9 +3346,9 @@
             , "Limpia el campo para comportamiento por defecto" ],
       "pl": [ "Makro dla zamkniętego edytora / przeglądarki / paneli w Far Managerze, gdy wybierzesz „Zamknij” z menu kontekstowego karty\n"
             , "Wyczyść pole, aby przywrócić ustawienia domyślne" ],
-      "ko": [ "탭 컨텍스트 메뉴에서 '닫기'를 선택할 때 Far 관리자의 편집기/뷰어/패널 닫기용 매크로\r\n"
+      "ko": [ "탭 컨텍스트 메뉴에서 '닫기'를 선택할 때 Far Manager의 편집기/뷰어/패널 닫기용 매크로\r\n"
             , "기본값으로 재설정하려면 필드 지우기" ],
-      "ko_KR": [ "탭 컨텍스트 메뉴에서 '닫기'를 선택할 때 Far 관리자의 편집기/뷰어/패널 닫기용  매크로\r\n"
+      "ko_KR": [ "탭 컨텍스트 메뉴에서 '닫기'를 선택할 때 Far Manager의 편집기/뷰어/패널 닫기용  매크로\r\n"
             , "기본값으로 재설정하려면 필드 지우기" ],
       "id": 2078 }
     ,
@@ -3504,8 +3504,8 @@
     "tFarHourglass": {
       "en": "Far Manager not-responding duration in milliseconds before changing mouse cursor to AppStarting",
       "pl": "Czas braku odpowiedzi Far Managera w ms przed zmianą kursora myszy na Uruchamianie aplikacji",
-      "ko": "마우스 커서를 AppStarting으로 변경하기 전 Far 관리자가 응답하지 않는 밀리초 시간",
-      "ko_KR": "마우스 커서를 AppStarting으로 변경하기 전 Far 관리자가 응답하지 않는 밀리초 시간",
+      "ko": "마우스 커서를 AppStarting으로 변경하기 전 Far Manager가 응답하지 않는 밀리초 시간",
+      "ko_KR": "마우스 커서를 AppStarting으로 변경하기 전 Far Manager가 응답하지 않는 밀리초 시간",
       "id": 3111 }
     ,
     "tFontCharset": {
@@ -3990,9 +3990,9 @@
             , "Limpiar campor y reiniciar a valores por defecto" ],
       "pl": [ "Makro Far Manager dla EMenu wybranych elementów panelu plików\n"
             , "Wyczyść pole, aby przywrócić ustawienia domyślne" ],
-      "ko": [ "파일 패널 선택 항목의 EMenu에 대한 Far 관리자 매크로\r\n"
+      "ko": [ "파일 패널 선택 항목의 EMenu에 대한 Far Manager 매크로\r\n"
             , "기본값으로 재설정하려면 필드 지우기" ],
-      "ko_KR": [ "파일 패널 선택 항목의 EMenu에 대한 Far 관리자 매크로\r\n"
+      "ko_KR": [ "파일 패널 선택 항목의 EMenu에 대한 Far Manager 매크로\r\n"
             , "기본값으로 재설정하려면 필드 지우기" ],
       "id": 2075 }
     ,
@@ -4074,9 +4074,9 @@
             , "Vaciar el campo para usar configuración por defecto" ],
       "pl": [ "Makro do zapisywania wszystkich otwartych edytorów zmodyfikowanych Far Managera, po wybraniu \"Zapisz wszystko\" z menu kontekstowego karty\n"
             , "Wyczyść pole, aby przywrócić ustawienia domyślne" ],
-      "ko": [ "탭 컨텍스트 메뉴에서 '모두 저장'을 선택하면 열려있는 모든 Far 관리자 수정 편집기를 저장하기 위한 매크로\r\n"
+      "ko": [ "탭 컨텍스트 메뉴에서 '모두 저장'을 선택하면 열려있는 모든 Far Manager 수정 편집기를 저장하기 위한 매크로\r\n"
             , "기본값으로 재설정하려면 필드 지우기" ],
-      "ko_KR": [ "탭 컨텍스트 메뉴에서 '모두 저장'을 선택하면 열려있는 모든 Far 관리자 수정 편집기를 저장하기 위한 매크로\r\n"
+      "ko_KR": [ "탭 컨텍스트 메뉴에서 '모두 저장'을 선택하면 열려있는 모든 Far Manager 수정 편집기를 저장하기 위한 매크로\r\n"
             , "기본값으로 재설정하려면 필드 지우기" ],
       "id": 2079 }
     ,
@@ -4193,8 +4193,8 @@
       "ja": "共通タブテンプレート(Far Manager以外のコンソールプログラム)",
       "es": "Plantilla común para pestaña (cualquier programa de terminal excepto Far Manager)",
       "pl": "Szablon wspólnych kart (dowolny program konsoli oprócz Far Managera)",
-      "ko": "공통 탭 템플릿 (Far 관리자를 제외한 모든 콘솔 프로그램)",
-      "ko_KR": "공통 탭 템플릿 (Far 관리자를 제외한 모든 콘솔 프로그램)",
+      "ko": "공통 탭 템플릿 (Far Manager를 제외한 모든 콘솔 프로그램)",
+      "ko_KR": "공통 탭 템플릿 (Far Manager를 제외한 모든 콘솔 프로그램)",
       "id": 1638 }
     ,
     "tTabEditor": {
@@ -4205,8 +4205,8 @@
       "ja": "Far Managerの内部エディタ用のタブテンプレート",
       "es": "Plantilla de pestaña para editores internos de Far Manager",
       "pl": "Szablon zakładek dla wewnętrznych edytorów Far Managera",
-      "ko": "Far 관리자 내부 편집기용 탭 템플릿",
-      "ko_KR": "Far 관리자 내부 편집기용 탭 템플릿",
+      "ko": "Far Manager 내부 편집기용 탭 템플릿",
+      "ko_KR": "Far Manager 내부 편집기용 탭 템플릿",
       "id": 1639 }
     ,
     "tTabEditorMod": {
@@ -4217,8 +4217,8 @@
       "ja": "Far Manager内部修正エディタ用のタブテンプレート",
       "es": "Plantilla de pestaña para editores modificados internos de Far Manager",
       "pl": "Szablon zakładek dla wewnętrznych edytorów edytorów Far Manager",
-      "ko": "Far 관리자 내부 수정 편집기용 탭 템플릿",
-      "ko_KR": "Far 관리자 내부 수정 편집기용 탭 템플릿",
+      "ko": "Far Manager 내부 수정 편집기용 탭 템플릿",
+      "ko_KR": "Far Manager 내부 수정 편집기용 탭 템플릿",
       "id": 1641 }
     ,
     "tTabFlashCounter": {
@@ -4298,8 +4298,8 @@
       "ja": "Far Managerパネルのタブテンプレート",
       "es": "Plantilla de pestaña para paneles de Far Manager",
       "pl": "Szablon zakładek dla paneli Far Managera",
-      "ko": "Far 관리자 패널용 탭 템플릿",
-      "ko_KR": "Far 관리자 패널용 탭 템플릿",
+      "ko": "Far Manager 패널용 탭 템플릿",
+      "ko_KR": "Far Manager 패널용 탭 템플릿",
       "id": 1644 }
     ,
     "tTabViewer": {
@@ -4310,8 +4310,8 @@
       "ja": "Far Managerの内部ビューア用のタブテンプレート",
       "es": "Plantilla de pestañas para los visores internos de Far Manager",
       "pl": "Szablon zakładek dla wewnętrznych przeglądarek Far Managera",
-      "ko": "Far 관리자 내부 뷰어용 탭 템플릿",
-      "ko_KR": "Far 관리자 내부 뷰어용 탭 템플릿",
+      "ko": "Far Manager 내부 뷰어용 탭 템플릿",
+      "ko_KR": "Far Manager 내부 뷰어용 탭 템플릿",
       "id": 1640 }
     ,
     "tThumbLoadingTimeout": {
@@ -9187,8 +9187,8 @@
       "es": "Far Manager",
       "pl": "Far Menadzer",
       "it_IT": "Far Manager",
-      "ko": "Far 관리자",
-      "ko_KR": "Far 관리자",
+      "ko": "Far Manager",
+      "ko_KR": "Far Manager",
       "id": 50 }
     ,
     "lng_SpgFarViews": {
@@ -10018,8 +10018,8 @@
       "es": "Permitir plugins de fondo (Far Manager)",
       "pl": "Zezwalaj na wtyczki w tle (Far Manager)",
       "it_IT": "Consenti i plugin in background (Far Manager)",
-      "ko": "백그라운드 플러그인 허용 (Far 관리자)",
-      "ko_KR": "백그라운드 플러그인 허용 (Far 관리자)",
+      "ko": "백그라운드 플러그인 허용 (Far Manager)",
+      "ko_KR": "백그라운드 플러그인 허용 (Far Manager)",
       "id": 1734 }
     ,
     "cbBgImage": {
@@ -10132,8 +10132,8 @@
       "es": "Confirmar cierre de las pestañas de Editor/Visor de Far Manager",
       "pl": "Potwierdź zamknięcie karty edytora / przeglądarki Far Managera",
       "it_IT": "Chiedi conferma per chiusura scheda di Far Manager/Viewer",
-      "ko": "Far 관리자 편집기/뷰어 탭 닫기 확인",
-      "ko_KR": "Far 관리자 편집기/뷰어 탭 닫기 확인",
+      "ko": "Far Manager 편집기/뷰어 탭 닫기 확인",
+      "ko_KR": "Far Manager 편집기/뷰어 탭 닫기 확인",
       "id": 2517 }
     ,
     "cbCloseWindowConfirm": {
@@ -11051,7 +11051,7 @@
       "de": "Automatisch nach neuer Version suchen",
       "ja": "自動更新を有効にする",
       "es": "Activar actualizaciones automáticas",
-      "pl": "Włącz automatyczne aktualizacje",
+      "pl": "Włącz auto aktualizacje",
       "it_IT": "Abilita aggiornamenti automatici",
       "ko": "자동 업데이트 활성화",
       "ko_KR": "자동 업데이트 활성화",
@@ -11282,8 +11282,8 @@
       "ja": "AltTab/AltF9 で Alt を修正する (Alt-releaseにリンクされたFar Managerマクロの実行を避けるため)",
       "es": "Corregir Alt en Alt-Tab/Alt-F9 (evitar ejecución de macro de Far Manager, ligada a Alt-soltar)",
       "pl": "Napraw Alt na AltTab / AltF9 (aby uniknąć wykonania makra Far Manager, powiązanego z wydaniem Alt)",
-      "ko": "AltTab/AltF9에서 Alt 수정 (Alt 릴리스에 연결된 Far 관리자 매크로 실행 방지)",
-      "ko_KR": "AltTab/AltF9에서 Alt 수정 (Alt 릴리스에 연결된 Far 관리자 매크로 실행 방지)",
+      "ko": "AltTab/AltF9에서 Alt 수정 (Alt 릴리스에 연결된 Far Manager 매크로 실행 방지)",
+      "ko_KR": "AltTab/AltF9에서 Alt 수정 (Alt 릴리스에 연결된 Far Manager 매크로 실행 방지)",
       "id": 1562 }
     ,
     "cbFixFarBorders": {
@@ -11558,7 +11558,7 @@
       "de": "ConEmuHk.dll in alle Prozesse laden, die in ConEmu-Reitern gestartet werden",
       "ja": "ConEmuHk.dll を ConEmuタブで開始されたすべてのプロセスに注入する",
       "es": "Inyectar ConEmuHk.dll en todos los procesos iniciados en pestañas de ConEmu",
-      "pl": "ConEmuHk.dll wstrzykuje do wszystkich procesów rozpoczętych na akordeonie ConEmu",
+      "pl": "ConEmuHk.dll wstrzykuje do wszystkich procesów rozpoczętych w kartach ConEmu",
       "it_IT": "Inietta ConEmuHk.dll in ogni processo avviato nelle schede di ConEmu",
       "ko": "ConEmu 탭에서 시작된 모든 프로세스에 ConEmuHk.dll을 삽입합니다",
       "ko_KR": "ConEmu 탭에서 시작된 모든 프로세스에 ConEmuHk.dll을 삽입합니다",
@@ -11930,7 +11930,7 @@
       "de": "Konsole vom oberen Bildschirmrand ein-/ausblenden (Quake-Modus)",
       "ja": "スクリーン上部から Quakeスタイルでスライド",
       "es": "Modo-Quake: mostrar desde la parte superior de la pantalla",
-      "pl": "Zsuń się w stylu quake'a z góry ekranu",
+      "pl": "Quake-style styl rozsuwania z góry",
       "it_IT": "Stile Quake a scomparsa dalla parte superiore dello schermo",
       "ko": "화면 상단에서 아래로 퀘이크 스타일 슬라이드",
       "ko_KR": "화면 상단에서 아래로 퀘이크 스타일 슬라이드",
@@ -12232,7 +12232,7 @@
       "de": "Nur eine Instanz (verwendet vorhandene Fenster, anstatt neue zu öffnen)",
       "ja": "シングルインスタンスモード (新しいインスタンスを実行する代わりに既存のウィンドウを使用)",
       "es": "Instancia única (usar la ventana existente en vez de crear una nueva instancia)",
-      "pl": "Tryb pojedynczego wystąpienia (użyj istniejącego okna zamiast uruchamiania nowego wystąpienia)",
+      "pl": "Tryb pojedynczego wystąpienia (użyj tego okna zamiast uruchamiania nowego)",
       "it_IT": "Modalità singola istanza (usa la finestra esistente anziché crearne una nuova)",
       "ko": "단일 인스턴스 모드 (새 인스턴스를 실행하는 대신 기존 창 사용)",
       "ko_KR": "단일 인스턴스 모드 (새 인스턴스를 실행하는 대신 기존 창 사용)",
@@ -12258,8 +12258,8 @@
       "ja": "フォーカスイベントをスキップします(コンソールFOCUS_EVENTには送信しないでください,Far Managerで便利です)",
       "es": "Saltar eventos de foco (no enviar FOCUS_EVENT al terminal, útil con Far Manager)",
       "pl": "Pomiń zdarzenia skupienia (nie wysyłaj do konsoli FOCUS_EVENT, przydatne w Far Managerze)",
-      "ko": "초점 이벤트 건너뛰기 (FOCUS_EVENT 콘솔로 보내지 않음, Far 관리자에서 유용함)",
-      "ko_KR": "초점 이벤트 건너뛰기 (FOCUS_EVENT 콘솔로 보내지 않음, Far 관리자에서 유용함)",
+      "ko": "초점 이벤트 건너뛰기 (FOCUS_EVENT 콘솔로 보내지 않음, Far Manager에서 유용함)",
+      "ko_KR": "초점 이벤트 건너뛰기 (FOCUS_EVENT 콘솔로 보내지 않음, Far Manager에서 유용함)",
       "id": 1538 }
     ,
     "cbSkipMove": {
@@ -12784,8 +12784,8 @@
       "es": "Transparencia 'pantalla de usuario' (opción de Far Manager)",
       "pl": "\"ekranu użytkownika\" (funkcja Far Managera)",
       "it_IT": "Trasparenza 'User screen' (funzionalità di Far Manager)",
-      "ko": "'사용자 화면' 투명성 (Far 관리자 기능)",
-      "ko_KR": "'사용자 화면' 투명성 (Far 관리자 기능)",
+      "ko": "'사용자 화면' 투명성 (Far Manager 기능)",
+      "ko_KR": "'사용자 화면' 투명성 (Far Manager 기능)",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
@@ -13048,8 +13048,8 @@
       "es": "Far Manager",
       "pl": "Far Manager",
       "it_IT": "Far Manager",
-      "ko": "Far 관리자",
-      "ko_KR": "Far 관리자",
+      "ko": "Far Manager",
+      "ko_KR": "Far Manager",
       "id": 2759 }
     ,
     "gbConfirmMisc": {
@@ -13213,8 +13213,8 @@
       "ja": "シェルスタイルのドラッグ&ドロップ(Far Managerのみ)",
       "es": "Estilo de arrastrar y soltar (sólo Far Manager)",
       "pl": "Przeciągnij i upuść w stylu powłoki (tylko Far Manager)",
-      "ko": "셸 스타일 끌어서 놓기 (Far 관리자만 해당)",
-      "ko_KR": "셸 스타일 끌어서 놓기 (Far 관리자만 해당)",
+      "ko": "셸 스타일 끌어서 놓기 (Far Manager만 해당)",
+      "ko_KR": "셸 스타일 끌어서 놓기 (Far Manager만 해당)",
       "id": 2957 }
     ,
     "gbFarMacros": {
@@ -13226,8 +13226,8 @@
       "es": "Macros de Far Manager",
       "pl": "Makra Far Managera",
       "it_IT": "Macro di Far Manager",
-      "ko": "Far 관리자 매크로",
-      "ko_KR": "Far 관리자 매크로",
+      "ko": "Far Manager 매크로",
+      "ko_KR": "Far Manager 매크로",
       "id": 2965 }
     ,
     "gbFarOptions": {
@@ -13239,8 +13239,8 @@
       "es": "Opciones de Far Manager",
       "pl": "Opcje Far Managera",
       "it_IT": "Opzioni Far Manager",
-      "ko": "Far 관리자 옵션",
-      "ko_KR": "Far 관리자 옵션",
+      "ko": "Far Manager 옵션",
+      "ko_KR": "Far Manager 옵션",
       "id": 2958 }
     ,
     "gbFarPanelViews": {
@@ -13341,8 +13341,8 @@
       "ja": "テキストの動作を貼り付ける(Far Managerを除く)",
       "es": "Comportamiento pegado de texto (no afecta a Far Manager)",
       "pl": "Wklejanie tekstu (z wyjątkiem Far Managera)",
-      "ko": "텍스트 동작 붙여넣기 (Far 관리자 제외)",
-      "ko_KR": "텍스트 동작 붙여넣기 (Far 관리자 제외)",
+      "ko": "텍스트 동작 붙여넣기 (Far Manager 제외)",
+      "ko_KR": "텍스트 동작 붙여넣기 (Far Manager 제외)",
       "id": 2166 }
     ,
     "gbFeatureDebug": {
@@ -13865,8 +13865,8 @@
       "es": "Pestañas (terminales, paneles/editores/visores de Far Manager)",
       "pl": "Zakładki (konsole, panele / edytory / przeglądarki Far Manager)",
       "it_IT": "Schede (console, pannelli/editor/visualizzatori di Far Manager)",
-      "ko": "탭 (콘솔, Far 관리자 패널/편집기/뷰어)",
-      "ko_KR": "탭 (콘솔, Far 관리자 패널/편집기/뷰어)",
+      "ko": "탭 (콘솔, Far Manager 패널/편집기/뷰어)",
+      "ko_KR": "탭 (콘솔, Far Manager 패널/편집기/뷰어)",
       "id": 2981 }
     ,
     "gbTaskBarButton": {
@@ -16073,7 +16073,7 @@
       "de": "Es kann Folgendes auf der Seite 'Aktualisierung' des Einstellungen-Dialogs geändert werden",
       "ja": "設定ダイアログの '更新' ページで以下を変更することができます",
       "es": "Puedes modificar lo siguiente en página 'Actualizar' del diálogo de Opciones",
-      "pl": "Możesz zmienić następujące opcje na stronie \"Aktualizacja\" okna dialogowego Ustawienia",
+      "pl": "Możesz zmienić te opcje w karcie \"Aktualizacja\" okna dialogowego Ustawienia",
       "ko": "설정 대화 상자의 '업데이트' 페이지에서 다음을 변경할 수 있습니다",
       "ko_KR": "설정 대화 상자의 '업데이트' 페이지에서 다음을 변경할 수 있습니다",
       "id": 2093 }
@@ -16403,7 +16403,7 @@
       "de": "Folgendes kann auf der Seite 'Funktionen' des Einstellungen-Dialogs geändert werden",
       "ja": "[設定]ダイアログの[機能]ページで以下を変更できます",
       "es": "Puedes cambiar lo siguiente en la página de 'Características' del diálogo de opciones",
-      "pl": "Możesz zmienić następujące opcje na stronie \"Funkcje\" w oknie dialogowym Ustawienia",
+      "pl": "Możesz zmienić te opcje w karcie \"Funkcje\" w oknie dialogowym Ustawienia",
       "fr": "Vous pouvez changer ceci dans la page  'Fonctionnalité' de l'onglet 'Paramètres'",
       "ko": "설정 대화 상자의 '기능' 페이지에서 다음을 변경할 수 있습니다",
       "ko_KR": "설정 대화 상자의 '기능' 페이지에서 다음을 변경할 수 있습니다",
@@ -16898,7 +16898,7 @@
       "de": "Auf der Seite 'Erscheinungsbild' des Einstellungen-Dialogs kann folgendes angepasst werden",
       "ja": "[設定]ダイアログの[外観]ページで以下を変更できます",
       "es": "Puedes cambiar lo siguiente en la página de 'Apariencia' del diálogo de opciones",
-      "pl": "Możesz zmienić następujące opcje na stronie \"Wygląd\" w oknie dialogowym Ustawienia",
+      "pl": "Możesz zmienić te opcje w karcie \"Wygląd\" w oknie dialogowym Ustawienia",
       "fr": "Vous pouvez changer ce qui suit dans la page 'Apparence' de l'onglet Configuration",
       "ko": "설정 대화 상자의 '모양' 페이지에서 다음을 변경할 수 있습니다",
       "ko_KR": "설정 대화 상자의 '모양' 페이지에서 다음을 변경할 수 있습니다",
@@ -17090,7 +17090,7 @@
       "de": "Speicherort für ConEmu-Einstellungen auswählen (Hier kann der portable Modus ein-/ausgeschaltet werden)",
       "ja": "ConEmuの設定保存場所を選択してください(ここではポータブルモードをオン/オフすることができます)",
       "es": "Selecciona dónde almacenar la configuración de ConEmu (puedes activar/desactivar el modo portable aquí)",
-      "pl": "Wybierz lokalizację przechowywania ustawień ConEmu (możesz tutaj włączyć / wyłączyć tryb przenośny)",
+      "pl": "Wybierz lokalizację przechowywania ustawień ConEmu (możesz tutaj wł/wył tryb przenośny)",
       "fr": "Choisissez l'endroit de stockage de la configuration de ConEmu (Vous pouvez activer/désactiver le mode portable ici)",
       "ko": "ConEmu 설정 저장 위치 선택 (여기에서 휴대용 모드를 켜거나 끌 수 있습니다)",
       "ko_KR": "ConEmu 설정 저장 위치 선택  (여기에서 휴대용 모드를 켜거나 끌 수 있습니다)",
@@ -17297,8 +17297,8 @@
       "ja": "タブテンプレート(Far Managerのものは 'Far Manager'ページにあります)",
       "es": "Plantillas de pestaña (las de Far Manager están en la página 'Far Manager')",
       "pl": "Szablony zakładek (szablony Far Managera znajdują się na stronie Far Managera)",
-      "ko": "탭 템플릿 (Far 관리자는 'Far 관리자' 페이지에 있습니다)",
-      "ko_KR": "탭 템플릿 (Far 관리자는 'Far 관리자' 페이지에 있습니다)",
+      "ko": "탭 템플릿 (Far Manager는 'Far Manager' 페이지에 있습니다)",
+      "ko_KR": "탭 템플릿 (Far Manager는 'Far Manager' 페이지에 있습니다)",
       "id": 2736 }
     ,
     "stTabViewer": {
@@ -17607,7 +17607,7 @@
       "de": "Auf der Seite 'Tastatur' des Einstellungen-Dialogs kann folgende angepasst werden",
       "ja": "[設定]ダイアログの[キーボード]ページで以下を変更できます",
       "es": "Puedes cambiar lo siguiente en la página 'Teclado' del diálogo de opciones",
-      "pl": "Możesz zmienić następujące opcje na stronie \"Klawiatura\" w oknie dialogowym Ustawienia",
+      "pl": "Możesz te opcje w karcie \"Klawiatura\" w oknie dialogowym Ustawienia",
       "fr": "Vous pouvez changer ce qui suit dans l'onglet 'Clavier' de la fenêtre paramètre",
       "ko": "설정 대화 상자의 '키보드' 페이지에서 다음을 변경할 수 있습니다",
       "ko_KR": "설정 대화 상자의 '키보드' 페이지에서 다음을 변경할 수 있습니다",
