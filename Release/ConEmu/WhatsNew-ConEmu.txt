@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2022.8.7
+* gh-2458: Preliminary support of Far3 experimental feature 'Fullwidth-aware rendering'.
+* l10n: translations were updated
+* New binaries are signed with new certificate issued by Sectigo.
+
+
 2022.4.18
 * gh-2404, gh-2420, gh-2429: Fix line-wrapping regression.
 * GuiMacro: Let `Tab 7 -2` activate the console where command is executed.

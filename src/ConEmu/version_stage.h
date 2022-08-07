@@ -4,4 +4,4 @@
 #define CEVS_PREVIEW  1
 #define CEVS_ALPHA    2
 
-#define ConEmuVersionStage CEVS_PREVIEW
+#define ConEmuVersionStage CEVS_ALPHA
