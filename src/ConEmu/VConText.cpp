@@ -431,6 +431,8 @@ bool CVConLine::ParseLine(bool abForce, unsigned anTextWidth, unsigned anFontWid
 	const bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	const bool bUseAlternativeFont = _bool(gpSet->isFixFarBorders);
 
+	int cjkShift = 0;
+
 	for (unsigned j = 0; j < TextWidth;)
 	{
 		bool bPair = ((j+1) < TextWidth);
@@ -442,7 +444,7 @@ bool CVConLine::ParseLine(bool abForce, unsigned anTextWidth, unsigned anFontWid
 		VConTextPart* p = TextParts+(PartsCount++);
 
 		//TODO: DBCS cell number, it may differ from j
-		p->Init(j, j, this);
+		p->Init(j, j + cjkShift, this);
 
 		// Process Far Dialogs to justify rectangles and frames
 		TextPartFlags dlgBorder = j ? isDialogBorderCoord(j) : TRF_None;
@@ -548,6 +550,8 @@ bool CVConLine::ParseLine(bool abForce, unsigned anTextWidth, unsigned anFontWid
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharCJK(ConCharLine[j2]))
 					j2++;
 			}
+			if (!bPair)
+				cjkShift += (j2 - j);
 		}
 		else if (bUseAlternativeFont && isCharAltFont(wc))
 		{
@@ -587,6 +591,26 @@ bool CVConLine::ParseLine(bool abForce, unsigned anTextWidth, unsigned anFontWid
 
 		/* Next part */
 		j = j2;
+	}
+
+	// We have trailing spaces at the end of console line if it contains flags
+	// COMMON_LVB_LEADING_BYTE & COMMON_LVB_TRAILING_BYTE. That means RealConsole
+	// assigned two real cells per one CJK (doublespace char).
+	// Let's try to crop silently these spaces
+	for (int cut = cjkShift; cut > 0 && PartsCount > 0;)
+	{
+		auto& lastPart = TextParts[PartsCount - 1];
+		if ((lastPart.Flags & (TRF_SizeFree|TRF_TextSpacing)) != (TRF_SizeFree|TRF_TextSpacing))
+		{
+			break;
+		}
+		if (lastPart.Length > static_cast<unsigned>(cut))
+		{
+			lastPart.Length -= cut;
+			break;
+		}
+		cut -= static_cast<int>(lastPart.Length);
+		--PartsCount;
 	}
 
 	return true;
