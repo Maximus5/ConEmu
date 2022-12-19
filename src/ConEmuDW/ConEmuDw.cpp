@@ -1032,12 +1032,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 				break;
 			}
 
-			FAR_CHAR_INFO chr{};
-			if (lbRead)
-			{
-				chr.Char = pc->Char.UnicodeChar;
-				chr.Attributes.Flags = pc->Attributes & 0xFF00;
-			}
+			FAR_CHAR_INFO chr = {lbRead ? pc->Char.UnicodeChar : L' '};
 
 			if (pTrueColor && pTrueColor >= pTrueColorEnd)
 			{
@@ -1285,7 +1280,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 			}
 
 
-			n |= (Flags & 0xFF00);
+
 			pc->Attributes = n;
 
 			if (pTrueColor)

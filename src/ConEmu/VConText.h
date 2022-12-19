@@ -162,6 +162,7 @@ protected:
 protected:
 	friend struct VConTextPart;
 	// Members
+	CRealConsole* mp_RCon;
 
 	// This corresponds to "dialogs" - regions framed with preudographics
 	int mn_DialogsCount;
