@@ -985,10 +985,11 @@ bool SrvAnsiImpl::ReportString(LPCWSTR asRet)
 	LPCWSTR pc = asRet;
 	for (int i = 0; i < nLen; i++, p++, pc++)
 	{
+		const char ch = (wcschr(UNSAFE_CONSOLE_REPORT_CHARS, *pc) == nullptr) ? *pc : L' ';
 		p->EventType = KEY_EVENT;
 		p->Event.KeyEvent.bKeyDown = TRUE;
 		p->Event.KeyEvent.wRepeatCount = 1;
-		p->Event.KeyEvent.uChar.UnicodeChar = *pc;
+		p->Event.KeyEvent.uChar.UnicodeChar = ch;
 	}
 
 	DumpKnownEscape(asRet, nLen, SrvAnsi::de_Report);
