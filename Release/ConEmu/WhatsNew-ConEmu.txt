@@ -20,7 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
-2022.8.7
+2022.12.18 (stable)
+* Fix Window Title Reporting security issue.
+  More info: https://seclists.org/fulldisclosure/2003/Feb/341
+* gh-2458: Preliminary support of Far3 experimental feature 'Fullwidth-aware rendering' temporarily removed.
+
+
+2022.8.7 (alpha)
 * gh-2458: Preliminary support of Far3 experimental feature 'Fullwidth-aware rendering'.
 * l10n: translations were updated
 * New binaries are signed with new certificate issued by Sectigo.
