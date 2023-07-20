@@ -52,9 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DISABLE_NEWLINE_AUTO_RETURN 0x0008
 #endif
 
-// These keys should not be reported back to console input
-#define UNSAFE_CONSOLE_REPORT_CHARS L"\r\n\t"
-
 struct MY_CONSOLE_SCREEN_BUFFER_INFOEX
 {
 	ULONG      cbSize;
