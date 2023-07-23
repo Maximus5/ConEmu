@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2023.7.23
+* gh-2536: Do not emit control characters in title reports.
+
+
 2022.12.18 (stable)
 * Fix Window Title Reporting security issue.
   More info: https://seclists.org/fulldisclosure/2003/Feb/341
