@@ -9,7 +9,9 @@ if exist "%~dp0user_env.cmd" (
 )
 
 set ex7zlist=-x!*.7z -x!*.aps -x!*.bak -x!*.bdf -x!*.cache -x!*.cod -x!.codeblocks -x!*.exp -x!*.gz -x!*.hab -x!*.ilk -x!*.ipch -x!*.lib -x!*.log -x!*.msi -x!*.ncb -x!*.new -x!*.obj -x!*.opt -x!*.pdb -x!*.plg -x!*.plog -x!*.psess -x!*.pvd -x!*.sln.cache -x!*.suo -x!*.tgz -x!*.ttf -x!*.user -x!*.vsp -x!*.zip -x!*684.* -x!*sdf -x!.gitignore -x!.svn -x!curl-7.21.4 -x!Debug -x!enc_temp_folder -x!enc_temp_folder -x!gcc -x!kl_parts_gcc.* -x!makefile_lt_vc -x!MouseWheelTilt.reg -x!rebar.bmp -x!Thumbs.db -x!time2.exe -x!toolbar -x!VTune -x!WhatsNew-ConEmu-Portable.txt -x!PortableApps_Installer -x!UnitTests.cmd -x!.svnignore -x!*.o -x!!*.txt -x!*.VC.db
-set ex7zpack=-x!ConEmu.Gui.map -x!ConEmu64.Gui.map -x!ConEmu\*.map -x!ConEmu\ConEmu.Addons -x!ConEmu\Portable -x!UnitTests -x!Logs -x!*.VC.db -x!far
+
+set ex7zpack=-x!ConEmu.Gui.map -x!ConEmu64.Gui.map -x!ConEmu\*.map -x!ConEmu\ConEmu.Addons -x!ConEmu\Portable -x!UnitTests -x!Logs -x!Descript.ion -x!*.VC.db -x!Tests_*.exe -x!far
+rem ex7zpack changes should be placed in deploy.cmd and Deploy_git.cmd
 
 setlocal
 set ConEmuHooks=OFF
@@ -71,7 +73,9 @@ rem if exist ConEmu.map (
 rem   if exist ConEmu1.map del ConEmu1.map
 rem   ren ConEmu.map ConEmu1.map
 rem )
+echo on
 7z a -r -mx=9 -ms=255f64m "%ConEmuPack_7z%" ConEmu*.exe ConEmu*.map ConEmu\* plugins\* %ex7zlist% %ex7zpack%
+@echo off
 if errorlevel 1 goto err7z
 rem if exist ConEmu1.map ren ConEmu1.map ConEmu.map
 cd ..
