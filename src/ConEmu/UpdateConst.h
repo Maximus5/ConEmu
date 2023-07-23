@@ -44,11 +44,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define szRetryVersionIniCheck \
 	L"ConEmu is unable to load current version information from servers.\n" \
 	L"You may either check and download new versions manually from\n" \
-	CEDOWNLPAGE /* http://www.fosshub.com/ConEmu.html */ L"\n" \
+	CEDOWNLPAGE /* https://conemu.github.io/en/Downloads.html */ L"\n" \
 	L"or let ConEmu retry the check.\n"
 
 #define szRetryPackageDownload \
 	L"ConEmu is unable to download update package.\n" \
 	L"You may either download new versions manually from\n" \
-	CEDOWNLPAGE /* http://www.fosshub.com/ConEmu.html */ L"\n" \
+	CEDOWNLPAGE /* https://conemu.github.io/en/Downloads.html */ L"\n" \
 	L"or let ConEmu retry the downloading.\n"

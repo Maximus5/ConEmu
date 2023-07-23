@@ -14,6 +14,7 @@ pushd "%~dp0.."
 
 set L10N_PATH=Release/ConEmu/ConEmu.l10n
 
+echo Calling "%PYTHON3%" "%~dp0l10n.py" --l10n %L10N_PATH% --tx-pull all --write-l10n
 call "%PYTHON3%" "%~dp0l10n.py" --l10n %L10N_PATH% --tx-pull all --write-l10n
 if errorlevel 1 (
   echo [1;31;40mFailed to load updated translations from transifex[0m

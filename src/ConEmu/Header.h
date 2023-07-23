@@ -539,7 +539,7 @@ bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecuteStatic(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))
 
 extern const wchar_t* gsHomePage;    // = L"https://conemu.github.io";
-extern const wchar_t* gsDownlPage;   // = L"http://www.fosshub.com/ConEmu.html";
+extern const wchar_t* gsDownlPage;   // = L"https://conemu.github.io/en/Downloads.html";
 extern const wchar_t* gsFirstStart;  // = L"https://conemu.github.io/en/SettingsFast.html";
 extern const wchar_t* gsReportBug;   // = L"https://conemu.github.io/en/Issues.html";
 extern const wchar_t* gsReportCrash; // = L"https://conemu.github.io/en/Issues.html";
