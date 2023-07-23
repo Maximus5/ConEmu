@@ -2,7 +2,7 @@
 
 """
 Prerequisities:
-1. pip3 install PyYAML requests
+1. pip3 install PyYAML requests transifex-python
 2. set TX_TOKEN env.var. to your API token obtained at https://www.transifex.com/user/settings/api/
 
 Add new language, e.g. Polish:
@@ -30,6 +30,7 @@ import yaml  # PyYAML | PyYAML.Yandex
 from collections import OrderedDict
 from enum import Enum
 from requests.auth import HTTPBasicAuth
+from transifex.api import transifex_api as tapi
 
 
 def parse_args():
@@ -337,10 +338,12 @@ class Transifex:
 
     def pull(self, lang_id):
         print('Pulling language {} from Transifex'.format(lang_id))
-        result = requests.get(
-            '{}/translation/{}/?{}'.format(
-                self.base_url, lang_id, self.file_format),
-            auth=HTTPBasicAuth('api', self.tx_token))
+        # https://developers.transifex.com/reference/api-python-sdk
+        tapi.setup(auth=self.tx_token)
+        resource = tapi.Resource.get(project="o:conemu:p:conemu-sources")
+        language = tapi.Language.get(f"l:{lang_id}")
+        download_url = tapi.ResourceTranslationsAsyncDownload.download(resource=resource, language=language)
+        result = requests.get(download_url)
         print(' TX result: %s' % result.status_code)
         if result.status_code == 200:
             # print(result.encoding)
