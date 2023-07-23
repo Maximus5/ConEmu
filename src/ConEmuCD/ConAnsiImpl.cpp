@@ -985,7 +985,7 @@ bool SrvAnsiImpl::ReportString(LPCWSTR asRet)
 	LPCWSTR pc = asRet;
 	for (int i = 0; i < nLen; i++, p++, pc++)
 	{
-		const char ch = *pc >= 0x20 ? *pc : L' ';
+		const char ch = (*pc == 0x1B || *pc >= 0x20) ? *pc : L' ';
 		p->EventType = KEY_EVENT;
 		p->Event.KeyEvent.bKeyDown = TRUE;
 		p->Event.KeyEvent.wRepeatCount = 1;
@@ -2474,4 +2474,3 @@ void SrvAnsiImpl::XTermAltBuffer(bool bSetAltBuffer/*, condata::TablePtr& table*
 
 	}
 }
-

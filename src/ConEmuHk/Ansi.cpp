@@ -2505,7 +2505,7 @@ BOOL CEAnsi::ReportString(LPCWSTR asRet)
 	LPCWSTR pc = asRet;
 	for (size_t i = 0; i < nLen; i++, p++, pc++)
 	{
-		const char ch = *pc >= 0x20 ? *pc : L' ';
+		const char ch = (*pc == 0x1B || *pc >= 0x20) ? *pc : L' ';
 		p->EventType = KEY_EVENT;
 		p->Event.KeyEvent.bKeyDown = TRUE;
 		p->Event.KeyEvent.wRepeatCount = 1;
