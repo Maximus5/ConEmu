@@ -9,7 +9,7 @@ if exist "%~dp0user_env.cmd" (
 )
 
 set ex7zlist=-x!*.7z -x!*.aps -x!*.bak -x!*.bdf -x!*.cache -x!*.cod -x!.codeblocks -x!*.exp -x!*.gz -x!*.hab -x!*.ilk -x!*.ipch -x!*.lib -x!*.log -x!*.msi -x!*.ncb -x!*.new -x!*.obj -x!*.opt -x!*.pdb -x!*.plg -x!*.plog -x!*.psess -x!*.pvd -x!*.sln.cache -x!*.suo -x!*.tgz -x!*.ttf -x!*.user -x!*.vsp -x!*.zip -x!*684.* -x!*sdf -x!.gitignore -x!.svn -x!curl-7.21.4 -x!Debug -x!enc_temp_folder -x!enc_temp_folder -x!gcc -x!kl_parts_gcc.* -x!makefile_lt_vc -x!MouseWheelTilt.reg -x!rebar.bmp -x!Thumbs.db -x!time2.exe -x!toolbar -x!VTune -x!WhatsNew-ConEmu-Portable.txt -x!PortableApps_Installer -x!UnitTests.cmd -x!.svnignore -x!*.o -x!!*.txt -x!*.VC.db
-set ex7zpack=-x!ConEmu.Gui.map -x!ConEmu64.Gui.map -x!ConEmu\*.map -x!ConEmu\ConEmu.Addons -x!ConEmu\Portable -x!UnitTests -x!Logs -x!*.VC.db
+set ex7zpack=-x!ConEmu.Gui.map -x!ConEmu64.Gui.map -x!ConEmu\*.map -x!ConEmu\ConEmu.Addons -x!ConEmu\Portable -x!UnitTests -x!Logs -x!*.VC.db -x!far
 
 setlocal
 set ConEmuHooks=OFF
@@ -61,7 +61,7 @@ rem if errorlevel 1 goto errcpy
 
 set "ConEmu_Maximus5_dbg_7z=%CONEMU_DEPLOY%Debug\ConEmu.Maximus5.%BUILD_NO%.dbg.7z"
 if exist "%ConEmu_Maximus5_dbg_7z%" del "%ConEmu_Maximus5_dbg_7z%"
-7z a -r "%ConEmu_Maximus5_dbg_7z%" Release\*.map Release\*.pdb
+7z a -r "%ConEmu_Maximus5_dbg_7z%" Release\*.map Release\*.pdb -x!Release\far
 if errorlevel 1 goto err7z
 
 set "ConEmuPack_7z=%CONEMU_DEPLOY%Pack\ConEmuPack.%BUILD_NO%.7z"
