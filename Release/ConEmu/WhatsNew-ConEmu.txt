@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2023.7.24
+* gh-2536: Do not emit control characters in title reports (capability fix).
+* l10n: translations were updated
+
+
 2023.7.23
 * gh-2536: Do not emit control characters in title reports.
 
