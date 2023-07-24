@@ -19,3 +19,5 @@ user_env.cmd
 
 downloads-*.txt
 downloads-*.json
+
+.idea
