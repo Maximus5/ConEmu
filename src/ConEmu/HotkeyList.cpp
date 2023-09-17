@@ -311,6 +311,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		.SetHotKey(VK_PAUSE);
 	Add(vkMultiBuffer,     chk_User,  L"Multi.Scroll",          CConEmuCtrl::key_MultiBuffer)
 		;
+    Add(vkSwitchTermMode,     chk_User,  L"Multi.SwitchTermMode",          CConEmuCtrl::key_SwitchTermMode)
+            ;
 	Add(vkMultiGroup,      chk_User,  L"Multi.GroupInput"     ).SetMacro(L"GroupInput(0)")
 		.SetHotKey('G', VK_APPS);
 	Add(vkMultiGroupAll,   chk_User,  L"Multi.GroupInputAll"  ).SetMacro(L"GroupInput(3)")
