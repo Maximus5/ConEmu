@@ -5713,14 +5713,17 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 
 	// Del/Shift-Del/BS/Ctrl-X - try to "edit" prompt
 	bool bDel = false, bShiftDel = false, bBS = false, bCtrlX = false;
+	bool bEndOnTyping = false;
 	if (gpSet->isCTSEraseBeforeReset &&
 		((bDel = VkState.IsEqual(VK_DELETE, cvk_Naked))
 		|| (bShiftDel = VkState.IsEqual(VK_DELETE, cvk_Shift))
 		|| (bCtrlX = VkState.IsEqual('X', cvk_Ctrl))
 		|| (bBS = VkState.IsEqual(VK_BACK, cvk_Naked)))
+		|| (bEndOnTyping = (gpSet->isCTSEndOnTyping && (pszChars && *pszChars)))
 		)
 	{
-		const bool bCopyBeforeErase = (bShiftDel || bCtrlX);
+		const bool bCopyOnTyping = (bEndOnTyping && (gpSet->isCTSEndOnTyping == 1));
+		const bool bCopyBeforeErase = (bShiftDel || bCtrlX || bCopyOnTyping);
 		const CONSOLE_SELECTION_INFO sel = con.m_sel;
 		const COORD cur = con.m_sbi.dwCursorPosition;
 		const COORD anchor = sel.dwSelectionAnchor;
@@ -5762,6 +5765,8 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 					mp_RCon->PostConsoleEvent(r + 1);
 			}
 		}
+		if (bEndOnTyping)
+			return nullptr; // don't swallow characters
 		return ConEmuSkipHotKey;
 	}
 
