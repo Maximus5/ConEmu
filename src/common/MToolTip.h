@@ -31,17 +31,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include <commctrl.h>
+#include <uxtheme.h>
 
 class CToolTip
 {
 public:
-	CToolTip();
+	CToolTip(bool dark=false);
 	virtual ~CToolTip();
 public:
 	void ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBalloon, POINT pt, HINSTANCE hInstance = NULL/*g_hInstance*/);
 	void HideTip();
 	//virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags) { return false; };
 private:
+	bool mb_dark;
 	HWND mh_Tip, mh_Ball;
 	wchar_t *mpsz_LastTip;
 	int mn_LastTipCchMax;

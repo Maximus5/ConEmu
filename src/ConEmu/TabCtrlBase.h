@@ -34,10 +34,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CTabPanelBase : public CWinObjBase
 {
-private:
-	HFONT      mh_TabFont;
+//private:
+//	HFONT      mh_TabFont;
 
 protected:
+	HFONT      mh_TabFont; // moved from private to protected
+
 	CTabBarClass* mp_Owner;
 	HWND       mh_TabTip, mh_Balloon;
 	TOOLINFO   tiBalloon;

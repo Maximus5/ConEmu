@@ -795,6 +795,9 @@
     <ClInclude Include="common\xmllite.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\Dark.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmu\AboutDlg.cpp">
@@ -1203,6 +1206,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\helper.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Dark.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>

@@ -35,6 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN_INACTIVE_ALPHA_VALUE 0
 #define MAX_ALPHA_VALUE 255
 
+enum Theme
+{
+	theme_Auto     = 0,
+	theme_Dark     = 1,
+	theme_Light    = 2,
+};
+
 //TODO: #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 // #define MAX_FONT_STYLES 8 //normal/(bold|italic|underline)
 enum CEFontStyles
@@ -865,6 +872,8 @@ struct Settings
 		UINT nScrollBarAppearDelay;
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		UINT nScrollBarDisappearDelay;
+
+		BYTE nTheme; // enum Theme: 0-auto, 1-dark, 2-light
 
 		////reg->Load(L"TabMargins", rcTabMargins);
 		//RECT rcTabMargins;

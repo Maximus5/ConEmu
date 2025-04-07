@@ -110,6 +110,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
+#include "Dark.h"
+
 //#define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
@@ -2062,6 +2064,9 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 	switch (messg)
 	{
 		case WM_INITDIALOG:
+			if (gbUseDarkMode)
+				DarkDialogInit(hWnd2);
+
 			gpConEmu->OnOurDialogOpened();
 			ghOpWnd = hWnd2;
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hClassIcon));
@@ -2077,6 +2082,29 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			gpSetCls->OnInitDialog();
 			break;
 
+        case WM_CTLCOLORDLG:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorDlg((HDC)wParam);
+			break;
+
+        case WM_CTLCOLORSTATIC:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorStatic((HWND)lParam, (HDC)wParam);
+			else
+				return gpSetCls->OnCtlColorStatic(hWnd2, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(lParam), LOWORD(GetDlgCtrlID(reinterpret_cast<HWND>(lParam))));
+			break;
+
+        case WM_CTLCOLORBTN:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorBtn((HDC)wParam);
+			break;
+
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORLISTBOX:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorEditColorListBox((HDC)wParam);
+			break;
+
 		case WM_SYSCOMMAND:
 
 			if (LOWORD(wParam) == ID_ALWAYSONTOP)
@@ -2090,9 +2118,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 
 			break;
-
-		case WM_CTLCOLORSTATIC:
-			return gpSetCls->OnCtlColorStatic(hWnd2, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(lParam), LOWORD(GetDlgCtrlID(reinterpret_cast<HWND>(lParam))));
 
 		case WM_SETCURSOR:
 			if (CDlgItemHelper::isHyperlinkCtrl(LOWORD(GetDlgCtrlID(reinterpret_cast<HWND>(wParam)))))
@@ -2243,6 +2268,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				break;
 			}
 		} break;
+
 		case WM_CLOSE:
 		{
 			gpSetCls->OnSettingsClosed();
@@ -2741,6 +2767,11 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 DWORD CSettings::BalloonStyle()
 {
+	// Unfortunately dark mode balloons with longer text have an ugly white "arrow" triangle at the bottom.
+	// Therefor we turn balloon style completely off in dark mode, this looks better.
+	if (gbUseDarkMode)
+		return 0;
+
 	//грр, Issue 886, и подсказки нифига не видны
 	//[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
 	//"EnableBalloonTips"=0
@@ -2776,6 +2807,10 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			                                    CW_USEDEFAULT, CW_USEDEFAULT,
 			                                    ghOpWnd, nullptr,
 			                                    g_hInstance, nullptr);
+
+			if (gbUseDarkMode)
+				SetWindowTheme(hwndConFontBalloon, L"DarkMode_Explorer", NULL);
+
 			SetWindowPos(hwndConFontBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
@@ -2807,6 +2842,10 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			                             CW_USEDEFAULT, CW_USEDEFAULT,
 			                             ghOpWnd, nullptr,
 			                             g_hInstance, nullptr);
+
+			if (gbUseDarkMode)
+				SetWindowTheme(hwndBalloon, L"DarkMode_Explorer", NULL);
+
 			SetWindowPos(hwndBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
@@ -2833,6 +2872,10 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			                         CW_USEDEFAULT, CW_USEDEFAULT,
 			                         ghOpWnd, nullptr,
 			                         g_hInstance, nullptr);
+
+			if (gbUseDarkMode)
+				SetWindowTheme(hwndTip, L"DarkMode_Explorer", NULL);
+
 			SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 		}

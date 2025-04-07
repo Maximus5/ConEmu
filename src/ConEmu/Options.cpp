@@ -590,6 +590,8 @@ void Settings::InitSettings()
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
+	nTheme = theme_Auto;
+
 	isShowBgImage = 0;
 	wcscpy_c(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 255; // 0x46;
@@ -3030,6 +3032,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		/* *** Notification *** */
 		reg->Load(L"Notification.StopBuzzingDate", StopBuzzingDate, countof(StopBuzzingDate));
 
+		reg->Load(L"Theme", nTheme);
+
 		/* Done */
 		reg->CloseKey();
 
@@ -3942,6 +3946,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Update.DownloadPath", UpdSet.szUpdateDownloadPath);
 		reg->Save(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Save(L"Update.PostUpdateCmd", UpdSet.szUpdatePostUpdateCmd);
+
+		reg->Save(L"Theme", nTheme);
 
 		/* Done */
 		reg->CloseKey();

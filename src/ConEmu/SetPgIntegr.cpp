@@ -41,6 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgLists.h"
 #include "SetPgIntegr.h"
 
+#include "Dark.h"
+
 #define CONEMU_HERE_CMD  L"{cmd} -cur_console:n"
 #define CONEMU_HERE_POSH L"{powershell} -cur_console:n"
 
@@ -404,6 +406,27 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			_ASSERTE(FALSE && "Unexpected, CSetPgIntegr::OnInitDialog must be called instead!");
 		}
 		break; // WM_INITDIALOG
+
+	case WM_CTLCOLORDLG:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorDlg((HDC)wParam);
+		break;
+
+	case WM_CTLCOLORSTATIC:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorStatic((HWND)lParam, (HDC)wParam);
+		break;
+
+	case WM_CTLCOLORBTN:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorBtn((HDC)wParam);
+		break;
+
+	case WM_CTLCOLOREDIT:
+	case WM_CTLCOLORLISTBOX:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorEditColorListBox((HDC)wParam);
+		break;
 
 	case WM_COMMAND:
 		switch (HIWORD(wParam))

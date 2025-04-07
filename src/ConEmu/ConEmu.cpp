@@ -95,6 +95,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "version.h"
 #include "VirtualConsole.h"
 
+#include "Dark.h"
+
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
@@ -1410,7 +1412,8 @@ BOOL CConEmuMain::Init()
 	//!!!ICON
 	LoadIcons();
 
-	mp_Tip = new CToolTip();
+	mp_Tip = new CToolTip(gbUseDarkMode);
+
 	//m_Child = new CConEmuChild();
 	//m_Back = new CConEmuBack();
 	//m_Macro = new CConEmuMacro();
@@ -13159,6 +13162,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	switch (messg)
 	{
 		case WM_CREATE:
+			if (gbUseDarkMode)
+				DarkModeInit(hWnd);
 			result = this->OnCreate(hWnd, (LPCREATESTRUCT)lParam);
 			break;
 

@@ -49,6 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "Menu.h"
 
+#include "Dark.h"
+
 #define TAB_DRAG_START_DELTA 5
 #define MIN_TABCLICK_CHANGE_DELTA 200
 
@@ -170,6 +172,9 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 									hParent, nullptr,
 									g_hInstance, nullptr);
 		SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+
+		if (gbUseDarkMode)
+			SetWindowTheme(mh_TabTip, L"DarkMode_Explorer", NULL);
 	}
 
 	if (!mh_Balloon || !IsWindow(mh_Balloon))
@@ -181,6 +186,10 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 		                            hParent, nullptr,
 		                            g_hInstance, nullptr);
 		SetWindowPos(mh_Balloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+
+		if (gbUseDarkMode)
+			SetWindowTheme(mh_Balloon, L"DarkMode_Explorer", NULL);
+
 		// Set up tool information.
 		// In this case, the "tool" is the entire parent window.
 		tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);

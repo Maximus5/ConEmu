@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CEStr.h"
 #include "../common/MMap.h"
 
+#include "Dark.h"
+
 ATOM CFindPanel::mh_Class = 0;
 #define FindPanelClass L"ConEmuFindPanel"
 #define SearchHint CLngRc::getRsrc(lng_Search/*"Search"*/)
@@ -125,15 +127,19 @@ bool CFindPanel::OnCreateFinished()
 
 	if (!mh_Edit)
 	{
-		mh_Edit = CreateWindowEx(WS_EX_CLIENTEDGE,
+		mh_Edit = CreateWindowEx(
+			gbUseDarkMode ? 0: WS_EX_CLIENTEDGE,
 			L"EDIT", L"",
-			WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,
+			WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,//  |WS_BORDER,
 			rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
 			mh_Pane, (HMENU)SearchCtrlId, nullptr, nullptr);
 		if (!mh_Edit)
 		{
 			return false;
 		}
+
+		if (gbUseDarkMode)
+			SetWindowTheme(mh_Edit, L"DarkMode_Explorer", NULL);
 
 		g_FindMap.Set(mh_Edit, this);
 
@@ -179,7 +185,8 @@ bool CFindPanel::RegisterPaneClass()
 		sizeof(wcFindPane), 0,
 		FindPaneProc, 0, 0,
 		g_hInstance, nullptr, LoadCursor(nullptr, IDC_ARROW),
-		reinterpret_cast<HBRUSH>((COLOR_BTNFACE + 1)), nullptr,
+		gbUseDarkMode ? BG_BRUSH_DARK : reinterpret_cast<HBRUSH>((COLOR_BTNFACE + 1)),
+		nullptr,
 		FindPanelClass, nullptr
 	};
 
@@ -220,6 +227,11 @@ LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			lRc = -1;
 			goto wrap;
 		}
+		break;
+
+   case WM_CTLCOLOREDIT:
+   		if (gbUseDarkMode)
+   			return DarkFindPanelColorEdit((HDC)wParam);
 		break;
 
 	case WM_COMMAND:

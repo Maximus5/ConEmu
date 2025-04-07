@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/MSetter.h"
 
+#include "Dark.h"
+
 #define CE_ICON_SPACING 6
 #define CE_ICON_YPAD 2
 #define SEARCH_CTRL_TIMERID 1001
@@ -210,7 +212,8 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			int iw = ih;
 
 			// Paint background
-			HBRUSH hBr = GetSysColorBrush(COLOR_WINDOW);
+			HBRUSH hBr = gbUseDarkMode ? CONTROL_BG_BRUSH_DARK : GetSysColorBrush(COLOR_WINDOW);
+
 			RECT rcFill = rect;
 			// Draw only icon?
 			if (!bDrawHint)
@@ -225,7 +228,7 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			rect.right -= HIWORD(p->nMargins);
 
 			// Draw "Search" icon
-			if (p->bSearchIcon && dh.pIcon)
+			if (!gbUseDarkMode && p->bSearchIcon && dh.pIcon)
 			{
 				dh.pIcon->GetSizeForHeight(ih, iw, ih);
 				int X1 = rcClient.right - iw - 1;
@@ -243,6 +246,8 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 				HFONT hOldFont = (HFONT)SelectObject(hdc, dh.hFont);
 				COLORREF OldColor = GetTextColor(hdc);
 				SetTextColor(hdc, p->clrHint);
+				if (gbUseDarkMode)
+					SetBkColor(hdc, CONTROL_BG_COLOR_DARK);
 				DrawText(hdc, p->sHint, -1, &rect, DT_LEFT|DT_SINGLELINE|DT_EDITCONTROL|DT_VCENTER);
 				SetTextColor(hdc, OldColor);
 				SelectObject(hdc, hOldFont);

@@ -56,6 +56,17 @@ LRESULT CSetPgAppear::OnInitDialog(HWND hDlg, bool abInitial)
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
+	// nTheme: theme_Auto, theme_Dark, theme_Light
+	if (gbDarkModeSupported)
+		checkRadioButton(hDlg, rbThemeDark, rbThemeAuto, (gpSet->nTheme == theme_Auto) ? rbThemeAuto : (gpSet->nTheme == theme_Dark) ? rbThemeDark : rbThemeLight);
+	else
+	{
+		enableDlgItem(hDlg, gbTheme, false);
+		enableDlgItem(hDlg, rbThemeDark, false);
+		enableDlgItem(hDlg, rbThemeLight, false);
+		enableDlgItem(hDlg, rbThemeAuto, false);
+	}
+
 	checkDlgButton(hDlg, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
 
 	//checkDlgButton(hDlg, cbEnhanceButtons, gpSet->isEnhanceButtons);

@@ -296,6 +296,11 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rbScrollbarAuto:
 			OnBtn_ScrollbarStyle(hDlg, CB, uCheck);
 			break;
+		case rbThemeDark:
+		case rbThemeLight:
+		case rbThemeAuto:
+			OnBtn_Theme(hDlg, CB, uCheck);
+			break;
 		case cbScrollbarDynamic:
 			OnBtn_ScrollbarDynamic(hDlg, CB, uCheck);
 			break;
@@ -2556,6 +2561,14 @@ void CSetDlgButtons::OnBtn_ScrollbarDynamic(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->OnUpdateScrollInfo();
 
 } // cbScrollbarDynamic
+
+
+// rbThemeAuto || rbThemeDark || rbThemeLight
+void CSetDlgButtons::OnBtn_Theme(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==rbThemeAuto || CB==rbThemeDark || CB==rbThemeLight);
+	gpSet->nTheme = CB == rbThemeAuto ? theme_Auto : (CB == rbThemeDark ? theme_Dark : theme_Light);
+} // rbThemeAuto || rbThemeDark || rbThemeLight
 
 
 // cbFarHourglass

@@ -53,6 +53,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WObjects.h"
 #include "../common/StartupEnvEx.h"
 
+#include "Dark.h"
+
 namespace ConEmuAbout
 {
 	void InitCommCtrls();
@@ -197,6 +199,13 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
 			INT_PTR nPage = -1;
 
+			if (gbUseDarkMode)
+			{
+				SetWindowTheme(hTab, L"", L"");
+				SetWindowLong(hTab, GWL_STYLE, GetWindowLong(hTab, GWL_STYLE) | TCS_OWNERDRAWFIXED);
+				SetClassLongPtr(hTab, GCLP_HBRBACKGROUND, (LONG_PTR)BG_BRUSH_DARK);
+			}
+
 			for (size_t i = 0; i < countof(Pages); i++)
 			{
 				TCITEM tie = {};
@@ -207,7 +216,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				if (pszActivePage && (lstrcmpi(pszActivePage, Pages[i].Title) == 0))
 					nPage = i;
 			}
-
 
 			if (nPage >= 0)
 			{
@@ -225,24 +233,54 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			SetFocus(hTab);
 
+			if (gbUseDarkMode)
+				DarkDialogInit(hDlg);
+
 			return FALSE;
 		}
 
+		case WM_DRAWITEM:
+			// We only receive this message in dark mode (when TCS_OWNERDRAWFIXED was added to the TabCtrl's style).
+			DarkAboutOnDrawItem((DRAWITEMSTRUCT*)lParam);
+			break;
+
+		case WM_CTLCOLORDLG:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorDlg((HDC)wParam);
+			break;
+
 		case WM_CTLCOLORSTATIC:
-			if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
-			{
-				SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_HOTLIGHT));
-				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-				SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
-				return reinterpret_cast<INT_PTR>(hBrush);
-			}
+			if (gbUseDarkMode)
+				return DarkOnCtlColorStatic((HWND)lParam, (HDC)wParam);
 			else
 			{
-				SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_WINDOWTEXT));
-				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-				SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
-				return reinterpret_cast<INT_PTR>(hBrush);
+				if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
+				{
+					SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_HOTLIGHT));
+					HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+					SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
+					return reinterpret_cast<INT_PTR>(hBrush);
+				}
+				else
+				{
+					SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_WINDOWTEXT));
+					HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+					SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
+					return reinterpret_cast<INT_PTR>(hBrush);
+				}
 			}
+			break;
+
+		case WM_CTLCOLORBTN:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorBtn((HDC)wParam);
+			break;
+
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORLISTBOX:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorEditColorListBox((HDC)wParam);
+			break;
 
 		case WM_SETCURSOR:
 			{

@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgLists.h"
 #include "SetPgStartup.h"
 
+#include "Dark.h"
+
 CSetPgStartup::CSetPgStartup()
 {
 }
@@ -107,6 +109,28 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 			PageDlgProc(hDlg, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
 		}
 		break;
+
+	case WM_CTLCOLORDLG:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorDlg((HDC)wParam);
+		break;
+
+	case WM_CTLCOLORSTATIC:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorStatic((HWND)lParam, (HDC)wParam);
+		break;
+
+	case WM_CTLCOLORBTN:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorBtn((HDC)wParam);
+		break;
+
+	case WM_CTLCOLOREDIT:
+	case WM_CTLCOLORLISTBOX:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorEditColorListBox((HDC)wParam);
+		break;
+
 	case WM_COMMAND:
 		{
 			switch (HIWORD(wParam))

@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ImgButton.h"
 #include "ToolImg.h"
 
+#include "Dark.h"
+
 wchar_t gsDonatePage[] = CEDONATEPAGE;
 wchar_t gsFlattrPage[] = CEFLATTRPAGE;
 
@@ -234,6 +236,10 @@ void CImgButtons::RegisterTip()
 		                         g_hInstance, nullptr);
 		if (!hwndTip)
 			return;
+
+		if (gbUseDarkMode)
+			SetWindowTheme(hwndTip, L"DarkMode_Explorer", NULL);
+
 		SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 		//SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 	}

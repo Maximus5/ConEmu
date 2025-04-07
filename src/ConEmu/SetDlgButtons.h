@@ -270,4 +270,5 @@ protected:
 	static void OnBtn_StatusSystemColors(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_StatusAddDel(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_MinMaxKey(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_Theme(HWND hDlg, WORD CB, BYTE uCheck);
 };

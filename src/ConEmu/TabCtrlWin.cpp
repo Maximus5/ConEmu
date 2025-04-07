@@ -50,6 +50,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "../common/WUser.h"
 
+#include "Dark.h"
+
 //WNDPROC CTabPanelWin::_defaultTabProc = nullptr;
 //WNDPROC CTabPanelWin::_defaultToolProc = nullptr;
 //WNDPROC CTabPanelWin::_defaultReBarProc = nullptr;
@@ -110,6 +112,12 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		{
 			_ASSERTE(!mh_Rebar || mh_Rebar == hwnd);
 			mh_Rebar = nullptr;
+			break;
+		}
+		case WM_NOTIFY:
+		{
+			if (gbUseDarkMode && ((LPNMHDR)lParam)->code == NM_CUSTOMDRAW)
+				return DarkToolbarCustomDraw((LPNMTBCUSTOMDRAW)lParam);
 			break;
 		}
 		case WM_WINDOWPOSCHANGING:
@@ -198,6 +206,12 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		{
 			_ASSERTE(!mh_Tabbar || mh_Tabbar == hwnd);
 			mh_Tabbar = nullptr;
+			break;
+		}
+		case WM_PAINT:
+		{
+			if (gbUseDarkMode)
+				return DarkTabCtrlPaint(hwnd, mh_TabFont, gpSet->isTabIcons);
 			break;
 		}
 		case WM_WINDOWPOSCHANGING:
@@ -315,7 +329,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 			TBBUTTON tb = {};
 			POINT pt = {(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)};
-			int nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
+			INT_PTR nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
 			// If the return value is zero or a positive value, it is
 			// the zero-based index of the nonseparator item in which the point lies.
 			if ((nIdx >= 0) && SendMessage(hwnd, TB_GETBUTTON, nIdx, (LPARAM)&tb))
@@ -394,8 +408,11 @@ void CTabPanelWin::CreateRebar()
 								(ghWnd ? (WS_VISIBLE | WS_CHILD) : 0)
 								|WS_CLIPSIBLINGS|WS_CLIPCHILDREN
 								|/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
-								|RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
+								|RBS_FIXEDORDER|
+								RBS_AUTOSIZE|
+								/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
 								rcWnd.left, rcWnd.top, RectWidth(rcWnd), RectHeight(rcWnd), ghWnd, nullptr, g_hInstance, nullptr);
+
 	if (mh_Rebar == nullptr)
 	{
 		return;
@@ -404,24 +421,14 @@ void CTabPanelWin::CreateRebar()
 	#if !defined(__GNUC__)
 	#pragma warning (disable : 4312)
 	#endif
+
 	// Надо
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)_ReBarProc);
 	SetObj(mh_Rebar, this, defaultProc);
 
-
-	REBARINFO     rbi = {sizeof(REBARINFO)};
-
-	if (!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi))
-	{
-		DisplayLastError(_T("Can't initialize rebar!"));
-		DestroyWindow(mh_Rebar);
-		mh_Rebar = nullptr;
-		return;
-	}
-
-	COLORREF clrBack = GetSysColor(COLOR_BTNFACE);
-	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, clrBack);
-	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, reinterpret_cast<LPARAM>(L" "));
+	if (gbUseDarkMode)
+		// Turn off Windows theming for rebar
+		SetWindowTheme(mh_Rebar, L"", L"");
 
 	// Пока табы есть всегда
 	ShowTabsPane(true);
@@ -475,7 +482,6 @@ HWND CTabPanelWin::CreateTabbar()
 	{
 		return nullptr;
 	}
-
 
 	// Subclass it
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)_TabProc);
@@ -558,6 +564,9 @@ HWND CTabPanelWin::CreateToolbar()
 	gpConEmu->LogString(szLog);
 	DEBUGSTRSIZE(szLog);
 
+	// add some space between search ctrl and toolbar buttons
+	SendMessage(mh_Toolbar, TB_SETINDENT, 5, 0);
+
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(nBtnSize,nBtnSize));
 
 	int iCreated = 0;
@@ -569,7 +578,7 @@ HWND CTabPanelWin::CreateToolbar()
 	}
 
 	TBADDBITMAP bmp = {nullptr, (UINT_PTR)mp_ToolImg->GetBitmap()};
-	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, iCreated, (LPARAM)&bmp);
+	int nFirst = (int)SendMessage(mh_Toolbar, TB_ADDBITMAP, iCreated, (LPARAM)&bmp);
 	_ASSERTE(BID_TOOLBAR_LAST_IDX==38);
 	int nScrollBmp = BID_TOOLBAR_LAST_IDX;
 
@@ -623,6 +632,10 @@ HWND CTabPanelWin::CreateToolbar()
 	#ifdef _DEBUG
 	SIZE sz = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 	#endif
+
+	if (gbUseDarkMode)
+		DarkToolbarTooltips(mh_Toolbar);
+
 	return mh_Toolbar;
 }
 
@@ -635,7 +648,6 @@ bool CTabPanelWin::GetRebarClientRect(RECT* rc)
 	HWND hWnd = mh_Rebar ? mh_Rebar : mh_Tabbar;
 	GetWindowRect(hWnd, rc);
 	MapWindowPoints(nullptr, ghWnd, (LPPOINT)rc, 2);
-
 	return true;
 }
 
@@ -1039,6 +1051,9 @@ void CTabPanelWin::UpdateToolbarPos()
 		// В Win2k имеет место быть глюк вычисления размера (разделители)
 		if ((gOSVer.dwMajorVersion == 5) && (gOSVer.dwMinorVersion == 0) && !gbIsWine)
 			sz.cx += 26;
+		else
+			// Win 11: make sure last toolbar icon is not cropped by round window corner
+			sz.cx += 10;
 
 		if (mh_Rebar)
 		{
@@ -1247,14 +1262,15 @@ void CTabPanelWin::ShowTabsPane(bool bShow)
 
 			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
-			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
-			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID;// | RBBIM_STYLE;
+			rbBand.fStyle = 0;//RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;  //RBBS_CHILDEDGE |
 
-			#if 0
-			rbBand.fMask |= RBBIM_COLORS;
-			rbBand.clrFore = RGB(255,255,255);
-			rbBand.clrBack = RGB(0,0,0);
-			#endif
+			if (gbUseDarkMode)
+			{
+				rbBand.fMask |= RBBIM_COLORS;
+				rbBand.clrBack = BG_COLOR_DARK;
+				rbBand.clrFore = TEXT_COLOR_DARK;
+			}
 
 			_ASSERTE(mn_TabHeight > 0);
 
@@ -1269,6 +1285,8 @@ void CTabPanelWin::ShowTabsPane(bool bShow)
 			{
 				DisplayLastError(_T("Can't initialize rebar (tabbar)"));
 			}
+
+			SetWindowLong(mh_Rebar, GWL_STYLE, GetWindowLong(mh_Rebar, GWL_STYLE) | CCS_NORESIZE | 0x10);
 		}
 	}
 	else
@@ -1329,11 +1347,12 @@ bool CTabPanelWin::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
 				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
 				rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE /*| RBBS_VARIABLEHEIGHT*/;
 
-				#if 0
-				rbBand.fMask |= RBBIM_COLORS;
-				rbBand.clrFore = RGB(255,255,255);
-				rbBand.clrBack = RGB(0,255,0);
-				#endif
+				if (gbUseDarkMode)
+				{
+					rbBand.fMask |= RBBIM_COLORS;
+					rbBand.clrBack = BG_COLOR_DARK;
+					rbBand.clrFore = TEXT_COLOR_DARK;
+				}
 
 				rbBand.wID        = rbi_FindBar;
 				rbBand.hwndChild  = hFindPane;
@@ -1388,11 +1407,12 @@ void CTabPanelWin::ShowToolsPane(bool bShow)
 			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
 			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
 
-			#if 0
-			rbBand.fMask |= RBBIM_COLORS;
-			rbBand.clrFore = RGB(255,255,255);
-			rbBand.clrBack = RGB(0,0,255);
-			#endif
+			if (gbUseDarkMode)
+			{
+				rbBand.fMask |= RBBIM_COLORS;
+				rbBand.clrBack = BG_COLOR_DARK;
+				rbBand.clrFore = TEXT_COLOR_DARK;
+			}
 
 			SIZE sz = {0,0};
 			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);

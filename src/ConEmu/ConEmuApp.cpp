@@ -166,6 +166,9 @@ wchar_t gsAltConFont[32] = L"Courier New"; // "Lucida Console" is not installed?
 // Use this (default) in ConEmu interface, where allowed (tabs, status, panel views, ...)
 wchar_t gsDefMUIFont[32] = L"Tahoma";         // WindowsVista ? L"Segoe UI" : L"Tahoma"
 
+bool gbDarkModeSupported = false;
+bool gbUseDarkMode = false;
+
 LPCWSTR GetMouseMsgName(UINT msg)
 {
 	LPCWSTR pszName;
@@ -2357,6 +2360,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetOsVersionInformational(&gOSVer);
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
+
+	gbDarkModeSupported = gnOsVer >= 0xA00;
+
+
 	HeapInitialize();
 	AssertMsgBox = MsgBox;
 	gfnHooksUnlockerProc = HooksUnlockerProc;
@@ -2626,6 +2633,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// выполнить дополнительные действия в классе настроек здесь
 	DEBUGSTRSTARTUP(L"Config loaded, post checks");
 	gpSetCls->SettingsLoaded(slfFlags, gpConEmu->opt.runCommand);
+
+	if (gbDarkModeSupported)
+	{
+		if (gpSet->nTheme == theme_Auto)
+		{
+			// Check AppsUseLightTheme in registry
+			HKEY hk = NULL;
+			if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", 0, KEY_READ, &hk) == ERROR_SUCCESS)
+			{
+				DWORD dwValue, dwSize;
+				if (RegQueryValueEx(hk, L"AppsUseLightTheme", NULL, NULL, (LPBYTE)&dwValue, &(dwSize=sizeof(dwValue))) == ERROR_SUCCESS)
+				{
+					gbUseDarkMode = (dwValue == 0);
+				}
+				RegCloseKey(hk);
+			}
+		}
+		else gbUseDarkMode = gpSet->nTheme == theme_Dark;
+	}
+	else
+		gbUseDarkMode = false;
 
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
 

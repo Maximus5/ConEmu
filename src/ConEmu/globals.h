@@ -74,9 +74,11 @@ extern wchar_t gsDefMUIFont[32];
 extern BOOL gbDebugLogStarted;
 extern BOOL gbDebugShowRects;
 
+extern bool gbUseDarkMode;
+extern bool gbDarkModeSupported;
+
 //extern const int TAB_FONT_HEIGTH;
 //extern wchar_t TAB_FONT_FACE[];
-
 
 //extern TCHAR szIconPath[MAX_PATH];
 extern HICON hClassIcon, hClassIconSm;

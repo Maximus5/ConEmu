@@ -49,6 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgFonts.h"
 #include "SetPgKeys.h"
 
+#include "Dark.h"
+
 bool CSetPgBase::mb_IgnoreEditChanged = false;
 
 CSetPgBase::CSetPgBase()
@@ -262,6 +264,9 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			if (pObj->mp_DpiAware)
 				pObj->mp_DpiAware->Attach(hDlg, pObj->mh_Parent, pDynDialog);
 			MoveWindowRect(hDlg, rcClient);
+
+			if (gbUseDarkMode)
+				DarkDialogInit(hDlg);
 		}
 		else
 		{
@@ -329,6 +334,29 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		#endif
 
+        case WM_CTLCOLORDLG:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorDlg((HDC)wParam);
+			break;
+
+        case WM_CTLCOLORSTATIC:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorStatic((HWND)lParam, (HDC)wParam);
+			else
+				return pObj->OnCtlColorStatic(hDlg, (HDC)wParam, (HWND)lParam, GetDlgCtrlID((HWND)lParam));
+			break;
+
+        case WM_CTLCOLORBTN:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorBtn((HDC)wParam);
+			break;
+
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORLISTBOX:
+			if (gbUseDarkMode)
+				return DarkOnCtlColorEditColorListBox((HDC)wParam);
+			break;
+
 		case WM_COMMAND:
 		{
 			switch (HIWORD(wParam))
@@ -375,9 +403,6 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			return gpSetCls->OnMeasureFontItem(hDlg, messg, wParam, lParam);
 		case WM_DRAWITEM:
 			return gpSetCls->OnDrawFontItem(hDlg, messg, wParam, lParam);
-
-		case WM_CTLCOLORSTATIC:
-			return pObj->OnCtlColorStatic(hDlg, (HDC)wParam, (HWND)lParam, GetDlgCtrlID((HWND)lParam));
 
 		case WM_SETCURSOR:
 			return pObj->OnSetCursor(hDlg, (HWND)wParam, GetDlgCtrlID((HWND)wParam), LOWORD(lParam), HIWORD(lParam));
@@ -450,6 +475,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 					return dynamic_cast<CSetPgKeys*>(pObj)->OnHotkeysNotify(hDlg, wParam, lParam);
 				break;
 			}
+
 			return 0;
 		} // WM_NOTIFY
 		break;

@@ -43,6 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
+#include "Dark.h"
+
 static struct StrDistinctControls
 {
 	DWORD nOverrideID;
@@ -240,7 +242,30 @@ INT_PTR CSetPgApps::pageOpProc_AppsChild(HWND hDlg, UINT messg, WPARAM wParam, L
 	case WM_INITDIALOG:
 		nLastScrollPos = 0;
 		gpSetCls->RegisterTipsFor(hDlg);
+		if (gbUseDarkMode)
+			DarkDialogInit(hDlg);
 		return FALSE;
+
+    case WM_CTLCOLORDLG:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorDlg((HDC)wParam);
+		break;
+
+    case WM_CTLCOLORSTATIC:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorStatic((HWND)lParam, (HDC)wParam);
+		break;
+
+    case WM_CTLCOLORBTN:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorBtn((HDC)wParam);
+		break;
+
+	case WM_CTLCOLOREDIT:
+	case WM_CTLCOLORLISTBOX:
+		if (gbUseDarkMode)
+			return DarkOnCtlColorEditColorListBox((HDC)wParam);
+		break;
 
 	case WM_NOTIFY:
 		{
@@ -361,6 +386,42 @@ INT_PTR CSetPgApps::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPa
 
 			break;
 		}
+
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSTATIC:
+		if (gbUseDarkMode)
+		{
+			LONG style = GetWindowLong((HWND)lParam, GWL_STYLE);
+			if (style & WS_DISABLED)
+			{
+				SetWindowLong((HWND)lParam, GWL_STYLE, style & ~WS_DISABLED);
+				SetTextColor((HDC)wParam, TEXT_COLOR_DARK_DISABLED);
+			}
+			else
+				SetTextColor((HDC)wParam, TEXT_COLOR_DARK);
+			SetBkColor((HDC)wParam, BG_COLOR_DARK);
+			return (INT_PTR)BG_BRUSH_DARK;
+		}
+		break;
+
+	case WM_CTLCOLOREDIT:
+	case WM_CTLCOLORLISTBOX:
+		if (gbUseDarkMode)
+		{
+			SetTextColor((HDC)wParam, TEXT_COLOR_DARK);
+			SetBkColor((HDC)wParam, CONTROL_BG_COLOR_DARK);
+			SetDCBrushColor((HDC)wParam, CONTROL_BG_COLOR_DARK);
+			return (INT_PTR)GetStockObject(DC_BRUSH);
+		}
+		break;
+
+    case WM_CTLCOLORBTN:
+		if (gbUseDarkMode)
+		{
+			SetDCBrushColor((HDC)wParam, BG_COLOR_DARK);
+			return (INT_PTR)GetStockObject(DC_BRUSH);
+		}
+		break;
 
 	case WM_COMMAND:
 		{

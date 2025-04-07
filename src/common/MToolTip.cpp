@@ -43,8 +43,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 /* *********************************** */
-CToolTip::CToolTip()
+CToolTip::CToolTip(bool dark)
 {
+	mb_dark = dark;
 	mh_Tip = mh_Ball = NULL;
 	mpsz_LastTip = NULL;
 	mn_LastTipCchMax = 0;
@@ -102,6 +103,9 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 			                           CW_USEDEFAULT, CW_USEDEFAULT,
 			                           ahOwner, NULL,
 			                           hInstance/*g_hInstance*/, NULL);
+			if (mb_dark)
+				SetWindowTheme(mh_Ball, L"DarkMode_Explorer", NULL);
+
 			SetWindowPos(mh_Ball, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
@@ -129,6 +133,10 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 			                         CW_USEDEFAULT, CW_USEDEFAULT,
 			                         ahOwner, NULL,
 			                         hInstance, NULL);
+
+			if (mb_dark)
+				SetWindowTheme(mh_Tip, L"DarkMode_Explorer", NULL);
+
 			SetWindowPos(mh_Tip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			SendMessage(mh_Tip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 		}
