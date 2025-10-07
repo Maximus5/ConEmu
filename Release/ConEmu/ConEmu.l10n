@@ -30,7 +30,7 @@
       "en": "You may change font face and size in the Real console. Console restart required.",
       "ru": "Вы можете изменить имя шрифта и размер для RealConsole. Требуется перезапуск консоли.",
       "zh": "你可以改变控制台本体的字体外观和大小。需要重启控制台。",
-      "de": "Schriftart und -größe können für die tatsächliche Konsole geändert. Benötigt einen Neustart der Konsole.",
+      "de": "Schriftart und -größe können für die tatsächliche Konsole geändert werden. Dies erfordert einen Neustart der Konsole.",
       "ja": "リアルコンソールでフォントのフェイスとサイズを変更することができます。コンソールの再起動が必要です。",
       "es": "Puedes cambiar el tipo y tamaño de letra en el terminal Real. Se necesita reiniciar el terminal.",
       "pl": "Możesz zmienić czcionkę i rozmiar czcionki w konsoli Real. Wymagane ponowne uruchomienie konsoli.",
@@ -60,7 +60,7 @@
       "en": "Reset all settings to defaults",
       "ru": "Сбросить к настройкам по умолчанию",
       "zh": "重置所有配置为默认配置",
-      "de": "Setzt alle Einstellungen auf Vorgabewerte zurück",
+      "de": "Setzt alle Einstellungen auf Standardwerte zurück",
       "ja": "すべての設定をデフォルトにリセットする",
       "es": "Reiniciar las opciones a sus valores por defecto",
       "pl": "Zresetuj wszystkie ustawienia do wartości domyślnych",
@@ -411,7 +411,7 @@
       "en": "Show in TaskBar Jump List commands used to run consoles (history)",
       "ru": "Показать в списке переходов команды запуска консолей (история)",
       "zh": "在任务栏快速跳转列表中显示用于运行终端的命令（通过使用历史）",
-      "de": "Zeigt verwendete Taskleisten-Sprungbefehle um Konsolen zu starten (Verlauf)",
+      "de": "Zeigt verwendete Taskleisten-Sprungbefehle, um Konsolen zu starten (Verlauf)",
       "ja": "タスクバーで表示するコンソールを実行するために使用するジャンプコマンド(履歴)",
       "es": "Mostrar en la Lista de Tareas los comandos para iniciar terminales (histórico)",
       "pl": "Pokaż w liście paska zadań komendy używane do uruchamiania konsol (historia)",
@@ -887,7 +887,7 @@
       "en": "If enabled, running ConEmu instance will not be required for hooking new processes. One already hooked process, e.g. ‘Explorer.exe’, will be enough.",
       "ru": "Если включено, запуск экземпляра ConEmu не потребуется для перехвата новых процессов. Одиного перехваченного процесса, например ‘Explorer.exe’ будет достаточно.",
       "zh": "如果被启用，运行中的 ConEmu 实例不会被请求 hook 新的进程。已经被 hook 的进程已经足够，例如：‘Explorer.exe’。",
-      "de": "Wenn aktiviert, wird keine ConEmu-Instanz benötigt um neue Prozesse anzuzapfen. Ein bereits angezapfter Prozess, z.B. 'Explorer.exe', wird genügen.",
+      "de": "Wenn aktiviert, wird keine ConEmu-Instanz benötigt, um sich in neue Prozesse zu integrieren. Ein Prozess mit ConEmu-Integration, z.B. 'Explorer.exe', genügt.",
       "ja": "有効にすると,新しいプロセスをフックするためにConEmuインスタンスを実行しません.既にフックされた単一の 'Explorer.exe'プロセスを使います.",
       "es": "Si está activo, no se requiere ejecutar la instancia de ConEmu para anclar nuevos procesos. Será suficiente un proceso ya anclado, ej.: 'Explorer.exe'",
       "pl": "Jeśli ta opcja jest włączona, uruchomienie instancji ConEmu nie będzie wymagane do zaczepiania nowych procesów. Jeden już uzależniony proces, np.„Explorer.exe” już wystarczy.",
@@ -950,9 +950,9 @@
       "zh": [ "强制复制行为 \"Copy\" 为默认行为，\r\n"
             , "你能使用 Ctrl、Shift 或者 Alt\r\n"
             , "在拖放时改变行为" ],
-      "de": [ "Erzwingt \"Kopieren\" als Vorgabe,\r\n"
+      "de": [ "Erzwingt \"Kopieren\" als Standard,\r\n"
             , "Es kann Strg, Umslt oder Alt\r\n"
-            , "während des Ziehens verwendet werden um die Art der Aktion zu ändern" ],
+            , "während des Ziehens verwendet werden, um die Art der Aktion zu ändern" ],
       "ja": [ "強制的な \"コピー\" アクションをデフォルトにし,\r\n"
             , "Ctrl, Shift, Alt を使用して\r\n"
             , "ドラッグ操作中にアクションを変更する" ],
@@ -1119,7 +1119,7 @@
       "en": "Uncheck this to stop sending mouse events to console, mouse will be processed by ConEmu internally (text selection, for example)",
       "ru": "Снимите этот флажок, чтобы прекратить отправку событий мыши на консоль, ConEmu будет обрабатывать мышь внутри себя (например, выделение текста)",
       "zh": "不选中时停止发送鼠标事件到控制台，鼠标事件会在 ConEmu 内部处理（例如：文本选择）",
-      "de": "Abwählen um das Senden von Mausereignissen an die Konsole zu unterdrücken, die Maus wird intern von ConEmu verarbeitet (z.B. Textauswahl)",
+      "de": "Abwählen, um das Senden von Mausereignissen an die Konsole zu unterdrücken, die Maus wird intern von ConEmu verarbeitet (z.B. Textauswahl)",
       "ja": "マウスイベントをコンソールに送信しないようにするにはこれをオフにします.マウスはConEmuによって内部的に処理されます(テキスト選択など)",
       "es": "Desactiva esto para evitar enviar eventos del ratón al terminal, el ratón se manejará internamente por ConEmu (por ejemplo, selección de texto)",
       "pl": "Odznacz to, aby zatrzymać wysyłanie zdarzeń myszy do konsoli, mysz będzie przetwarzana wewnętrznie przez ConEmu (na przykład zaznaczanie tekstu)",
@@ -1356,7 +1356,7 @@
       "zh": [ "Explorer 的弹出菜单中你所看见的内容\r\n"
             , "你可以使用 `&` 标志为菜单项设置热键" ],
       "de": [ "Was im Explorer-PopUp-Menü zu sehen sein wird.\r\n"
-            , "Das '&'-Zeichen kann verwendet werden um eine Schnelltaste für einen Menüeintrag festzulegen." ],
+            , "Das '&'-Zeichen kann verwendet werden, um eine Schnelltaste für einen Menüeintrag festzulegen." ],
       "ja": [ "エクスプローラのポップアップメニューに表示される内容\r\n"
             , "`&`記号を使ってメニュー項目のホットキーを設定することができます" ],
       "es": [ "Lo que se verá en el menú contextual del Explorador\r\n"
@@ -1433,7 +1433,7 @@
       "zh": [ "Explorer 的弹出菜单中你所看见的内容\r\n"
             , "你可以使用 `&` 标志为菜单项设置热键" ],
       "de": [ "Was im Explorer-PopUp-Menü zu sehen sein wird.\r\n"
-            , "Das '&'-Zeichen kann verwendet werden um eine Schnelltaste für den Menüeintrag festzulegen." ],
+            , "Das '&'-Zeichen kann verwendet werden, um eine Schnelltaste für den Menüeintrag festzulegen." ],
       "ja": [ "エクスプローラのポップアップメニューに表示される内容\r\n"
             , "`&`記号を使ってメニュー項目のホットキーを設定することができます" ],
       "es": [ "Lo que se verá en el menú contextual del Explorador\r\n"
@@ -1464,6 +1464,7 @@
       "en": "Allows interception of Win+Number, Win+Arrows, Alt+Esc, Alt+Tab, etc.",
       "ru": "Позволяет перехватывать Win+Number, Win+Arrows, Alt+Esc, Alt+Tab и т.д.",
       "zh": "允许拦截 Win+Number、Win+Arrows、Alt+Esc、Alt+Tab、等等。",
+      "de": "Ermöglicht das Abfangen von Win+Ziffer, Win+Pfeiltaste, Alt+Esc, Alt+Tab, usw.",
       "ja": "Win Number,Win Arrows,Alt Esc,Alt Tabなどの傍受を許可します.",
       "es": "Permite interceptar combinaciones Win+Número, Win+Cursores, Alt+Esc, Alt+Tab, etc...",
       "pl": "Umożliwia przechwytywanie Win + Number, Win + strzałki, Alt + Esc, Alt + Tab itp.",
@@ -1475,6 +1476,8 @@
     "cbIntegralSize": {
       "en": [ "When checked, ConEmu windows size is changed proportionally to console cells.\n"
             , "Option is disabled automatically for Quake and Inside modes, and for 100% window width or height." ],
+      "de": [ "Die Größe des ConEmu-Fensters proportional an die Zellen der Konsole anpassen.\n"
+            , "Die Einstellung wird für den Quake- und den integrierten Modus sowie bei voller Fensterhöhe oder -breite automatisch deaktiviert." ],
       "es": [ "Cuando está habilitado, el tamaño de las ventanas de ConEmu se cambia proporcionalmente a las celdas de la consola.\n"
             , "Esta opción se deshabilita para los modos Quake y dentro, y si el ancho o el alto de la ventana es del 100%." ],
       "pl": [ "Gdy zaznaczone, rozmiar okien ConEmu jest zmieniany proporcjonalnie do komórek konsoli.\n"
@@ -2232,6 +2235,8 @@
             , "Требуется Inject ConEmuHk." ],
       "zh": [ "抑制回显字符（7）、Beep 和 MessageBeep 函数时产生的烦人响声。\r\n"
             , "需要注入 ConEmuHk" ],
+      "de": [ "Töne unterdrücken, die durch das Zeichen char(7d sowie der Beep und MessageBeep-Funktionen abgespielt werden.\r\n"
+            , "Die Nutzung von ConEmuHk ist erforderlich." ],
       "ja": [ "char(7),Beep,およびMessageBeep関数をエコーすることによって生成される厄介な鐘を抑制します.\r\n"
             , "注入ConEmuHkが必要です." ],
       "es": [ "Eliminar los sonidos emitidos al emitir el char(7), por las funciones Beep y MessageBeep.\r\n"
@@ -2432,7 +2437,7 @@
       "en": "Try to use PicView2 plugin to generate previews (FAR2 only)",
       "ru": "Попробуйте использовать плагин PicView2 для создания превью (только FAR2)",
       "zh": "尝试用 PicView2 插件生成预览（仅支持 FAR2）",
-      "de": "Versuche das PicView2-PlugIn zu verwenden um Vorschauansichten zu erzeugen (nur FAR2)",
+      "de": "Versuche das PicView2-PlugIn zu verwenden, um Vorschauansichten zu erzeugen (nur FAR2)",
       "ja": "PicView2プラグインを使用してプレビューを生成しようとする(FAR2のみ)",
       "es": "Intentar usar el plugin PicView2 para generar las previsualizaciones (sól FAR2)",
       "pl": "Spróbuj użyć wtyczki PicView2 do generowania podglądów (tylko FAR2)",
@@ -2479,7 +2484,7 @@
       "en": "Don't forger to apply manually entered UCS range to observe the result.",
       "ru": "Не забудьте применить введенный вручную диапазон UCS, чтобы увидеть результат.",
       "zh": "不要忘记应用手动输入的 UCS 范围以查看结果。",
-      "de": "Nicht vergessen den manuell eingegebenen UCS-Bereich anzuwenden um das Ergebnis zu sehen.",
+      "de": "Nicht vergessen den manuell eingegebenen UCS-Bereich anzuwenden, um das Ergebnis zu sehen.",
       "ja": "手動で入力したUCS範囲を適用するなら結果をきちんと確認して下さい。",
       "es": "No olvides aplicar manualmente el rango UCS introducido para observar los resultados.",
       "pl": "Nie fałszuj zastosowania ręcznie wprowadzonego zakresu UCS, aby obserwować wynik.",
@@ -2498,7 +2503,7 @@
       "zh": [ "使用 Alt+NumpadAdd+HexNumbers 输入十六进制代码的 Unicode 符号\r\n"
             , "在 Far Manager 中忽略\r\n"
             , "对快捷方式无影响" ],
-      "de": [ "Verwende Alt+NumpadPlus+HexZahlen um Unicodesymbole anhand ihrer Hex-Werte zu erzeugen\r\n"
+      "de": [ "Verwende Alt+NumpadPlus+HexZahlen, um Unicodesymbole anhand ihrer Hex-Werte zu erzeugen\r\n"
             , "Wird in Far-Manager ignoriert\r\n"
             , "Hat keinen Einfluss auf explicit shortcut" ],
       "ja": [ "Alt Numpadを使用してHexNumberを入力し,16進コードベースでUnicodeシンボルを入力します\r\n"
@@ -2566,7 +2571,7 @@
       "en": "Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example)",
       "ru": "Требуется для некоторых сочетаний клавиш. Когда отмеченно, ConEmu установит хук клавиатуры, когда ConEmu находится на переднем окне. Так что, вы должны разрешить это в антивирусном ПО (например, AVP)",
       "zh": "某些键盘组合所需的。如果被选中，ConEmu 是前端窗口时，ConEmu 会安装键盘 hook。因此，你必须在杀毒软件允许（比如：AVP）",
-      "de": "Für einige Tastaturkombinationen erforderlich. Wenn ausgewählt und ConEmu das Fenster im Vordergrund ist, wird es die Tastatur anzapfen. Dies muss in vorhandenen Antivirenprogrammen erlaubt werden",
+      "de": "Für einige Tastenkombinationen erforderlich. Wenn ausgewählt und ConEmu im Vordergrund ist, wird es Tastenanschläge abfangen. Dies muss in Antivirenprogrammen erlaubt werden",
       "ja": "いくつかのキーボードの組み合わせに必要、チェックするとConEmuがフォアグラウンドのときにキーボードをフックします。アンチウイルスソフト(例えばAVP)などで許可しておく必要があります",
       "es": "Se precisa para algunas combinaciones de teclado. Cuando está activa, ConEmu instalará un gancho de teclado cuando esté como ventana de fondo. Debes permitir esto en tu antivirus (p.ej.: AVP)",
       "pl": "Wymagane w przypadku niektórych kombinacji klawiatury. Po zaznaczeniu ConEmu zainstaluje zaczep klawiatury, gdy ConEmu jest oknem pierwszego planu. Musisz więc pozwolić na to w oprogramowaniu antywirusowym (na przykład AVP)",
@@ -2778,6 +2783,7 @@
       "en": "Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag",
       "ru": "Выберите модификатор для начала ‘Блокировки’ с помощью мыши LeftClick+Drag",
       "zh": "使用鼠标左键单击+拖动，选择修改器来启动 “块状选择”",
+      "de": "Zusatztaste für ‘Blockauswahl’ mit LeftClick+Drag",
       "ja": "モディファイアを選択して,マウスで 'ブロック選択' を開始する LeftClick+Drag",
       "es": "Selecciona el modificador para iniciar la 'Selección de bloque' con el ratón ClickIzq+Arrastrar",
       "pl": "Wybierz modyfikator, aby rozpocząć „Wybór bloku” za pomocą myszy LeftClick + Drag",
@@ -2847,7 +2853,7 @@
       "en": "Choose background color index for which ‘Bold’ font properties will be inverted (default is Red #12)",
       "ru": "Выбрать фон, для которого будут инвертированы свойства шрифта ‘Жирный’ (по умолчанию Красный #12)",
       "zh": "选择背景颜色索引，“粗体” 字体属性会被倒置（默认为红色 #12）",
-      "de": "Hintergrundfarbindex wählen für den 'Fette' Schrifteigenschaften umgekehrt werden (Vorgabe ist Rot #12)",
+      "de": "Hintergrundfarbindex wählen für den 'Fette' Schrifteigenschaften umgekehrt werden (Standard ist Rot #12)",
       "ja": " '太字' のフォントプロパティを反転する背景色のインデックスを選択します(デフォルトは赤#12)",
       "es": "Seleccionar índice de color de fondo para el cual se invertirán las propiedades del tipo 'Negrita' (por defecto Rojo #12)",
       "pl": "Wybierz indeks koloru tła, dla którego właściwości czcionki \"Pogrubienie\" zostaną odwrócone (domyślnie jest to czerwony #12)",
@@ -2860,7 +2866,7 @@
       "en": "Choose background color index for which ‘Italic’ font properties will be inverted (default is Magenta #13)",
       "ru": "Выбрать фон, для которого будут инвертированы свойства шрифта ‘Курсив’ (по умолчанию - Магнента #13)",
       "zh": "选择背景颜色索引，“斜体” 字体属性会被倒置（默认为品红色 #13）",
-      "de": "Hintergrundfarbindex wählen für den 'Kursive' Schrifteigenschaften umgekehrt werden (Vorgabe ist Magenta #13)",
+      "de": "Hintergrundfarbindex wählen für den 'Kursive' Schrifteigenschaften umgekehrt werden (Standard ist Magenta #13)",
       "ja": "'Italic'フォントのプロパティを反転する背景色のインデックスを選択します(デフォルトはMagenta#13)",
       "es": "Elegir el índice del color de fondo para el cual la propiedad 'itálica' se invertirá (por defecto es Magenta #13)",
       "pl": "Wybierz indeks koloru tła, dla którego właściwości czcionki \"Kursywa\" zostaną odwrócone (domyślnie jest to Magenta #13)",
@@ -2873,7 +2879,7 @@
       "en": "When Bold or Italic font property was inverted, ConEmu may change background to default color (default is Blue #1)",
       "ru": "Когда свойство жирного или курсивого шрифта было инвертировано, ConEmu может изменить фон на цвет по умолчанию (по умолчанию Синий #1)",
       "zh": "当 “粗体” 或 “斜体” 字体属性被倒置，ConEmu 会改变背景为默认颜色（默认为蓝色 #1）",
-      "de": "Wenn die Schrifteigenschaft Fett oder Kursiv umgekehrt wurde, darf ConEmu den Hintergrund auf die Vorgabefabe ändern (Vorgabe ist Blau #1)",
+      "de": "Wenn die Schrifteigenschaft Fett oder Kursiv umgekehrt wurde, ändert ConEmu den Hintergrund auf die Standardfarbe (Standard ist Blau #1)",
       "ja": "太字または斜体のフォントプロパティが反転されている場合,ConEmuは背景をデフォルトの色に変更することがあります(デフォルトは青#1)",
       "es": "Cuando se invierten los tipos de letra Negrita e Itálica, ConEmu puede cambiar el fondo al color por defecto (Azul #1)",
       "pl": "Kiedy właściwość czcionki Pogrubienie lub Kursywa została odwrócona, ConEmu może zmienić tło na domyślny kolor (domyślnie niebieski #1)",
@@ -3266,6 +3272,8 @@
             , "(влияет только на новые консоли)" ],
       "zh": [ "你可以为 in-console 日志文件选择文件夹\r\n"
             , "（仅影响之后新建的控制台）" ],
+      "de": [ "Wählen Sie den Ordner zum Speichern von Konsolen-Logdateien\r\n"
+            , "(wirkt nur bei neuen Konsolen)" ],
       "ja": [ "コンソール内のログファイルのフォルダを選択することができます\r\n"
             , "(新しいコンソールにのみ影響する)" ],
       "es": [ "Puedes elegir la carpeta para los ficheros de log del terminal\r\n"
@@ -3305,7 +3313,7 @@
             , "使用 \"*\"（星号）为 Far Manager 面板背景颜色。" ],
       "de": [ "Hintergrundfarbindizes auswählen,\r\n"
             , "die mit dem Hintergrundbild ersetzt werden,\r\n"
-            , "Vorgabe ist '#0 #1' Schwarz und Blau.\r\n"
+            , "Standard ist '#0 #1' Schwarz und Blau.\r\n"
             , "\"*\" (Asterisk) für die Hintergrundfarbe der Far-Manager-Panels verwenden." ],
       "ja": [ "背景色のインデックスを選択し,\r\n"
             , "これは背景画像に置き換えられ,\r\n"
@@ -3341,7 +3349,7 @@
       "zh": [ "Far Manager 里的关闭编辑器/视图/面板的宏，当你从标签页上下文菜单中选择 ‘关闭’ 时\r\n"
             , "清除字段重置为默认值" ],
       "de": [ "Makro zum Schließen von Editor/Betrachter/Panels im Far-Manager, wenn 'Schließen' aus dem Reiterkontextmenü ausgewählt wurde\r\n"
-            , "Feld leeren um Vorgabewerte wiederherzustellen" ],
+            , "Feld leeren, um Standardwert wiederherzustellen" ],
       "ja": [ "Far Managerの閉じるエディタ/ビューア/パネルのマクロ,タブのコンテキストメニューから '閉じる' を選択すると\r\n"
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "es": [ "Macro para cerrar el Editor/Visor/Paneles en Far Manager, cuando seleccionar 'Cerrar' desde el menú contextual de la pestaña\r\n"
@@ -3505,6 +3513,7 @@
     ,
     "tFarHourglass": {
       "en": "Far Manager not-responding duration in milliseconds before changing mouse cursor to AppStarting",
+      "de": "Dauer in Millisekunden, die Far Manager nicht reagiert, bis sich der Mauszeiger ändert",
       "es": "Duración de no-respuesta de Far Manager en milisegundos antes de cambiar el cursor a InicioApp",
       "pl": "Czas braku odpowiedzi Far Managera w ms przed zmianą kursora myszy na Uruchamianie aplikacji",
       "ko": "마우스 커서를 AppStarting으로 변경하기 전 Far Manager가 응답하지 않는 밀리초 시간",
@@ -3696,10 +3705,10 @@
             , "而不是被点击的文件\r\n"
             , "使用 ‘-reuse -run {cmd}’ 使用现有的窗口而不是创建新 ConEmu 窗口" ],
       "de": [ "Gewünschten Befehlsinterpreter (CMD, Far, usw.) hier angeben.\r\n"
-            , "Den '%1'-Parameter benutzen um den 'angeklickten' Eintrag zu verwenden.\r\n"
-            , "'!ConEmuWorkDir!' um das Verzeichnis,\r\n"
+            , "Den '%1'-Parameter benutzen, um den 'angeklickten' Eintrag zu verwenden.\r\n"
+            , "'!ConEmuWorkDir!', um das Verzeichnis,\r\n"
             , "und nicht die angeklickte Datei zu verwenden.\r\n"
-            , "'-reuse' verwenden um ein vorhandenes ConEmu-Fenster zu verwenden, anstatt ein neues zu erzeugen. Z.B. '-reuse -run {cmd}'" ],
+            , "'-reuse' verwenden, um ein vorhandenes ConEmu-Fenster zu verwenden, anstatt ein neues zu erzeugen. Z.B. '-reuse -run {cmd}'" ],
       "es": [ "Indica tu intérprete de comandos (cmd, far, etc...)\r\n"
             , "Usar '%1' para elemento 'seleccionado'\r\n"
             , "Usar '!ConEmuWorkDir!' para la carpeta,\r\n"
@@ -3750,7 +3759,7 @@
       "en": "While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel.",
       "ru": "Пока заголовок и рамка скрыты, ConEmu может держать небольшую часть кадра (в пикселях) вокруг части консоли. По умолчанию 1 пиксель.",
       "zh": "当标题和框架隐藏时，ConEmu 可能保持较小部分（像素）在控制台的周围。默认为 1 像素。",
-      "de": "Solange Titel und Rahmen verborgen sind, soll ConEmu einen kleinen Teil des Rahmens (in Pixeln) um den Konsolenteil anzeigen. Vorgabe ist 1 Pixel.",
+      "de": "Solange Titel und Rahmen verborgen sind, soll ConEmu einen kleinen Teil des Rahmens (in Pixeln) um den Konsolenteil anzeigen. Standard ist 1 Pixel.",
       "ja": "キャプションとフレームが隠されている間,ConEmuはコンソール部分の周りにフレームの小さな部分(ピクセル単位)を保持します.デフォルトは1ピクセルです.",
       "es": "Mientras la barra de título y el borde están ocultos, ConEmu puede mantener un pequeño margen alrededor de la zona del terminal. Por defecto es 1 pixel.",
       "pl": "Podczas gdy podpis i ramka są ukryte, ConEmu może utrzymywać małą część ramki (w pikselach) wokół części konsoli. Domyślnie jest to 1 piksel.",
@@ -3832,7 +3841,7 @@
             , "\\e - ESC, \\b - BS, \\n - ENTER, \\1 - \"dir\", \\2 - \"bash dir\"." ],
       "zh": [ "‘cd’ 的格式，默认为 ‘\\eCD /d \\1\\n’。\r\n"
             , "\\e - ESC、\\b - BS、\\n - ENTER、\\1 - \"dir\"、\\2 - \"bash dir\"。" ],
-      "de": [ "Format von 'cd', Vorgabe ist ‘\\eCD /d \\1\\n’.\r\n"
+      "de": [ "Format von 'cd', Standard ist ‘\\eCD /d \\1\\n’.\r\n"
             , "\\e - ESC, \\b - Rücktaste, \\n - ENTER, \\1 - \"dir\", \\2 - \"bash dir\"." ],
       "ja": [ "'cd'の形式で,デフォルトは '\\eCD / d \\1 \\n'です.\r\n"
             , "\\e  -  ESC,\\b  -  BS,\\n  -  ENTER,\\1  -  \"dir\",\\2  -  \"bash dir\"" ],
@@ -3986,7 +3995,7 @@
       "zh": [ "文件面板选定项目的 EMenu 的 Far Manager 宏\r\n"
             , "清除字段以重置为默认值" ],
       "de": [ "Far-Manager-Makro für das EMenü von auf dem Datei-Panel ausgewählten Einträgen\r\n"
-            , "Feld leeren um auf Standards zu setzen" ],
+            , "Feld leeren, um auf Standard zu setzen" ],
       "ja": [ "ファイルパネル選択項目のEMenuのFar Managerマクロ\r\n"
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "es": [ "Far Manager macro para EMenu de los elementos seleccionados del panel de ficheros\r\n"
@@ -4052,6 +4061,8 @@
             , "Очистить поле, чтобы восстановить настройки по умолчанию" ],
       "zh": [ "宏 - 当你关闭 ConEmu 窗口，轻柔的关闭 Far Manager，而不是关闭控制台窗口，\r\n"
             , "清除字段重置为默认值" ],
+      "de": [ "Macro zum Beenden von Far Manager, statt nur das Konsolenfenster beim Beenden von ConEmu zu schließen.\r\n"
+            , "Feld löschen, um den Standardwert wiederherzustellen." ],
       "ja": [ "ConEmuウィンドウを閉じたときにコンソールウィンドウではなくFar Manager を閉じるマクロ\r\n"
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "es": [ "Macro para cerrar Far Manager, sin cerrar la ventana de terminal, cuando se cierra ConEmu\r\n"
@@ -4071,6 +4082,8 @@
             , "Очистить поле для сброса на значения по умолчанию" ],
       "zh": [ "宏 - 当您从标签上下文菜单选择“保存所有”时，保存所有打开的 Far Manager 修改过的编辑器\r\n"
             , "清除字段重置为默认值" ],
+      "de": [ "Macro zum Speichern aller in Far Manager geänderten Editor-Fenster, wenn Sie ‘Alle Speichern’ im Kontextmenü des Reiters wählen\r\n"
+            , "Feld löschen, um den Standardwert wiederherzustellen." ],
       "ja": [ "Far Manager エディタで編集中のファイルをタブのコンテキストメニューから 'すべて保存' するマクロ\r\n"
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "es": [ "Macro para guardar todos los editores abiertos y modificados de Far Manager, cuando elijes 'Guardar todo' del menú contextual\r\n"
@@ -4239,8 +4252,8 @@
             , "使用奇数值使标签出在高亮状态下" ],
       "de": [ "Wenn in einer inaktiven Konsole etwas geändert wurde\r\n"
             , "kann ConEmu in diesem Fall das Reitersymbol blinken lassen.\r\n"
-            , "Auf '-1' setzen um unbegrenzt lange zu blinken.\r\n"
-            , "Ungerade Werte verwenden um den Reiter im hervorgehobenen Zustand zu lassen" ],
+            , "Auf '-1' setzen, um dauerhaft zu blinken.\r\n"
+            , "Ungerade Werte verwenden, um den Reiter im hervorgehobenen Zustand zu lassen" ],
       "ja": [ "非アクティブなコンソールで何かが変更されたとき\r\n"
             , "この場合,ConEmuはタブアイコンを点滅させることがあります\r\n"
             , "無限に点滅するように '-1'を設定します.\r\n"
@@ -4376,7 +4389,7 @@
       "zh": [ "在缩略图模式里预览，平方像素大小\r\n"
             , "默认为 96" ],
       "de": [ "Größe in Pixeln des Vorschauquadrats im Vorschaumodus\r\n"
-            , "Vorgabe ist 96" ],
+            , "Standard ist 96" ],
       "ja": [ "サムネイルモードでのプレビュースクエアのピクセル単位のサイズ\r\n"
             , "デフォルトは96です" ],
       "es": [ "Tamaño en pixels del cuadro de previsualización en el modo Miniaturase\r\n"
@@ -4503,7 +4516,7 @@
       "zh": [ "Tiles 模式预览方块的大小（像素）\r\n"
             , "默认为 48" ],
       "de": [ "Größe in Pixeln des Vorschauquadrats im Kachelmodus\r\n"
-            , "Vorgabe ist 48" ],
+            , "Standard ist 48" ],
       "ja": [ "タイルモードのプレビュースクエアのピクセル単位のサイズ\r\n"
             , "デフォルトは48です" ],
       "es": [ "Tamaño en pixels de la caja de previsualización en el modo de Tiles\r\n"
@@ -4629,9 +4642,9 @@
       "zh": [ "接收最新版本的信息的地址\r\n"
             , "默认为：https://conemu.github.io/version.ini\r\n"
             , "清空该文本框来恢复到默认的网址。" ],
-      "de": [ "URL um die neuesten Versionsinformationen zu erhalten,\r\n"
-            , "Vorgabe ist: https://conemu.github.io/version.ini\r\n"
-            , "Textfeld leeren um auf Vorgabe-URL zurückzusetzen." ],
+      "de": [ "URL, um die neuesten Versionsinformationen zu erhalten,\r\n"
+            , "Standard: https://conemu.github.io/version.ini\r\n"
+            , "Textfeld leeren, um die Standard-URL zu verwenden." ],
       "ja": [ "最新のバージョン情報を取得するためのURL,\r\n"
             , "デフォルトはhttps://conemu.github.io/version.iniです.\r\n"
             , "テキストボックスを消去してデフォルトのURLに戻します." ],
@@ -4801,7 +4814,7 @@
       "en": "Start Alt+Number mode to enter unicode symbol by its hex codebase",
       "ru": "Запустите Alt+Number mode для ввода символа юникода по его шестнадцатеричному коду",
       "zh": "启动 ALT+数字 模式，输入十六进制代码的 Unicode 符号",
-      "de": "Startet Alt+Zahl-Modus um ein Unicode-Symbol anhand seines Hex-Wertes einzugeben",
+      "de": "Startet Alt+Zahl-Modus, um ein Unicode-Symbol anhand seines Hex-Wertes einzugeben",
       "ja": "Alt 16進コードベースでUnicodeシンボルを入力するにはAltキーを押します.",
       "es": "Iniciar modo Alt+Número para introducir símbolo unicode por su código hexadecimal",
       "pl": "Uruchom tryb Alt + Number, aby wprowadzić symbol Unicode według jego szesnastkowej bazy kodów",
@@ -5358,6 +5371,7 @@
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
       "zh": "开始文本选择，在 Far 中被忽略，在 '标记和粘贴' 和 '应用程序独特' 页面上可能被禁用。",
+      "de": "Beginne Textauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "es": "Iniciar la selección de texto, se ignora en Far, puede desactivarse en las páginas 'Marcar y Pegar' y 'Otras App'",
       "pl": "Rozpocznij zaznaczanie tekstu, ignorowane w Far zasięgu, można wyłączyć na stronach \"Oznacz i wklej\" oraz \"Wyróżnij aplikację\"",
       "ko": "Far에서 무시되는 시작 텍스트 선택은 '표시 및 붙여넣기' 및 '별개 앱' 페이지에서 비활성화 될 수 있습니다",
@@ -5368,6 +5382,7 @@
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
       "zh": "开始文本选择，在 Far 中被忽略，在 '标记和粘贴' 和 '应用程序独特' 页面上可能被禁用。",
+      "de": "Beginne Textauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "es": "Iniciar selección de texto, se ignora en Far, se puede desactivar en las páginas 'Marcar y Pegar' y 'Otras App'",
       "pl": "Rozpocznij zaznaczanie tekstu, ignorowane w Far zasięgu, można wyłączyć na stronach \"Oznacz i wklej\" oraz \"Wyróżnij aplikację\"",
       "ko": "Far에서 무시되는 시작 텍스트 선택은 '표시 및 붙여넣기' 및 '별개 앱' 페이지에서 비활성화 될 수 있습니다",
@@ -5609,6 +5624,7 @@
     ,
     "vkEditMenu": {
       "en": "Show Edit context menu",
+      "de": "'Kontextmenü bearbeiten' anzeigen",
       "ru": "Показать контекстное меню редактирования",
       "zh": "显示编辑右键菜单",
       "es": "Mostrar el menú contextual Editar",
@@ -5620,6 +5636,7 @@
     ,
     "vkEditMenu2": {
       "en": "Show Edit context menu",
+      "de": "'Kontextmenü bearbeiten' anzeigen",
       "ru": "Показать контекстное меню редактирования",
       "zh": "显示编辑右键菜单",
       "es": "Mostrar el menú contextual Editar",
@@ -5911,7 +5928,7 @@
       "en": "Switch bufferheight mode",
       "ru": "Режим переключения высоты буфера",
       "zh": "切换缓存高度模式",
-      "de": "Pufferhöhenmodus umschalten",
+      "de": "Pufferhöhen-Modus umschalten",
       "ja": "バッファーハイトモードを切り替える",
       "es": "Cambiar modo 'altura-buffer'",
       "pl": "Przełącz tryb wysokości bufora",
@@ -6295,6 +6312,7 @@
     ,
     "vkSetFocusParent": {
       "en": "Set focus to the ConEmu parent window (ConEmu Inside mode)",
+      "de": "Fokus auf das Hauptfenster setzen (ConEmu Inside mode)",
       "es": "Centrar el foco en la ventana matriz de ConEmu (modo dentro de ConEmu)",
       "pl": "Ustaw fokus na okno nadrzędne ConEmu (tryb ConEmu Inside)",
       "ko": "ConEmu 부모 창에 포커스 설정 (ConEmu Inside 모드)",
@@ -6557,6 +6575,7 @@
     ,
     "vkSystemMenu": {
       "en": "Show ConEmu System menu (fires on key down)",
+      "de": "ConEmu-Systemmenü anzeigen (beim Drücken einer Taste)",
       "ru": "Показать системное меню ConEmu (срабатывает по нажатию)",
       "zh": "显示 ConEmu 系统菜单 (fires on key down)",
       "_de": "Zeige ConEmu-Systemmenü",
@@ -6569,6 +6588,7 @@
     ,
     "vkSystemMenu2": {
       "en": "Show ConEmu System menu (fires on key release)",
+      "de": "ConEmu-Systemmenü anzeigen (beim Loslassen einer Taste)",
       "ru": "Показать системное меню ConEmu (срабатывает по отпусканию)",
       "zh": "显示 ConEmu 系统菜单 (fires on key release)",
       "_de": "Zeige ConEmu-Systemmenü",
@@ -6633,7 +6653,7 @@
       "en": "Terminate (kill) all but shell processes in the current console",
       "ru": "Завершить (убить) все процессы, кроме оболочки, в текущей консоли",
       "zh": "在当前控制台中终止（杀死）除了 shell 进程以外的所有进程",
-      "de": "Beendet alle bis auf den Shell-Prozess in der aktuellen Konsole",
+      "de": "Beendet alles bis auf den Shell-Prozess in der aktuellen Konsole",
       "ja": "現在のコンソール内のシェルプロセスを除くすべてのプロセスを終了(強制終了)する",
       "es": "Finalizar todos los procesos excepto la línea de comandos del terminal actual",
       "pl": "Zakończ (zabij) wszystkie procesy oprócz powłoki w bieżącej konsoli",
@@ -6907,8 +6927,8 @@
             , "Удерживайте Shift для диалога с опциями" ],
       "zh": [ "重启当前控制台\r\n"
             , "按住 Shift 键来弹出重启对话框" ],
-      "de": [ "Starte aktuelle Konsole neu\r\n"
-            , "Umschalttaste halten um Neustart-Dialog aufzurufen" ],
+      "de": [ "Aktuelle Konsole neu starten.\r\n"
+            , "Umschalttaste halten, um den Neustart-Dialog aufzurufen" ],
       "ja": [ "現在のコンソールを再起動する\r\n"
             , "Shiftを押し続けると,再起動ダイアログがポップアップします" ],
       "es": [ "Reiniciar terminal activa\r\n"
@@ -6930,8 +6950,8 @@
             , "Удерживайте Shift для диалога с опциями" ],
       "zh": [ "以管理员身份（Vista+）或用户身份（WinXP）重启当前控制台\r\n"
             , "按住 Shift 键来弹出重启对话框" ],
-      "de": [ "Starte aktuelle Konsole als Admin (Vista+) oder Benutzer (WinXP) neu\r\n"
-            , "Umschalttaste halten um Neustart-Dialog aufzurufen" ],
+      "de": [ "Aktuelle Konsole als Admin (Vista+) oder Benutzer (WinXP) neu starten.\r\n"
+            , "Umschalttaste halten, um den Neustart-Dialog aufzurufen" ],
       "ja": [ "管理者(Vista)またはユーザー(WinXP)として現在のコンソールを再起動します.\r\n"
             , "Shiftを押し続けると,再起動ダイアログがポップアップします" ],
       "es": [ "Reiniciar el terminal activo como Administrador (Vista+) o usuario (WinXP)\r\n"
@@ -7102,6 +7122,7 @@
     ,
     "lng_AlternativeIsOffHint": {
       "en": "Alternative mode is off",
+      "de": "Alternativ-Modus ist aus",
       "ru": "Альтернативный режим выключен",
       "zh": "替代模式 关闭",
       "es": "El modo alternativo está desactivado",
@@ -7113,6 +7134,7 @@
     ,
     "lng_AlternativeIsOnHint": {
       "en": "Alternative mode is ON (console frozen)",
+      "de": "Alternativ-Modus ist ein (Konsole eingefroren)",
       "ru": "Альтернативный режим включен (консоль заморожена)",
       "zh": "替代模式 开启（控制台冻结）",
       "es": "El modo alternativo está activado (consola congelada)",
@@ -7163,7 +7185,7 @@
       "en": " - release <Alt> to paste ANSI code point",
       "ru": " - отпустите <Alt> для вставки ANSI-символа",
       "zh": " - 释放 <Alt> 键粘贴 ANSI 代码点",
-      "de": " - <Alt> loslassen um ANSI-Code-Punkt einzufügen",
+      "de": " - <Alt> loslassen, um ANSI-Code-Punkt einzufügen",
       "ja": "  -  <Alt>を離してANSIコードポイントを貼り付けます",
       "es": " - suelta <Alt> para pegar código ANSI",
       "pl": "wydanie <Alt> wkleić punkt kodowy ANSI",
@@ -7175,7 +7197,7 @@
       "en": " - release <Alt> to paste OEM code point",
       "ru": " - отпустите <Alt> для вставки OEM-символа",
       "zh": " - 释放 <Alt> 键粘贴 OEM 代码点",
-      "de": " - <Alt> loslassen um OEM-Codepoint einzufügen",
+      "de": " - <Alt> loslassen, um OEM-Codepoint einzufügen",
       "ja": "  -  <Alt>を放してOEMコードポイントを貼り付ける",
       "es": " - soltar <Alt> para pegar código OEM",
       "pl": "-wydanie <Alt> wkleić punkt kodu OEM",
@@ -7187,7 +7209,7 @@
       "en": " - release <Alt> to paste UNICODE code point",
       "ru": " - отпустите <Alt> для вставки UNICODE-символа",
       "zh": " - 松开<Alt> 键粘贴 Unicode 代码点",
-      "de": " - <Alt> loslassen um UNICODE-Codepoint einzufügen",
+      "de": " - <Alt> loslassen, um UNICODE-Codepoint einzufügen",
       "ja": "  -  <Alt>を離してUNICODEコードポイントを貼り付ける",
       "es": " - soltar <Alt> para pegar código UNICODE",
       "pl": "-wydanie <Alt> wkleić punkt kodowy UNICODE",
@@ -7215,8 +7237,8 @@
             , "и сообщить об ошибке (открыть веб-страницу проекта)." ],
       "zh": [ "按下<重试>复制文本信息至剪贴板\r\n"
             , "并报告 bug（打开项目网页）。" ],
-      "de": [ "<Wiederholen> klicken, um die Textinformationen in die Zwischenablage zu kopieren\r\n"
-            , "und einen Fehler zu melden (öffnet Projekt-Website)." ],
+      "de": [ "Wählen Sie <Wiederholen>, um die Textinformationen in die Zwischenablage zu kopieren\r\n"
+            , "und einen Fehler zu melden (öffnet die Projekt-Website)." ],
       "ja": [ "テキスト情報をクリップボードにコピーするには<Retry>を押します\r\n"
             , "バグ(オープンプロジェクトのWebページ)を報告します." ],
       "es": [ "Pulsa <Retry> para copiar el texto informativo al portapapeles\r\n"
@@ -7248,6 +7270,7 @@
       "en": "BufferHeight mode is off",
       "ru": "Режим BufferHeight выключен",
       "zh": "缓存高度模式 关闭",
+      "de": "Pufferhöhen-Modus ist aus",
       "es": "Modo AlturaBuffer está desactivado",
       "pl": "Tryb BufferHeight jest wyłączony",
       "it_IT": "AltezzaDinamica disattiva",
@@ -7259,6 +7282,7 @@
       "en": "BufferHeight mode is ON (scrolling enabled)",
       "ru": "Режим BufferHeight включен (прокрутка включена)",
       "zh": "缓存高度模式 开启（滚动已启动）",
+      "de": "Pufferhöhen-Modus ist an (Scrollen aktiv)",
       "es": "Modo AlturaBuffer está activado (scroll habilitado)",
       "pl": "Tryb BufferHeight jest włączony (przewijanie włączone)",
       "it_IT": "AltezzaDinamica attiva (scorrimento abilitato)",
@@ -7306,7 +7330,7 @@
       "en": "Close all",
       "ru": "Закрыть все",
       "zh": "全部关闭",
-      "de": "Alle schließen",
+      "de": "Alle schließen: ",
       "es": "Cerrar todo",
       "pl": "Zamknij wszystko",
       "it_IT": "Chiudi tutto",
@@ -7341,6 +7365,7 @@
     "lng_ConfirmCloseBtnGroup": {
       "en": "Close group of",
       "zh": "关闭",
+      "de": "Die Gruppe schließen",
       "es": "Cerrar grupo de",
       "pl": "Zamknij grupe",
       "it_IT": "Chiudi gruppo di",
@@ -7448,6 +7473,7 @@
       "en": "Terminate all but shell processes?",
       "ru": "Завершить все процессы, кроме оболочки?",
       "zh": "终止除 shell 之外的所有进程？",
+      "de": "Möchten Sie alle Prozesse bis auf die Shell selbst beenden?",
       "es": "¿Terminar todo excepto los procesos del intérprete de comandos?",
       "pl": "Zakończyć wszystkie procesy oprócz procesów powłoki?",
       "it_IT": "Chiudi tutti i processi non shell?",
@@ -7458,6 +7484,7 @@
     "lng_ConfirmKillingQ": {
       "en": "Confirm killing?",
       "zh": "同意杀死？",
+      "de": "Beenden bestätigen?",
       "es": "¿Matar?",
       "pl": "Potwierdzasz zabijanie?",
       "it_IT": "Conferma chiusura forzata?",
@@ -7815,6 +7842,7 @@
       "en": "All task tabs",
       "ru": "Все вкладки задач",
       "zh": "所有任务标签",
+      "de": "Alle Aufgaben",
       "es": "Todas las pestañas de tareas",
       "pl": "Wszystkie zakładki zadań",
       "ko": "모든 작업 탭",
@@ -7849,6 +7877,7 @@
       "en": "Auto scro&ll",
       "ru": "Автопрокрутка",
       "zh": "自动滚动（&l）",
+      "de": "Autom. scro&llen",
       "es": "Desplazamiento automático",
       "pl": "Auto Scro&ll",
       "it_IT": "Scorrimento automatico",
@@ -8196,6 +8225,7 @@
       "en": "Dump used memory blocks",
       "ru": "Дамп используемых блоков памяти",
       "zh": "转储已用内存块",
+      "de": "Inhalte des Arbeitsspeichers sichern",
       "pl": "Zrzuć używane bloki pamięci",
       "ko": "사용한 메모리 블록 덤프",
       "ko_KR": "사용한 메모리 블록 덤프",
@@ -8293,6 +8323,7 @@
       "en": "&More tasks",
       "ru": "Больше задач",
       "zh": "更多任务",
+      "de": "&Weitere Aufgaben",
       "pl": "&Więcej zadań",
       "ko": "기타 작업(&M)",
       "ko_KR": "기타 작업(&M)",
@@ -8617,7 +8648,7 @@
     "lng_MenuTerminateButShell": {
       "en": "Kill all but &shell",
       "zh": "终止除根进程外所有进程",
-      "de": "Alle bis auf die Shell-Prozess beenden",
+      "de": "Alle Prozesse bis auf den Shell-Prozess beenden",
       "pl": "Zabij wszystkich oprócz powłoki",
       "it_IT": "Forza chiusura di tutto tranne &shell",
       "ko": "쉘을 제외하고 모두 죽이기(&S)",
@@ -8726,6 +8757,7 @@
       "en": "Minimize window",
       "ru": "Свернуть окно",
       "zh": "最小化窗口",
+      "de": "Fenster minimieren",
       "pl": "Zminimalizuj okno",
       "it_IT": "Minimizza finestra",
       "ko": "창 최소화",
@@ -8736,6 +8768,7 @@
       "en": "&Save",
       "ru": "Сохранить",
       "zh": "保存",
+      "de": "&Speichern",
       "pl": "Zapisać",
       "it_IT": "&Salva",
       "ko": "저장(&S)",
@@ -8746,6 +8779,7 @@
       "en": "&Start",
       "ru": "Начало",
       "zh": "开始",
+      "de": "&Starten",
       "pl": "Uruchom",
       "it_IT": "&Avvia",
       "ko": "시작(&S)",
@@ -8771,12 +8805,8 @@
             , "将<Enter>按键发送到至控制台！\n"
             , "\n"
             , "确定继续吗？" ],
-      "de": [ "Warnung!\n"
-            , "\n"
-            , "Das Einfügen von mehrzeiligem Text schließt das\n"
-            , "Senden von <Enter>-Tastendrücken an die Konsole!\n"
-            , "\n"
-            , "Fortfahren?" ],
+      "de": [ "Warnung: Das Einfügen von mehreren Zeilen schließt das Senden von <Enter> an die Konsole mit ein.\n"
+            , "Möchten Sie wirklich fortfahren?" ],
       "ja": [ "警告！\n"
             , "\n"
             , "複数行のテキストを貼り付けるには,\n"
@@ -8833,10 +8863,8 @@
             , "在粘贴结束前不响应！\n"
             , "\n"
             , "确定继续吗？" ],
-      "de": [ "Warnung!\n"
-            , "\n"
-            , "Das Einfügen lange Texte (%u Zeichen) kann zum Blockieren\n"
-            , "der Konsole führen, bis das Einfügen abgeschlossen ist!\n"
+      "de": [ "Warnung: Das Einfügen langer Texte (%u Zeichen) kann dazu führen,\n"
+            , "dass die Konsole nicht mehr reagiert, bis das Einfügen abgeschlossen ist.\n"
             , "\n"
             , "Fortfahren?" ],
       "ja": [ "警告！\n"
@@ -8911,6 +8939,7 @@
       "en": "Do you want to reset terminal contents?",
       "ru": "Вы хотите сбросить содержимое терминала?",
       "zh": "你想重置终端内容吗？",
+      "de": "Möchten Sie die Inhalte des Terminals zurücksetzen?",
       "pl": "Czy chcesz zresetować zawartość terminala?",
       "it_IT": "Vuoi ripristinare il contenuto del terminale?",
       "ko": "터미널 내용을 재설정하시겠습니까?",
@@ -8921,6 +8950,7 @@
       "en": "Reset terminal contents and properties",
       "ru": "Сбросить содержимое и свойства терминала",
       "zh": "重置终端内容和属性",
+      "de": "Inhalte und Eigenschaften des Terminals zurücksetzen",
       "pl": "Zresetuj zawartość i właściwości terminala",
       "it_IT": "Ripristina contenuto e proprietà del terminale",
       "ko": "터미널 내용 및 속성 재설정",
@@ -8930,6 +8960,7 @@
     "lng_ResetTerminalTitle": {
       "en": "Reset terminal confirmation",
       "zh": "重置终端确认",
+      "de": "Terminal zurücksetzen",
       "pl": "Zresetuj potwierdzenie terminala",
       "it_IT": "Conferma ripristino terminale",
       "ko": "터미널 확인 재설정",
@@ -8943,6 +8974,8 @@
       "zh": [ "警告！\n"
             , "这项操作可能会损坏应用程序之后的输出。\n"
             , "最好执行一个专用命令，如 `clear` 或 `cls` 。" ],
+      "de": [ "Warnung: Diese Aktion kann die Ausgabe anderer Anwendungen beschädigen.\n"
+            , "Es ist besser ein explizites Kommando wie `clear` oder `cls` zu verwenden." ],
       "pl": [ "Ostrzeżenie\n"
             , "Ta operacja może zaszkodzić dalszym produkcjom aplikacji.\n"
             , "Lepiej jest wykonać dedykowane polecenie jako `clear` lub` cls`." ],
@@ -9025,6 +9058,7 @@
     "lng_SetPgInfoNone": {
       "en": "(None)",
       "zh": "（无）",
+      "de": "(Keine)",
       "pl": "(Żaden)",
       "it_IT": "(Nulla)",
       "ko": "(없음)",
@@ -9035,6 +9069,7 @@
       "en": "Show system menu (RClick for Settings)",
       "ru": "Показать системное меню (Правый клик для настройки)",
       "zh": "显示系统菜单（右击设置）",
+      "de": "Systemmenü anzeigen (RClick für Einstellungen)",
       "pl": "Pokaż menu systemowe (P Kliknij, aby wyświetlić ustawienia)",
       "it_IT": "Mostra menù di sistema (ClickDx per Impostazioni)",
       "ko": "시스템 메뉴 표시 (설정을 위한 우클릭)",
@@ -9539,7 +9574,7 @@
       "en": "Visit website to get thorough switches description:",
       "ru": "Посетите веб-страницу с подробным описанием ключей:",
       "zh": "访问网站，以获得更详尽的命令行开关使用介绍：",
-      "de": "Website besuchen, um Informationen zu Parametern zu erhalten:",
+      "de": "Besuchen Sie die Website, um Informationen zu Parametern zu erhalten:",
       "ja": "徹底的なスイッチの説明を取得するにはウェブサイトをご覧ください",
       "es": "Visitar el sitio web para obtener una descripción detallada de las opciones:",
       "pl": "Odwiedź stronę internetową, aby uzyskać dokładny opis przełączników:",
@@ -9552,7 +9587,7 @@
       "en": "Or run ‘ConEmu.exe -?’ to get the brief.",
       "ru": "Или запустите ‘ConEmu.exe -?’ для краткого списка.",
       "zh": "或者运行 ‘ConEmu.exe -?’ 获得简介。",
-      "de": "Oder 'ConEmu.exe -?' aufrufen um eine Kurzinfo zu erhalten.",
+      "de": "Oder 'ConEmu.exe -?' aufrufen, um eine Kurzinfo zu erhalten.",
       "ja": "または, ‘ConEmu.exe -?’ を実行して概要を取得します.",
       "es": "O ejecute 'ConEmu.exe -?' para obtener un resumen.",
       "pl": "Lub uruchom \"ConEmu.exe -?\", Aby uzyskać informacje.",
@@ -9565,7 +9600,7 @@
       "en": "Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!",
       "ru": "Ключ ‘-new_console’ должен быть указан *после* ‘-cmd’ или ‘-cmdlist’!",
       "zh": "开关 ‘-new_console’ 必须在 ‘-cmd’ 或者 ‘-cmdlist’ 的 *后面*！",
-      "de": "Der Parameter '-new_console' muss *nach* '-cmd' oder '-cmdlist' stehen!",
+      "de": "Der Parameter '-new_console' muss *nach* '-cmd' oder '-cmdlist' stehen.",
       "ja": "スイッチ '-new_console'は,* '* -cmd'または '-cmdlist'の後に指定する必要があります！",
       "es": "¡La opción ‘-new_console’ debe ponerse *después* ‘-cmd’ o ‘-cmdlist’!",
       "pl": "Przełącznik \"-new_console\" musi zostać określony * po * \"-cmd\" lub \"-cmdlist\"!",
@@ -9578,7 +9613,7 @@
       "en": "Please, close all ConEmu instances before continuing",
       "ru": "Пожалуйста, закройте все открытые окна ConEmu перед продолжением",
       "zh": "继续之前请关闭所有 ConEmu 实例",
-      "de": "Bitte vor dem Fortfahren alle ConEmu-Instanzen schließen",
+      "de": "Bitte schließen Sie ConEmu bevor Sie fortfahren",
       "ja": "続行する前に,すべてのConEmuインスタンスを閉じてください",
       "es": "Por favor, cierra todas las instancias de ConEmu antes de continuar",
       "pl": "Przed kontynuowaniem zamknij wszystkie instancje ConEmu",
@@ -9710,7 +9745,7 @@
       "en": "Unregister",
       "ru": "Удалить",
       "zh": "反注册",
-      "de": "Deregistrieren",
+      "de": "Entfernen",
       "ja": "登録を解除",
       "es": "Des-registrar",
       "pl": "Wyrejestruj się ",
@@ -9749,7 +9784,7 @@
       "en": "Unregister",
       "ru": "Удалить",
       "zh": "反注册",
-      "de": "Deregistrieren",
+      "de": "Entfernen",
       "ja": "登録を解除",
       "es": "Des-registrar",
       "pl": "Wyrejestruj sie",
@@ -9866,7 +9901,7 @@
       "en": "Add/refresh default tasks...",
       "ru": "Обновить основные задачи...",
       "zh": "添加/刷新预设任务",
-      "de": "Standardaufgaben laden...",
+      "de": "Standardaufgaben einrichten...",
       "ja": "デフォルトタスクの追加/更新...",
       "es": "Añadir/recargar tareas por defecto...",
       "pl": "Dodaj / odśwież domyślne zadania ...",
@@ -10123,7 +10158,7 @@
       "en": "Multi-line paste: avoid unexpected command execution by <Enter> keypress",
       "ru": "Вставка многострочного текста: избежать посылку в консоль нажатий <Enter>",
       "zh": "多行粘贴：避免由于<Enter>按键执行非预期命令",
-      "de": "Mehrzeiliges Einfügen: Verhindere versehentliche Befehlsausführung durch <Enter>",
+      "de": "Mehrzeiliges Einfügen: Warne vor versehentlicher Befehlsausführung durch <Enter>",
       "ja": "複数行のペースト:<Enter>キーで予期しないコマンド実行を避ける",
       "es": "Pegado multi-línea: evitar ejecución de comandos al pulsar <Enter>",
       "pl": "Wklejanie wielu wierszy: unikaj nieoczekiwanego wykonania polecenia przez <Enter>  naciśnięcie klawisza",
@@ -10314,7 +10349,7 @@
       "en": "Update Now!",
       "ru": "Обновить!",
       "zh": "现在更新!",
-      "de": "Jetzt aktualisieren!",
+      "de": "Jetzt aktualisieren",
       "ja": "今すぐアップデート！",
       "es": "¡Actualizar ahora!",
       "pl": "Aktualizuj teraz!",
@@ -10629,7 +10664,7 @@
       "en": "Detect line ends",
       "ru": "Определять конец строки",
       "zh": "探测行尾",
-      "de": "Erkenne Zeilenenden",
+      "de": "Zeilenenden erkennen",
       "ja": "行末を検出",
       "es": "Detectar fin de línea",
       "pl": "Wykryj końce linii",
@@ -10764,7 +10799,7 @@
       "en": "Trim trailing spaces",
       "ru": "Удалять замыкающие пробелы",
       "zh": "移除首尾空格",
-      "de": "Anhängende Leerzeichen abschneiden",
+      "de": "Leerzeichen am Ende abschneiden",
       "ja": "末尾のスペースを削除する",
       "es": "Eliminar espacios finales",
       "pl": "Przytnij końc. spacje",
@@ -10888,7 +10923,7 @@
       "en": "Register on OS startup",
       "ru": "Зарегистрировать при запуске ОС",
       "zh": "在系统启动时注册",
-      "de": "Für Systemstart registrieren",
+      "de": "Mit Windows starten",
       "ja": "OS起動時に登録する",
       "es": "Registrar al inicio del SO",
       "pl": "Zarejestruj podczas uruchamiania systemu",
@@ -10949,7 +10984,7 @@
       "en": " Disable ConIme.exe autorun (Vista only)",
       "ru": " Отключить автозапуск ConIme.exe (только Vista)",
       "zh": " 禁用ConIme.exe自动启动（仅Vista）",
-      "de": " Deaktiviere Autostart der ConIme.exe (Nur Vista)",
+      "de": " Deaktiviere Autostart von ConIme.exe (Nur Vista)",
       "ja": " ConIme.exeの自動実行を無効にする(Vistaのみ)",
       "es": "Desactivar autoejecución de ConIme.exe (sólo Vista)",
       "pl": "Wyłącz autorun ConIme.exe (tylko Vista)",
@@ -11034,7 +11069,7 @@
       "en": "Resize panels by mouse",
       "ru": "Изменять размер панели мышью",
       "zh": "鼠标调整面板大小",
-      "de": "Größe der Panels mit der Maus ändern",
+      "de": "Größe der Panele mit der Maus ändern",
       "ja": "マウスでパネルのサイズを変更する",
       "es": "Redimensionar paneles con el ratón",
       "pl": "Zmień rozmiar paneli za pomocą myszy",
@@ -11046,7 +11081,7 @@
       "en": "use both panel edges",
       "ru": "используйте оба края панели",
       "zh": "使用面板两个边缘",
-      "de": "Beide Panel-Kanten nutzen",
+      "de": "Beide Seiten nutzen",
       "ja": "両方のパネルエッジを使用する",
       "es": "usar ambos extremos del panel",
       "pl": "użyj obu krawędzi panelu",
@@ -11271,7 +11306,7 @@
       "en": "Match &case",
       "ru": "Учитывать регистр",
       "zh": "匹配（&c）",
-      "de": "Trefferschreibung",
+      "de": "Groß-/Kleins&chreibung",
       "ja": "マッチケース(&c)",
       "es": "Coincidir &may./min.",
       "pl": "Mecz &walizka \"Match &case\"",
@@ -12348,7 +12383,7 @@
       "en": "Snap to desktop edges",
       "ru": "Привязка к краям рабочего стола",
       "zh": "快闪至桌面边缘",
-      "de": "Am Desktoprand fangen",
+      "de": "Am Desktoprand einrasten",
       "ja": "デスクトップの端にスナップ",
       "es": "Anclar a bordes del escritorio",
       "pl": "Przyciągaj do krawędzi pulpitu",
@@ -12901,7 +12936,7 @@
     "cbVividColors": {
       "en": "Adjust lightness of indistinguishable text",
       "ru": "Регулировать яркость неразличимого текста",
-      "de": "Passe Stärke ununterscheidbaren Textes an",
+      "de": "Stärke von nicht unterscheidbarem Text anpassen",
       "ja": "区別できないテキストの明るさを調整する",
       "es": "Ajustar claridad de texto ilegible",
       "pl": "Dostosuj jasność nierozróżnialnego tekstu",
@@ -13050,7 +13085,7 @@
       "en": "Used command processor",
       "ru": "Использовать командный процессор",
       "zh": "使用的命令处理器",
-      "de": "Verwendeten Befehlsprozesser",
+      "de": "Verwendeter Befehlsprozesser",
       "ja": "使用されているコマンドプロセッサ",
       "es": "Intérprete de comandos usado",
       "pl": "Używany procesor poleceń",
@@ -13063,7 +13098,7 @@
       "en": "Choose preferred command processor platform (bits)",
       "ru": "Выбрать предпочитаемую платформу командного процессора (биты)",
       "zh": "选择首选的命令处理器平台（bits）",
-      "de": "Bevorzugte Prozesserplattform (Bits) auswählen",
+      "de": "Bevorzugte Plattform (Bits) auswählen",
       "ja": "優先コマンドプロセッサプラットフォーム(ビット)を選択する",
       "es": "Elegir el intérprete de comandos de la plataforma",
       "pl": "Wybierz preferowaną platformę procesora poleceń (bity)",
@@ -13217,7 +13252,7 @@
       "en": "Seize keys / Send to console",
       "ru": "Захватить ключи / Отправить в консоль",
       "zh": "抓取按键 / 发送至控制台",
-      "de": "Tastendrücke einfangen / An Konsole senden",
+      "de": "Tastenanschläge einfangen / An Konsole senden",
       "ja": "キーを押す/コンソールに送信",
       "es": "Interceptar teclas / Enviar a terminal",
       "pl": "Chwytaj klucze / Wyślij do konsoli",
@@ -13254,7 +13289,7 @@
       "en": "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",
       "ru": "ВНИМАНИЕ!!! Включение этой опции может вызвать ложные срабатывания в антивирусных программах!!!",
       "zh": "警告！！！ 启用此选项会导致杀毒软件假的警报！！！",
-      "de": "WARNUNG!!! Das Aktivieren dieser Option kann zu Fehlalarmen von Antivirenprogrammen führen!!!",
+      "de": "WARNUNG: Das Aktivieren dieser Option kann zu Fehlalarmen von Antivirenprogrammen führen.",
       "ja": "警告！！！このオプションを有効にすると,ウイルス対策プログラムで誤ったアラームが発生する可能性があります.",
       "es": "¡¡¡AVISO!!! ¡Activar esta opción puede causar falsas alarmas en los antivirus!",
       "pl": "OSTRZEŻENIE!!! Włączenie tej opcji może powodować fałszywe alarmy w programach antywirusowych !!!",
@@ -13546,7 +13581,7 @@
       "en": "ConEmu Here - Explorer context menu integration",
       "ru": "ConEmu Here - Интеграция с контекстным меню проводника",
       "zh": "这里打开ConEmu - Explorer右键菜单集成",
-      "de": "ConEmu - Explorer-Kontextmenü-Integration",
+      "de": "ConEmu - Explorer-Kontextmenü",
       "ja": "ConEmu Here  -  Explorerのコンテキストメニューの統合",
       "es": "Abrir ConEmu aquí - integración menú contextual del Explorador",
       "pl": "Tutaj ConEmu - Explorer integracja menu kontekstowego",
@@ -13558,7 +13593,7 @@
       "en": "ConEmu Inside - Explorer context menu integration",
       "ru": "ConEmu Inside - Интеграция с контекстным меню проводника",
       "zh": "里面打开ConEmu - Explorer右键菜单集成",
-      "de": "ConEmu-Intern - Explorer-Kontextmenü-Integration",
+      "de": "ConEmu-Intern - Explorer-Kontextmenü",
       "ja": "ConEmu Inside -  Explorerのコンテキストメニューの統合",
       "es": "ConEmu dentro - integración menú contextual del Explorador",
       "pl": "ConEmu Inside - integracja menu kontekstowego Eksploratora",
@@ -13635,7 +13670,7 @@
       "en": "Paste mode #1 (Shift+Ins)",
       "ru": "Режим вставки #1 (Shift+Ins)",
       "zh": "粘贴模式 #1 （Shift+Ins）",
-      "de": "Einfügenmodus #1 (Umslt+Einfg)",
+      "de": "Einfüge-Modus #1 (Umslt+Einfg)",
       "ja": "ペーストモード #1 (Shift+Ins)",
       "es": "Modo de pegado #1 (Shift+Ins)",
       "pl": "Tryb wklejania #1 (Shift + Ins)",
@@ -13648,7 +13683,7 @@
       "en": "Paste mode #2 (Ctrl+V)",
       "ru": "Режим вставки #2 (Ctrl+V)",
       "zh": "粘贴模式 #2 （Ctrl+V）",
-      "de": "Einfügenmodus #2 (Strg+V)",
+      "de": "Einfüge-Modus #2 (Strg+V)",
       "ja": "ペーストモード #2 (Ctrl+V)",
       "es": "Modo de pegado #2 (Ctrl+V)",
       "pl": "Tryb wklejania #2 (Ctrl + V)",
@@ -13724,7 +13759,7 @@
     "gbRestoreMinimize": {
       "en": "Activation and minimization",
       "ru": "Активация и минимизация",
-      "de": "Aktivierung und Minimierung",
+      "de": "Aktivieren und Minimieren",
       "ja": "アクティベーションと最小化",
       "es": "Activación y minimizar",
       "pl": "Aktywacja i minimalizacja",
@@ -14072,6 +14107,7 @@
     ,
     "IDABORT": {
       "en": "Abort",
+      "de": "Abbrechen",
       "ru": "Прервать",
       "pl": "Poronienie",
       "it_IT": "Informazioni",
@@ -14083,7 +14119,7 @@
       "en": "&Alternative mode",
       "ru": "Альтернативный режим",
       "zh": "可选（&A）模式",
-      "de": "&Alternativmodus",
+      "de": "&Alternativ-Modus",
       "ja": "代替モード(&A)",
       "es": "Modo &alternativo",
       "pl": "&Tryb alternatywny",
@@ -14165,7 +14201,7 @@
       "en": "Warning, unsaved work may be lost!",
       "ru": "Предупреждение, несохраненная работа может быть потеряна!",
       "zh": "警告，为保存的工作会丢失！",
-      "de": "Warnung, nicht gespeicherte Daten gehen verloren!",
+      "de": "Warnung, nicht gespeicherte Daten gehen verloren.",
       "ja": "警告,保存されていない作業が失われる可能性があります！",
       "es": "Aviso, ¡se pueden perder los datos no guardados!",
       "pl": "Niezapisana praca zostanie utracona!",
@@ -14191,6 +14227,7 @@
       "en": "Continue",
       "ru": "Продолжить",
       "zh": "继续",
+      "de": "Fortsetzen",
       "pl": "Kontyntynuj",
       "it_IT": "Continua",
       "ko": "계속",
@@ -14201,6 +14238,7 @@
       "en": "Ignore",
       "ru": "Игнорировать",
       "zh": "忽略",
+      "de": "Ignorieren",
       "pl": "Ignorować",
       "it_IT": "Ignora",
       "ko": "무시",
@@ -14211,6 +14249,7 @@
       "en": "No",
       "ru": "Нет",
       "zh": "No",
+      "de": "Nein",
       "pl": "Nie",
       "it_IT": "No",
       "ko": "아니오",
@@ -14245,6 +14284,7 @@
       "en": "Try",
       "ru": "Пытаться",
       "zh": "尝试",
+      "de": "Wiederholen",
       "pl": "Próbuj",
       "it_IT": "Prova",
       "ko": "시도",
@@ -14349,7 +14389,7 @@
       "en": "Allow anywhere",
       "ru": "Разрешить везде",
       "zh": "完全允许",
-      "de": "Überall erlauben",
+      "de": "Immer erlauben",
       "ja": "どこでも許可",
       "es": "Permitir en cualquier sitio",
       "pl": "Pozwól gdziekolwiek -Allow anywhere-",
@@ -14375,7 +14415,7 @@
       "en": "Disallow everywhere",
       "ru": "Запрещено везде",
       "zh": "全面禁止",
-      "de": "Überall verbieten",
+      "de": "Immer verbieten",
       "ja": "どこからも許可しない",
       "es": "Impedir en cualquier sitio",
       "pl": "Zabroń wszędzie",
@@ -14687,7 +14727,7 @@
       "en": "&Above normal",
       "ru": "Выше среднего",
       "zh": "高于正常（&A）",
-      "de": "Über norm&al",
+      "de": "Höher",
       "ja": "ノーマル以上(&A)",
       "es": "Encim&a de lo normal",
       "pl": "&Ponad normę",
@@ -15408,7 +15448,7 @@
       "en": "Do nothing",
       "ru": "Игнорировать",
       "zh": "什么也不做",
-      "de": "Nichts tun",
+      "de": "Keine Aktion",
       "ja": "何もしない",
       "es": "No hacer nada",
       "pl": "Nic nie robić",
@@ -15460,7 +15500,7 @@
       "en": "Do nothing",
       "ru": "Игнорировать",
       "zh": "什么也不做",
-      "de": "Nichts tun",
+      "de": "Keine Aktion",
       "ja": "何もしない",
       "es": "No hacer nada",
       "pl": "Nic nie robić",
@@ -15834,7 +15874,7 @@
       "en": "Schemes:",
       "ru": "Схема:",
       "zh": "方案：",
-      "de": "Schemata",
+      "de": "Themen:",
       "ja": "スキーム:",
       "es": "Esquemas:",
       "pl": "Schematy:",
@@ -15847,7 +15887,7 @@
       "en": "Text:",
       "ru": "Текст:",
       "zh": "文本：",
-      "de": "Text",
+      "de": "Text:",
       "ja": "テキスト:",
       "es": "Texto:",
       "pl": "Tekst:",
@@ -15873,6 +15913,7 @@
       "en": "Buffer (chars):",
       "ru": "Буфер (символы):",
       "zh": "缓存（字符）：",
+      "de": "Puffer (Zeichen):",
       "pl": "Bufor (znaki):",
       "it_IT": "Buffer (caratteri):",
       "ko": "버퍼 (문자):",
@@ -15883,6 +15924,7 @@
       "en": "Left x Top:",
       "ru": "Слева x Сверху:",
       "zh": "左 x 高：",
+      "de": "Links x Oben:",
       "pl": "Lewa x Góra:",
       "it_IT": "Sinistra x Alto:",
       "ko": "왼쪽 x 위쪽:",
@@ -15970,7 +16012,7 @@
       "en": "Right:",
       "ru": "Справа:",
       "zh": "右：",
-      "de": "Rechts",
+      "de": "Rechts:",
       "ja": "右:",
       "es": "Derecha:",
       "pl": "Prawy:",
@@ -15983,7 +16025,7 @@
       "en": "Condition:",
       "ru": "Условие:",
       "zh": "状况：",
-      "de": "Modifizierer:",
+      "de": "Zusatztasten:",
       "ja": "コンディション:",
       "es": "Condición:",
       "pl": "Kondycja:",
@@ -16064,7 +16106,7 @@
             , "Например: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
       "zh": [ "以分割符 ‘|’ 列出 hooked 的可执行文件或窗口类的名字\r\n"
             , "例子：explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
-      "de": [ "Liste von angezapften ausführbaren Dateien oder Fensterklassennamen getrennt durch ‘|’\r\n"
+      "de": [ "Liste von ausführbaren Dateien oder Fensterklassennamen mit ConEmu-Integration getrennt durch ‘|’\r\n"
             , "Beispiel: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
       "ja": [ "'|'で区切られたフックされた実行ファイルまたはウィンドウクラス名のリスト\r\n"
             , "例:explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
@@ -16085,7 +16127,7 @@
             , "Например: \"cmd.exe -new_console:z\"" ],
       "zh": [ "当 “默认终端” 已启用时，如果你想在 Windows 标准控制台窗口启动一些来自 hooked 的可执行文件的命令，只需使用 \"-new_console:z\" 开关。\r\n"
             , "例子：\"cmd.exe -new_console:z\"" ],
-      "de": [ "Soll, wenn 'Standardterminal' aktiviert ist, ein Befehl im Windows-Standardkonsolenfenster von einer angezapften ausführbaren Datei gestartet werden, einfach den \"-new_console:z\"-Parameter verwenden.\r\n"
+      "de": [ "Falls die Option 'Standardterminal' aktiviert ist und Sie einen Befehl beim Starten eines Standardkonsolenfensters über ein Programm mit ConEmu-Integration ausführen möchten, verwenden Sie den Parameter \"-new_console:z\".\r\n"
             , "Beispiel: \"cmd.exe -new_console:z\"" ],
       "ja": [ "'既定の端末'が有効になっているときにフックされた実行可能ファイルからWindowsの標準コンソールウィンドウでいくつかのコマンドを開始するには,単に \"-new_console:z\"スイッチを使用します.\r\n"
             , "例: \"cmd.exe -new_console:z\"" ],
@@ -16103,7 +16145,7 @@
       "en": "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",
       "ru": "Нежелательное значение параметра реестра ‘LoadConIme’! Это может привести к зависанию других консольных приложений! ConEmu может отключить ConIme.exe через реестр:",
       "zh": "注册表参数 ‘LoadConIme’ 多余的值！这可能会导致其他控制台应用程序挂起！ConEmu 可以通过注册表禁用 ConIme.exe：",
-      "de": "Unerwünschter Wert vom 'LoadConIme'-Registry-Parameter! Das kann zum Aufhängen anderer Konsolenanwendungen führen! ConEmu kann ConIme.exe mittel Registry deaktivieren:",
+      "de": "Unerwünschter Wert in 'LoadConIme'-Registry-Parameter. Dieser kann zum Absturz anderer Konsolenanwendungen führen. ConEmu kann ConIme.exe mittels Registry deaktivieren:",
       "ja": "'LoadConIme'レジストリパラメータの不要な値！これにより,他のコンソールアプリケーションが停止することがあります. ConEmuはレジストリを介してConIme.exeを無効にすることがあります:",
       "es": "¡Valor no aceptado del parámetro de registro 'LoadConIme'! ¡Esto puede provocar que se cuelguen otras aplicaciones de terminal! ConEmu puede desactivar ConIme.exe a través del registro:",
       "pl": "Niepożądana wartość parametru rejestru \"LoadConIme\"! Może to powodować zawieszanie się innych aplikacji konsolowych! ConEmu może wyłączyć ConIme.exe poprzez rejestr:",
@@ -16179,7 +16221,7 @@
       "en": "By the cost of background colors you may change the used font to bold or italic",
       "ru": "За счет одного фонового цвета консольной палитры можно делать шрифт жирным или курсивом",
       "zh": "由于背景颜色反差的原因，你可以改变使用的字体为加粗或斜体",
-      "de": "Auf Kosten der Hintergrundfarben kann die verwendete Schriftart auf fett oder kursiv geändert werden",
+      "de": "An Stelle von Hintergrundfarben können Sie fette oder kursive Schriftarten verwenden",
       "ja": "背景色のコストでフォントを太字または斜体に変更",
       "es": "Al coste de los colores de fondo podrá cambiar la letra a negrita o cursiva",
       "pl": "Kosztem kolorów tła możesz zmienić używaną czcionkę na pogrubioną lub kursywą",
@@ -16394,7 +16436,7 @@
             , "使用 ‘#’ 前缀来运行 ConEmu 外部的编辑器" ],
       "de": [ "Verfügbare Platzhalter: '%1' - Zeilennummer, '%2' - Spaltennummer\n"
             , "'%3' - C:\\Pfad\\Datei, '%4' - C:/Pfad/Datei, '%5' - /C/Pfad/Datei\n"
-            , "'#' als Vorzeichen verwenden um den Editor außerhalb ConEmus zu starten" ],
+            , "Stellen Sie '#' voran, um den Editor außerhalb von ConEmu zu starten" ],
       "ja": [ "利用可能なマクロ: '%1' - 行番号, '%2' - 列番号\n"
             , "'%3' - C:\\Path\\File, '%4' - C:/Path/File, '%5' - /C/Path/File\n"
             , "ConEmuの外部でエディタを実行するには '#'接頭辞を使用してください" ],
@@ -16597,7 +16639,7 @@
       "en": "Use this if you want ConEmu act as a page of Windows Explorer window",
       "ru": "ConEmu в качестве страницы окна Windows Explorer",
       "zh": "使用此功能 - 如果你希望 ConEmu 作为 Windows Explorer 窗口的一个页面",
-      "de": "Dies verwenden, wenn ConEmu als Seite im Windows Explorer-Fenster arbeiten soll",
+      "de": "ConEmu in Explorer-Fenster integrieren",
       "ja": "ConEmuをWindowsエクスプローラウィンドウのページとして機能させたい場合に使用します",
       "es": "Usa esto si quieres que ConEmu aparezca como una página del Explorador de Windows",
       "pl": "Użyj tego, jeśli chcesz, aby ConEmu działał jako strona okna Eksploratora Windows",
@@ -16624,7 +16666,7 @@
       "en": "Modifiers:",
       "ru": "Модификаторы:",
       "zh": "修改器：",
-      "de": "Modifizierer:",
+      "de": "Zusatztasten:",
       "ja": "モデファイヤ:",
       "es": "Modificadores:",
       "pl": "Modyfikatory:",
@@ -16638,7 +16680,7 @@
       "en": "WARNING!!!",
       "ru": "ВНИМАНИЕ!!!",
       "zh": "警告！！！",
-      "de": "WARNUNG!!!",
+      "de": "WARNUNG",
       "ja": "警告！！！",
       "es": "¡¡¡AVISO!!!",
       "pl": "OSTRZEŻENIE!!!",
@@ -16652,7 +16694,7 @@
       "en": "Change these settings very carefully!!!",
       "ru": "Изменяйте эти настройки очень осторожно!!!",
       "zh": "改变这些设置时请非常小心！！！",
-      "de": "Die Einstellungen mit Bedacht verändern!!!",
+      "de": "Ändern Sie diese Einstellungen nur mit Bedacht.",
       "ja": "これらの設定は最新の注意を払って変更してください！",
       "es": "¡¡¡Cambia estas opciones con sumo cuidado!!!",
       "pl": "Zmień te ustawienia bardzo ostrożnie !!!",
@@ -16666,7 +16708,7 @@
       "en": "Font must be Unicode and must be smaller than main font!!!",
       "ru": "Шрифт должен быть Юникод и должен быть меньше основного шрифта!!!",
       "zh": "字体必须是 Unicode 的并且必须小于主字体！！！",
-      "de": "Die Schriftart muss Unicode und kleiner als die Hauptschriftart sein!!!",
+      "de": "Die Schriftart muss Unicode und kleiner als die Hauptschriftart sein.",
       "ja": "フォントはUnicodeで,メインフォントより小さくする必要があります.",
       "es": "¡El tipo de letra debe ser Unicode y debe ser más pequeño que el principal!",
       "pl": "Czcionka musi być Unicode i musi być mniejsza niż czcionka główna !!!",
@@ -16890,7 +16932,7 @@
       "en": "Save all editors:",
       "ru": "Сохранить все редакторы:",
       "zh": "保存所有编辑器：",
-      "de": "Alle editoren sichern:",
+      "de": "Alle Editoren sichern:",
       "ja": "すべてのエディタを保存:",
       "es": "Guardar los editores:",
       "pl": "Zapisz wszystkich redaktorów: \"Save all editors:\"",
@@ -16933,7 +16975,7 @@
             , "Одна строка может иметь только одну команду! Вы можете комментировать строки знаком #" ],
       "zh": [ "你可以在这里设置你的环境变量、默认代码页、等等\r\n"
             , "一行只能有一个命令！你可以以 \"#\" 标识开始注释行。" ],
-      "de": [ "Hier können Umgebungsvariablen, Standardzeichensatz, usw., eingerichtet werden.\r\n"
+      "de": [ "Hier können Umgebungsvariablen, Standardzeichensatz, usw. eingerichtet werden.\r\n"
             , "Jede Zeile darf nur einen Befehl enthalten! Zeilen können mit '#' auskommentiert werden." ],
       "ja": [ "ここでは,環境変数,デフォルトのコードページなどを設定することができます.\r\n"
             , "1行には1つのコマンドしかないかもしれません！ #記号で行をコメントすることができます." ],
@@ -17295,7 +17337,7 @@
       "en": "Panels:",
       "ru": "Панели:",
       "zh": "面板:",
-      "de": "Panels:",
+      "de": "Panele:",
       "ja": "パネル:",
       "es": "Paneles:",
       "pl": "Panele:",
@@ -17375,7 +17417,7 @@
       "en": "Loading timeout (sec.):",
       "ru": "Время ожидания загрузки (сек.):",
       "zh": "加载超时（秒）：",
-      "de": "Lade-Auszeit (Sek.):",
+      "de": "Abbruch nach (Sek.):",
       "ja": "読み込みタイムアウト(秒):",
       "es": "Timeout de carga (seg.):",
       "pl": "Limit czasu ładowania (sek.):",
@@ -17389,7 +17431,7 @@
       "en": "Max. zoom:",
       "ru": "Макс. масштаб:",
       "zh": "最大缩放：",
-      "de": "Max. Lupe:",
+      "de": "Max. Vergrößerung:",
       "ja": "最大ズーム:",
       "es": "Zoom máx.:",
       "pl": "Max. Powiększenie:",
@@ -17403,7 +17445,7 @@
       "en": "Label font:",
       "ru": "Шрифт метки:",
       "zh": "标签字体：",
-      "de": "Bez.Schrift:",
+      "de": "Beschriftung:",
       "ja": "ラベルフォント:",
       "es": "Tipo letra pestaña:",
       "pl": "Czcionka etykiety:",
@@ -17431,7 +17473,7 @@
       "en": "Horz.pad:",
       "ru": "Гориз.отступ:",
       "zh": "水平边距：",
-      "de": "Horiz. Füllung:",
+      "de": "Horiz. Abstand:",
       "ja": "水平pad:",
       "es": "Separ.horiz.:",
       "pl": "Pozioma podkładka:",
@@ -17444,7 +17486,7 @@
       "en": "Vert.pad:",
       "ru": "Верт.отступ:",
       "zh": "垂直边距：",
-      "de": "Vertik. Füllung:",
+      "de": "Vertik. Abstand:",
       "ja": "垂直pad:",
       "es": "Separ.vert.:",
       "pl": "Pionowa podkładka:",
@@ -17457,7 +17499,7 @@
       "en": "Label font:",
       "ru": "Шрифт метки:",
       "zh": "标签字体：",
-      "de": "Bez.-Schrift:",
+      "de": "Beschriftung:",
       "ja": "ラベルフォント:",
       "es": "Tipo letra etiqueta:",
       "pl": "Czcionka etykiety:",
@@ -17485,7 +17527,7 @@
       "en": "Right pad:",
       "ru": "отступ справа:",
       "zh": "右边距：",
-      "de": "Rechte Füllung:",
+      "de": "Rechter Abstand:",
       "ja": "右パッド:",
       "es": "Sep. derecha:",
       "pl": "Prawa podkładka:",
@@ -17498,7 +17540,7 @@
       "en": "Left pad:",
       "ru": "отступ слева:",
       "zh": "左边距：",
-      "de": "Linke Füllung:",
+      "de": "Linker Abstand:",
       "ja": "左パッド:",
       "es": "Sep. izquierda:",
       "pl": "Lewa podkładka:",
@@ -17539,7 +17581,7 @@
       "en": "Unicode ranges, the default is \"2013-25C4;\":",
       "ru": "Диапазоны Unicode (умолчание \"2013-25C4;\"):",
       "zh": "Unicode 范围，默认为：\"2013-25C4;\":",
-      "de": "Unicode-Bereiche, Vorgabe ist \"2013-25C4;\":",
+      "de": "Unicode-Bereiche, Standardbereich \"2013-25C4;\":",
       "ja": "Unicode範囲 デフォルトは \"2013-25C4;\"",
       "es": "Rangos Unicode, por defecto \"2013-25C4;\":",
       "pl": "Zakresy Unicode, domyślnie \"2013-25C4;\":",
@@ -17701,7 +17743,7 @@
       "en": "Pad size (pixels):",
       "ru": "Окантовка (пиксели):",
       "zh": "边距大小（像素）：",
-      "de": "Abstand-Größe (Pixel):",
+      "de": "Abstand (Pixel):",
       "ja": "Pad(隙間)サイズ(ピクセル):",
       "es": "Espaciado (pixels):",
       "pl": "Rozmiar pada (piksele):",
@@ -17741,7 +17783,7 @@
       "en": "Console restart may be required",
       "ru": "Может потребоваться перезагрузка консоли",
       "zh": "可能需要重启控制台",
-      "de": "Möglicherweise Konsolenneustart erforderlich",
+      "de": "Neustart der Konsolen möglicherweise erforderlich",
       "ja": "コンソールの再起動が必要な場合があります",
       "es": "Se requiere reinicio del terminal",
       "pl": "Może być konieczne ponowne włączenie konsoli",
@@ -17755,7 +17797,7 @@
       "en": "NOTE!!! Computer restart may be required to apply registry changes",
       "ru": "ПРИМЕЧАНИЕ!!! Для применения изменений реестра может потребоваться перезапуск компьютера",
       "zh": "注意！！！应用注册表改动可能需要计算机重启",
-      "de": "WICHTIG! Ein Neustart des Computers könnte notwendig sein, um die Änderungen in der Registry anzuwenden.",
+      "de": "Ein Neustart des Computers kann notwendig sein, um die Änderungen in der Registry anzuwenden.",
       "ja": "注意！！！レジストリの変更を適用するにはコンピュータの再起動が必要な場合があります",
       "es": "¡¡¡AVISO!!! puede que sea necesario reiniciar el PC para aplicar los cambios en el registro",
       "pl": "UWAGA!!! W celu zastosowania zmian rejestru może być konieczne ponowne uruchomienie komputera",
